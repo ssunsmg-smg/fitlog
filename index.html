@@ -89,6 +89,30 @@
     return snap.exists ? snap.data() : null;
   };
 
+  window.saveDietRecord = async (date, dietData) => {
+    if (!currentUser) return false;
+    try {
+      await db.collection('users').doc(currentUser.uid)
+        .collection('diet').doc(date)
+        .set({ ...dietData, savedAt: new Date().toISOString() });
+      return true;
+    } catch(e) { return false; }
+  };
+
+  window.loadDietRecords = async () => {
+    if (!currentUser) return [];
+    try {
+      const snap = await db.collection('users').doc(currentUser.uid)
+        .collection('diet').orderBy('date','desc').limit(30).get();
+      return snap.docs.map(d => d.data());
+    } catch(e) { return []; }
+  };
+
+  window.deleteDietRecord = async (date) => {
+    if (!currentUser) return;
+    await db.collection('users').doc(currentUser.uid).collection('diet').doc(date).delete();
+  };
+
   auth.getRedirectResult().then(result => {
     if (result && result.user) currentUser = result.user;
   }).catch(e => console.log('redirect:', e));
@@ -274,6 +298,85 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .sets-hdr{display:grid;grid-template-columns:28px 1fr 1fr 32px;gap:6px;padding:8px 2px 4px;font-size:10px;color:var(--muted);font-family:var(--mono);text-align:center;}
 .set-row{display:grid;grid-template-columns:28px 1fr 1fr 32px;gap:6px;align-items:center;margin-bottom:5px;}
 .set-num{font-size:11px;font-family:var(--mono);color:var(--muted);text-align:center;}
+
+/* ── 식단 탭 ── */
+.diet-date-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
+.diet-date-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;}
+.diet-date-btn:hover{border-color:var(--green);color:var(--green);}
+.diet-date-label{font-size:15px;font-weight:700;font-family:var(--mono);color:var(--text);cursor:pointer;}
+.diet-date-label:hover{color:var(--accent);}
+.diet-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
+.diet-sum-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 8px;text-align:center;}
+.diet-sum-val{font-size:20px;font-weight:900;font-family:var(--mono);color:var(--green);}
+.diet-sum-val.kcal{color:var(--accent);}
+.diet-sum-val.carb{color:var(--accent2);}
+.diet-sum-val.fat{color:var(--purple);}
+.diet-sum-lbl{font-size:10px;color:var(--muted);margin-top:2px;}
+.diet-goal-bar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:16px;}
+.diet-goal-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;font-family:var(--mono);}
+.diet-goal-bar-bg{height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
+.diet-goal-bar-fill{height:100%;border-radius:3px;background:var(--green);transition:width .4s;max-width:100%;}
+.diet-goal-bar-fill.over{background:var(--accent);}
+.diet-meal-section{margin-bottom:14px;}
+.diet-meal-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 2px;margin-bottom:6px;border-bottom:1px solid var(--border);}
+.diet-meal-title{font-size:13px;font-weight:700;}
+.diet-meal-kcal{font-size:11px;font-family:var(--mono);color:var(--muted);}
+.diet-food-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:5px;display:flex;align-items:center;gap:10px;}
+.diet-food-info{flex:1;}
+.diet-food-name{font-size:13px;font-weight:500;margin-bottom:2px;}
+.diet-food-sub{font-size:11px;color:var(--muted);font-family:var(--mono);}
+.diet-food-kcal{font-size:13px;font-weight:700;color:var(--accent);font-family:var(--mono);white-space:nowrap;}
+.diet-food-del{padding:3px 7px;border-radius:5px;border:1px solid var(--border);background:none;color:var(--muted);font-size:11px;cursor:pointer;}
+.diet-food-del:hover{border-color:var(--accent);color:var(--accent);}
+.diet-add-btn{width:100%;padding:8px;border-radius:8px;border:1px dashed var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);margin-top:4px;}
+.diet-add-btn:hover{border-color:var(--green);color:var(--green);}
+.diet-modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:500px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;}
+.diet-modal-hdr{padding:16px 18px 12px;border-bottom:1px solid var(--border);}
+.diet-modal-title{font-size:16px;font-weight:700;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.diet-search{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);font-family:var(--font);}
+.diet-search:focus{outline:none;border-color:var(--green);}
+.diet-modal-cats{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;}
+.diet-modal-cat{padding:3px 9px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font);}
+.diet-modal-cat.on{background:var(--green);border-color:var(--green);color:#fff;}
+.diet-modal-body{overflow-y:auto;flex:1;padding:8px;}
+.diet-db-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);margin-bottom:4px;cursor:pointer;transition:border-color .15s;}
+.diet-db-item:hover{border-color:var(--green);}
+.diet-db-info{flex:1;}
+.diet-db-name{font-size:13px;font-weight:500;}
+.diet-db-sub{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:1px;}
+.diet-db-kcal{font-size:12px;font-weight:700;color:var(--accent);font-family:var(--mono);}
+.diet-modal-footer{padding:12px 16px;border-top:1px solid var(--border);}
+.diet-custom-lbl{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:7px;}
+.diet-custom-grid{display:grid;grid-template-columns:2fr 1fr 1fr 1fr auto;gap:6px;align-items:center;}
+.diet-ci{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 9px;font-size:12px;color:var(--text);font-family:var(--font);width:100%;}
+.diet-ci:focus{outline:none;border-color:var(--green);}
+.diet-cadd{padding:7px 12px;border-radius:6px;border:none;background:var(--green);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;}
+.diet-qty-modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:320px;padding:24px;}
+.diet-qty-title{font-size:15px;font-weight:700;margin-bottom:4px;}
+.diet-qty-sub{font-size:12px;color:var(--muted);margin-bottom:16px;}
+.diet-qty-row{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.diet-qty-inp{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono);text-align:center;}
+.diet-qty-inp:focus{outline:none;border-color:var(--green);}
+.diet-qty-unit{font-size:13px;color:var(--muted);}
+.diet-qty-preview{text-align:center;font-size:13px;color:var(--accent);font-family:var(--mono);margin-bottom:16px;padding:8px;background:#e8533a15;border-radius:8px;}
+.diet-qty-btns{display:flex;gap:8px;}
+.diet-qty-cancel{flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;cursor:pointer;font-family:var(--font);}
+.diet-qty-ok{flex:1;padding:10px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.diet-goal-edit{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;}
+.diet-goal-edit-title{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.diet-goal-inputs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.diet-goal-inp-wrap{text-align:center;}
+.diet-goal-inp-lbl{font-size:10px;color:var(--muted);margin-bottom:4px;}
+.diet-goal-inp{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 4px;font-size:13px;font-weight:700;color:var(--text);font-family:var(--mono);text-align:center;}
+.diet-goal-inp:focus{outline:none;border-color:var(--green);}
+.diet-save-btn{width:100%;padding:11px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:12px;}
+.diet-save-btn:hover{opacity:.9;}
+@media(max-width:420px){
+  .diet-summary{grid-template-columns:repeat(2,1fr);}
+  .diet-custom-grid{grid-template-columns:1fr 1fr;row-gap:6px;}
+  .diet-custom-grid button{grid-column:1/-1;}
+  .diet-goal-inputs{grid-template-columns:repeat(2,1fr);}
+}
 .set-inp{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 4px;font-size:14px;color:var(--text);font-family:var(--mono);text-align:center;width:100%;}
 .set-inp:focus{outline:none;border-color:var(--accent2);}
 .set-inp.filled{border-color:#4caf7d55;color:var(--green);}
@@ -417,6 +520,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="nav-tabs">
         <button class="nav-tab active" onclick="showPage('home')">홈</button>
         <button class="nav-tab" onclick="showPage('workout')">운동</button>
+        <button class="nav-tab" onclick="showPage('diet')">식단</button>
         <button class="nav-tab" onclick="showPage('calendar')">캘린더</button>
         <button class="nav-tab" onclick="showPage('log')">기록</button>
         <button class="nav-tab" onclick="showPage('stats')">통계</button>
@@ -474,6 +578,45 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
   </div>
 
+  <!-- 식단 -->
+  <div class="page" id="page-diet">
+    <!-- 날짜 네비게이션 -->
+    <div class="diet-date-nav">
+      <button class="diet-date-btn" onclick="dietChangeDate(-1)">‹</button>
+      <span class="diet-date-label" id="diet-date-label" onclick="dietGoToday()">오늘</span>
+      <button class="diet-date-btn" onclick="dietChangeDate(1)">›</button>
+    </div>
+    <!-- 목표 칼로리 설정 -->
+    <div class="diet-goal-edit" id="diet-goal-edit">
+      <div class="diet-goal-edit-title">
+        <span>🎯 일일 목표</span>
+        <button style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font);" onclick="toggleGoalEdit()">수정</button>
+      </div>
+      <div class="diet-goal-inputs" id="diet-goal-inputs" style="display:none;">
+        <div class="diet-goal-inp-wrap"><div class="diet-goal-inp-lbl">칼로리 kcal</div><input class="diet-goal-inp" id="dg-kcal" type="number" placeholder="2000"></div>
+        <div class="diet-goal-inp-wrap"><div class="diet-goal-inp-lbl">탄수화물 g</div><input class="diet-goal-inp" id="dg-carb" type="number" placeholder="250"></div>
+        <div class="diet-goal-inp-wrap"><div class="diet-goal-inp-lbl">단백질 g</div><input class="diet-goal-inp" id="dg-prot" type="number" placeholder="150"></div>
+        <div class="diet-goal-inp-wrap"><div class="diet-goal-inp-lbl">지방 g</div><input class="diet-goal-inp" id="dg-fat" type="number" placeholder="67"></div>
+      </div>
+      <div id="diet-goal-display"></div>
+      <button class="diet-save-btn" id="diet-goal-save-btn" style="display:none;" onclick="saveDietGoal()">저장</button>
+    </div>
+    <!-- 영양 요약 -->
+    <div class="diet-summary">
+      <div class="diet-sum-box"><div class="diet-sum-val kcal" id="ds-kcal">0</div><div class="diet-sum-lbl">칼로리 kcal</div></div>
+      <div class="diet-sum-box"><div class="diet-sum-val carb" id="ds-carb">0</div><div class="diet-sum-lbl">탄수화물 g</div></div>
+      <div class="diet-sum-box"><div class="diet-sum-val" id="ds-prot">0</div><div class="diet-sum-lbl">단백질 g</div></div>
+      <div class="diet-sum-box"><div class="diet-sum-val fat" id="ds-fat">0</div><div class="diet-sum-lbl">지방 g</div></div>
+    </div>
+    <!-- 칼로리 진행 바 -->
+    <div class="diet-goal-bar">
+      <div class="diet-goal-row"><span id="diet-bar-txt">0 / 2000 kcal</span><span id="diet-bar-pct">0%</span></div>
+      <div class="diet-goal-bar-bg"><div class="diet-goal-bar-fill" id="diet-bar-fill" style="width:0%"></div></div>
+    </div>
+    <!-- 식사별 섹션 -->
+    <div id="diet-meals-area"></div>
+  </div>
+
   <!-- 캘린더 -->
   <div class="page" id="page-calendar">
     <div class="cal-hdr"><div class="cal-title" id="cal-title"></div><div class="cal-navs"><button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button><button class="cal-nav-btn" onclick="changeMonth(1)">›</button></div></div>
@@ -515,6 +658,46 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- 식단 추가 모달 -->
+<div class="modal-bg" id="diet-modal">
+  <div class="diet-modal">
+    <div class="diet-modal-hdr">
+      <div class="diet-modal-title"><span id="diet-modal-meal-name">식품 추가</span><button class="modal-close" onclick="closeDietModal()">✕</button></div>
+      <input class="diet-search" id="diet-search-inp" type="text" placeholder="식품 검색... (닭가슴살, 밥, 고구마...)" oninput="filterDietDB()"/>
+      <div class="diet-modal-cats" id="diet-modal-cats"></div>
+    </div>
+    <div class="diet-modal-body" id="diet-db-list"></div>
+    <div class="diet-modal-footer">
+      <div class="diet-custom-lbl">직접 입력</div>
+      <div class="diet-custom-grid">
+        <input class="diet-ci" id="dc-name" type="text" placeholder="식품명"/>
+        <input class="diet-ci" id="dc-kcal" type="number" placeholder="kcal"/>
+        <input class="diet-ci" id="dc-carb" type="number" placeholder="탄 g"/>
+        <input class="diet-ci" id="dc-prot" type="number" placeholder="단 g"/>
+        <input class="diet-ci" id="dc-fat" type="number" placeholder="지 g"/>
+        <button class="diet-cadd" onclick="addCustomFood()" style="grid-column:1/-1;">+ 직접 추가</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 수량 입력 모달 -->
+<div class="modal-bg" id="diet-qty-modal">
+  <div class="diet-qty-modal">
+    <div class="diet-qty-title" id="dqm-title">수량 입력</div>
+    <div class="diet-qty-sub" id="dqm-sub">기준: 100g당</div>
+    <div class="diet-qty-row">
+      <input class="diet-qty-inp" id="dqm-inp" type="number" value="100" min="1" oninput="updateQtyPreview()"/>
+      <span class="diet-qty-unit" id="dqm-unit">g</span>
+    </div>
+    <div class="diet-qty-preview" id="dqm-preview"></div>
+    <div class="diet-qty-btns">
+      <button class="diet-qty-cancel" onclick="closeQtyModal()">취소</button>
+      <button class="diet-qty-ok" onclick="confirmAddFood()">추가</button>
+    </div>
+  </div>
+</div>
 
 <!-- 라이브러리 모달 -->
 <div class="modal-bg" id="lib-modal">
@@ -820,6 +1003,8 @@ async function initApp(user){
 
   // 기록 불러오기
   records=await window.loadRecords();
+
+  await loadDietData();
 
   showApp();
 }
@@ -1298,6 +1483,288 @@ async function delEx(tk,si,ei){
 // openLibrary → openLib 연결
 function openLibrary(tk,si){ openLib(tk,si); }
 
+// ══════════════════════════════
+// 식단 탭
+// ══════════════════════════════
+const DIET_MEALS=['아침','점심','저녁','간식'];
+const DIET_MEAL_ICONS={아침:'🌅',점심:'☀️',저녁:'🌙',간식:'🍎'};
+let dietDate=toStr(new Date());
+let dietRecords={};   // { 'YYYY-MM-DD': { meals:{아침:[],점심:[],저녁:[],간식:[]}, goal:{kcal,carb,prot,fat} } }
+let dietGoal={kcal:2000,carb:250,prot:150,fat:67};
+let dietModalTarget=null; // {meal}
+let qtyTarget=null;       // {food, meal}
+let dietDbCat='전체';
+let _dietFiltered=[];
+
+// ── 식품 DB ──
+const FOOD_DB=[
+  // 단백질
+  {n:'닭가슴살(삶은)',cat:'단백질',per:'100g',kcal:165,carb:0,prot:31,fat:3.6},
+  {n:'달걀(삶은)',cat:'단백질',per:'1개(50g)',kcal:77,carb:0.6,prot:6.3,fat:5.3,qty:50},
+  {n:'참치캔(기름제거)',cat:'단백질',per:'100g',kcal:116,carb:0,prot:25,fat:1.5},
+  {n:'두부(부침)',cat:'단백질',per:'100g',kcal:84,carb:2.1,prot:9,fat:4.2},
+  {n:'연어',cat:'단백질',per:'100g',kcal:208,carb:0,prot:20,fat:13},
+  {n:'소고기(등심)',cat:'단백질',per:'100g',kcal:247,carb:0,prot:22,fat:17},
+  {n:'돼지고기(안심)',cat:'단백질',per:'100g',kcal:143,carb:0,prot:22,fat:5.5},
+  {n:'그릭요거트(무가당)',cat:'단백질',per:'100g',kcal:59,carb:3.6,prot:10,fat:0.4},
+  {n:'닭다리살(구운)',cat:'단백질',per:'100g',kcal:185,carb:0,prot:28,fat:8},
+  {n:'새우',cat:'단백질',per:'100g',kcal:99,carb:0,prot:24,fat:0.3},
+  {n:'고등어(구운)',cat:'단백질',per:'100g',kcal:239,carb:0,prot:23,fat:16},
+  {n:'프로틴쉐이크',cat:'단백질',per:'1스쿱(30g)',kcal:120,carb:4,prot:24,fat:1.5,qty:30},
+  // 탄수화물
+  {n:'흰쌀밥',cat:'탄수화물',per:'1공기(210g)',kcal:307,carb:68,prot:5,fat:0.5,qty:210},
+  {n:'현미밥',cat:'탄수화물',per:'1공기(200g)',kcal:270,carb:57,prot:6,fat:2,qty:200},
+  {n:'고구마(삶은)',cat:'탄수화물',per:'1개(150g)',kcal:144,carb:34,prot:2,fat:0.2,qty:150},
+  {n:'오트밀',cat:'탄수화물',per:'100g',kcal:389,carb:67,prot:17,fat:7},
+  {n:'바나나',cat:'탄수화물',per:'1개(120g)',kcal:107,carb:27,prot:1.3,fat:0.4,qty:120},
+  {n:'식빵(통밀)',cat:'탄수화물',per:'1장(30g)',kcal:79,carb:14,prot:3.5,fat:1.2,qty:30},
+  {n:'감자(삶은)',cat:'탄수화물',per:'1개(130g)',kcal:103,carb:24,prot:2.5,fat:0.1,qty:130},
+  {n:'파스타(삶은)',cat:'탄수화물',per:'100g',kcal:158,carb:31,prot:5.8,fat:0.9},
+  {n:'고구마(구운)',cat:'탄수화물',per:'100g',kcal:90,carb:21,prot:1.6,fat:0.1},
+  // 채소
+  {n:'브로콜리',cat:'채소',per:'100g',kcal:34,carb:7,prot:2.8,fat:0.4},
+  {n:'시금치',cat:'채소',per:'100g',kcal:23,carb:3.6,prot:2.9,fat:0.4},
+  {n:'양배추',cat:'채소',per:'100g',kcal:25,carb:5.8,prot:1.3,fat:0.1},
+  {n:'당근',cat:'채소',per:'100g',kcal:41,carb:9.6,prot:0.9,fat:0.2},
+  {n:'오이',cat:'채소',per:'100g',kcal:15,carb:3.6,prot:0.7,fat:0.1},
+  {n:'방울토마토',cat:'채소',per:'100g',kcal:18,carb:3.9,prot:0.9,fat:0.2},
+  {n:'아보카도',cat:'채소',per:'반개(75g)',kcal:120,carb:6.4,prot:1.5,fat:11,qty:75},
+  // 유제품
+  {n:'우유(저지방)',cat:'유제품',per:'1잔(200ml)',kcal:98,carb:9.4,prot:6.6,fat:3,qty:200},
+  {n:'치즈(슬라이스)',cat:'유제품',per:'1장(20g)',kcal:67,carb:0.5,prot:4,fat:5.4,qty:20},
+  {n:'코티지치즈',cat:'유제품',per:'100g',kcal:72,carb:2.7,prot:12.5,fat:1},
+  // 견과류·기타
+  {n:'아몬드',cat:'견과류',per:'한줌(30g)',kcal:174,carb:6,prot:6,fat:15,qty:30},
+  {n:'땅콩버터',cat:'견과류',per:'1T(15g)',kcal:94,carb:3.1,prot:4,fat:8,qty:15},
+  {n:'올리브오일',cat:'견과류',per:'1T(14g)',kcal:124,carb:0,prot:0,fat:14,qty:14},
+  // 한식
+  {n:'김치찌개',cat:'한식',per:'1인분(300g)',kcal:180,carb:8,prot:12,fat:9,qty:300},
+  {n:'된장찌개',cat:'한식',per:'1인분(300g)',kcal:150,carb:10,prot:10,fat:6,qty:300},
+  {n:'비빔밥',cat:'한식',per:'1인분(400g)',kcal:550,carb:95,prot:20,fat:12,qty:400},
+  {n:'삼겹살',cat:'한식',per:'1인분(150g)',kcal:510,carb:0,prot:27,fat:44,qty:150},
+  {n:'국밥',cat:'한식',per:'1인분(500g)',kcal:450,carb:55,prot:25,fat:12,qty:500},
+  {n:'라면(인스턴트)',cat:'한식',per:'1봉(120g)',kcal:500,carb:74,prot:10,fat:17,qty:120},
+  {n:'김밥(한줄)',cat:'한식',per:'1줄(230g)',kcal:400,carb:68,prot:12,fat:9,qty:230},
+  // 음료·간식
+  {n:'아메리카노',cat:'음료',per:'1잔(350ml)',kcal:10,carb:1,prot:0.5,fat:0,qty:350},
+  {n:'카페라떼',cat:'음료',per:'1잔(350ml)',kcal:180,carb:18,prot:8,fat:7,qty:350},
+  {n:'오렌지주스',cat:'음료',per:'1잔(200ml)',kcal:92,carb:22,prot:1.4,fat:0.4,qty:200},
+  {n:'초코바',cat:'간식',per:'1개(50g)',kcal:250,carb:30,prot:3,fat:13,qty:50},
+  {n:'요거트(과일)',cat:'간식',per:'1개(150g)',kcal:130,carb:22,prot:5,fat:2,qty:150},
+];
+const DIET_CATS=['전체','단백질','탄수화물','채소','유제품','견과류','한식','음료','간식'];
+
+function getDietDay(date){
+  if(!dietRecords[date])dietRecords[date]={meals:{아침:[],점심:[],저녁:[],간식:[]},goal:null};
+  return dietRecords[date];
+}
+function dietChangeDate(dir){
+  const d=new Date(dietDate+'T12:00:00');d.setDate(d.getDate()+dir);
+  dietDate=toStr(d);renderDiet();
+}
+function dietGoToday(){dietDate=toStr(new Date());renderDiet();}
+
+function calcDietTotals(date){
+  const day=getDietDay(date);
+  let kcal=0,carb=0,prot=0,fat=0;
+  DIET_MEALS.forEach(m=>(day.meals[m]||[]).forEach(f=>{kcal+=f.kcal||0;carb+=f.carb||0;prot+=f.prot||0;fat+=f.fat||0;}));
+  return{kcal:Math.round(kcal),carb:Math.round(carb*10)/10,prot:Math.round(prot*10)/10,fat:Math.round(fat*10)/10};
+}
+function mealKcal(date,meal){
+  return Math.round((getDietDay(date).meals[meal]||[]).reduce((s,f)=>s+(f.kcal||0),0));
+}
+
+function renderDiet(){
+  const today=toStr(new Date());
+  const isToday=dietDate===today;
+  const d=new Date(dietDate+'T12:00:00');
+  const dayNames=['일','월','화','수','목','금','토'];
+  document.getElementById('diet-date-label').textContent=
+    isToday?`오늘 (${dietDate})`:`${dietDate} (${dayNames[d.getDay()]})`;
+
+  // 목표 표시
+  const g=dietGoal;
+  const gDisp=document.getElementById('diet-goal-display');
+  gDisp.innerHTML=`<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--muted);font-family:var(--mono);">
+    <span style="color:var(--accent);">🔥 ${g.kcal} kcal</span>
+    <span style="color:var(--accent2);">탄 ${g.carb}g</span>
+    <span style="color:var(--green);">단 ${g.prot}g</span>
+    <span style="color:var(--purple);">지 ${g.fat}g</span>
+  </div>`;
+
+  // 총합
+  const tot=calcDietTotals(dietDate);
+  document.getElementById('ds-kcal').textContent=tot.kcal;
+  document.getElementById('ds-carb').textContent=tot.carb;
+  document.getElementById('ds-prot').textContent=tot.prot;
+  document.getElementById('ds-fat').textContent=tot.fat;
+
+  // 칼로리 바
+  const pct=g.kcal?Math.min(Math.round(tot.kcal/g.kcal*100),100):0;
+  const over=tot.kcal>g.kcal;
+  document.getElementById('diet-bar-txt').textContent=`${tot.kcal} / ${g.kcal} kcal`;
+  document.getElementById('diet-bar-pct').textContent=`${pct}%`;
+  const fill=document.getElementById('diet-bar-fill');
+  fill.style.width=pct+'%';
+  fill.className='diet-goal-bar-fill'+(over?' over':'');
+
+  // 식사별 섹션
+  const area=document.getElementById('diet-meals-area');
+  const day=getDietDay(dietDate);
+  area.innerHTML=DIET_MEALS.map(meal=>{
+    const foods=day.meals[meal]||[];
+    const mk=mealKcal(dietDate,meal);
+    const foodsHtml=foods.map((f,fi)=>`
+      <div class="diet-food-card">
+        <div class="diet-food-info">
+          <div class="diet-food-name">${f.name}</div>
+          <div class="diet-food-sub">${f.amount} · 탄${f.carb}g 단${f.prot}g 지${f.fat}g</div>
+        </div>
+        <span class="diet-food-kcal">${f.kcal}kcal</span>
+        <button class="diet-food-del" onclick="deleteDietFood('${meal}',${fi})">✕</button>
+      </div>`).join('');
+    return`<div class="diet-meal-section">
+      <div class="diet-meal-hdr">
+        <span class="diet-meal-title">${DIET_MEAL_ICONS[meal]} ${meal}</span>
+        <span class="diet-meal-kcal">${mk} kcal</span>
+      </div>
+      ${foodsHtml}
+      <button class="diet-add-btn" onclick="openDietModal('${meal}')">＋ ${meal} 음식 추가</button>
+    </div>`;
+  }).join('');
+}
+
+function toggleGoalEdit(){
+  const inp=document.getElementById('diet-goal-inputs');
+  const btn=document.getElementById('diet-goal-save-btn');
+  const isOpen=inp.style.display!=='none';
+  inp.style.display=isOpen?'none':'grid';
+  btn.style.display=isOpen?'none':'block';
+  if(!isOpen){
+    document.getElementById('dg-kcal').value=dietGoal.kcal;
+    document.getElementById('dg-carb').value=dietGoal.carb;
+    document.getElementById('dg-prot').value=dietGoal.prot;
+    document.getElementById('dg-fat').value=dietGoal.fat;
+  }
+}
+function saveDietGoal(){
+  dietGoal={
+    kcal:parseInt(document.getElementById('dg-kcal').value)||2000,
+    carb:parseInt(document.getElementById('dg-carb').value)||250,
+    prot:parseInt(document.getElementById('dg-prot').value)||150,
+    fat:parseInt(document.getElementById('dg-fat').value)||67
+  };
+  localStorage.setItem('fitlog-diet-goal',JSON.stringify(dietGoal));
+  toggleGoalEdit();renderDiet();
+  showToast('✅ 목표 칼로리 저장됨','success');
+}
+
+function openDietModal(meal){
+  dietModalTarget=meal;
+  dietDbCat='전체';
+  document.getElementById('diet-search-inp').value='';
+  document.getElementById('diet-modal-meal-name').textContent=DIET_MEAL_ICONS[meal]+' '+meal+' 식품 추가';
+  document.getElementById('dc-name').value='';
+  ['dc-kcal','dc-carb','dc-prot','dc-fat'].forEach(id=>{document.getElementById(id).value='';});
+  renderDietCats();filterDietDB();
+  document.getElementById('diet-modal').classList.add('open');
+}
+function closeDietModal(){document.getElementById('diet-modal').classList.remove('open');dietModalTarget=null;}
+function renderDietCats(){
+  document.getElementById('diet-modal-cats').innerHTML=DIET_CATS.map(c=>
+    `<button class="diet-modal-cat ${c===dietDbCat?'on':''}" onclick="selDietCat('${c}')">${c}</button>`
+  ).join('');
+}
+function selDietCat(c){dietDbCat=c;renderDietCats();filterDietDB();}
+function filterDietDB(){
+  const kw=document.getElementById('diet-search-inp').value.toLowerCase();
+  _dietFiltered=FOOD_DB.filter(f=>(dietDbCat==='전체'||f.cat===dietDbCat)&&(!kw||f.n.toLowerCase().includes(kw)));
+  document.getElementById('diet-db-list').innerHTML=_dietFiltered.length
+    ?_dietFiltered.map((f,i)=>`<div class="diet-db-item" onclick="startAddFood(${i})">
+      <div class="diet-db-info">
+        <div class="diet-db-name">${f.n}</div>
+        <div class="diet-db-sub">${f.per} · 탄${f.carb}g 단${f.prot}g 지${f.fat}g</div>
+      </div>
+      <span class="diet-db-kcal">${f.kcal}kcal</span>
+    </div>`).join('')
+    :`<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">검색 결과 없음</div>`;
+}
+function startAddFood(i){
+  const f=_dietFiltered[i];
+  qtyTarget={food:f,meal:dietModalTarget};
+  const baseQty=f.qty||100;
+  document.getElementById('dqm-title').textContent=f.n;
+  document.getElementById('dqm-sub').textContent=`기준: ${f.per}`;
+  document.getElementById('dqm-unit').textContent=f.qty?'개':'g';
+  document.getElementById('dqm-inp').value=f.qty?1:100;
+  updateQtyPreview();
+  document.getElementById('diet-qty-modal').classList.add('open');
+}
+function updateQtyPreview(){
+  if(!qtyTarget)return;
+  const f=qtyTarget.food;
+  const qty=parseFloat(document.getElementById('dqm-inp').value)||1;
+  const ratio=f.qty?(qty):(qty/100);
+  const kcal=Math.round(f.kcal*ratio);
+  const carb=Math.round(f.carb*ratio*10)/10;
+  const prot=Math.round(f.prot*ratio*10)/10;
+  const fat=Math.round(f.fat*ratio*10)/10;
+  document.getElementById('dqm-preview').textContent=`${kcal}kcal · 탄${carb}g · 단${prot}g · 지${fat}g`;
+}
+function closeQtyModal(){document.getElementById('diet-qty-modal').classList.remove('open');qtyTarget=null;}
+function confirmAddFood(){
+  if(!qtyTarget)return;
+  const f=qtyTarget.food;
+  const qty=parseFloat(document.getElementById('dqm-inp').value)||1;
+  const ratio=f.qty?qty:(qty/100);
+  const entry={
+    name:f.n,
+    amount:f.qty?`${qty}개 (${Math.round(f.qty*qty)}g)`:`${qty}g`,
+    kcal:Math.round(f.kcal*ratio),
+    carb:Math.round(f.carb*ratio*10)/10,
+    prot:Math.round(f.prot*ratio*10)/10,
+    fat:Math.round(f.fat*ratio*10)/10
+  };
+  getDietDay(dietDate).meals[qtyTarget.meal].push(entry);
+  closeQtyModal();closeDietModal();
+  saveDietToFirebase();renderDiet();
+  showToast(`✅ "${f.n}" 추가됨!`,'success');
+}
+function addCustomFood(){
+  const name=document.getElementById('dc-name').value.trim();
+  if(!name){showToast('식품명을 입력해주세요','error');return;}
+  const kcal=parseFloat(document.getElementById('dc-kcal').value)||0;
+  const carb=parseFloat(document.getElementById('dc-carb').value)||0;
+  const prot=parseFloat(document.getElementById('dc-prot').value)||0;
+  const fat=parseFloat(document.getElementById('dc-fat').value)||0;
+  const entry={name,amount:'직접입력',kcal:Math.round(kcal),carb,prot,fat};
+  getDietDay(dietDate).meals[dietModalTarget].push(entry);
+  closeDietModal();saveDietToFirebase();renderDiet();
+  showToast(`✅ "${name}" 추가됨!`,'success');
+}
+function deleteDietFood(meal,fi){
+  getDietDay(dietDate).meals[meal].splice(fi,1);
+  saveDietToFirebase();renderDiet();
+  showToast('삭제 완료','info');
+}
+async function saveDietToFirebase(){
+  const day=getDietDay(dietDate);
+  await window.saveDietRecord(dietDate,{date:dietDate,...day});
+}
+async function loadDietData(){
+  try{
+    const saved=localStorage.getItem('fitlog-diet-goal');
+    if(saved)dietGoal=JSON.parse(saved);
+    const allDiet=await window.loadDietRecords();
+    allDiet.forEach(d=>{
+      if(d.date)dietRecords[d.date]={
+        meals:d.meals||{아침:[],점심:[],저녁:[],간식:[]},
+        goal:d.goal||null
+      };
+    });
+  }catch(e){console.log('식단 로드 실패',e);}
+}
+
 function copyLink(){
   const url=window.location.href.split('?')[0];
   navigator.clipboard.writeText(url).then(()=>showToast('✅ 링크 복사됨! 친구에게 공유해보세요','success')).catch(()=>{
@@ -1319,6 +1786,7 @@ function showPage(id){
   if(id==='log')renderLog();
   if(id==='stats')renderStats();
   if(id==='workout')renderWorkout();
+  if(id==='diet')renderDiet();
 }
 let tTimer=null;
 function showToast(msg,type='info'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;if(tTimer)clearTimeout(tTimer);tTimer=setTimeout(()=>t.classList.remove('show'),3500);}
