@@ -371,6 +371,29 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .diet-goal-inp:focus{outline:none;border-color:var(--green);}
 .diet-save-btn{width:100%;padding:11px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:12px;}
 .diet-save-btn:hover{opacity:.9;}
+
+/* ── 체중 관리 ── */
+.weight-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;}
+.weight-card-title{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.weight-input-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.weight-inp{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:22px;font-weight:900;color:var(--text);font-family:var(--mono);text-align:center;}
+.weight-inp:focus{outline:none;border-color:var(--green);}
+.weight-unit{font-size:14px;color:var(--muted);font-weight:700;}
+.weight-save-btn{padding:10px 18px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;}
+.weight-save-btn:active{opacity:.8;}
+.weight-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
+.weight-stat{background:var(--surface2);border-radius:8px;padding:9px;text-align:center;}
+.weight-stat-val{font-size:17px;font-weight:900;font-family:var(--mono);}
+.weight-stat-lbl{font-size:10px;color:var(--muted);margin-top:2px;}
+.weight-chart-wrap{margin-bottom:10px;}
+.weight-history-list{max-height:150px;overflow-y:auto;}
+.weight-hist-item{display:flex;align-items:center;justify-content:space-between;padding:6px 2px;border-bottom:1px solid var(--border);font-size:12px;}
+.weight-hist-item:last-child{border:none;}
+.weight-hist-date{color:var(--muted);font-family:var(--mono);}
+.weight-hist-val{font-weight:700;font-family:var(--mono);}
+.weight-hist-diff{font-size:11px;font-family:var(--mono);}
+.weight-hist-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px 6px;border-radius:4px;}
+.weight-hist-del:hover{color:var(--accent);}
 @media(max-width:420px){
   .diet-summary{grid-template-columns:repeat(2,1fr);}
   .diet-custom-grid{grid-template-columns:1fr 1fr;row-gap:6px;}
@@ -580,6 +603,25 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
   <!-- 식단 -->
   <div class="page" id="page-diet">
+    <!-- 체중 기록 -->
+    <div class="weight-card">
+      <div class="weight-card-title">
+        <span>⚖️ 체중 기록</span>
+        <button style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font);" onclick="toggleWeightHistory()">기록 보기</button>
+      </div>
+      <div class="weight-input-row">
+        <input class="weight-inp" id="weight-inp" type="number" step="0.1" min="20" max="300" placeholder="00.0"/>
+        <span class="weight-unit">kg</span>
+        <button class="weight-save-btn" onclick="saveWeight()">저장</button>
+      </div>
+      <div class="weight-stats-row">
+        <div class="weight-stat"><div class="weight-stat-val" id="ws-today" style="color:var(--green);">—</div><div class="weight-stat-lbl">오늘</div></div>
+        <div class="weight-stat"><div class="weight-stat-val" id="ws-start" style="color:var(--muted);">—</div><div class="weight-stat-lbl">시작</div></div>
+        <div class="weight-stat"><div class="weight-stat-val" id="ws-diff" style="color:var(--accent2);">—</div><div class="weight-stat-lbl">변화량</div></div>
+      </div>
+      <div class="weight-chart-wrap" id="weight-chart-wrap"></div>
+      <div class="weight-history-list" id="weight-history-list" style="display:none;"></div>
+    </div>
     <!-- 날짜 네비게이션 -->
     <div class="diet-date-nav">
       <button class="diet-date-btn" onclick="dietChangeDate(-1)">‹</button>
@@ -1574,6 +1616,7 @@ function mealKcal(date,meal){
 }
 
 function renderDiet(){
+  renderWeightCard();
   const today=toStr(new Date());
   const isToday=dietDate===today;
   const d=new Date(dietDate+'T12:00:00');
@@ -1761,8 +1804,129 @@ async function loadDietData(){
         goal:d.goal||null
       };
     });
+    loadWeightFromStorage();
   }catch(e){console.log('식단 로드 실패',e);}
 }
+// ══════════════════════════════
+// 체중 관리
+// ══════════════════════════════
+let weightLog = {}; // { 'YYYY-MM-DD': kg }
+
+function saveWeight(){
+  const val = parseFloat(document.getElementById('weight-inp').value);
+  if(!val || val < 20 || val > 300){ showToast('올바른 체중을 입력해주세요 (20~300kg)', 'error'); return; }
+  const today = toStr(new Date());
+  weightLog[today] = val;
+  saveWeightToStorage();
+  renderWeightCard();
+  document.getElementById('weight-inp').value = '';
+  showToast(`✅ ${val}kg 저장됨!`, 'success');
+}
+
+function deleteWeight(date){
+  delete weightLog[date];
+  saveWeightToStorage();
+  renderWeightCard();
+  showToast('삭제 완료', 'info');
+}
+
+function saveWeightToStorage(){
+  localStorage.setItem('fitlog-weight-log', JSON.stringify(weightLog));
+}
+
+function loadWeightFromStorage(){
+  try {
+    const s = localStorage.getItem('fitlog-weight-log');
+    if(s) weightLog = JSON.parse(s);
+  } catch(e) {}
+}
+
+function toggleWeightHistory(){
+  const el = document.getElementById('weight-history-list');
+  const isHidden = el.style.display === 'none';
+  el.style.display = isHidden ? 'block' : 'none';
+  renderWeightCard();
+}
+
+function renderWeightCard(){
+  const sorted = Object.entries(weightLog).sort((a,b)=>a[0].localeCompare(b[0]));
+  const today = toStr(new Date());
+
+  // 오늘 체중 입력창에 기존값 힌트
+  const todayVal = weightLog[today];
+  const inp = document.getElementById('weight-inp');
+  if(inp && !inp.value && todayVal) inp.placeholder = todayVal + ' (기록됨)';
+
+  // 통계
+  const wsToday = document.getElementById('ws-today');
+  const wsStart = document.getElementById('ws-start');
+  const wsDiff  = document.getElementById('ws-diff');
+  if(sorted.length === 0){
+    if(wsToday) wsToday.textContent = '—';
+    if(wsStart) wsStart.textContent = '—';
+    if(wsDiff)  wsDiff.textContent  = '—';
+  } else {
+    const firstVal = sorted[0][1];
+    const latestVal = sorted[sorted.length-1][1];
+    const todayDisp = weightLog[today] ? weightLog[today]+'kg' : '—';
+    const diff = +(latestVal - firstVal).toFixed(1);
+    const diffStr = (diff>0?'+':'')+diff+'kg';
+    const diffColor = diff<0?'var(--green)':diff>0?'var(--accent)':'var(--muted)';
+    if(wsToday){ wsToday.textContent = todayDisp; }
+    if(wsStart){ wsStart.textContent = firstVal+'kg'; }
+    if(wsDiff) { wsDiff.textContent = diffStr; wsDiff.style.color = diffColor; }
+  }
+
+  // 미니 차트 (SVG 꺾은선)
+  const chartWrap = document.getElementById('weight-chart-wrap');
+  if(chartWrap && sorted.length >= 2){
+    const vals = sorted.map(e=>e[1]);
+    const minV = Math.min(...vals) - 1;
+    const maxV = Math.max(...vals) + 1;
+    const W = 300, H = 70, pad = 10;
+    const cx = (i) => pad + (i/(sorted.length-1))*(W-pad*2);
+    const cy = (v) => H - pad - ((v-minV)/(maxV-minV))*(H-pad*2);
+    let path = sorted.map((e,i)=>(i===0?'M':'L')+cx(i).toFixed(1)+','+cy(e[1]).toFixed(1)).join(' ');
+    // 최근 점 강조
+    const lx = cx(sorted.length-1).toFixed(1);
+    const ly = cy(sorted[sorted.length-1][1]).toFixed(1);
+    const todayDot = weightLog[today]
+      ? `<circle cx="${lx}" cy="${ly}" r="4" fill="var(--green)"/>`
+      : '';
+    chartWrap.innerHTML = `<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:70px;">
+      <polyline points="${sorted.map((e,i)=>cx(i).toFixed(1)+','+cy(e[1]).toFixed(1)).join(' ')}" fill="none" stroke="var(--green)" stroke-width="2" stroke-linejoin="round"/>
+      ${todayDot}
+      <text x="${lx}" y="${(+ly-7)}" text-anchor="middle" font-size="10" fill="var(--green)" font-family="var(--mono)">${sorted[sorted.length-1][1]}kg</text>
+    </svg>`;
+  } else if(chartWrap) {
+    chartWrap.innerHTML = sorted.length < 2
+      ? `<div style="text-align:center;font-size:11px;color:var(--muted);padding:8px 0;">2일 이상 기록하면 그래프가 표시됩니다</div>`
+      : '';
+  }
+
+  // 기록 목록
+  const listEl = document.getElementById('weight-history-list');
+  if(listEl && listEl.style.display !== 'none'){
+    const rev = [...sorted].reverse();
+    if(!rev.length){ listEl.innerHTML='<div style="text-align:center;font-size:12px;color:var(--muted);padding:8px;">기록 없음</div>'; return; }
+    listEl.innerHTML = rev.map((e,i)=>{
+      const prev = rev[i+1];
+      let diffHtml = '';
+      if(prev){
+        const d = +(e[1]-prev[1]).toFixed(1);
+        const col = d<0?'var(--green)':d>0?'var(--accent)':'var(--muted)';
+        diffHtml = `<span class="weight-hist-diff" style="color:${col};">${d>0?'+':''}${d}kg</span>`;
+      }
+      return `<div class="weight-hist-item">
+        <span class="weight-hist-date">${e[0]}</span>
+        <span class="weight-hist-val">${e[1]} kg</span>
+        ${diffHtml}
+        <button class="weight-hist-del" onclick="deleteWeight('${e[0]}')">✕</button>
+      </div>`;
+    }).join('');
+  }
+}
+
 
 function copyLink(){
   const url=window.location.href.split('?')[0];
