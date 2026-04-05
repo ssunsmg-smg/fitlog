@@ -1793,25 +1793,44 @@ function showToast(msg,type='info'){const t=document.getElementById('toast');t.t
 // ══════════════════════════════
 // Firebase 이벤트 리스너
 // ══════════════════════════════
+let _appStarted = false;
+
 window.addEventListener('firebase-login', async(e)=>{
+  if(_appStarted) return;
+  _appStarted = true;
   document.getElementById('loading').style.display='flex';
   document.getElementById('login-screen').style.display='none';
   await initApp(e.detail);
 });
 
 window.addEventListener('firebase-logout', ()=>{
-  document.getElementById('loading').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
-  document.getElementById('main-app').classList.remove('active');
+  // 앱이 이미 실행 중일 때만 로그인 화면으로 전환
+  // (초기 로딩 중 firebase-logout이 먼저 발생해도 firebase-login 기회를 줌)
+  if(_appStarted){
+    _appStarted = false;
+    document.getElementById('loading').style.display='none';
+    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('main-app').classList.remove('active');
+    return;
+  }
+  // 초기 로딩 중: 잠시 기다려서 firebase-login이 뒤따르는지 확인
+  setTimeout(()=>{
+    if(!_appStarted){
+      document.getElementById('loading').style.display='none';
+      document.getElementById('login-screen').style.display='flex';
+    }
+  }, 1500);
 });
 
-// 초기 로딩
+// 초기 로딩 — Firebase 응답이 늦을 경우 대비 (5초 후 강제 로그인 화면 표시)
 setTimeout(()=>{
-  if(!window.getCurrentUser||!window.getCurrentUser()){
+  if(_appStarted) return;
+  const user = window.getCurrentUser ? window.getCurrentUser() : null;
+  if(!user){
     document.getElementById('loading').style.display='none';
     document.getElementById('login-screen').style.display='flex';
   }
-}, 3000);
+}, 5000);
 </script>
 </body>
 </html>
