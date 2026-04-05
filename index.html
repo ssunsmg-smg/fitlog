@@ -391,13 +391,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <body>
 
 <!-- 로딩 -->
-<div class="loading" id="loading">
+<div class="loading" id="loading" style="display:none;">
   <div class="loading-logo">핏로그</div>
   <div class="loading-dot"></div>
 </div>
 
 <!-- 로그인 화면 -->
-<div class="login-screen" id="login-screen" style="display:none;">
+<div class="login-screen" id="login-screen" style="display:flex;">
   <div class="login-card">
     <div class="login-logo">핏로그 💪</div>
     <div class="login-sub">무릎·허리·어깨 재활부터 체중감량, 근력강화까지<br>나만의 운동 루틴을 만들고 기록하세요</div>
@@ -1305,8 +1305,9 @@ function showToast(msg,type='info'){const t=document.getElementById('toast');t.t
 // Firebase 이벤트 리스너
 // ══════════════════════════════
 window.addEventListener('firebase-login', async(e)=>{
-  document.getElementById('loading').style.display='flex';
+  // 로그인되면 로그인 화면 숨기고 로딩 표시
   document.getElementById('login-screen').style.display='none';
+  document.getElementById('loading').style.display='flex';
   await initApp(e.detail);
 });
 
@@ -1318,13 +1319,14 @@ window.addEventListener('firebase-logout', ()=>{
   records=[];RT=JSON.parse(JSON.stringify(RT_BASE));userProfile=null;isLoggedIn=false;
 });
 
-// 초기 로딩 — 2초 후 로그인 안됐으면 로그인 화면 표시
+// 초기 로딩 — 1.5초 후 로그인 안됐으면 로그인 화면 표시
 setTimeout(()=>{
-  if(!window.getCurrentUser||!window.getCurrentUser()){
+  const u=window.getCurrentUser&&window.getCurrentUser();
+  if(!u){
     document.getElementById('loading').style.display='none';
     document.getElementById('login-screen').style.display='flex';
   }
-}, 2000);
+}, 1500);
 </script>
 </body>
 </html>
