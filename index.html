@@ -1313,16 +1313,18 @@ window.addEventListener('firebase-login', async(e)=>{
 window.addEventListener('firebase-logout', ()=>{
   document.getElementById('loading').style.display='none';
   document.getElementById('login-screen').style.display='flex';
+  document.getElementById('onboarding').style.display='none';
   document.getElementById('main-app').classList.remove('active');
+  records=[];RT=JSON.parse(JSON.stringify(RT_BASE));userProfile=null;isLoggedIn=false;
 });
 
-// 초기 로딩
+// 초기 로딩 — 2초 후 로그인 안됐으면 로그인 화면 표시
 setTimeout(()=>{
   if(!window.getCurrentUser||!window.getCurrentUser()){
     document.getElementById('loading').style.display='none';
     document.getElementById('login-screen').style.display='flex';
   }
-}, 3000);
+}, 2000);
 </script>
 </body>
 </html>
