@@ -31,20 +31,13 @@
 
   let currentUser = null;
 
-  // ── 구글 로그인 (팝업 → 실패시 리디렉션) ──
+  // ── 구글 로그인 (리디렉션 방식) ──
   window.firebaseLogin = async () => {
     try {
-      const result = await signInWithPopup(auth, provider);
-      currentUser = result.user;
-      return currentUser;
+      await signInWithRedirect(auth, provider);
     } catch(e) {
-      console.log('Popup failed, trying redirect:', e.code);
-      // 팝업 차단이면 리디렉션으로 전환
-      if(e.code === 'auth/popup-blocked' || e.code === 'auth/popup-closed-by-user' || e.code === 'auth/cancelled-popup-request') {
-        await signInWithRedirect(auth, provider);
-      } else {
-        throw e;
-      }
+      console.error('Login error:', e);
+      throw e;
     }
   };
 
@@ -733,10 +726,11 @@ async function finishOb(){
 // ══════════════════════════════
 async function doLogin(){
   try{
-    showToast('로그인 중...','info');
-    const user=await window.firebaseLogin();
-    // onAuthStateChanged가 처리
+    showToast('구글 로그인 페이지로 이동 중...','info');
+    await window.firebaseLogin();
+    // 리디렉션 방식이라 이 아래 코드는 실행 안됨 (페이지 이동)
   }catch(e){
+    console.error('Login error:', e);
     showToast('로그인 실패. 다시 시도해주세요.','error');
   }
 }
