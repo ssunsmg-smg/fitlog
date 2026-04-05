@@ -689,30 +689,46 @@ async function doLogout(){
 async function initApp(user){
   isLoggedIn=true;
   // 유저 아바타
-  if(user.photoURL){
-    const av=document.getElementById('user-avatar');
-    av.src=user.photoURL; av.style.display='block';
-  }
-  document.getElementById('user-name').textContent=user.displayName?.split(' ')[0]||'';
+  try{
+    if(user.photoURL){
+      const av=document.getElementById('user-avatar');
+      av.src=user.photoURL; av.style.display='block';
+    }
+    document.getElementById('user-name').textContent=user.displayName?.split(' ')[0]||'';
+  }catch(e){}
 
   showToast('데이터 불러오는 중...','info');
-  // 프로필 불러오기
-  userProfile=await window.loadUserProfile();
+
+  // 항상 RT 기본값 먼저 설정
+  RT=JSON.parse(JSON.stringify(RT_BASE));
+
+  try{
+    // 프로필 불러오기
+    userProfile=await window.loadUserProfile();
+  }catch(e){
+    console.log('Profile load error:', e);
+    userProfile=null;
+  }
 
   if(!userProfile||!userProfile.name){
     // 온보딩
     document.getElementById('loading').style.display='none';
+    document.getElementById('login-screen').style.display='none';
     document.getElementById('onboarding').style.display='flex';
     obStep=1; renderOb();
     return;
   }
 
-  // 루틴 불러오기
-  const savedRT=await window.loadRoutine();
-  RT=savedRT||JSON.parse(JSON.stringify(RT_BASE));
+  try{
+    // 루틴 불러오기
+    const savedRT=await window.loadRoutine();
+    if(savedRT) RT=savedRT;
+  }catch(e){ console.log('Routine load error:', e); }
 
-  // 기록 불러오기
-  records=await window.loadRecords();
+  try{
+    // 기록 불러오기
+    records=await window.loadRecords();
+  }catch(e){ console.log('Records load error:', e); records=[]; }
 
   showApp();
 }
