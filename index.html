@@ -6,10 +6,10 @@
 <title>핏로그 · 나만의 재활 운동 플랜</title>
 <meta name="description" content="무릎·허리·어깨 재활부터 체중감량, 근력강화까지. 내 몸에 맞는 운동 루틴을 만들어보세요.">
 
-<!-- Firebase SDK (compat 방식 - 모바일 호환) -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<!-- Firebase SDK (compat - 모바일 완전 호환) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyAsT3dKVusnbmh1lrOrM6jwcPiiBCm0W7Y",
@@ -24,10 +24,8 @@
   const auth = firebase.auth();
   const db = firebase.firestore();
   const provider = new firebase.auth.GoogleAuthProvider();
-
   let currentUser = null;
 
-  // ── 구글 로그인 ──
   window.firebaseLogin = async () => {
     try {
       const result = await auth.signInWithPopup(provider);
@@ -40,32 +38,22 @@
     }
   };
 
-  // ── 로그아웃 ──
-  window.firebaseLogout = async () => {
-    await auth.signOut();
-    currentUser = null;
-  };
+  window.firebaseLogout = async () => { await auth.signOut(); currentUser = null; };
 
-  // ── 유저 프로필 저장 ──
   window.saveUserProfile = async (profile) => {
     if (!currentUser) return;
     await db.collection('users').doc(currentUser.uid).set({
-      ...profile,
-      email: currentUser.email,
-      displayName: currentUser.displayName,
-      photoURL: currentUser.photoURL,
-      updatedAt: new Date().toISOString()
+      ...profile, email:currentUser.email, displayName:currentUser.displayName,
+      photoURL:currentUser.photoURL, updatedAt:new Date().toISOString()
     }, { merge: true });
   };
 
-  // ── 유저 프로필 불러오기 ──
   window.loadUserProfile = async () => {
     if (!currentUser) return null;
     const snap = await db.collection('users').doc(currentUser.uid).get();
     return snap.exists ? snap.data() : null;
   };
 
-  // ── 운동 기록 저장 ──
   window.saveRecord = async (record) => {
     if (!currentUser) return false;
     try {
@@ -76,7 +64,6 @@
     } catch(e) { return false; }
   };
 
-  // ── 운동 기록 불러오기 ──
   window.loadRecords = async () => {
     if (!currentUser) return [];
     try {
@@ -86,47 +73,35 @@
     } catch(e) { return []; }
   };
 
-  // ── 운동 기록 삭제 ──
   window.deleteRecord = async (date) => {
     if (!currentUser) return;
-    await db.collection('users').doc(currentUser.uid)
-      .collection('records').doc(date).delete();
+    await db.collection('users').doc(currentUser.uid).collection('records').doc(date).delete();
   };
 
-  // ── 루틴 저장 ──
   window.saveRoutine = async (rt) => {
     if (!currentUser) return;
-    await db.collection('users').doc(currentUser.uid)
-      .collection('settings').doc('routine').set(rt);
+    await db.collection('users').doc(currentUser.uid).collection('settings').doc('routine').set(rt);
   };
 
-  // ── 루틴 불러오기 ──
   window.loadRoutine = async () => {
     if (!currentUser) return null;
-    const snap = await db.collection('users').doc(currentUser.uid)
-      .collection('settings').doc('routine').get();
+    const snap = await db.collection('users').doc(currentUser.uid).collection('settings').doc('routine').get();
     return snap.exists ? snap.data() : null;
   };
 
-  // ── 리디렉션 결과 처리 ──
-  auth.getRedirectResult().then((result) => {
-    if (result && result.user) {
-      currentUser = result.user;
-    }
-  }).catch((e) => { console.log('Redirect error:', e); });
+  auth.getRedirectResult().then(result => {
+    if (result && result.user) currentUser = result.user;
+  }).catch(e => console.log('redirect:', e));
 
-  // ── 로그인 상태 감지 ──
-  auth.onAuthStateChanged((user) => {
+  auth.onAuthStateChanged(user => {
     currentUser = user;
-    if (user) {
-      window.dispatchEvent(new CustomEvent('firebase-login', { detail: user }));
-    } else {
-      window.dispatchEvent(new CustomEvent('firebase-logout'));
-    }
+    if (user) window.dispatchEvent(new CustomEvent('firebase-login', { detail: user }));
+    else window.dispatchEvent(new CustomEvent('firebase-logout'));
   });
 
   window.getCurrentUser = () => currentUser;
 </script>
+
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -259,7 +234,30 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .t-back{background:#f0a5001a;color:#f0a500;}
 .t-knee{background:#e8533a1a;color:#e8533a;}
 .t-sh{background:#9b7fe81a;color:#9b7fe8;}
-.ex-actions{display:flex;gap:5px;}
+.ex-actions{display:flex;gap:5px;flex-wrap:wrap;}
+.add-ex-btn{width:100%;padding:7px;border-radius:8px;border:1px dashed var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;margin-top:5px;font-family:var(--font);}
+.add-ex-btn:hover{border-color:var(--green);color:var(--green);}
+.lib-modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:520px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;}
+.lib-hdr{padding:18px 18px 12px;border-bottom:1px solid var(--border);}
+.lib-htitle{font-size:16px;font-weight:700;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.lib-search{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);font-family:var(--font);}
+.lib-search:focus{outline:none;border-color:var(--accent);}
+.lib-cats{display:flex;gap:5px;flex-wrap:wrap;margin-top:9px;}
+.lib-cat{padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font);}
+.lib-cat.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+.lib-list{overflow-y:auto;flex:1;padding:9px;}
+.lib-item{display:flex;align-items:center;gap:8px;padding:9px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);margin-bottom:4px;}
+.lib-item:hover{border-color:var(--green);}
+.lib-item-info{flex:1;}
+.lib-item-name{font-size:13px;font-weight:500;}
+.lib-item-sub{font-size:11px;color:var(--muted);margin-top:2px;font-family:var(--mono);}
+.lib-add-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--green);background:none;color:var(--green);font-size:11px;cursor:pointer;font-family:var(--font);white-space:nowrap;}
+.lib-custom{padding:11px 14px;border-top:1px solid var(--border);}
+.lib-custom-lbl{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:7px;}
+.lib-custom-row{display:flex;gap:6px;}
+.lib-ci{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 10px;font-size:13px;color:var(--text);font-family:var(--font);}
+.lib-ci:focus{outline:none;border-color:var(--accent);}
+.lib-cadd{padding:7px 13px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;}
 .eab{padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:none;font-size:10px;cursor:pointer;font-family:var(--font);}
 .eab.info{color:var(--blue);border-color:#4a9eff33;}
 .eab.yt{color:#ff4444;border-color:#ff444433;}
@@ -349,34 +347,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .modal-save{flex:1;padding:11px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);}
 .modal-cancel{padding:11px 16px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:14px;cursor:pointer;font-family:var(--font);}
 
-.eab.del{color:#ff4444;border-color:#ff444433;}
-.eab.del:hover{background:#ff44441a;}
-.add-ex-btn{width:100%;padding:8px;border-radius:8px;border:1px dashed var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;margin-top:6px;font-family:var(--font);transition:all .15s;}
-.add-ex-btn:hover{border-color:var(--green);color:var(--green);}
-
-/* 라이브러리 모달 */
-.lib-modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:0;width:100%;max-width:520px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;}
-.lib-header{padding:20px 20px 14px;border-bottom:1px solid var(--border);}
-.lib-title{font-size:16px;font-weight:700;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
-.lib-search{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--text);font-family:var(--font);}
-.lib-search:focus{outline:none;border-color:var(--accent);}
-.lib-cats{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
-.lib-cat{padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font);}
-.lib-cat.active{background:var(--accent);border-color:var(--accent);color:#fff;}
-.lib-list{overflow-y:auto;flex:1;padding:10px;}
-.lib-item{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);margin-bottom:5px;cursor:pointer;transition:all .15s;}
-.lib-item:hover{border-color:var(--green);background:#4caf7d0a;}
-.lib-item-info{flex:1;}
-.lib-item-name{font-size:13px;font-weight:500;}
-.lib-item-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;}
-.lib-item-add{padding:4px 10px;border-radius:6px;border:1px solid var(--green);background:none;color:var(--green);font-size:11px;cursor:pointer;font-family:var(--font);flex-shrink:0;}
-.lib-item-add:hover{background:#4caf7d1a;}
-.lib-custom{padding:12px;border-top:1px solid var(--border);}
-.lib-custom-title{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;}
-.lib-custom-row{display:flex;gap:6px;}
-.lib-custom-inp{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 11px;font-size:13px;color:var(--text);font-family:var(--font);}
-.lib-custom-inp:focus{outline:none;border-color:var(--accent);}
-.lib-custom-btn{padding:8px 14px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;}
+.loading{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
 .loading-logo{font-size:28px;font-weight:900;color:var(--accent);}
 .loading-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:bounce .8s infinite;}
 @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
@@ -393,13 +364,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 <body>
 
 <!-- 로딩 -->
-<div class="loading" id="loading" style="display:none;">
+<div class="loading" id="loading">
   <div class="loading-logo">핏로그</div>
   <div class="loading-dot"></div>
 </div>
 
 <!-- 로그인 화면 -->
-<div class="login-screen" id="login-screen" style="display:flex;">
+<div class="login-screen" id="login-screen" style="display:none;">
   <div class="login-card">
     <div class="login-logo">핏로그 💪</div>
     <div class="login-sub">무릎·허리·어깨 재활부터 체중감량, 근력강화까지<br>나만의 운동 루틴을 만들고 기록하세요</div>
@@ -543,30 +514,27 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <!-- 라이브러리 모달 -->
 <div class="modal-bg" id="lib-modal">
   <div class="lib-modal">
-    <div class="lib-header">
-      <div class="lib-title">
-        <span>운동 추가 📚</span>
-        <button class="modal-close" onclick="closeLibrary()">✕</button>
-      </div>
-      <input class="lib-search" id="lib-search" type="text" placeholder="운동 검색... (예: 스쿼트, 벤치프레스)" oninput="filterLib()"/>
+    <div class="lib-hdr">
+      <div class="lib-htitle"><span>운동 추가 📚</span><button class="modal-close" onclick="closeLib()">✕</button></div>
+      <input class="lib-search" id="lib-search" type="text" placeholder="운동 검색... (벤치프레스, 스쿼트...)" oninput="filterLib()"/>
       <div class="lib-cats" id="lib-cats"></div>
     </div>
     <div class="lib-list" id="lib-list"></div>
     <div class="lib-custom">
-      <div class="lib-custom-title">직접 입력으로 추가</div>
+      <div class="lib-custom-lbl">직접 입력</div>
       <div class="lib-custom-row">
-        <input class="lib-custom-inp" id="lib-custom-name" type="text" placeholder="운동 이름"/>
-        <input class="lib-custom-inp" id="lib-custom-detail" type="text" placeholder="3세트 × 12회"/>
-        <button class="lib-custom-btn" onclick="addCustomEx()">추가</button>
+        <input class="lib-ci" id="lc-name" type="text" placeholder="운동 이름"/>
+        <input class="lib-ci" id="lc-detail" type="text" placeholder="3세트 × 12회"/>
+        <button class="lib-cadd" onclick="addCustomEx()">추가</button>
       </div>
     </div>
   </div>
 </div>
-
-<div class="toast" id="toast"></div>
 
 <script>
 // ══════════════════════════════
@@ -722,11 +690,10 @@ async function finishOb(){
 // ══════════════════════════════
 async function doLogin(){
   try{
-    showToast('구글 로그인 페이지로 이동 중...','info');
-    await window.firebaseLogin();
-    // 리디렉션 방식이라 이 아래 코드는 실행 안됨 (페이지 이동)
+    showToast('로그인 중...','info');
+    const user=await window.firebaseLogin();
+    // onAuthStateChanged가 처리
   }catch(e){
-    console.error('Login error:', e);
     showToast('로그인 실패. 다시 시도해주세요.','error');
   }
 }
@@ -742,46 +709,30 @@ async function doLogout(){
 async function initApp(user){
   isLoggedIn=true;
   // 유저 아바타
-  try{
-    if(user.photoURL){
-      const av=document.getElementById('user-avatar');
-      av.src=user.photoURL; av.style.display='block';
-    }
-    document.getElementById('user-name').textContent=user.displayName?.split(' ')[0]||'';
-  }catch(e){}
+  if(user.photoURL){
+    const av=document.getElementById('user-avatar');
+    av.src=user.photoURL; av.style.display='block';
+  }
+  document.getElementById('user-name').textContent=user.displayName?.split(' ')[0]||'';
 
   showToast('데이터 불러오는 중...','info');
-
-  // 항상 RT 기본값 먼저 설정
-  RT=JSON.parse(JSON.stringify(RT_BASE));
-
-  try{
-    // 프로필 불러오기
-    userProfile=await window.loadUserProfile();
-  }catch(e){
-    console.log('Profile load error:', e);
-    userProfile=null;
-  }
+  // 프로필 불러오기
+  userProfile=await window.loadUserProfile();
 
   if(!userProfile||!userProfile.name){
     // 온보딩
     document.getElementById('loading').style.display='none';
-    document.getElementById('login-screen').style.display='none';
     document.getElementById('onboarding').style.display='flex';
     obStep=1; renderOb();
     return;
   }
 
-  try{
-    // 루틴 불러오기
-    const savedRT=await window.loadRoutine();
-    if(savedRT) RT=savedRT;
-  }catch(e){ console.log('Routine load error:', e); }
+  // 루틴 불러오기
+  const savedRT=await window.loadRoutine();
+  RT=savedRT||JSON.parse(JSON.stringify(RT_BASE));
 
-  try{
-    // 기록 불러오기
-    records=await window.loadRecords();
-  }catch(e){ console.log('Records load error:', e); records=[]; }
+  // 기록 불러오기
+  records=await window.loadRecords();
 
   showApp();
 }
@@ -917,7 +868,7 @@ function renderWorkout(){
               ${info?`<button class="eab info" onclick="event.stopPropagation();toggleDesc('${descId}')">📖 설명</button>`:''}
               ${info?`<button class="eab yt" onclick="event.stopPropagation();openYT('${(info.yt||ex.n).replace(/'/g,"\\'")}')">▶ 유튜브</button>`:''}
               <button class="eab edit" onclick="event.stopPropagation();openEdit('${tk}',${si},${ei})">✏️ 수정</button>
-              <button class="eab del" onclick="event.stopPropagation();delEx('${tk}',${si},${ei})">🗑️ 삭제</button>
+              <button class="eab" style="color:#ff6b6b;border-color:#ff6b6b33;" onclick="event.stopPropagation();delEx('${tk}',${si},${ei})">🗑️ 삭제</button>
             </div>
           </div>
           ${hasSets?`<div class="ex-arrow" id="arr-${si}-${ei}" onclick="toggleCard('${si}','${ei}','${k}','${saId}')">▼</div>`:''}
@@ -925,7 +876,8 @@ function renderWorkout(){
         ${info?`<div class="ex-desc-panel" id="${descId}"><div class="ex-desc-title">📋 운동 방법</div><div class="ex-desc-body">${info.desc}</div><div class="ex-desc-tip">⚠️ ${info.tip}</div></div>`:''}
         ${hasSets?`<div class="sets-area" id="${saId}"></div>`:''}
       </div>`;
-    html+=`<button class="add-ex-btn" onclick="openLibrary('${tk}',${si})">+ 운동 추가</button>`;
+    });
+    html+=`<button class="add-ex-btn" onclick="openLibrary('${tk}',${si})">＋ 운동 추가</button>`;
   });
   content.innerHTML=html;
   rt.sections.forEach((sec,si)=>sec.exs.forEach((ex,ei)=>{if(ex.sets>0){const k=exKey(si,ei);if(!setData[k])setData[k]=Array.from({length:ex.sets},()=>({weight:'',reps:'',done:false}));}}));
@@ -1107,183 +1059,137 @@ function renderStats(){
 // ══════════════════════════════
 // 공유
 // ══════════════════════════════
-function copyLink(){
-  const url=window.location.href.split('?')[0];
-  navigator.clipboard.writeText(url).then(()=>showToast('✅ 링크 복사됨! 친구에게 공유해보세요','success')).catch(()=>{
-    const el=document.createElement('textarea');el.value=url;document.body.appendChild(el);el.select();document.execCommand('copy');document.body.removeChild(el);showToast('✅ 링크 복사됨!','success');
-  });
-}
-
 // ══════════════════════════════
 // 운동 라이브러리
 // ══════════════════════════════
-const EX_LIBRARY = [
-  // 가슴
+const EX_LIB=[
   {n:'벤치프레스',d:'4세트 × 10회',tags:['대흉근(주)'],w:[],sets:4,cat:'가슴'},
   {n:'인클라인 벤치프레스',d:'3세트 × 12회',tags:['대흉근상부(주)'],w:[],sets:3,cat:'가슴'},
-  {n:'딥스',d:'3세트 × 10회',tags:['대흉근(주)','삼두근(보조)'],w:['어깨주의'],sets:0,cat:'가슴'},
   {n:'시티드 체스트 프레스',d:'4세트 × 12회',tags:['대흉근(주)'],w:[],sets:4,cat:'가슴'},
   {n:'케이블 체스트 플라이',d:'3세트 × 15회',tags:['대흉근(주)'],w:[],sets:3,cat:'가슴'},
   {n:'펙덱 플라이',d:'3세트 × 15회',tags:['대흉근(주)'],w:[],sets:3,cat:'가슴'},
   {n:'푸시업',d:'3세트 × 최대',tags:['대흉근(주)'],w:[],sets:0,cat:'가슴'},
-  // 등
-  {n:'데드리프트',d:'4세트 × 8회',tags:['광배근(주)','척추기립근(보조)'],w:['허리주의'],sets:4,cat:'등'},
   {n:'풀업',d:'3세트 × 최대',tags:['광배근(주)'],w:['어깨주의'],sets:0,cat:'등'},
   {n:'랫 풀다운',d:'4세트 × 12회',tags:['광배근(주)'],w:['어깨주의'],sets:4,cat:'등'},
   {n:'시티드 케이블 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3,cat:'등'},
-  {n:'바벨 로우',d:'4세트 × 10회',tags:['광배근(주)','승모근(보조)'],w:['허리주의'],sets:4,cat:'등'},
+  {n:'바벨 로우',d:'4세트 × 10회',tags:['광배근(주)'],w:['허리주의'],sets:4,cat:'등'},
   {n:'원암 덤벨 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3,cat:'등'},
   {n:'시티드 리어 델트 플라이',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:3,cat:'등'},
-  {n:'페이스 풀',d:'3세트 × 15회',tags:['후면삼각근(주)','승모근(보조)'],w:['어깨주의'],sets:3,cat:'등'},
-  // 어깨
+  {n:'페이스 풀',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:3,cat:'등'},
   {n:'오버헤드 프레스',d:'4세트 × 10회',tags:['삼각근(주)'],w:['어깨주의'],sets:4,cat:'어깨'},
   {n:'시티드 숄더 프레스',d:'3세트 × 12회',tags:['삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨'},
   {n:'덤벨 숄더 프레스',d:'3세트 × 12회',tags:['삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨'},
   {n:'사이드 레터럴 레이즈',d:'3세트 × 15회',tags:['측면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨'},
   {n:'케이블 사이드 레터럴',d:'3세트 × 15회',tags:['측면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨'},
   {n:'프론트 레이즈',d:'3세트 × 12회',tags:['전면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨'},
-  {n:'밴드 풀어파트',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:0,cat:'어깨'},
-  // 팔
   {n:'바벨 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔'},
   {n:'덤벨 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔'},
   {n:'시티드 덤벨 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔'},
-  {n:'케이블 컬',d:'3세트 × 15회',tags:['이두근(주)'],w:[],sets:3,cat:'팔'},
-  {n:'해머 컬',d:'3세트 × 12회',tags:['이두근(주)','완요골근(보조)'],w:[],sets:3,cat:'팔'},
+  {n:'해머 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔'},
   {n:'트라이셉 푸시다운',d:'3세트 × 15회',tags:['삼두근(주)'],w:[],sets:3,cat:'팔'},
   {n:'오버헤드 익스텐션',d:'3세트 × 12회',tags:['삼두근(주)'],w:['어깨주의'],sets:3,cat:'팔'},
   {n:'스컬크러셔',d:'3세트 × 12회',tags:['삼두근(주)'],w:[],sets:3,cat:'팔'},
-  {n:'딥스 (벤치)',d:'3세트 × 최대',tags:['삼두근(주)'],w:['어깨주의'],sets:0,cat:'팔'},
-  // 하체
-  {n:'바벨 스쿼트',d:'4세트 × 10회',tags:['대퇴사두근(주)','대둔근(보조)'],w:['허리주의','무릎주의'],sets:4,cat:'하체'},
   {n:'레그 프레스',d:'4세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:4,cat:'하체'},
   {n:'시티드 레그 프레스(초경량)',d:'3세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3,cat:'하체'},
-  {n:'런지',d:'3세트 × 12회(각)',tags:['대퇴사두근(주)','대둔근(보조)'],w:['무릎주의'],sets:0,cat:'하체'},
+  {n:'런지',d:'3세트 × 12회(각)',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:0,cat:'하체'},
   {n:'레그 컬',d:'3세트 × 15회',tags:['햄스트링(주)'],w:[],sets:3,cat:'하체'},
   {n:'레그 익스텐션',d:'3세트 × 15회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3,cat:'하체'},
   {n:'카프 레이즈',d:'4세트 × 20회',tags:['비복근(주)'],w:[],sets:0,cat:'하체'},
-  {n:'수모 스쿼트',d:'3세트 × 12회',tags:['내전근(주)','대둔근(보조)'],w:['무릎주의'],sets:3,cat:'하체'},
-  // 둔근
   {n:'힙 어브덕션 (기계)',d:'4세트 × 15회',tags:['중둔근(주)'],w:['무릎주의'],sets:4,cat:'둔근'},
   {n:'힙 어덕션 (기계)',d:'3세트 × 15회',tags:['내전근(주)'],w:[],sets:3,cat:'둔근'},
   {n:'누워서 브릿지',d:'4세트 × 20회',tags:['대둔근(주)'],w:['허리주의'],sets:0,cat:'둔근'},
   {n:'싱글레그 브릿지',d:'3세트 × 15회(각)',tags:['대둔근(주)'],w:['허리주의'],sets:0,cat:'둔근'},
   {n:'클램쉘 (밴드)',d:'3세트 × 20회',tags:['중둔근(주)'],w:[],sets:0,cat:'둔근'},
   {n:'케이블 킥백',d:'3세트 × 15회',tags:['대둔근(주)'],w:['허리주의'],sets:3,cat:'둔근'},
-  {n:'사이드 라잉 레그 레이즈',d:'3세트 × 15회',tags:['중둔근(주)'],w:[],sets:0,cat:'둔근'},
   {n:'힙 쓰러스트',d:'4세트 × 12회',tags:['대둔근(주)'],w:['허리주의'],sets:4,cat:'둔근'},
-  {n:'케이블 힙 어브덕션',d:'3세트 × 15회',tags:['중둔근(주)'],w:[],sets:3,cat:'둔근'},
-  // 복근
-  {n:'크런치',d:'3세트 × 20회',tags:['복직근상부(주)'],w:[],sets:3,cat:'복근'},
+  {n:'크런치',d:'3세트 × 20회',tags:['복직근(주)'],w:[],sets:3,cat:'복근'},
   {n:'레그 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:3,cat:'복근'},
   {n:'플랭크',d:'3세트 × 45초',tags:['복횡근(주)'],w:[],sets:0,cat:'복근'},
-  {n:'사이드 플랭크',d:'2세트 × 30초',tags:['외복사근(주)'],w:['허리주의'],sets:0,cat:'복근'},
   {n:'케이블 크런치',d:'4세트 × 20회',tags:['복직근(주)'],w:['허리주의'],sets:4,cat:'복근'},
   {n:'바이시클 크런치',d:'3세트 × 30회',tags:['복사근(주)'],w:[],sets:0,cat:'복근'},
   {n:'행잉 니 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:[],sets:0,cat:'복근'},
-  {n:'리버스 크런치',d:'3세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:0,cat:'복근'},
   {n:'데드버그',d:'3세트 × 10회',tags:['복횡근(주)'],w:['허리주의'],sets:3,cat:'복근'},
-  {n:'러시안 트위스트',d:'3세트 × 20회',tags:['복사근(주)'],w:['허리주의'],sets:0,cat:'복근'},
-  // 유산소
-  {n:'업라이트 바이크',d:'20분 · 중강도',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소'},
+  {n:'업라이트 바이크',d:'20분',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소'},
   {n:'런닝머신',d:'20분 · 중강도',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소'},
-  {n:'일립티컬',d:'20분 · 중강도',tags:['심폐'],w:[],sets:0,cat:'유산소'},
-  {n:'스테퍼',d:'15분 · 중강도',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소'},
-  {n:'로잉머신',d:'15분 · 중강도',tags:['심폐','등'],w:['허리주의'],sets:0,cat:'유산소'},
-  {n:'버피',d:'3세트 × 10회',tags:['전신','심폐'],w:['무릎주의'],sets:0,cat:'유산소'},
-  {n:'점프 로프',d:'5분 × 3세트',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소'},
-  // 재활·스트레칭
-  {n:'폼롤러 흉추 이완',d:'등 중간 부분만',tags:['흉추가동성'],w:['허리주의'],sets:0,cat:'재활'},
+  {n:'일립티컬',d:'20분',tags:['심폐'],w:[],sets:0,cat:'유산소'},
+  {n:'로잉머신',d:'15분',tags:['심폐','등'],w:['허리주의'],sets:0,cat:'유산소'},
   {n:'고양이-소 스트레칭',d:'10회',tags:['척추유연성'],w:['허리주의'],sets:0,cat:'재활'},
   {n:'맥켄지 운동',d:'10회',tags:['요추안정화'],w:['허리주의'],sets:0,cat:'재활'},
-  {n:'친 턱 당기기 (Chin Tuck)',d:'3세트 × 15회',tags:['경추굴곡근(주)'],w:[],sets:0,cat:'재활'},
-  {n:'목 등척성 운동',d:'전후좌우 각 10초 × 3세트',tags:['경추안정근(주)'],w:[],sets:0,cat:'재활'},
   {n:'피전 포즈',d:'양쪽 각 60초',tags:['대둔근이완'],w:[],sets:0,cat:'재활'},
-  {n:'누워서 무릎 당기기',d:'양쪽 각 30초',tags:['허리압박해소'],w:['무릎주의'],sets:0,cat:'재활'},
-  {n:'햄스트링 스트레칭',d:'양쪽 각 30초',tags:['햄스트링이완'],w:[],sets:0,cat:'재활'},
-  {n:'고관절 굴곡근 스트레칭',d:'양쪽 각 45초',tags:['고관절이완'],w:[],sets:0,cat:'재활'},
+  {n:'폼롤러 흉추 이완',d:'등 중간 부분만',tags:['흉추가동성'],w:['허리주의'],sets:0,cat:'재활'},
+  {n:'친 턱 당기기 (Chin Tuck)',d:'3세트 × 15회',tags:['경추굴곡근(주)'],w:[],sets:0,cat:'재활'},
+  {n:'밴드 풀어파트',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:0,cat:'재활'},
 ];
-
 const LIB_CATS=['전체','가슴','등','어깨','팔','하체','둔근','복근','유산소','재활'];
-let libTarget=null, libSelCat='전체', libKeyword='';
+let libTarget=null, libCat='전체', libKw='';
+let _libFiltered=[];
 
-function openLibrary(tk,si){
-  libTarget={tk,si};
-  libSelCat='전체'; libKeyword='';
+function openLib(tk,si){
+  libTarget={tk,si}; libCat='전체'; libKw='';
   document.getElementById('lib-search').value='';
-  document.getElementById('lib-custom-name').value='';
-  document.getElementById('lib-custom-detail').value='';
+  document.getElementById('lc-name').value='';
+  document.getElementById('lc-detail').value='';
   renderLibCats(); renderLibList();
   document.getElementById('lib-modal').classList.add('open');
 }
-function closeLibrary(){ document.getElementById('lib-modal').classList.remove('open'); libTarget=null; }
-
+function closeLib(){ document.getElementById('lib-modal').classList.remove('open'); libTarget=null; }
 function renderLibCats(){
   document.getElementById('lib-cats').innerHTML=LIB_CATS.map(c=>
-    `<button class="lib-cat ${c===libSelCat?'active':''}" onclick="selLibCat('${c}')">${c}</button>`
+    `<button class="lib-cat ${c===libCat?'on':''}" onclick="selLibCat('${c}')">${c}</button>`
   ).join('');
 }
-function selLibCat(cat){ libSelCat=cat; renderLibCats(); renderLibList(); }
-function filterLib(){ libKeyword=document.getElementById('lib-search').value.toLowerCase(); renderLibList(); }
-
+function selLibCat(c){ libCat=c; renderLibCats(); renderLibList(); }
+function filterLib(){ libKw=document.getElementById('lib-search').value.toLowerCase(); renderLibList(); }
 function renderLibList(){
-  const filtered=EX_LIBRARY.filter(ex=>{
-    const catOk=libSelCat==='전체'||ex.cat===libSelCat;
-    const kwOk=!libKeyword||ex.n.toLowerCase().includes(libKeyword)||ex.tags.join('').toLowerCase().includes(libKeyword);
-    return catOk&&kwOk;
-  });
+  _libFiltered=EX_LIB.filter(e=>(libCat==='전체'||e.cat===libCat)&&(!libKw||e.n.toLowerCase().includes(libKw)));
   const list=document.getElementById('lib-list');
-  if(!filtered.length){ list.innerHTML=`<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">검색 결과가 없어요</div>`; return; }
-  const tC={주:'#4a9eff',보조:'var(--muted)'};
-  list.innerHTML=filtered.map((ex,i)=>`
+  if(!_libFiltered.length){ list.innerHTML=`<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">검색 결과 없음</div>`; return; }
+  list.innerHTML=_libFiltered.map((e,i)=>`
     <div class="lib-item">
       <div class="lib-item-info">
-        <div class="lib-item-name">${ex.n}</div>
-        <div class="lib-item-tags">
-          ${ex.tags.map(t=>`<span class="etag t-main">${t}</span>`).join('')}
-          ${ex.w.map(w=>`<span class="etag ${w.includes('허리')?'t-back':w.includes('무릎')?'t-knee':'t-sh'}">${w}</span>`).join('')}
-        </div>
+        <div class="lib-item-name">${e.n}</div>
+        <div class="lib-item-sub">${e.d} · ${e.cat}${e.w.length?' · ⚠️'+e.w.join(','):''}</div>
       </div>
-      <button class="lib-item-add" onclick="addLibEx(${i})">+ 추가</button>
+      <button class="lib-add-btn" onclick="addLibEx(${i})">+ 추가</button>
     </div>`).join('');
-  // filtered 배열을 전역에 저장
-  window._libFiltered=filtered;
 }
-
 async function addLibEx(i){
   if(!libTarget) return;
-  const ex=window._libFiltered[i];
+  const ex=_libFiltered[i];
   const {tk,si}=libTarget;
-  // 새 운동 추가
-  const newEx={n:ex.n,d:ex.d,tags:ex.tags,w:ex.w,sets:ex.sets};
-  RT[tk].sections[si].exs.push(newEx);
+  RT[tk].sections[si].exs.push({n:ex.n,d:ex.d,tags:ex.tags,w:ex.w,sets:ex.sets});
   await window.saveRoutine(RT);
-  closeLibrary();
-  initSetData(tk); renderWorkout();
+  closeLib(); initSetData(tk); renderWorkout();
   showToast(`✅ "${ex.n}" 추가됨!`,'success');
 }
-
 async function addCustomEx(){
   if(!libTarget) return;
-  const name=document.getElementById('lib-custom-name').value.trim();
-  const detail=document.getElementById('lib-custom-detail').value.trim()||'3세트 × 12회';
+  const name=document.getElementById('lc-name').value.trim();
+  const detail=document.getElementById('lc-detail').value.trim()||'3세트 × 12회';
   if(!name){ showToast('운동 이름을 입력해주세요','error'); return; }
   const {tk,si}=libTarget;
-  const newEx={n:name,d:detail,tags:[],w:[],sets:3};
-  RT[tk].sections[si].exs.push(newEx);
+  RT[tk].sections[si].exs.push({n:name,d:detail,tags:[],w:[],sets:3});
   await window.saveRoutine(RT);
-  closeLibrary();
-  initSetData(tk); renderWorkout();
+  closeLib(); initSetData(tk); renderWorkout();
   showToast(`✅ "${name}" 추가됨!`,'success');
 }
-
-// ── 운동 삭제 ──
 async function delEx(tk,si,ei){
-  const exName=RT[tk].sections[si].exs[ei].n;
-  if(!confirm(`"${exName}"을 삭제할까요?`)) return;
+  const name=RT[tk].sections[si].exs[ei].n;
+  if(!confirm(`"${name}"을 삭제할까요?`)) return;
   RT[tk].sections[si].exs.splice(ei,1);
   await window.saveRoutine(RT);
   initSetData(tk); renderWorkout();
-  showToast(`🗑️ "${exName}" 삭제됨`,'info');
+  showToast(`🗑️ "${name}" 삭제됨`,'info');
+}
+
+// openLibrary → openLib 연결
+function openLibrary(tk,si){ openLib(tk,si); }
+
+function copyLink(){
+  const url=window.location.href.split('?')[0];
+  navigator.clipboard.writeText(url).then(()=>showToast('✅ 링크 복사됨! 친구에게 공유해보세요','success')).catch(()=>{
+    const el=document.createElement('textarea');el.value=url;document.body.appendChild(el);el.select();document.execCommand('copy');document.body.removeChild(el);showToast('✅ 링크 복사됨!','success');
+  });
 }
 
 // ══════════════════════════════
@@ -1308,28 +1214,24 @@ function showToast(msg,type='info'){const t=document.getElementById('toast');t.t
 // Firebase 이벤트 리스너
 // ══════════════════════════════
 window.addEventListener('firebase-login', async(e)=>{
-  // 로그인되면 로그인 화면 숨기고 로딩 표시
-  document.getElementById('login-screen').style.display='none';
   document.getElementById('loading').style.display='flex';
+  document.getElementById('login-screen').style.display='none';
   await initApp(e.detail);
 });
 
 window.addEventListener('firebase-logout', ()=>{
   document.getElementById('loading').style.display='none';
   document.getElementById('login-screen').style.display='flex';
-  document.getElementById('onboarding').style.display='none';
   document.getElementById('main-app').classList.remove('active');
-  records=[];RT=JSON.parse(JSON.stringify(RT_BASE));userProfile=null;isLoggedIn=false;
 });
 
-// 초기 로딩 — 1.5초 후 로그인 안됐으면 로그인 화면 표시
+// 초기 로딩
 setTimeout(()=>{
-  const u=window.getCurrentUser&&window.getCurrentUser();
-  if(!u){
+  if(!window.getCurrentUser||!window.getCurrentUser()){
     document.getElementById('loading').style.display='none';
     document.getElementById('login-screen').style.display='flex';
   }
-}, 1500);
+}, 3000);
 </script>
 </body>
 </html>
