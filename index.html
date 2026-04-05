@@ -920,55 +920,81 @@ function renderWorkout(){
   const ds=getDateForDow(selDay);
   document.getElementById('today-meta').textContent='오늘: '+toStr(new Date())+' ('+DAY_KR[new Date().getDay()]+')';
   document.getElementById('today-title').textContent=rt.title;
-  document.getElementById('today-type').textContent=tk==='REST'?'휴식일':`Type ${tk} · ${dayNames[selDay]} · ${ds}`;
-
+  document.getElementById('today-type').textContent=tk==='REST'?'휴식일':'Type '+tk+' · '+dayNames[selDay]+' · '+ds;
   const sel=document.getElementById('day-sel');sel.innerHTML='';
   DAY_KR.forEach((n,i)=>{
     const btn=document.createElement('button');
     btn.className='day-btn'+(i===selDay?' active':'')+(records.find(r=>r.date===getDateForDow(i))?' has-rec':'');
-    btn.textContent=n;btn.onclick=()=>{selDay=i;initSetData(DAY_SCHED[i]);renderWorkout();};sel.appendChild(btn);
+    btn.textContent=n;
+    btn.addEventListener('click',()=>{selDay=i;initSetData(DAY_SCHED[i]);renderWorkout();});
+    sel.appendChild(btn);
   });
-
   const content=document.getElementById('routine-content'),bottom=document.getElementById('bottom-bar');
   if(tk==='REST'){
-    content.innerHTML=`<div class="rest-card"><div style="font-size:34px;margin-bottom:10px;">😴</div><div style="font-size:17px;font-weight:700;margin-bottom:7px;">오늘은 휴식일!</div><div style="font-size:13px;color:var(--muted);line-height:1.9;">근육은 쉴 때 성장합니다<br>가벼운 산책 20분 OK<br>단백질 식사 꼭 챙기기</div></div>`;
+    content.innerHTML='<div class="rest-card"><div style="font-size:34px;margin-bottom:10px;">😴</div><div style="font-size:17px;font-weight:700;margin-bottom:7px;">오늘은 휴식일!</div><div style="font-size:13px;color:var(--muted);line-height:1.9;">근육은 쉴 때 성장합니다<br>가벼운 산책 20분 OK<br>단백질 식사 꼭 챙기기</div></div>';
     bottom.style.display='none';document.getElementById('prog-txt').textContent='휴식일';document.getElementById('prog-fill').style.width='0%';return;
   }
   bottom.style.display='block';
-
-  let html=`<div class="rh ${rt.color}"><div class="rh-lbl">${rt.label}</div><div class="rh-title">${rt.title}</div><div class="rh-muscles">${rt.muscles.map(m=>`<span class="mtag">${m}</span>`).join('')}</div></div>`;
+  let html='<div class="rh '+rt.color+'"><div class="rh-lbl">'+rt.label+'</div><div class="rh-title">'+rt.title+'</div><div class="rh-muscles">'+rt.muscles.map(m=>'<span class="mtag">'+m+'</span>').join('')+'</div></div>';
   rt.sections.forEach((sec,si)=>{
-    html+=`<div class="sec-lbl">${sec.n}</div>`;
+    html+='<div class="sec-lbl">'+sec.n+'</div>';
     sec.exs.forEach((ex,ei)=>{
-      const wTags=ex.w.map(w=>w.includes('허리')?`<span class="etag t-back">${w}</span>`:w.includes('무릎')?`<span class="etag t-knee">${w}</span>`:w.includes('어깨')?`<span class="etag t-sh">${w}</span>`:`<span class="etag">${w}</span>`).join('');
-      const mTags=ex.tags.map(t=>`<span class="etag t-main">${t}</span>`).join('');
-      const k=exKey(si,ei),hasSets=ex.sets>0,saId=`sa-${si}-${ei}`,descId=`desc-${si}-${ei}`;
+      const wTags=ex.w.map(w=>w.includes('허리')?'<span class="etag t-back">'+w+'</span>':w.includes('무릎')?'<span class="etag t-knee">'+w+'</span>':w.includes('어깨')?'<span class="etag t-sh">'+w+'</span>':'<span class="etag">'+w+'</span>').join('');
+      const mTags=ex.tags.map(t=>'<span class="etag t-main">'+t+'</span>').join('');
+      const k=exKey(si,ei),hasSets=ex.sets>0,saId='sa-'+si+'-'+ei,descId='desc-'+si+'-'+ei;
       const info=EX_INFO[ex.n];
-      html+=`<div class="ex-card" id="ec-${si}-${ei}">
-        <div class="ex-card-hdr">
-          <div class="ex-chk" id="echk-${si}-${ei}" onclick="toggleExChk('${si}','${ei}')"></div>
-          <div class="ex-info" onclick="${hasSets?`toggleCard('${si}','${ei}','${k}','${saId}')`:``}">
-            <div class="ex-name">${ex.n}</div>
-            <div class="ex-detail">${ex.d}</div>
-            <div class="ex-tags">${mTags}${wTags}</div>
-            <div class="ex-actions">
-              ${info?`<button class="eab info" onclick="event.stopPropagation();toggleDesc('${descId}')">📖 설명</button>`:''}
-              ${info?`<button class="eab yt" onclick="event.stopPropagation();openYT('${(info.yt||ex.n).replace(/'/g,"\\'")}')">▶ 유튜브</button>`:''}
-              <button class="eab edit" onclick="event.stopPropagation();openEdit('${tk}',${si},${ei})">✏️ 수정</button>
-              <button class="eab" style="color:#ff6b6b;border-color:#ff6b6b33;" onclick="event.stopPropagation();delEx('${tk}',${si},${ei})">🗑️ 삭제</button>
-            </div>
-          </div>
-          ${hasSets?`<div class="ex-arrow" id="arr-${si}-${ei}" onclick="toggleCard('${si}','${ei}','${k}','${saId}')">▼</div>`:''}
-        </div>
-        ${info?`<div class="ex-desc-panel" id="${descId}"><div class="ex-desc-title">📋 운동 방법</div><div class="ex-desc-body">${info.desc}</div><div class="ex-desc-tip">⚠️ ${info.tip}</div></div>`:''}
-        ${hasSets?`<div class="sets-area" id="${saId}"></div>`:''}
-      </div>`;
+      const ytQ=info?(info.yt||ex.n):'';
+      html+='<div class="ex-card" id="ec-'+si+'-'+ei+'" data-si="'+si+'" data-ei="'+ei+'">'
+        +'<div class="ex-card-hdr">'
+        +'<div class="ex-chk" id="echk-'+si+'-'+ei+'" data-action="chk" data-si="'+si+'" data-ei="'+ei+'"></div>'
+        +'<div class="ex-info"'+(hasSets?' data-action="toggle" data-k="'+k+'" data-said="'+saId+'"':'')+' >'
+        +'<div class="ex-name">'+ex.n+'</div>'
+        +'<div class="ex-detail">'+ex.d+'</div>'
+        +'<div class="ex-tags">'+mTags+wTags+'</div>'
+        +'<div class="ex-actions">'
+        +(info?'<button class="eab info" data-action="desc" data-descid="'+descId+'">📖 설명</button>':'')
+        +(info?'<button class="eab yt" data-action="yt" data-q="'+encodeURIComponent(ytQ)+'">▶ 유튜브</button>':'')
+        +'<button class="eab edit" data-action="edit" data-tk="'+tk+'" data-si="'+si+'" data-ei="'+ei+'">✏️ 수정</button>'
+        +'<button class="eab" style="color:#ff6b6b;border-color:#ff6b6b33;" data-action="del" data-tk="'+tk+'" data-si="'+si+'" data-ei="'+ei+'">🗑️ 삭제</button>'
+        +'</div></div>'
+        +(hasSets?'<div class="ex-arrow" id="arr-'+si+'-'+ei+'" data-action="toggle" data-k="'+k+'" data-said="'+saId+'">▼</div>':'')
+        +'</div>'
+        +(info?'<div class="ex-desc-panel" id="'+descId+'"><div class="ex-desc-title">📋 운동 방법</div><div class="ex-desc-body">'+info.desc+'</div><div class="ex-desc-tip">⚠️ '+info.tip+'</div></div>':'')
+        +(hasSets?'<div class="sets-area" id="'+saId+'"></div>':'')
+        +'</div>';
     });
-    html+=`<button class="add-ex-btn" onclick="openLibrary('${tk}',${si})">＋ 운동 추가</button>`;
+    html+='<button class="add-ex-btn" data-action="lib" data-tk="'+tk+'" data-si="'+si+'">＋ 운동 추가</button>';
   });
   content.innerHTML=html;
+  // 이벤트 위임 등록
+  content.addEventListener('click',handleWorkoutClick);
   rt.sections.forEach((sec,si)=>sec.exs.forEach((ex,ei)=>{if(ex.sets>0){const k=exKey(si,ei);if(!setData[k])setData[k]=Array.from({length:ex.sets},()=>({weight:'',reps:'',done:false}));}}));
   updateProg();
+}
+
+function handleWorkoutClick(e){
+  const el=e.target.closest('[data-action]');
+  if(!el)return;
+  e.stopPropagation();
+  const act=el.dataset.action;
+  const card=el.closest('.ex-card');
+  if(act==='chk'){toggleExChk(el.dataset.si,el.dataset.ei);}
+  else if(act==='toggle'){
+    const area=document.getElementById(el.dataset.said);
+    const si=card?card.dataset.si:'';const ei=card?card.dataset.ei:'';
+    const arr=document.getElementById('arr-'+si+'-'+ei);
+    if(!area)return;
+    const isOpen=area.classList.contains('open');
+    area.classList.toggle('open',!isOpen);
+    if(arr)arr.classList.toggle('open',!isOpen);
+    if(!isOpen)renderSets(el.dataset.k,el.dataset.said);
+  }
+  else if(act==='desc'){document.getElementById(el.dataset.descid)?.classList.toggle('open');}
+  else if(act==='yt'){window.open('https://www.youtube.com/results?search_query='+el.dataset.q,'_blank');}
+  else if(act==='edit'){openEdit(el.dataset.tk,parseInt(el.dataset.si),parseInt(el.dataset.ei));}
+  else if(act==='del'){delEx(el.dataset.tk,parseInt(el.dataset.si),parseInt(el.dataset.ei));}
+  else if(act==='lib'){openLib(el.dataset.tk,parseInt(el.dataset.si));}
+}
 }
 
 function toggleDesc(id){document.getElementById(id)?.classList.toggle('open');}
