@@ -347,7 +347,34 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .modal-save{flex:1;padding:11px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);}
 .modal-cancel{padding:11px 16px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:14px;cursor:pointer;font-family:var(--font);}
 
-.loading{min-height:100vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px;}
+.eab.del{color:#ff4444;border-color:#ff444433;}
+.eab.del:hover{background:#ff44441a;}
+.add-ex-btn{width:100%;padding:8px;border-radius:8px;border:1px dashed var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;margin-top:6px;font-family:var(--font);transition:all .15s;}
+.add-ex-btn:hover{border-color:var(--green);color:var(--green);}
+
+/* 라이브러리 모달 */
+.lib-modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:0;width:100%;max-width:520px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;}
+.lib-header{padding:20px 20px 14px;border-bottom:1px solid var(--border);}
+.lib-title{font-size:16px;font-weight:700;display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.lib-search{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 13px;font-size:13px;color:var(--text);font-family:var(--font);}
+.lib-search:focus{outline:none;border-color:var(--accent);}
+.lib-cats{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.lib-cat{padding:4px 10px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font);}
+.lib-cat.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.lib-list{overflow-y:auto;flex:1;padding:10px;}
+.lib-item{display:flex;align-items:center;justify-content:space-between;padding:10px 13px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);margin-bottom:5px;cursor:pointer;transition:all .15s;}
+.lib-item:hover{border-color:var(--green);background:#4caf7d0a;}
+.lib-item-info{flex:1;}
+.lib-item-name{font-size:13px;font-weight:500;}
+.lib-item-tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:3px;}
+.lib-item-add{padding:4px 10px;border-radius:6px;border:1px solid var(--green);background:none;color:var(--green);font-size:11px;cursor:pointer;font-family:var(--font);flex-shrink:0;}
+.lib-item-add:hover{background:#4caf7d1a;}
+.lib-custom{padding:12px;border-top:1px solid var(--border);}
+.lib-custom-title{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;}
+.lib-custom-row{display:flex;gap:6px;}
+.lib-custom-inp{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px 11px;font-size:13px;color:var(--text);font-family:var(--font);}
+.lib-custom-inp:focus{outline:none;border-color:var(--accent);}
+.lib-custom-btn{padding:8px 14px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;}
 .loading-logo{font-size:28px;font-weight:900;color:var(--accent);}
 .loading-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:bounce .8s infinite;}
 @keyframes bounce{0%,100%{transform:translateY(0);}50%{transform:translateY(-8px);}}
@@ -511,6 +538,29 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="modal-field"><div class="modal-label">운동 설명</div><textarea class="modal-ta" id="edit-desc"></textarea></div>
     <div class="modal-field"><div class="modal-label">주의사항 (쉼표 구분)</div><input class="modal-inp" id="edit-warn" type="text"/></div>
     <div class="modal-btns"><button class="modal-cancel" onclick="closeEdit()">취소</button><button class="modal-save" onclick="saveEdit()">저장</button></div>
+  </div>
+</div>
+
+<!-- 라이브러리 모달 -->
+<div class="modal-bg" id="lib-modal">
+  <div class="lib-modal">
+    <div class="lib-header">
+      <div class="lib-title">
+        <span>운동 추가 📚</span>
+        <button class="modal-close" onclick="closeLibrary()">✕</button>
+      </div>
+      <input class="lib-search" id="lib-search" type="text" placeholder="운동 검색... (예: 스쿼트, 벤치프레스)" oninput="filterLib()"/>
+      <div class="lib-cats" id="lib-cats"></div>
+    </div>
+    <div class="lib-list" id="lib-list"></div>
+    <div class="lib-custom">
+      <div class="lib-custom-title">직접 입력으로 추가</div>
+      <div class="lib-custom-row">
+        <input class="lib-custom-inp" id="lib-custom-name" type="text" placeholder="운동 이름"/>
+        <input class="lib-custom-inp" id="lib-custom-detail" type="text" placeholder="3세트 × 12회"/>
+        <button class="lib-custom-btn" onclick="addCustomEx()">추가</button>
+      </div>
+    </div>
   </div>
 </div>
 
@@ -864,6 +914,7 @@ function renderWorkout(){
               ${info?`<button class="eab info" onclick="event.stopPropagation();toggleDesc('${descId}')">📖 설명</button>`:''}
               ${info?`<button class="eab yt" onclick="event.stopPropagation();openYT('${(info.yt||ex.n).replace(/'/g,"\\'")}')">▶ 유튜브</button>`:''}
               <button class="eab edit" onclick="event.stopPropagation();openEdit('${tk}',${si},${ei})">✏️ 수정</button>
+              <button class="eab del" onclick="event.stopPropagation();delEx('${tk}',${si},${ei})">🗑️ 삭제</button>
             </div>
           </div>
           ${hasSets?`<div class="ex-arrow" id="arr-${si}-${ei}" onclick="toggleCard('${si}','${ei}','${k}','${saId}')">▼</div>`:''}
@@ -871,7 +922,7 @@ function renderWorkout(){
         ${info?`<div class="ex-desc-panel" id="${descId}"><div class="ex-desc-title">📋 운동 방법</div><div class="ex-desc-body">${info.desc}</div><div class="ex-desc-tip">⚠️ ${info.tip}</div></div>`:''}
         ${hasSets?`<div class="sets-area" id="${saId}"></div>`:''}
       </div>`;
-    });
+    html+=`<button class="add-ex-btn" onclick="openLibrary('${tk}',${si})">+ 운동 추가</button>`;
   });
   content.innerHTML=html;
   rt.sections.forEach((sec,si)=>sec.exs.forEach((ex,ei)=>{if(ex.sets>0){const k=exKey(si,ei);if(!setData[k])setData[k]=Array.from({length:ex.sets},()=>({weight:'',reps:'',done:false}));}}));
@@ -1058,6 +1109,178 @@ function copyLink(){
   navigator.clipboard.writeText(url).then(()=>showToast('✅ 링크 복사됨! 친구에게 공유해보세요','success')).catch(()=>{
     const el=document.createElement('textarea');el.value=url;document.body.appendChild(el);el.select();document.execCommand('copy');document.body.removeChild(el);showToast('✅ 링크 복사됨!','success');
   });
+}
+
+// ══════════════════════════════
+// 운동 라이브러리
+// ══════════════════════════════
+const EX_LIBRARY = [
+  // 가슴
+  {n:'벤치프레스',d:'4세트 × 10회',tags:['대흉근(주)'],w:[],sets:4,cat:'가슴'},
+  {n:'인클라인 벤치프레스',d:'3세트 × 12회',tags:['대흉근상부(주)'],w:[],sets:3,cat:'가슴'},
+  {n:'딥스',d:'3세트 × 10회',tags:['대흉근(주)','삼두근(보조)'],w:['어깨주의'],sets:0,cat:'가슴'},
+  {n:'시티드 체스트 프레스',d:'4세트 × 12회',tags:['대흉근(주)'],w:[],sets:4,cat:'가슴'},
+  {n:'케이블 체스트 플라이',d:'3세트 × 15회',tags:['대흉근(주)'],w:[],sets:3,cat:'가슴'},
+  {n:'펙덱 플라이',d:'3세트 × 15회',tags:['대흉근(주)'],w:[],sets:3,cat:'가슴'},
+  {n:'푸시업',d:'3세트 × 최대',tags:['대흉근(주)'],w:[],sets:0,cat:'가슴'},
+  // 등
+  {n:'데드리프트',d:'4세트 × 8회',tags:['광배근(주)','척추기립근(보조)'],w:['허리주의'],sets:4,cat:'등'},
+  {n:'풀업',d:'3세트 × 최대',tags:['광배근(주)'],w:['어깨주의'],sets:0,cat:'등'},
+  {n:'랫 풀다운',d:'4세트 × 12회',tags:['광배근(주)'],w:['어깨주의'],sets:4,cat:'등'},
+  {n:'시티드 케이블 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3,cat:'등'},
+  {n:'바벨 로우',d:'4세트 × 10회',tags:['광배근(주)','승모근(보조)'],w:['허리주의'],sets:4,cat:'등'},
+  {n:'원암 덤벨 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3,cat:'등'},
+  {n:'시티드 리어 델트 플라이',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:3,cat:'등'},
+  {n:'페이스 풀',d:'3세트 × 15회',tags:['후면삼각근(주)','승모근(보조)'],w:['어깨주의'],sets:3,cat:'등'},
+  // 어깨
+  {n:'오버헤드 프레스',d:'4세트 × 10회',tags:['삼각근(주)'],w:['어깨주의'],sets:4,cat:'어깨'},
+  {n:'시티드 숄더 프레스',d:'3세트 × 12회',tags:['삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨'},
+  {n:'덤벨 숄더 프레스',d:'3세트 × 12회',tags:['삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨'},
+  {n:'사이드 레터럴 레이즈',d:'3세트 × 15회',tags:['측면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨'},
+  {n:'케이블 사이드 레터럴',d:'3세트 × 15회',tags:['측면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨'},
+  {n:'프론트 레이즈',d:'3세트 × 12회',tags:['전면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨'},
+  {n:'밴드 풀어파트',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:0,cat:'어깨'},
+  // 팔
+  {n:'바벨 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔'},
+  {n:'덤벨 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔'},
+  {n:'시티드 덤벨 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔'},
+  {n:'케이블 컬',d:'3세트 × 15회',tags:['이두근(주)'],w:[],sets:3,cat:'팔'},
+  {n:'해머 컬',d:'3세트 × 12회',tags:['이두근(주)','완요골근(보조)'],w:[],sets:3,cat:'팔'},
+  {n:'트라이셉 푸시다운',d:'3세트 × 15회',tags:['삼두근(주)'],w:[],sets:3,cat:'팔'},
+  {n:'오버헤드 익스텐션',d:'3세트 × 12회',tags:['삼두근(주)'],w:['어깨주의'],sets:3,cat:'팔'},
+  {n:'스컬크러셔',d:'3세트 × 12회',tags:['삼두근(주)'],w:[],sets:3,cat:'팔'},
+  {n:'딥스 (벤치)',d:'3세트 × 최대',tags:['삼두근(주)'],w:['어깨주의'],sets:0,cat:'팔'},
+  // 하체
+  {n:'바벨 스쿼트',d:'4세트 × 10회',tags:['대퇴사두근(주)','대둔근(보조)'],w:['허리주의','무릎주의'],sets:4,cat:'하체'},
+  {n:'레그 프레스',d:'4세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:4,cat:'하체'},
+  {n:'시티드 레그 프레스(초경량)',d:'3세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3,cat:'하체'},
+  {n:'런지',d:'3세트 × 12회(각)',tags:['대퇴사두근(주)','대둔근(보조)'],w:['무릎주의'],sets:0,cat:'하체'},
+  {n:'레그 컬',d:'3세트 × 15회',tags:['햄스트링(주)'],w:[],sets:3,cat:'하체'},
+  {n:'레그 익스텐션',d:'3세트 × 15회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3,cat:'하체'},
+  {n:'카프 레이즈',d:'4세트 × 20회',tags:['비복근(주)'],w:[],sets:0,cat:'하체'},
+  {n:'수모 스쿼트',d:'3세트 × 12회',tags:['내전근(주)','대둔근(보조)'],w:['무릎주의'],sets:3,cat:'하체'},
+  // 둔근
+  {n:'힙 어브덕션 (기계)',d:'4세트 × 15회',tags:['중둔근(주)'],w:['무릎주의'],sets:4,cat:'둔근'},
+  {n:'힙 어덕션 (기계)',d:'3세트 × 15회',tags:['내전근(주)'],w:[],sets:3,cat:'둔근'},
+  {n:'누워서 브릿지',d:'4세트 × 20회',tags:['대둔근(주)'],w:['허리주의'],sets:0,cat:'둔근'},
+  {n:'싱글레그 브릿지',d:'3세트 × 15회(각)',tags:['대둔근(주)'],w:['허리주의'],sets:0,cat:'둔근'},
+  {n:'클램쉘 (밴드)',d:'3세트 × 20회',tags:['중둔근(주)'],w:[],sets:0,cat:'둔근'},
+  {n:'케이블 킥백',d:'3세트 × 15회',tags:['대둔근(주)'],w:['허리주의'],sets:3,cat:'둔근'},
+  {n:'사이드 라잉 레그 레이즈',d:'3세트 × 15회',tags:['중둔근(주)'],w:[],sets:0,cat:'둔근'},
+  {n:'힙 쓰러스트',d:'4세트 × 12회',tags:['대둔근(주)'],w:['허리주의'],sets:4,cat:'둔근'},
+  {n:'케이블 힙 어브덕션',d:'3세트 × 15회',tags:['중둔근(주)'],w:[],sets:3,cat:'둔근'},
+  // 복근
+  {n:'크런치',d:'3세트 × 20회',tags:['복직근상부(주)'],w:[],sets:3,cat:'복근'},
+  {n:'레그 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:3,cat:'복근'},
+  {n:'플랭크',d:'3세트 × 45초',tags:['복횡근(주)'],w:[],sets:0,cat:'복근'},
+  {n:'사이드 플랭크',d:'2세트 × 30초',tags:['외복사근(주)'],w:['허리주의'],sets:0,cat:'복근'},
+  {n:'케이블 크런치',d:'4세트 × 20회',tags:['복직근(주)'],w:['허리주의'],sets:4,cat:'복근'},
+  {n:'바이시클 크런치',d:'3세트 × 30회',tags:['복사근(주)'],w:[],sets:0,cat:'복근'},
+  {n:'행잉 니 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:[],sets:0,cat:'복근'},
+  {n:'리버스 크런치',d:'3세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:0,cat:'복근'},
+  {n:'데드버그',d:'3세트 × 10회',tags:['복횡근(주)'],w:['허리주의'],sets:3,cat:'복근'},
+  {n:'러시안 트위스트',d:'3세트 × 20회',tags:['복사근(주)'],w:['허리주의'],sets:0,cat:'복근'},
+  // 유산소
+  {n:'업라이트 바이크',d:'20분 · 중강도',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소'},
+  {n:'런닝머신',d:'20분 · 중강도',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소'},
+  {n:'일립티컬',d:'20분 · 중강도',tags:['심폐'],w:[],sets:0,cat:'유산소'},
+  {n:'스테퍼',d:'15분 · 중강도',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소'},
+  {n:'로잉머신',d:'15분 · 중강도',tags:['심폐','등'],w:['허리주의'],sets:0,cat:'유산소'},
+  {n:'버피',d:'3세트 × 10회',tags:['전신','심폐'],w:['무릎주의'],sets:0,cat:'유산소'},
+  {n:'점프 로프',d:'5분 × 3세트',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소'},
+  // 재활·스트레칭
+  {n:'폼롤러 흉추 이완',d:'등 중간 부분만',tags:['흉추가동성'],w:['허리주의'],sets:0,cat:'재활'},
+  {n:'고양이-소 스트레칭',d:'10회',tags:['척추유연성'],w:['허리주의'],sets:0,cat:'재활'},
+  {n:'맥켄지 운동',d:'10회',tags:['요추안정화'],w:['허리주의'],sets:0,cat:'재활'},
+  {n:'친 턱 당기기 (Chin Tuck)',d:'3세트 × 15회',tags:['경추굴곡근(주)'],w:[],sets:0,cat:'재활'},
+  {n:'목 등척성 운동',d:'전후좌우 각 10초 × 3세트',tags:['경추안정근(주)'],w:[],sets:0,cat:'재활'},
+  {n:'피전 포즈',d:'양쪽 각 60초',tags:['대둔근이완'],w:[],sets:0,cat:'재활'},
+  {n:'누워서 무릎 당기기',d:'양쪽 각 30초',tags:['허리압박해소'],w:['무릎주의'],sets:0,cat:'재활'},
+  {n:'햄스트링 스트레칭',d:'양쪽 각 30초',tags:['햄스트링이완'],w:[],sets:0,cat:'재활'},
+  {n:'고관절 굴곡근 스트레칭',d:'양쪽 각 45초',tags:['고관절이완'],w:[],sets:0,cat:'재활'},
+];
+
+const LIB_CATS=['전체','가슴','등','어깨','팔','하체','둔근','복근','유산소','재활'];
+let libTarget=null, libSelCat='전체', libKeyword='';
+
+function openLibrary(tk,si){
+  libTarget={tk,si};
+  libSelCat='전체'; libKeyword='';
+  document.getElementById('lib-search').value='';
+  document.getElementById('lib-custom-name').value='';
+  document.getElementById('lib-custom-detail').value='';
+  renderLibCats(); renderLibList();
+  document.getElementById('lib-modal').classList.add('open');
+}
+function closeLibrary(){ document.getElementById('lib-modal').classList.remove('open'); libTarget=null; }
+
+function renderLibCats(){
+  document.getElementById('lib-cats').innerHTML=LIB_CATS.map(c=>
+    `<button class="lib-cat ${c===libSelCat?'active':''}" onclick="selLibCat('${c}')">${c}</button>`
+  ).join('');
+}
+function selLibCat(cat){ libSelCat=cat; renderLibCats(); renderLibList(); }
+function filterLib(){ libKeyword=document.getElementById('lib-search').value.toLowerCase(); renderLibList(); }
+
+function renderLibList(){
+  const filtered=EX_LIBRARY.filter(ex=>{
+    const catOk=libSelCat==='전체'||ex.cat===libSelCat;
+    const kwOk=!libKeyword||ex.n.toLowerCase().includes(libKeyword)||ex.tags.join('').toLowerCase().includes(libKeyword);
+    return catOk&&kwOk;
+  });
+  const list=document.getElementById('lib-list');
+  if(!filtered.length){ list.innerHTML=`<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">검색 결과가 없어요</div>`; return; }
+  const tC={주:'#4a9eff',보조:'var(--muted)'};
+  list.innerHTML=filtered.map((ex,i)=>`
+    <div class="lib-item">
+      <div class="lib-item-info">
+        <div class="lib-item-name">${ex.n}</div>
+        <div class="lib-item-tags">
+          ${ex.tags.map(t=>`<span class="etag t-main">${t}</span>`).join('')}
+          ${ex.w.map(w=>`<span class="etag ${w.includes('허리')?'t-back':w.includes('무릎')?'t-knee':'t-sh'}">${w}</span>`).join('')}
+        </div>
+      </div>
+      <button class="lib-item-add" onclick="addLibEx(${i})">+ 추가</button>
+    </div>`).join('');
+  // filtered 배열을 전역에 저장
+  window._libFiltered=filtered;
+}
+
+async function addLibEx(i){
+  if(!libTarget) return;
+  const ex=window._libFiltered[i];
+  const {tk,si}=libTarget;
+  // 새 운동 추가
+  const newEx={n:ex.n,d:ex.d,tags:ex.tags,w:ex.w,sets:ex.sets};
+  RT[tk].sections[si].exs.push(newEx);
+  await window.saveRoutine(RT);
+  closeLibrary();
+  initSetData(tk); renderWorkout();
+  showToast(`✅ "${ex.n}" 추가됨!`,'success');
+}
+
+async function addCustomEx(){
+  if(!libTarget) return;
+  const name=document.getElementById('lib-custom-name').value.trim();
+  const detail=document.getElementById('lib-custom-detail').value.trim()||'3세트 × 12회';
+  if(!name){ showToast('운동 이름을 입력해주세요','error'); return; }
+  const {tk,si}=libTarget;
+  const newEx={n:name,d:detail,tags:[],w:[],sets:3};
+  RT[tk].sections[si].exs.push(newEx);
+  await window.saveRoutine(RT);
+  closeLibrary();
+  initSetData(tk); renderWorkout();
+  showToast(`✅ "${name}" 추가됨!`,'success');
+}
+
+// ── 운동 삭제 ──
+async function delEx(tk,si,ei){
+  const exName=RT[tk].sections[si].exs[ei].n;
+  if(!confirm(`"${exName}"을 삭제할까요?`)) return;
+  RT[tk].sections[si].exs.splice(ei,1);
+  await window.saveRoutine(RT);
+  initSetData(tk); renderWorkout();
+  showToast(`🗑️ "${exName}" 삭제됨`,'info');
 }
 
 // ══════════════════════════════
