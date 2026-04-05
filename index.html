@@ -6,59 +6,50 @@
 <title>핏로그 · 나만의 재활 운동 플랜</title>
 <meta name="description" content="무릎·허리·어깨 재활부터 체중감량, 근력강화까지. 내 몸에 맞는 운동 루틴을 만들어보세요.">
 
-<!-- Firebase SDK -->
-<script type="module">
-  import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
-  import { getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged }
-    from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js';
-  import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, getDocs, deleteDoc }
-    from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
-
+<!-- Firebase SDK (compat 방식 - 모바일 호환) -->
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+<script>
   const firebaseConfig = {
     apiKey: "AIzaSyAsT3dKVusnbmh1lrOrM6jwcPiiBCm0W7Y",
     authDomain: "fitlog-d94cc.firebaseapp.com",
     projectId: "fitlog-d94cc",
     storageBucket: "fitlog-d94cc.firebasestorage.app",
     messagingSenderId: "326616081755",
-    appId: "1:326616081755:web:13d70b4da64ce14904e67e",
-    measurementId: "G-CRZZYX833V"
+    appId: "1:326616081755:web:13d70b4da64ce14904e67e"
   };
 
-  const app = initializeApp(firebaseConfig);
-  const auth = getAuth(app);
-  const db = getFirestore(app);
-  const provider = new GoogleAuthProvider();
+  firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.firestore();
+  const provider = new firebase.auth.GoogleAuthProvider();
 
   let currentUser = null;
 
-  // ── 구글 로그인 (리디렉션 방식) ──
+  // ── 구글 로그인 ──
   window.firebaseLogin = async () => {
     try {
-      await signInWithRedirect(auth, provider);
+      const result = await auth.signInWithPopup(provider);
+      currentUser = result.user;
+      return currentUser;
     } catch(e) {
-      console.error('Login error:', e);
-      throw e;
+      if(e.code==='auth/popup-blocked'||e.code==='auth/popup-closed-by-user'){
+        await auth.signInWithRedirect(provider);
+      } else { throw e; }
     }
   };
 
-  // ── 리디렉션 결과 처리 ──
-  getRedirectResult(auth).then((result) => {
-    if (result && result.user) {
-      currentUser = result.user;
-      window.dispatchEvent(new CustomEvent('firebase-login', { detail: result.user }));
-    }
-  }).catch((e) => { console.log('Redirect result error:', e); });
-
   // ── 로그아웃 ──
   window.firebaseLogout = async () => {
-    await signOut(auth);
+    await auth.signOut();
     currentUser = null;
   };
 
   // ── 유저 프로필 저장 ──
   window.saveUserProfile = async (profile) => {
     if (!currentUser) return;
-    await setDoc(doc(db, 'users', currentUser.uid), {
+    await db.collection('users').doc(currentUser.uid).set({
       ...profile,
       email: currentUser.email,
       displayName: currentUser.displayName,
@@ -70,31 +61,27 @@
   // ── 유저 프로필 불러오기 ──
   window.loadUserProfile = async () => {
     if (!currentUser) return null;
-    const snap = await getDoc(doc(db, 'users', currentUser.uid));
-    return snap.exists() ? snap.data() : null;
+    const snap = await db.collection('users').doc(currentUser.uid).get();
+    return snap.exists ? snap.data() : null;
   };
 
   // ── 운동 기록 저장 ──
   window.saveRecord = async (record) => {
     if (!currentUser) return false;
     try {
-      await setDoc(
-        doc(db, 'users', currentUser.uid, 'records', record.date),
-        { ...record, savedAt: new Date().toISOString() }
-      );
+      await db.collection('users').doc(currentUser.uid)
+        .collection('records').doc(record.date)
+        .set({ ...record, savedAt: new Date().toISOString() });
       return true;
-    } catch(e) { console.error('Save record error:', e); return false; }
+    } catch(e) { return false; }
   };
 
   // ── 운동 기록 불러오기 ──
   window.loadRecords = async () => {
     if (!currentUser) return [];
     try {
-      const q = query(
-        collection(db, 'users', currentUser.uid, 'records'),
-        orderBy('date', 'desc')
-      );
-      const snap = await getDocs(q);
+      const snap = await db.collection('users').doc(currentUser.uid)
+        .collection('records').orderBy('date','desc').get();
       return snap.docs.map(d => d.data());
     } catch(e) { return []; }
   };
@@ -102,24 +89,34 @@
   // ── 운동 기록 삭제 ──
   window.deleteRecord = async (date) => {
     if (!currentUser) return;
-    await deleteDoc(doc(db, 'users', currentUser.uid, 'records', date));
+    await db.collection('users').doc(currentUser.uid)
+      .collection('records').doc(date).delete();
   };
 
   // ── 루틴 저장 ──
   window.saveRoutine = async (rt) => {
     if (!currentUser) return;
-    await setDoc(doc(db, 'users', currentUser.uid, 'settings', 'routine'), rt);
+    await db.collection('users').doc(currentUser.uid)
+      .collection('settings').doc('routine').set(rt);
   };
 
   // ── 루틴 불러오기 ──
   window.loadRoutine = async () => {
     if (!currentUser) return null;
-    const snap = await getDoc(doc(db, 'users', currentUser.uid, 'settings', 'routine'));
-    return snap.exists() ? snap.data() : null;
+    const snap = await db.collection('users').doc(currentUser.uid)
+      .collection('settings').doc('routine').get();
+    return snap.exists ? snap.data() : null;
   };
 
+  // ── 리디렉션 결과 처리 ──
+  auth.getRedirectResult().then((result) => {
+    if (result && result.user) {
+      currentUser = result.user;
+    }
+  }).catch((e) => { console.log('Redirect error:', e); });
+
   // ── 로그인 상태 감지 ──
-  onAuthStateChanged(auth, async (user) => {
+  auth.onAuthStateChanged((user) => {
     currentUser = user;
     if (user) {
       window.dispatchEvent(new CustomEvent('firebase-login', { detail: user }));
@@ -130,7 +127,6 @@
 
   window.getCurrentUser = () => currentUser;
 </script>
-
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
