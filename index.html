@@ -505,7 +505,25 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .toast.error{border-color:var(--accent);color:var(--accent);}
 .toast.info{border-color:var(--blue);color:var(--blue);}
 
-@media(max-width:480px){.nav{padding:10px 14px;}.page{padding:13px;}.today-title{font-size:20px;}}
+@media(max-width:480px){
+  .nav{padding:10px 14px;}
+  .page{padding:13px;}
+  .today-title{font-size:20px;}
+  .diet-summary{grid-template-columns:repeat(2,1fr);}
+  .weight-stats-row{grid-template-columns:repeat(3,1fr);}
+  .ai-diet-card{padding:12px;}
+  .ai-diet-btn{font-size:12px;padding:10px;}
+  .diet-custom-grid{grid-template-columns:1fr 1fr;row-gap:6px;}
+  .diet-custom-grid button{grid-column:1/-1;}
+  .diet-goal-inputs{grid-template-columns:repeat(2,1fr);}
+  .weight-input-row{flex-wrap:wrap;}
+  .weight-inp{min-width:0;font-size:18px;}
+}
+@media(max-width:360px){
+  .nav-tab{padding:4px 7px;font-size:11px;}
+  .ai-diet-title{flex-direction:column;gap:3px;}
+  .diet-sum-val{font-size:17px;}
+}
 </style>
 </head>
 <body>
