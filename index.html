@@ -1976,124 +1976,167 @@ function goHome(){
   document.querySelector('.nav-tab').classList.add('active');
 }
 
-async function generateAIDiet(){
+function generateAIDiet(){
   const btn = document.getElementById('ai-gen-btn');
   const result = document.getElementById('ai-diet-result');
   btn.disabled = true;
-  btn.textContent = '⏳ AI 분석 중...';
-  result.innerHTML = '<div class="ai-loading">🤖 체중과 목표를 분석해서 식단을 구성하고 있어요...</div>';
+  btn.textContent = '⏳ 계산 중...';
+  result.innerHTML = '<div class="ai-loading">📊 체중·목표·영양학 공식으로 식단을 계산하고 있어요...</div>';
 
-  const today = toStr(new Date());
-  const sortedWt = Object.entries(weightLog||{}).sort((a,b)=>a[0].localeCompare(b[0]));
-  const todayWeight = weightLog?.[today] || (sortedWt.length ? sortedWt[sortedWt.length-1][1] : null);
+  setTimeout(() => {
+    try {
+      // ── 1. 사용자 정보 수집 ──
+      const today = toStr(new Date());
+      const sortedWt = Object.entries(weightLog||{}).sort((a,b)=>a[0].localeCompare(b[0]));
+      const weight  = parseFloat(weightLog?.[today] || (sortedWt.length ? sortedWt[sortedWt.length-1][1] : null) || userProfile?.weight || 70);
+      const height  = parseFloat(userProfile?.height || 170);
+      const age     = parseInt(userProfile?.age || 40);
+      const gender  = userProfile?.gender === 'female' ? 'female' : 'male';
+      const goals   = userProfile?.goals || [];
 
-  const name   = userProfile?.name   || '사용자';
-  const age    = userProfile?.age    || 40;
-  const gender = userProfile?.gender === 'female' ? '여성' : '남성';
-  const height = userProfile?.height || 170;
-  const weight = todayWeight || userProfile?.weight || 70;
-  const goals  = (userProfile?.goals || ['건강 유지']).join(', ');
-  const targetKcal = dietGoal?.kcal || 2000;
+      // ── 2. TDEE 계산 (Harris-Benedict + 활동계수) ──
+      // 기초대사량 BMR
+      const bmr = gender === 'female'
+        ? 655 + (9.6 * weight) + (1.8 * height) - (4.7 * age)
+        : 66  + (13.7 * weight) + (5 * height)  - (6.8 * age);
 
-  const prompt = `당신은 전문 스포츠 영양사입니다. 아래 정보를 바탕으로 오늘 하루 맞춤 식단을 JSON으로만 응답하세요. 설명이나 마크다운 없이 순수 JSON만 출력하세요.
+      // 활동계수: 재활 운동 특성상 가볍게~보통
+      const activityFactor = 1.375;
+      const tdee = Math.round(bmr * activityFactor);
 
-사용자: ${name}, ${age}세, ${gender}, 키 ${height}cm, 체중 ${weight}kg
-목표: ${goals}
-하루 목표 칼로리: ${targetKcal}kcal
+      // ── 3. 목표별 칼로리 조정 ──
+      let targetKcal = dietGoal?.kcal || tdee;
+      let goalLabel = '체중 유지';
+      let carbRatio = 0.50, protRatio = 0.25, fatRatio = 0.25;
 
-아침/점심/저녁/간식 4끼로 구성. 한국인 식습관에 맞고 구하기 쉬운 식품 위주.
+      if(goals.some(g=>g.includes('감량')||g.includes('다이어트'))){
+        targetKcal = Math.round(tdee * 0.82); // 18% 감량
+        goalLabel = '체중 감량';
+        carbRatio = 0.40; protRatio = 0.35; fatRatio = 0.25;
+      } else if(goals.some(g=>g.includes('근력')||g.includes('근육')||g.includes('벌크'))){
+        targetKcal = Math.round(tdee * 1.10); // 10% 증량
+        goalLabel = '근육 증가';
+        carbRatio = 0.45; protRatio = 0.35; fatRatio = 0.20;
+      } else if(goals.some(g=>g.includes('재활')||g.includes('회복'))){
+        targetKcal = Math.round(tdee * 0.92);
+        goalLabel = '재활 회복';
+        carbRatio = 0.45; protRatio = 0.30; fatRatio = 0.25;
+      }
 
-{"summary":"한 줄 식단 설명 (목표 칼로리와 목적 포함)","totalKcal":숫자,"meals":{"아침":[{"name":"식품명","amount":"수량/g","kcal":숫자,"carb":숫자,"prot":숫자,"fat":숫자}],"점심":[...],"저녁":[...],"간식":[...]}}`;
+      // 목표 칼로리가 사용자 설정값 있으면 그걸 우선
+      if(dietGoal?.kcal && dietGoal.kcal !== 2000) targetKcal = dietGoal.kcal;
 
-  try {
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514',
-        max_tokens: 1500,
-        messages: [{ role: 'user', content: prompt }]
-      })
-    });
-    const data = await res.json();
-    const raw = data.content?.[0]?.text || '';
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if(!jsonMatch) throw new Error('응답 파싱 실패');
-    aiDietPlan = JSON.parse(jsonMatch[0]);
-    renderAIDietResult(aiDietPlan);
-  } catch(e) {
-    result.innerHTML = `<div style="color:var(--accent);font-size:12px;padding:10px;text-align:center;background:#e8533a10;border-radius:8px;">
-      ⚠️ AI 연결 실패<br><span style="color:var(--muted);font-size:10px;">${e.message}</span>
-    </div>`;
-  }
-  btn.disabled = false;
-  btn.textContent = '✨ 다시 생성';
+      const targetCarb = Math.round(targetKcal * carbRatio / 4);  // 4kcal/g
+      const targetProt = Math.round(targetKcal * protRatio / 4);
+      const targetFat  = Math.round(targetKcal * fatRatio  / 9);  // 9kcal/g
+
+      // ── 4. 식품 DB (100g 기준) ──
+      const DB = {
+        // 단백질 식품
+        '닭가슴살':    {kcal:165,carb:0,  prot:31, fat:3.6, unit:'g'},
+        '달걀':        {kcal:155,carb:1.1,prot:13, fat:11,  unit:'개', per:50},
+        '두부':        {kcal:84, carb:2.1,prot:9,  fat:4.2, unit:'g'},
+        '그릭요거트':  {kcal:59, carb:3.6,prot:10, fat:0.4, unit:'g'},
+        '연어':        {kcal:208,carb:0,  prot:20, fat:13,  unit:'g'},
+        '참치캔':      {kcal:116,carb:0,  prot:25, fat:1.5, unit:'g'},
+        '고등어':      {kcal:239,carb:0,  prot:23, fat:16,  unit:'g'},
+        // 탄수화물
+        '흰쌀밥':      {kcal:146,carb:32, prot:2.5,fat:0.3, unit:'g'},
+        '현미밥':      {kcal:135,carb:28, prot:3,  fat:1,   unit:'g'},
+        '고구마':      {kcal:96, carb:22, prot:1.6,fat:0.1, unit:'g'},
+        '오트밀':      {kcal:389,carb:67, prot:17, fat:7,   unit:'g'},
+        '바나나':      {kcal:89, carb:23, prot:1.1,fat:0.3, unit:'개', per:120},
+        '통밀빵':      {kcal:265,carb:49, prot:9,  fat:3.4, unit:'g'},
+        // 채소
+        '브로콜리':    {kcal:34, carb:7,  prot:2.8,fat:0.4, unit:'g'},
+        '시금치':      {kcal:23, carb:3.6,prot:2.9,fat:0.4, unit:'g'},
+        '양배추':      {kcal:25, carb:5.8,prot:1.3,fat:0.1, unit:'g'},
+        '방울토마토':  {kcal:18, carb:3.9,prot:0.9,fat:0.2, unit:'g'},
+        '오이':        {kcal:15, carb:3.6,prot:0.7,fat:0.1, unit:'g'},
+        '아보카도':    {kcal:160,carb:9,  prot:2,  fat:15,  unit:'개', per:150},
+        // 유제품·견과류
+        '저지방우유':  {kcal:49, carb:4.8,prot:3.4,fat:1.5, unit:'ml'},
+        '아몬드':      {kcal:579,carb:22, prot:21, fat:50,  unit:'g'},
+        '땅콩버터':    {kcal:628,carb:20, prot:25, fat:53,  unit:'g'},
+        // 한식
+        '된장찌개':    {kcal:50, carb:3.5,prot:3.5,fat:2,   unit:'g'},
+        '김치':        {kcal:15, carb:2.4,prot:1,  fat:0.5, unit:'g'},
+        '미역국':      {kcal:20, carb:1.5,prot:1.5,fat:1,   unit:'g'},
+      };
+
+      function makeFood(name, grams){
+        const d = DB[name];
+        if(!d) return null;
+        const ratio = d.per ? grams/d.per : grams/100;
+        return {
+          name,
+          amount: d.unit==='g'?`${grams}g` : d.unit==='ml'?`${grams}ml` : `${Math.round(grams/d.per)}${d.unit}`,
+          kcal: Math.round(d.kcal * ratio),
+          carb: Math.round(d.carb * ratio * 10)/10,
+          prot: Math.round(d.prot * ratio * 10)/10,
+          fat:  Math.round(d.fat  * ratio * 10)/10,
+        };
+      }
+
+      // ── 5. 목표별 식단 템플릿 ──
+      let meals;
+
+      if(goalLabel === '체중 감량'){
+        meals = {
+          아침: [makeFood('오트밀',60), makeFood('그릭요거트',150), makeFood('바나나',120), makeFood('아몬드',15)],
+          점심: [makeFood('현미밥',150), makeFood('닭가슴살',150), makeFood('브로콜리',100), makeFood('김치',50)],
+          저녁: [makeFood('두부',200), makeFood('시금치',150), makeFood('된장찌개',200), makeFood('고구마',100)],
+          간식: [makeFood('그릭요거트',100), makeFood('방울토마토',100)],
+        };
+      } else if(goalLabel === '근육 증가'){
+        meals = {
+          아침: [makeFood('흰쌀밥',200), makeFood('달걀',150), makeFood('저지방우유',200), makeFood('바나나',120)],
+          점심: [makeFood('흰쌀밥',250), makeFood('닭가슴살',200), makeFood('브로콜리',100), makeFood('아보카도',150)],
+          저녁: [makeFood('현미밥',200), makeFood('연어',150), makeFood('시금치',100), makeFood('두부',100)],
+          간식: [makeFood('오트밀',50), makeFood('그릭요거트',150), makeFood('아몬드',20)],
+        };
+      } else if(goalLabel === '재활 회복'){
+        meals = {
+          아침: [makeFood('현미밥',150), makeFood('달걀',100), makeFood('시금치',100), makeFood('저지방우유',200)],
+          점심: [makeFood('현미밥',180), makeFood('참치캔',100), makeFood('브로콜리',100), makeFood('된장찌개',200), makeFood('김치',50)],
+          저녁: [makeFood('고구마',150), makeFood('닭가슴살',130), makeFood('두부',150), makeFood('미역국',200)],
+          간식: [makeFood('바나나',120), makeFood('아몬드',20), makeFood('그릭요거트',100)],
+        };
+      } else {
+        // 체중 유지
+        meals = {
+          아침: [makeFood('통밀빵',60), makeFood('달걀',100), makeFood('그릭요거트',150), makeFood('방울토마토',80)],
+          점심: [makeFood('현미밥',200), makeFood('닭가슴살',130), makeFood('브로콜리',100), makeFood('된장찌개',200), makeFood('김치',50)],
+          저녁: [makeFood('흰쌀밥',150), makeFood('고등어',130), makeFood('시금치',100), makeFood('두부',100)],
+          간식: [makeFood('바나나',120), makeFood('아몬드',20)],
+        };
+      }
+
+      // null 제거
+      Object.keys(meals).forEach(m => { meals[m] = meals[m].filter(Boolean); });
+
+      // 실제 총 칼로리 계산
+      let realKcal = 0;
+      Object.values(meals).forEach(arr => arr.forEach(f => realKcal += f.kcal));
+
+      const bmi = (weight / ((height/100)**2)).toFixed(1);
+
+      aiDietPlan = {
+        summary: `${goalLabel} 식단 · BMI ${bmi} · BMR ${Math.round(bmr)}kcal · 목표 ${targetKcal}kcal`,
+        totalKcal: realKcal,
+        targetKcal, targetCarb, targetProt, targetFat,
+        goalLabel, meals
+      };
+
+      renderAIDietResult(aiDietPlan);
+    } catch(e) {
+      document.getElementById('ai-diet-result').innerHTML =
+        `<div style="color:var(--accent);font-size:12px;padding:10px;text-align:center;">⚠️ 오류: ${e.message}</div>`;
+    }
+    btn.disabled = false;
+    btn.textContent = '✨ 다시 생성';
+  }, 600); // 계산 중 느낌 연출
 }
-
-function renderAIDietResult(plan){
-  if(!plan) return;
-  const result = document.getElementById('ai-diet-result');
-  const ICONS = {아침:'🌅',점심:'☀️',저녁:'🌙',간식:'🍎'};
-  let total = 0;
-  ['아침','점심','저녁','간식'].forEach(m=>(plan.meals[m]||[]).forEach(f=>total+=f.kcal||0));
-
-  let html = '';
-  if(plan.summary){
-    html += `<div class="ai-summary-txt">${plan.summary} · <span style="color:var(--accent);font-weight:700;">${Math.round(total)}kcal</span></div>`;
-  }
-
-  ['아침','점심','저녁','간식'].forEach(meal=>{
-    const foods = plan.meals[meal]||[];
-    if(!foods.length) return;
-    const mk = Math.round(foods.reduce((s,f)=>s+(f.kcal||0),0));
-    html += `<div class="ai-meal-block">
-      <div class="ai-meal-hdr">
-        <span class="ai-meal-name">${ICONS[meal]} ${meal}</span>
-        <span class="ai-meal-kcal">${mk}kcal</span>
-      </div>
-      ${foods.map((f,fi)=>`<div class="ai-food-row" id="aif-${meal}-${fi}">
-        <div class="ai-food-info">
-          <div class="ai-food-name">${f.name} <span style="color:var(--muted);font-size:10px;">${f.amount}</span></div>
-          <div class="ai-food-macro">탄${f.carb}g · 단${f.prot}g · 지${f.fat}g</div>
-        </div>
-        <span class="ai-food-kcal">${f.kcal}kcal</span>
-        <button class="ai-food-del" onclick="removeAIFood('${meal}',${fi})">✕</button>
-      </div>`).join('')}
-    </div>`;
-  });
-
-  html += `<button class="ai-apply-btn" onclick="applyAIDiet()">📋 이 식단을 오늘에 적용</button>`;
-  result.innerHTML = html;
-}
-
-function removeAIFood(meal, fi){
-  if(!aiDietPlan?.meals[meal]) return;
-  aiDietPlan.meals[meal].splice(fi,1);
-  renderAIDietResult(aiDietPlan);
-  showToast('항목 삭제됨','info');
-}
-
-function applyAIDiet(){
-  if(!aiDietPlan) return;
-  const day = getDietDay(dietDate);
-  ['아침','점심','저녁','간식'].forEach(meal=>{
-    (aiDietPlan.meals[meal]||[]).forEach(f=>{
-      day.meals[meal].push({
-        name:f.name, amount:f.amount,
-        kcal:Math.round(f.kcal||0),
-        carb:Math.round((f.carb||0)*10)/10,
-        prot:Math.round((f.prot||0)*10)/10,
-        fat: Math.round((f.fat||0)*10)/10
-      });
-    });
-  });
-  saveDietToFirebase();
-  renderDiet();
-  document.getElementById('ai-diet-result').innerHTML =
-    '<div style="text-align:center;padding:10px;color:var(--green);font-size:13px;font-weight:700;">✅ 식단 적용 완료! 아래에서 수정 가능합니다.</div>';
-  showToast('✅ AI 식단이 오늘 식단에 추가됐어요!','success');
-}
-
 function copyLink(){
   const url=window.location.href.split('?')[0];
   navigator.clipboard.writeText(url).then(()=>showToast('✅ 링크 복사됨! 친구에게 공유해보세요','success')).catch(()=>{
