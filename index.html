@@ -294,8 +294,34 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .eab{padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:none;font-size:10px;cursor:pointer;font-family:var(--font);}
 .eab.info{color:var(--blue);border-color:#4a9eff33;}
 .eab.pf{color:#1D9E75;border-color:#1D9E7533;font-weight:600;}
+.eab.ai-guide{color:#8b5cf6;border-color:#8b5cf633;font-weight:600;}
 .eab.yt{color:#ff4444;border-color:#ff444433;}
 .eab.edit{color:var(--muted);}
+/* AI 가이드 모달 */
+.ai-guide-modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:520px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;}
+.ai-guide-hdr{display:flex;align-items:flex-start;justify-content:space-between;padding:16px 18px 12px;border-bottom:1px solid var(--border);}
+.ai-guide-badge{font-size:10px;font-weight:700;color:#8b5cf6;background:#8b5cf612;border:1px solid #8b5cf633;border-radius:5px;padding:2px 8px;display:inline-block;margin-bottom:5px;}
+.ai-guide-title{font-size:16px;font-weight:900;color:var(--text);}
+.ai-guide-body{flex:1;overflow-y:auto;padding:16px 18px;}
+.ai-guide-content{font-size:13px;line-height:1.9;color:var(--text);}
+.ai-guide-content h3{font-size:13px;font-weight:700;color:#8b5cf6;margin:14px 0 6px;display:flex;align-items:center;gap:5px;}
+.ai-guide-content h3:first-child{margin-top:0;}
+.ai-guide-content p{margin-bottom:8px;color:var(--muted);}
+.ai-guide-content ul{padding-left:16px;margin-bottom:8px;}
+.ai-guide-content li{margin-bottom:4px;color:var(--muted);}
+.ai-guide-content .warn-box{background:#e8533a12;border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:8px 12px;margin:10px 0;color:var(--accent);font-size:12px;}
+.ai-guide-content .tip-box{background:#4a9eff12;border-left:3px solid var(--blue);border-radius:0 8px 8px 0;padding:8px 12px;margin:10px 0;color:var(--blue);font-size:12px;}
+.ai-guide-content strong{color:var(--text);font-weight:700;}
+/* 로딩 애니메이션 */
+.ai-loading{display:flex;flex-direction:column;align-items:center;padding:30px 0;gap:12px;}
+.ai-loading-dots{display:flex;gap:6px;}
+.ai-loading-dots span{width:8px;height:8px;border-radius:50%;background:#8b5cf6;animation:ai-dot .9s infinite;}
+.ai-loading-dots span:nth-child(2){animation-delay:.2s;}
+.ai-loading-dots span:nth-child(3){animation-delay:.4s;}
+@keyframes ai-dot{0%,80%,100%{opacity:.2;transform:scale(.8);}40%{opacity:1;transform:scale(1);}}
+.ai-loading-txt{font-size:12px;color:var(--muted);}
+.ai-cursor{display:inline-block;width:2px;height:1em;background:#8b5cf6;margin-left:2px;animation:blink .7s infinite;vertical-align:text-bottom;}
+@keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
 .ex-arrow{font-size:11px;color:var(--muted);flex-shrink:0;margin-top:3px;transition:transform .2s;cursor:pointer;}
 .ex-arrow.open{transform:rotate(180deg);}
 .ex-desc-panel{padding:10px 14px;background:var(--surface2);border-top:1px solid var(--border);display:none;}
@@ -826,6 +852,26 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- AI 가이드 모달 -->
+<div class="modal-bg" id="ai-guide-modal">
+  <div class="ai-guide-modal">
+    <div class="ai-guide-hdr">
+      <div>
+        <div class="ai-guide-badge">🤖 AI 운동 가이드</div>
+        <div class="ai-guide-title" id="ai-guide-title"></div>
+      </div>
+      <button class="modal-close" onclick="closeAiGuide()">✕</button>
+    </div>
+    <div class="ai-guide-body" id="ai-guide-body">
+      <div class="ai-loading" id="ai-loading">
+        <div class="ai-loading-dots"><span></span><span></span><span></span></div>
+        <div class="ai-loading-txt">AI가 가이드를 생성 중입니다...</div>
+      </div>
+      <div class="ai-guide-content" id="ai-guide-content"></div>
+    </div>
+  </div>
+</div>
 
 <!-- 타이머 오버레이 -->
 <div id="timer-overlay">
@@ -1397,8 +1443,7 @@ function renderWorkout(){
         +'<div class="ex-tags">'+mTags+wTags+'</div>'
         +'<div class="ex-actions">'
         +(info?'<button class="eab info" data-action="desc" data-descid="'+descId+'">📖 설명</button>':'')
-        +(info&&info.pf?'<button class="eab pf" data-action="pf" data-pf="'+info.pf+'">🏋️ 자세가이드</button>':'')
-        +(info&&!info.pf?'<button class="eab yt" data-action="yt" data-q="'+encodeURIComponent(ytQ)+'">▶ 유튜브</button>':'')
+        +'<button class="eab ai-guide" data-action="aiguide" data-exname="'+encodeURIComponent(ex.n)+'" data-tags="'+encodeURIComponent(ex.tags.join(','))+'" data-warn="'+encodeURIComponent((ex.w||[]).join(','))+'">🤖 AI 가이드</button>'
         +(isTimeBased?'<button class="eab" style="color:var(--green);border-color:#3ecf8e33;" data-action="timer" data-si="'+si+'" data-ei="'+ei+'" data-sec="'+timerSec+'" data-name="'+encodeURIComponent(ex.n)+'">⏱ 타이머</button>':'')
         +'<button class="eab edit" data-action="edit" data-tk="'+tk+'" data-si="'+si+'" data-ei="'+ei+'">✏️ 수정</button>'
         +'<button class="eab" style="color:#ff6b6b;border-color:#ff6b6b33;" data-action="del" data-tk="'+tk+'" data-si="'+si+'" data-ei="'+ei+'">🗑️ 삭제</button>'
@@ -1445,7 +1490,7 @@ function handleWorkoutClick(e){
   }
   else if(act==='desc'){document.getElementById(el.dataset.descid)?.classList.toggle('open');}
   else if(act==='yt'){window.open('https://www.youtube.com/results?search_query='+el.dataset.q,'_blank');}
-  else if(act==='pf'){window.open('https://planfit.ai/ko/exercise/'+el.dataset.pf,'_blank');}
+  else if(act==='aiguide'){openAiGuide(decodeURIComponent(el.dataset.exname),decodeURIComponent(el.dataset.tags),decodeURIComponent(el.dataset.warn));}
   else if(act==='timer'){openTimerOverlay(decodeURIComponent(el.dataset.name),parseInt(el.dataset.sec),el.dataset.si,el.dataset.ei);}
   else if(act==='edit'){openEdit(el.dataset.tk,parseInt(el.dataset.si),parseInt(el.dataset.ei));}
   else if(act==='del'){delEx(el.dataset.tk,parseInt(el.dataset.si),parseInt(el.dataset.ei));}
@@ -2546,6 +2591,136 @@ setTimeout(()=>{
   }
 }, 5000);
 // ══════════════════════════════
+// AI 운동 가이드 (Claude API)
+// ══════════════════════════════
+const _aiCache={};  // 운동명 → 생성된 가이드 캐시
+
+function openAiGuide(exName,tags,warn){
+  document.getElementById('ai-guide-modal').classList.add('open');
+  document.getElementById('ai-guide-title').textContent=exName;
+  document.getElementById('ai-guide-content').innerHTML='';
+  document.getElementById('ai-guide-loading') && (document.getElementById('ai-guide-loading').style.display='');
+
+  // 캐시 확인
+  if(_aiCache[exName]){
+    document.getElementById('ai-loading').style.display='none';
+    document.getElementById('ai-guide-content').innerHTML=_aiCache[exName];
+    return;
+  }
+  document.getElementById('ai-loading').style.display='flex';
+
+  const info=EX_INFO[exName];
+  const existingDesc=info?`기존 설명: ${info.desc} / 주의: ${info.tip}`:'';
+  const prompt=`당신은 재활 전문 퍼스널 트레이너입니다. 아래 운동에 대해 한국어로 상세한 가이드를 작성해주세요.
+
+운동명: ${exName}
+주요 근육: ${tags||''}
+주의사항: ${warn||'없음'}
+${existingDesc}
+
+다음 형식으로 작성해주세요 (HTML 태그 없이 마크다운만 사용):
+
+### 🎯 운동 목적
+이 운동이 왜 중요한지 2-3문장
+
+### 📐 시작 자세
+번호 매겨서 3-4단계
+
+### 🔄 동작 순서
+번호 매겨서 4-6단계 (호흡법 포함)
+
+### ✅ 핵심 포인트
+- 가장 중요한 점 3가지 불릿
+
+### ⚠️ 주의사항
+재활 환자(무릎/허리/어깨)를 위한 주의사항 2-3가지
+
+### 💡 재활 팁
+이 운동을 더 안전하고 효과적으로 하는 팁 2가지
+
+간결하고 실용적으로 작성해주세요.`;
+
+  fetchAiGuideStream(prompt, exName);
+}
+
+async function fetchAiGuideStream(prompt, exName){
+  const contentEl=document.getElementById('ai-guide-content');
+  const loadingEl=document.getElementById('ai-loading');
+  let fullText='';
+
+  try{
+    const resp=await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({
+        model:'claude-sonnet-4-20250514',
+        max_tokens:1000,
+        stream:true,
+        messages:[{role:'user',content:prompt}]
+      })
+    });
+
+    if(!resp.ok){throw new Error('API 오류: '+resp.status);}
+    loadingEl.style.display='none';
+    contentEl.innerHTML='<span class="ai-cursor"></span>';
+
+    const reader=resp.body.getReader();
+    const dec=new TextDecoder();
+
+    while(true){
+      const {done,value}=await reader.read();
+      if(done)break;
+      const chunk=dec.decode(value);
+      const lines=chunk.split('\n');
+      for(const line of lines){
+        if(!line.startsWith('data:'))continue;
+        const data=line.slice(5).trim();
+        if(data==='[DONE]')continue;
+        try{
+          const j=JSON.parse(data);
+          if(j.type==='content_block_delta'&&j.delta?.text){
+            fullText+=j.delta.text;
+            contentEl.innerHTML=aiMd(fullText)+'<span class="ai-cursor"></span>';
+            // 스크롤 따라가기
+            const body=document.getElementById('ai-guide-body');
+            body.scrollTop=body.scrollHeight;
+          }
+        }catch(e){}
+      }
+    }
+    // 커서 제거, 캐시 저장
+    contentEl.innerHTML=aiMd(fullText);
+    _aiCache[exName]=contentEl.innerHTML;
+
+  }catch(err){
+    loadingEl.style.display='none';
+    contentEl.innerHTML=`<div class="warn-box">AI 가이드 생성 실패: ${err.message}<br>잠시 후 다시 시도해주세요.</div>`;
+  }
+}
+
+function aiMd(text){
+  // 간단한 마크다운 → HTML 변환
+  return text
+    .replace(/### (.+)/g,'<h3>$1</h3>')
+    .replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>')
+    .replace(/^- (.+)/gm,'<li>$1</li>')
+    .replace(/(<li>.*<\/li>)/gs,'<ul>$1</ul>')
+    .replace(/^(\d+)\. (.+)/gm,'<li><strong>$1.</strong> $2</li>')
+    .replace(/⚠️(.+)/g,'<div class="warn-box">⚠️$1</div>')
+    .replace(/💡(.+)/g,'<div class="tip-box">💡$1</div>')
+    .replace(/\n\n/g,'</p><p>')
+    .replace(/\n/g,'<br>')
+    .replace(/^(.+)$/gm,(m)=>m.startsWith('<')?m:`<p>${m}</p>`)
+    .replace(/<p><\/p>/g,'')
+    .replace(/<p>(<[hud])/g,'$1')
+    .replace(/(<\/[hud][l3]>)<\/p>/g,'$1');
+}
+
+function closeAiGuide(){
+  document.getElementById('ai-guide-modal').classList.remove('open');
+}
+
+// ══════════════════════════════
 // 운동 중 모드
 // ══════════════════════════════
 let _wm={exList:[],cur:0,startTime:null,totalInterval:null,restInterval:null,restRemain:0};
@@ -2650,10 +2825,8 @@ function wmRender(){
     <div>${mTags}${wTags}</div>
   </div>`;
 
-  // 플랜핏 가이드 버튼
-  if(info&&info.pf){
-    html+=`<button onclick="window.open('https://planfit.ai/ko/exercise/${info.pf}','_blank')" style="width:100%;padding:10px;border-radius:10px;border:1px solid #1D9E7533;background:#1D9E7508;color:#1D9E75;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:14px;">🏋️ 플랜핏 자세 가이드 보기</button>`;
-  }
+  // AI 가이드 버튼 (항상 표시)
+  html+=`<button onclick="openAiGuide('${encodeURIComponent(item.ex.n)}','${encodeURIComponent(item.ex.tags.join(','))}','${encodeURIComponent((item.ex.w||[]).join(','))}')" style="width:100%;padding:10px;border-radius:10px;border:1px solid #8b5cf633;background:#8b5cf608;color:#8b5cf6;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:14px;">🤖 AI 자세 가이드 생성</button>`;
 
   // 시간 운동
   if(item.isTime){
