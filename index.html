@@ -2838,27 +2838,409 @@ async function fetchAiGuide(prompt, exName){
 }
 
 // 운동별 공개 GIF 이미지 (Wikimedia Commons 공개도메인)
-const EX_GIF={
-  '랫 풀다운':'https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Lat_pulldown.gif/220px-Lat_pulldown.gif',
-  '시티드 케이블 로우':'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Seated_cable_rows.gif/220px-Seated_cable_rows.gif',
-  '플랭크':'https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Plank_position.gif/220px-Plank_position.gif',
-  '크런치':'https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Crunch_exercise.gif/220px-Crunch_exercise.gif',
-  '레그 레이즈':'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Leg_raise_abdo_exercise.gif/220px-Leg_raise_abdo_exercise.gif',
-  '바이시클 크런치':'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Bicycle_crunch.gif/220px-Bicycle_crunch.gif',
-  '누워서 브릿지':'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Bridge_exercise.gif/220px-Bridge_exercise.gif',
-  '힙 어브덕션 (기계)':'https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Hip_abduction_machine.gif/220px-Hip_abduction_machine.gif',
-  '데드버그':'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Dead_bug_exercise.gif/220px-Dead_bug_exercise.gif',
-  '클램쉘 (밴드)':'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Clamshell_exercise.gif/220px-Clamshell_exercise.gif',
-  '시티드 덤벨 컬':'https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Dumbbell_curl.gif/220px-Dumbbell_curl.gif',
-  '고양이-소 스트레칭':'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Cat_Cow_Stretch.gif/220px-Cat_Cow_Stretch.gif',
-  '케이블 킥백':'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Cable_kickback.gif/220px-Cable_kickback.gif',
-  '케이블 크런치':'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Cable_crunch.gif/220px-Cable_crunch.gif',
-  '케이블 사이드 레터럴':'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Cable_lateral_raise.gif/220px-Cable_lateral_raise.gif',
-  '케이블 체스트 플라이':'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Cable_fly.gif/220px-Cable_fly.gif',
-  '사이드 라잉 레그 레이즈':'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Side_leg_raise.gif/220px-Side_leg_raise.gif',
-  '행잉 니 레이즈':'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Hanging_knee_raise.gif/220px-Hanging_knee_raise.gif',
-  '리버스 크런치':'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Reverse_crunch.gif/220px-Reverse_crunch.gif',
-};
+// 자체 제작 SVG 운동 애니메이션 (저작권 없음)
+function getExAnimation(exName){
+  const anims={
+
+'랫 풀다운':`<svg viewBox="0 0 280 180" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#111;">
+  <defs>
+    <style>
+      .lp-bar{animation:lp-move 2s ease-in-out infinite;}
+      .lp-arm-l{animation:lp-arm-l 2s ease-in-out infinite;transform-origin:90px 75px;}
+      .lp-arm-r{animation:lp-arm-r 2s ease-in-out infinite;transform-origin:190px 75px;}
+      .lp-elbow-l{animation:lp-el 2s ease-in-out infinite;}
+      .lp-elbow-r{animation:lp-er 2s ease-in-out infinite;}
+      @keyframes lp-move{0%,100%{transform:translateY(0);}50%{transform:translateY(40px);}}
+      @keyframes lp-arm-l{0%,100%{transform:rotate(-15deg);}50%{transform:rotate(25deg);}}
+      @keyframes lp-arm-r{0%,100%{transform:rotate(15deg);}50%{transform:rotate(-25deg);}}
+      @keyframes lp-el{0%,100%{transform:translate(0,0);}50%{transform:translate(15px,30px);}}
+      @keyframes lp-er{0%,100%{transform:translate(0,0);}50%{transform:translate(-15px,30px);}}
+    </style>
+  </defs>
+  <!-- 케이블 머신 프레임 -->
+  <rect x="20" y="10" width="8" height="160" rx="3" fill="#444"/>
+  <rect x="252" y="10" width="8" height="160" rx="3" fill="#444"/>
+  <rect x="20" y="10" width="240" height="8" rx="3" fill="#444"/>
+  <!-- 케이블 -->
+  <line x1="140" y1="18" x2="140" y2="50" stroke="#888" stroke-width="2" class="lp-bar"/>
+  <!-- 바 -->
+  <g class="lp-bar">
+    <rect x="75" y="48" width="130" height="8" rx="4" fill="#e8533a"/>
+    <circle cx="80" cy="52" r="5" fill="#ff7755"/>
+    <circle cx="200" cy="52" r="5" fill="#ff7755"/>
+  </g>
+  <!-- 사람: 앉은 자세 -->
+  <!-- 머리 -->
+  <circle cx="140" cy="72" r="14" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+  <!-- 몸통 -->
+  <line x1="140" y1="86" x2="140" y2="130" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
+  <!-- 다리 -->
+  <line x1="140" y1="130" x2="115" y2="158" stroke="#e8e8e8" stroke-width="4" stroke-linecap="round"/>
+  <line x1="140" y1="130" x2="165" y2="158" stroke="#e8e8e8" stroke-width="4" stroke-linecap="round"/>
+  <line x1="115" y1="158" x2="100" y2="162" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round"/>
+  <line x1="165" y1="158" x2="180" y2="162" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round"/>
+  <!-- 팔 (애니메이션) -->
+  <g class="lp-arm-l"><line x1="140" y1="95" x2="85" y2="55" stroke="#4a9eff" stroke-width="4" stroke-linecap="round"/></g>
+  <g class="lp-arm-r"><line x1="140" y1="95" x2="195" y2="55" stroke="#4a9eff" stroke-width="4" stroke-linecap="round"/></g>
+  <!-- 안장 -->
+  <rect x="120" y="158" width="40" height="8" rx="4" fill="#555"/>
+  <!-- 라벨 -->
+  <text x="140" y="175" text-anchor="middle" fill="#4a9eff" font-size="11" font-family="sans-serif">바를 쇄골까지 당기기</text>
+</svg>`,
+
+'플랭크':`<svg viewBox="0 0 280 130" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#111;">
+  <defs>
+    <style>
+      .pk-body{animation:pk-sway 3s ease-in-out infinite;}
+      .pk-warn{animation:pk-flash 3s ease-in-out infinite;}
+      @keyframes pk-sway{0%,100%{transform:translateY(0);}50%{transform:translateY(-3px);}}
+      @keyframes pk-flash{0%,40%,100%{opacity:0;}50%,90%{opacity:1;}}
+    </style>
+  </defs>
+  <!-- 바닥 -->
+  <rect x="0" y="108" width="280" height="3" fill="#333"/>
+  <!-- 매트 -->
+  <rect x="20" y="106" width="240" height="5" rx="2" fill="#2a4a3a"/>
+  <!-- 몸 전체 -->
+  <g class="pk-body">
+    <!-- 팔꿈치 -->
+    <ellipse cx="195" cy="104" rx="10" ry="5" fill="#4a9eff" opacity="0.7"/>
+    <ellipse cx="155" cy="104" rx="10" ry="5" fill="#4a9eff" opacity="0.7"/>
+    <!-- 전완 -->
+    <rect x="150" y="96" width="50" height="10" rx="4" fill="#5599ff" opacity="0.5"/>
+    <!-- 팔 -->
+    <line x1="175" y1="96" x2="165" y2="75" stroke="#e8e8e8" stroke-width="4" stroke-linecap="round"/>
+    <!-- 몸통 (일직선 강조) -->
+    <rect x="60" y="70" width="115" height="18" rx="8" fill="#e8533a" opacity="0.85"/>
+    <!-- 머리 -->
+    <circle cx="50" cy="82" r="14" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+    <!-- 다리 -->
+    <line x1="60" y1="80" x2="30" y2="103" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
+    <!-- 발끝 -->
+    <ellipse cx="28" cy="104" rx="7" ry="4" fill="#4a9eff"/>
+    <!-- 일직선 표시 -->
+    <line x1="35" y1="80" x2="220" y2="80" stroke="#3ecf8e" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.6"/>
+  </g>
+  <!-- 경고: 엉덩이 처짐 금지 -->
+  <g class="pk-warn">
+    <text x="140" y="50" text-anchor="middle" fill="#e8533a" font-size="10" font-family="sans-serif">⚠ 엉덩이 처지면 안됨</text>
+  </g>
+  <text x="140" y="122" text-anchor="middle" fill="#3ecf8e" font-size="11" font-family="sans-serif">머리·몸통·발 일직선 유지</text>
+</svg>`,
+
+'크런치':`<svg viewBox="0 0 280 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#111;">
+  <defs>
+    <style>
+      .cr-up{animation:cr-rise 2s ease-in-out infinite;}
+      @keyframes cr-rise{0%,100%{transform:rotate(0deg);transform-origin:160px 118px;}50%{transform:rotate(-28deg);transform-origin:160px 118px;}}
+    </style>
+  </defs>
+  <rect x="0" y="130" width="280" height="4" fill="#333"/>
+  <rect x="20" y="128" width="240" height="5" rx="2" fill="#2a4a3a"/>
+  <!-- 하체 (고정) -->
+  <line x1="160" y1="118" x2="195" y2="128" stroke="#e8e8e8" stroke-width="6" stroke-linecap="round"/>
+  <line x1="195" y1="120" x2="200" y2="128" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
+  <line x1="160" y1="118" x2="130" y2="128" stroke="#e8e8e8" stroke-width="6" stroke-linecap="round"/>
+  <line x1="130" y1="120" x2="125" y2="128" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
+  <!-- 상체 (애니메이션) -->
+  <g class="cr-up">
+    <line x1="160" y1="118" x2="115" y2="108" stroke="#e8533a" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="105" cy="100" r="14" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+    <!-- 팔 머리 뒤 -->
+    <line x1="115" y1="108" x2="100" y2="97" stroke="#4a9eff" stroke-width="3" stroke-linecap="round"/>
+    <line x1="115" y1="108" x2="122" y2="95" stroke="#4a9eff" stroke-width="3" stroke-linecap="round"/>
+  </g>
+  <!-- 허리 고정 표시 -->
+  <text x="195" y="120" fill="#3ecf8e" font-size="9" font-family="sans-serif">허리 고정</text>
+  <text x="140" y="150" text-anchor="middle" fill="#4a9eff" font-size="11" font-family="sans-serif">어깨만 10~15cm 들어올리기</text>
+</svg>`,
+
+'누워서 브릿지':`<svg viewBox="0 0 280 150" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#111;">
+  <defs>
+    <style>
+      .br-hip{animation:br-up 2s ease-in-out infinite;}
+      @keyframes br-up{0%,100%{transform:translateY(0);}50%{transform:translateY(-28px);}}
+    </style>
+  </defs>
+  <rect x="0" y="122" width="280" height="4" fill="#333"/>
+  <rect x="20" y="120" width="240" height="5" rx="2" fill="#2a4a3a"/>
+  <!-- 머리 (고정) -->
+  <circle cx="55" cy="112" r="13" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+  <!-- 상체 (고정) -->
+  <line x1="68" y1="112" x2="130" y2="118" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
+  <!-- 팔 옆 고정 -->
+  <line x1="85" y1="115" x2="80" y2="128" stroke="#4a9eff" stroke-width="3" stroke-linecap="round"/>
+  <line x1="110" y1="117" x2="115" y2="128" stroke="#4a9eff" stroke-width="3" stroke-linecap="round"/>
+  <!-- 엉덩이+허벅지 (애니메이션) -->
+  <g class="br-hip">
+    <path d="M 130 118 Q 155 100 175 118" stroke="#e8533a" stroke-width="6" fill="none" stroke-linecap="round"/>
+    <!-- 엉덩이 강조 -->
+    <circle cx="152" cy="108" r="8" fill="#e8533a" opacity="0.4"/>
+    <!-- 화살표 -->
+    <text x="155" y="95" text-anchor="middle" fill="#3ecf8e" font-size="14">↑</text>
+  </g>
+  <!-- 하퇴 (고정) -->
+  <line x1="175" y1="118" x2="185" y2="128" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
+  <line x1="185" y1="128" x2="192" y2="120" stroke="#e8e8e8" stroke-width="4" stroke-linecap="round"/>
+  <text x="140" y="145" text-anchor="middle" fill="#e8533a" font-size="11" font-family="sans-serif">엉덩이 최대한 높이 들기</text>
+</svg>`,
+
+'랫 풀다운':`<svg viewBox="0 0 280 180" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#111;">
+  <defs><style>
+    .lp2-bar{animation:lp2 2s ease-in-out infinite;}
+    .lp2-al{animation:lp2-al 2s ease-in-out infinite;transform-origin:140px 95px;}
+    .lp2-ar{animation:lp2-ar 2s ease-in-out infinite;transform-origin:140px 95px;}
+    @keyframes lp2{0%,100%{transform:translateY(0);}50%{transform:translateY(38px);}}
+    @keyframes lp2-al{0%,100%{transform:rotate(-30deg);}50%{transform:rotate(5deg);}}
+    @keyframes lp2-ar{0%,100%{transform:rotate(30deg);}50%{transform:rotate(-5deg);}}
+  </style></defs>
+  <rect x="22" y="8" width="6" height="155" rx="3" fill="#444"/>
+  <rect x="252" y="8" width="6" height="155" rx="3" fill="#444"/>
+  <rect x="22" y="8" width="236" height="7" rx="3" fill="#444"/>
+  <line x1="140" y1="15" x2="140" y2="48" stroke="#888" stroke-width="2" class="lp2-bar"/>
+  <g class="lp2-bar">
+    <rect x="78" y="46" width="124" height="7" rx="3" fill="#e8533a"/>
+  </g>
+  <circle cx="140" cy="72" r="13" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+  <line x1="140" y1="85" x2="140" y2="128" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
+  <line x1="140" y1="128" x2="118" y2="155" stroke="#e8e8e8" stroke-width="4" stroke-linecap="round"/>
+  <line x1="140" y1="128" x2="162" y2="155" stroke="#e8e8e8" stroke-width="4" stroke-linecap="round"/>
+  <g class="lp2-al"><line x1="140" y1="95" x2="88" y2="53" stroke="#4a9eff" stroke-width="4" stroke-linecap="round"/></g>
+  <g class="lp2-ar"><line x1="140" y1="95" x2="192" y2="53" stroke="#4a9eff" stroke-width="4" stroke-linecap="round"/></g>
+  <rect x="118" y="155" width="44" height="7" rx="3" fill="#555"/>
+  <text x="140" y="174" text-anchor="middle" fill="#4a9eff" font-size="11" font-family="sans-serif">등으로 당기기 — 팔은 보조</text>
+</svg>`,
+
+'시티드 케이블 로우':`<svg viewBox="0 0 280 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#111;">
+  <defs><style>
+    .cr2-arm{animation:cr2 2s ease-in-out infinite;transform-origin:155px 90px;}
+    .cr2-cable{animation:cr2-c 2s ease-in-out infinite;}
+    @keyframes cr2{0%,100%{transform:rotate(-20deg);}50%{transform:rotate(15deg);}}
+    @keyframes cr2-c{0%,100%{transform:scaleX(1);}50%{transform:scaleX(0.7);transform-origin:left;}}
+  </style></defs>
+  <!-- 케이블 머신 -->
+  <rect x="10" y="20" width="8" height="130" rx="3" fill="#444"/>
+  <rect x="10" y="70" width="20" height="10" rx="3" fill="#666"/>
+  <!-- 앉은 발판 -->
+  <rect x="40" y="130" width="60" height="6" rx="3" fill="#555"/>
+  <!-- 케이블 -->
+  <line x1="30" y1="75" x2="130" y2="95" stroke="#888" stroke-width="2" class="cr2-cable"/>
+  <!-- 사람 앉은 자세 -->
+  <circle cx="170" cy="68" r="13" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+  <!-- 몸통 직립 -->
+  <line x1="170" y1="81" x2="165" y2="120" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
+  <!-- 다리 -->
+  <line x1="165" y1="120" x2="145" y2="135" stroke="#e8e8e8" stroke-width="4" stroke-linecap="round"/>
+  <line x1="165" y1="120" x2="185" y2="135" stroke="#e8e8e8" stroke-width="4" stroke-linecap="round"/>
+  <!-- 팔 애니메이션 -->
+  <g class="cr2-arm">
+    <line x1="165" y1="90" x2="130" y2="93" stroke="#4a9eff" stroke-width="4" stroke-linecap="round"/>
+    <line x1="165" y1="90" x2="200" y2="87" stroke="#4a9eff" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <!-- 날개뼈 수축 강조 -->
+  <text x="200" y="55" fill="#3ecf8e" font-size="9" font-family="sans-serif">날개뼈↔</text>
+  <text x="140" y="152" text-anchor="middle" fill="#4a9eff" font-size="11" font-family="sans-serif">상체 고정 — 팔꿈치 몸통 방향으로</text>
+</svg>`,
+
+'힙 어브덕션 (기계)':`<svg viewBox="0 0 280 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#111;">
+  <defs><style>
+    .ha-leg-l{animation:ha-l 2s ease-in-out infinite;transform-origin:130px 110px;}
+    .ha-leg-r{animation:ha-r 2s ease-in-out infinite;transform-origin:150px 110px;}
+    @keyframes ha-l{0%,100%{transform:rotate(0deg);}50%{transform:rotate(-20deg);}}
+    @keyframes ha-r{0%,100%{transform:rotate(0deg);}50%{transform:rotate(20deg);}}
+  </style></defs>
+  <!-- 머신 시트 -->
+  <rect x="100" y="100" width="80" height="12" rx="5" fill="#555"/>
+  <rect x="115" y="112" width="50" height="30" rx="4" fill="#444"/>
+  <!-- 패드 -->
+  <rect x="88" y="108" width="18" height="8" rx="4" fill="#e8533a" opacity="0.8"/>
+  <rect x="174" y="108" width="18" height="8" rx="4" fill="#e8533a" opacity="0.8"/>
+  <!-- 머리 -->
+  <circle cx="140" cy="62" r="13" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+  <!-- 몸통 -->
+  <line x1="140" y1="75" x2="140" y2="102" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
+  <!-- 왼다리 -->
+  <g class="ha-leg-l">
+    <line x1="130" y1="110" x2="110" y2="142" stroke="#4a9eff" stroke-width="5" stroke-linecap="round"/>
+    <line x1="110" y1="142" x2="100" y2="148" stroke="#4a9eff" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <!-- 오른다리 -->
+  <g class="ha-leg-r">
+    <line x1="150" y1="110" x2="170" y2="142" stroke="#4a9eff" stroke-width="5" stroke-linecap="round"/>
+    <line x1="170" y1="142" x2="180" y2="148" stroke="#4a9eff" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <!-- 화살표 -->
+  <text x="88" y="128" fill="#3ecf8e" font-size="14">←</text>
+  <text x="182" y="128" fill="#3ecf8e" font-size="14">→</text>
+  <text x="140" y="155" text-anchor="middle" fill="#e8533a" font-size="11" font-family="sans-serif">천천히 벌리기 — 엉덩이 수축 느끼기</text>
+</svg>`,
+
+'시티드 덤벨 컬':`<svg viewBox="0 0 280 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#111;">
+  <defs><style>
+    .dc-arm{animation:dc 2s ease-in-out infinite;transform-origin:140px 105px;}
+    @keyframes dc{0%,100%{transform:rotate(10deg);}50%{transform:rotate(-50deg);}}
+  </style></defs>
+  <rect x="100" y="128" width="80" height="8" rx="3" fill="#555"/>
+  <circle cx="140" cy="62" r="13" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+  <line x1="140" y1="75" x2="140" y2="118" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
+  <line x1="140" y1="118" x2="118" y2="135" stroke="#e8e8e8" stroke-width="4" stroke-linecap="round"/>
+  <line x1="140" y1="118" x2="162" y2="135" stroke="#e8e8e8" stroke-width="4" stroke-linecap="round"/>
+  <!-- 오른팔 (애니메이션) -->
+  <g class="dc-arm">
+    <line x1="140" y1="105" x2="175" y2="110" stroke="#4a9eff" stroke-width="4" stroke-linecap="round"/>
+    <!-- 덤벨 -->
+    <rect x="175" y="106" width="18" height="8" rx="3" fill="#e8533a"/>
+    <circle cx="177" cy="110" r="5" fill="#cc4422"/>
+    <circle cx="191" cy="110" r="5" fill="#cc4422"/>
+  </g>
+  <!-- 왼팔 반대 위상 -->
+  <line x1="140" y1="105" x2="108" y2="95" stroke="#4a9eff" stroke-width="4" stroke-linecap="round"/>
+  <rect x="90" y="91" width="18" height="8" rx="3" fill="#e8533a"/>
+  <text x="140" y="153" text-anchor="middle" fill="#4a9eff" font-size="11" font-family="sans-serif">팔꿈치 고정 — 이두근으로만 올리기</text>
+</svg>`,
+
+'데드버그':`<svg viewBox="0 0 280 150" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#111;">
+  <defs><style>
+    .db-ra{animation:db-ra 3s ease-in-out infinite;transform-origin:148px 72px;}
+    .db-ll{animation:db-ll 3s ease-in-out infinite;transform-origin:145px 115px;}
+    @keyframes db-ra{0%,40%{transform:rotate(0deg);}50%,90%{transform:rotate(-70deg);}100%{transform:rotate(0deg);}}
+    @keyframes db-ll{0%,40%{transform:rotate(0deg);}50%,90%{transform:rotate(40deg);}100%{transform:rotate(0deg);}}
+  </style></defs>
+  <rect x="0" y="128" width="280" height="4" fill="#333"/>
+  <rect x="20" y="126" width="240" height="5" rx="2" fill="#2a4a3a"/>
+  <!-- 누운 자세 -->
+  <circle cx="55" cy="115" r="13" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+  <line x1="68" y1="115" x2="185" y2="115" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
+  <!-- 팔 위로 (고정) -->
+  <line x1="100" y1="115" x2="95" y2="75" stroke="#888" stroke-width="3" stroke-linecap="round"/>
+  <!-- 오른팔 (애니메이션) -->
+  <g class="db-ra"><line x1="148" y1="115" x2="148" y2="72" stroke="#4a9eff" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="148" cy="68" r="5" fill="#4a9eff"/></g>
+  <!-- 왼다리 구부림 (고정) -->
+  <line x1="155" y1="115" x2="165" y2="88" stroke="#888" stroke-width="3" stroke-linecap="round"/>
+  <line x1="165" y1="88" x2="175" y2="115" stroke="#888" stroke-width="3" stroke-linecap="round"/>
+  <!-- 오른다리 (애니메이션) -->
+  <g class="db-ll"><line x1="185" y1="115" x2="215" y2="115" stroke="#e8533a" stroke-width="4" stroke-linecap="round"/>
+  <circle cx="218" cy="115" r="5" fill="#e8533a"/></g>
+  <!-- 허리 고정 강조 -->
+  <text x="85" y="135" fill="#3ecf8e" font-size="9" font-family="sans-serif">허리 바닥 고정!</text>
+  <text x="140" y="148" text-anchor="middle" fill="#4a9eff" font-size="11" font-family="sans-serif">반대팔-다리 동시에 뻗기</text>
+</svg>`,
+
+'사이드 플랭크':`<svg viewBox="0 0 280 130" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#111;">
+  <defs><style>
+    .sp-body{animation:sp-b 3s ease-in-out infinite;}
+    @keyframes sp-b{0%,100%{transform:translateY(0);}50%{transform:translateY(-4px);}}
+  </style></defs>
+  <rect x="0" y="108" width="280" height="4" fill="#333"/>
+  <rect x="20" y="106" width="240" height="5" rx="2" fill="#2a4a3a"/>
+  <g class="sp-body">
+    <line x1="50" y1="60" x2="220" y2="107" stroke="#e8533a" stroke-width="6" stroke-linecap="round"/>
+    <circle cx="40" cy="52" r="13" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+    <ellipse cx="188" cy="106" rx="12" ry="5" fill="#4a9eff" opacity="0.7"/>
+    <line x1="158" y1="88" x2="190" y2="106" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round"/>
+    <line x1="118" y1="76" x2="108" y2="45" stroke="#4a9eff" stroke-width="3" stroke-linecap="round"/>
+    <circle cx="108" cy="40" r="4" fill="#3ecf8e"/>
+    <ellipse cx="50" cy="107" rx="8" ry="4" fill="#4a9eff" opacity="0.6"/>
+    <line x1="38" y1="52" x2="220" y2="108" stroke="#3ecf8e" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.5"/>
+  </g>
+  <text x="140" y="124" text-anchor="middle" fill="#3ecf8e" font-size="11" font-family="sans-serif">머리·어깨·엉덩이 일직선</text>
+</svg>`,
+
+'클램쉘 (밴드)':`<svg viewBox="0 0 280 140" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#111;">
+  <defs><style>
+    .cl-knee{animation:cl-k 2s ease-in-out infinite;transform-origin:145px 95px;}
+    @keyframes cl-k{0%,100%{transform:rotate(0deg);}50%{transform:rotate(-30deg);}}
+  </style></defs>
+  <rect x="0" y="122" width="280" height="4" fill="#333"/>
+  <rect x="20" y="120" width="240" height="5" rx="2" fill="#2a4a3a"/>
+  <!-- 누운 옆 자세 -->
+  <circle cx="60" cy="90" r="13" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+  <line x1="72" y1="90" x2="185" y2="93" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
+  <!-- 팔 머리 받침 -->
+  <line x1="62" y1="98" x2="75" y2="118" stroke="#4a9eff" stroke-width="3" stroke-linecap="round"/>
+  <!-- 아래 다리 (고정) -->
+  <line x1="185" y1="93" x2="220" y2="118" stroke="#888" stroke-width="5" stroke-linecap="round"/>
+  <line x1="220" y1="118" x2="245" y2="120" stroke="#888" stroke-width="4" stroke-linecap="round"/>
+  <!-- 위 다리 (애니메이션) -->
+  <g class="cl-knee">
+    <line x1="185" y1="93" x2="215" y2="108" stroke="#e8533a" stroke-width="5" stroke-linecap="round"/>
+    <line x1="215" y1="108" x2="240" y2="112" stroke="#e8533a" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <!-- 밴드 -->
+  <ellipse cx="205" cy="108" rx="15" ry="6" fill="none" stroke="#3ecf8e" stroke-width="2.5" stroke-dasharray="4,2"/>
+  <!-- 화살표 -->
+  <text x="178" y="70" fill="#3ecf8e" font-size="18">↑</text>
+  <text x="140" y="136" text-anchor="middle" fill="#e8533a" font-size="11" font-family="sans-serif">발끝 붙인 채 무릎만 열기</text>
+</svg>`,
+
+'바이시클 크런치':`<svg viewBox="0 0 280 150" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#111;">
+  <defs><style>
+    .bc-a{animation:bc-a 1.5s ease-in-out infinite;transform-origin:140px 95px;}
+    .bc-b{animation:bc-b 1.5s ease-in-out infinite;transform-origin:140px 95px;}
+    @keyframes bc-a{0%,100%{transform:rotate(0deg);}50%{transform:rotate(-25deg);}}
+    @keyframes bc-b{0%,50%{transform:rotate(0deg);}100%{transform:rotate(-25deg);}}
+  </style></defs>
+  <rect x="0" y="128" width="280" height="4" fill="#333"/>
+  <!-- 누운 자세 몸통 -->
+  <line x1="60" y1="108" x2="185" y2="108" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
+  <circle cx="50" cy="100" r="13" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+  <!-- 팔 머리 뒤 -->
+  <line x1="75" y1="103" x2="65" y2="92" stroke="#4a9eff" stroke-width="3" stroke-linecap="round"/>
+  <line x1="75" y1="103" x2="88" y2="93" stroke="#4a9eff" stroke-width="3" stroke-linecap="round"/>
+  <!-- 오른무릎 (교대) -->
+  <g class="bc-a">
+    <line x1="185" y1="108" x2="210" y2="88" stroke="#e8533a" stroke-width="5" stroke-linecap="round"/>
+    <line x1="210" y1="88" x2="225" y2="108" stroke="#e8533a" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <!-- 왼무릎 -->
+  <g class="bc-b">
+    <line x1="140" y1="108" x2="118" y2="82" stroke="#4a9eff" stroke-width="5" stroke-linecap="round"/>
+    <line x1="118" y1="82" x2="108" y2="108" stroke="#4a9eff" stroke-width="4" stroke-linecap="round"/>
+  </g>
+  <text x="140" y="145" text-anchor="middle" fill="#4a9eff" font-size="11" font-family="sans-serif">천천히 — 복사근이 당기는 느낌</text>
+</svg>`,
+
+'고양이-소 스트레칭':`<svg viewBox="0 0 280 150" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#111;">
+  <defs><style>
+    .cs-back{animation:cs-b 2.5s ease-in-out infinite;}
+    .cs-head{animation:cs-h 2.5s ease-in-out infinite;}
+    .cs-tail{animation:cs-t 2.5s ease-in-out infinite;}
+    @keyframes cs-b{0%,100%{transform:translateY(0);}50%{transform:translateY(-15px);}}
+    @keyframes cs-h{0%,100%{transform:translateY(0) rotate(0deg);}50%{transform:translateY(5px) rotate(15deg);transform-origin:90px 95px;}}
+    @keyframes cs-t{0%,100%{transform:translateY(0);}50%{transform:translateY(5px);}}
+  </style></defs>
+  <rect x="0" y="128" width="280" height="4" fill="#333"/>
+  <!-- 네발 기기 자세 -->
+  <!-- 손 (고정) -->
+  <ellipse cx="80" cy="122" rx="10" ry="5" fill="#555"/>
+  <ellipse cx="200" cy="122" rx="10" ry="5" fill="#555"/>
+  <!-- 무릎 (고정) -->
+  <ellipse cx="90" cy="122" rx="8" ry="4" fill="#444"/>
+  <ellipse cx="190" cy="122" rx="8" ry="4" fill="#444"/>
+  <!-- 팔다리 -->
+  <line x1="80" y1="122" x2="88" y2="95" stroke="#888" stroke-width="4" stroke-linecap="round"/>
+  <line x1="200" y1="122" x2="192" y2="95" stroke="#888" stroke-width="4" stroke-linecap="round"/>
+  <line x1="90" y1="122" x2="96" y2="100" stroke="#888" stroke-width="4" stroke-linecap="round"/>
+  <line x1="190" y1="122" x2="184" y2="100" stroke="#888" stroke-width="4" stroke-linecap="round"/>
+  <!-- 등 (애니메이션) -->
+  <g class="cs-back">
+    <path d="M 88 95 Q 140 75 192 95" stroke="#e8533a" stroke-width="6" fill="none" stroke-linecap="round"/>
+  </g>
+  <!-- 머리 -->
+  <g class="cs-head">
+    <circle cx="78" cy="90" r="13" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+  </g>
+  <!-- 꼬리뼈 방향 화살표 -->
+  <g class="cs-tail">
+    <text x="205" y="92" fill="#3ecf8e" font-size="14">↕</text>
+  </g>
+  <text x="140" y="144" text-anchor="middle" fill="#4a9eff" font-size="11" font-family="sans-serif">호흡에 맞춰 천천히 — 고양이↔소</text>
+</svg>`,
+
+  };
+  return anims[exName]||null;
+}
 
 // 운동별 SVG 자세 일러스트 (GIF 없는 운동용)
 function getExSvg(exName){
@@ -3014,17 +3396,12 @@ function buildGuideHtml(exName, g){
   const stepItems=g.steps.map((s,i)=>`<li><strong>${i+1}.</strong> ${s}</li>`).join('');
   const pointItems=g.points.map(p=>`<li>${p}</li>`).join('');
 
-  // 이미지: GIF 우선, 없으면 SVG
-  const gifUrl=EX_GIF[exName];
+  // 이미지: 자체 SVG 애니메이션 우선, 없으면 정적 SVG
+  const animHtml=getExAnimation(exName);
   const svgHtml=getExSvg(exName);
   let mediaHtml='';
-  if(gifUrl){
-    mediaHtml=`<div class="ai-guide-media">
-      <img src="${gifUrl}" alt="${exName} 동작" loading="lazy"
-        onerror="this.parentElement.style.display='none'"
-        style="width:100%;max-width:260px;border-radius:10px;display:block;margin:0 auto;"/>
-      <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:5px;">동작 애니메이션</div>
-    </div>`;
+  if(animHtml){
+    mediaHtml=`<div class="ai-guide-media">${animHtml}<div style="font-size:10px;color:var(--muted);text-align:center;margin-top:5px;">동작 애니메이션</div></div>`;
   } else if(svgHtml){
     mediaHtml=`<div class="ai-guide-media">${svgHtml}</div>`;
   }
