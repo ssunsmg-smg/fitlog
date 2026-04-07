@@ -2596,10 +2596,14 @@ setTimeout(()=>{
 const _aiCache={};  // 운동명 → 생성된 가이드 캐시
 
 function openAiGuide(exName,tags,warn){
+  // 혹시 인코딩된 경우 디코딩
+  try{exName=decodeURIComponent(exName);}catch(e){}
+  try{tags=decodeURIComponent(tags);}catch(e){}
+  try{warn=decodeURIComponent(warn);}catch(e){}
+
   document.getElementById('ai-guide-modal').classList.add('open');
   document.getElementById('ai-guide-title').textContent=exName;
   document.getElementById('ai-guide-content').innerHTML='';
-  document.getElementById('ai-guide-loading') && (document.getElementById('ai-guide-loading').style.display='');
 
   // 캐시 확인
   if(_aiCache[exName]){
@@ -2640,62 +2644,65 @@ ${existingDesc}
 
 간결하고 실용적으로 작성해주세요.`;
 
-  fetchAiGuideStream(prompt, exName);
+  fetchAiGuide(prompt, exName);
 }
 
-async function fetchAiGuideStream(prompt, exName){
+async function fetchAiGuide(prompt, exName){
   const contentEl=document.getElementById('ai-guide-content');
   const loadingEl=document.getElementById('ai-loading');
-  let fullText='';
 
   try{
+    // Claude API in Artifacts 환경의 내장 프록시 활용
     const resp=await fetch('https://api.anthropic.com/v1/messages',{
       method:'POST',
       headers:{'Content-Type':'application/json'},
       body:JSON.stringify({
         model:'claude-sonnet-4-20250514',
-        max_tokens:1000,
-        stream:true,
+        max_tokens:1200,
         messages:[{role:'user',content:prompt}]
       })
     });
 
-    if(!resp.ok){throw new Error('API 오류: '+resp.status);}
+    const data=await resp.json();
     loadingEl.style.display='none';
-    contentEl.innerHTML='<span class="ai-cursor"></span>';
 
-    const reader=resp.body.getReader();
-    const dec=new TextDecoder();
-
-    while(true){
-      const {done,value}=await reader.read();
-      if(done)break;
-      const chunk=dec.decode(value);
-      const lines=chunk.split('\n');
-      for(const line of lines){
-        if(!line.startsWith('data:'))continue;
-        const data=line.slice(5).trim();
-        if(data==='[DONE]')continue;
-        try{
-          const j=JSON.parse(data);
-          if(j.type==='content_block_delta'&&j.delta?.text){
-            fullText+=j.delta.text;
-            contentEl.innerHTML=aiMd(fullText)+'<span class="ai-cursor"></span>';
-            // 스크롤 따라가기
-            const body=document.getElementById('ai-guide-body');
-            body.scrollTop=body.scrollHeight;
-          }
-        }catch(e){}
-      }
+    if(!resp.ok||!data.content){
+      throw new Error((data.error?.message)||'응답 오류 ('+resp.status+')');
     }
-    // 커서 제거, 캐시 저장
-    contentEl.innerHTML=aiMd(fullText);
+
+    const text=data.content.map(b=>b.text||'').join('');
+    contentEl.innerHTML=aiMd(text);
     _aiCache[exName]=contentEl.innerHTML;
 
   }catch(err){
     loadingEl.style.display='none';
-    contentEl.innerHTML=`<div class="warn-box">AI 가이드 생성 실패: ${err.message}<br>잠시 후 다시 시도해주세요.</div>`;
+    // API 직접 호출 실패 시 → EX_INFO 기반 구조화 가이드로 폴백
+    const info=EX_INFO[exName];
+    if(info){
+      contentEl.innerHTML=buildOfflineGuide(exName,info);
+      _aiCache[exName]=contentEl.innerHTML;
+    } else {
+      contentEl.innerHTML=`<div class="warn-box">⚠️ 가이드를 불러올 수 없습니다.<br><small>${err.message}</small></div>`;
+    }
   }
+}
+
+function buildOfflineGuide(exName, info){
+  // EX_INFO 데이터를 AI 가이드처럼 구조화해서 표시
+  const steps=info.desc.split(/[.。]\s*/).filter(s=>s.trim().length>3);
+  const stepsHtml=steps.map((s,i)=>`<li><strong>${i+1}.</strong> ${s.trim()}.</li>`).join('');
+  return `
+    <h3>📋 운동 방법</h3>
+    <ul>${stepsHtml}</ul>
+    <div class="warn-box">⚠️ ${info.tip}</div>
+    <h3>✅ 핵심 포인트</h3>
+    <ul>
+      <li>정확한 자세를 먼저 익힌 뒤 중량을 늘리세요</li>
+      <li>통증이 느껴지면 즉시 중단하고 강도를 낮추세요</li>
+      <li>호흡을 멈추지 말고 자연스럽게 유지하세요</li>
+    </ul>
+    <div class="tip-box">💡 재활 운동은 천천히, 정확하게가 원칙입니다. 무게보다 자세를 우선하세요.</div>
+  `;
 }
 
 function aiMd(text){
@@ -2826,7 +2833,10 @@ function wmRender(){
   </div>`;
 
   // AI 가이드 버튼 (항상 표시)
-  html+=`<button onclick="openAiGuide('${encodeURIComponent(item.ex.n)}','${encodeURIComponent(item.ex.tags.join(','))}','${encodeURIComponent((item.ex.w||[]).join(','))}')" style="width:100%;padding:10px;border-radius:10px;border:1px solid #8b5cf633;background:#8b5cf608;color:#8b5cf6;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:14px;">🤖 AI 자세 가이드 생성</button>`;
+  const _n=item.ex.n.replace(/'/g,"\\'");
+  const _t=(item.ex.tags||[]).join(',').replace(/'/g,"\\'");
+  const _w=(item.ex.w||[]).join(',').replace(/'/g,"\\'");
+  html+=`<button onclick="openAiGuide('${_n}','${_t}','${_w}')" style="width:100%;padding:10px;border-radius:10px;border:1px solid #8b5cf633;background:#8b5cf608;color:#8b5cf6;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:14px;">🤖 AI 자세 가이드 생성</button>`;
 
   // 시간 운동
   if(item.isTime){
