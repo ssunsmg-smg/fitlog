@@ -33,6 +33,18 @@
   let currentUser = null;
 
   window.firebaseLogin = async () => {
+    const ua = navigator.userAgent.toLowerCase();
+    const isMobile = /android|iphone|ipad|ipod/.test(ua);
+
+    if(isMobile){
+      // 모바일은 redirect 방식 (팝업은 모바일 Chrome에서 차단됨)
+      try{
+        await auth.signInWithRedirect(provider);
+      }catch(e){ console.error('redirect error:',e.code); }
+      return null;
+    }
+
+    // PC는 팝업
     try {
       const result = await auth.signInWithPopup(provider);
       currentUser = result.user;
@@ -40,9 +52,9 @@
     } catch(e) {
       console.error('login error:', e.code);
       if(e.code === 'auth/popup-blocked'){
-        alert('팝업이 차단됐습니다.\n브라우저 주소창 오른쪽의 팝업 허용 버튼을 눌러주세요.');
+        // 팝업 차단 시 redirect로 폴백
+        await auth.signInWithRedirect(provider);
       } else if(e.code === 'auth/cancelled-popup-request' || e.code === 'auth/popup-closed-by-user'){
-        // 사용자가 닫은 경우 - 무시
         return null;
       } else {
         throw e;
@@ -125,10 +137,30 @@
     await db.collection('users').doc(currentUser.uid).collection('diet').doc(date).delete();
   };
 
+  // redirect 로그인 결과 처리 (모바일 복귀 시)
+  let _redirectHandled = false;
+  auth.getRedirectResult().then(result => {
+    if (result && result.user && !_redirectHandled) {
+      _redirectHandled = true;
+      currentUser = result.user;
+      window.dispatchEvent(new CustomEvent('firebase-login', { detail: result.user }));
+    }
+  }).catch(e => {
+    if(e.code && e.code !== 'auth/no-current-user'){
+      console.log('redirect result error:', e.code);
+    }
+  });
+
   auth.onAuthStateChanged(user => {
     currentUser = user;
-    if (user) window.dispatchEvent(new CustomEvent('firebase-login', { detail: user }));
-    else window.dispatchEvent(new CustomEvent('firebase-logout'));
+    if (user) {
+      window.dispatchEvent(new CustomEvent('firebase-login', { detail: user }));
+    } else {
+      // redirect 처리 중이면 logout 이벤트 지연
+      setTimeout(()=>{
+        if(!currentUser) window.dispatchEvent(new CustomEvent('firebase-logout'));
+      }, 2000);
+    }
   });
 
   window.getCurrentUser = () => currentUser;
@@ -2739,7 +2771,7 @@ window.addEventListener('firebase-logout', ()=>{
       document.getElementById('loading').style.display='none';
       document.getElementById('login-screen').style.display='flex';
     }
-  }, 1500);
+  }, 3000);
 });
 
 // 초기 로딩 — Firebase 응답이 늦을 경우 대비 (5초 후 강제 로그인 화면 표시)
