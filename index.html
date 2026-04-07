@@ -33,13 +33,12 @@
   let currentUser = null;
 
   window.firebaseLogin = async () => {
-    // 인앱 브라우저 감지 (카카오톡, 네이버, 인스타그램 등)
     const ua = navigator.userAgent.toLowerCase();
-    const isInApp = /kakaotalk|naver|instagram|fban|fbav|line|wechat|micromessenger/.test(ua)
-                 || /android/.test(ua) && /version\/[\d.]+.*chrome\/[\d.]+ mobile safari/.test(ua) === false && /samsung/.test(ua) === false;
+    const isMobile = /android|iphone|ipad|ipod/.test(ua);
     try {
-      if(isInApp){
-        // 인앱 브라우저 → redirect 방식 사용
+      if(isMobile){
+        // 모바일은 무조건 redirect (popup은 모바일에서 차단됨)
+        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         await auth.signInWithRedirect(provider);
         return null;
       }
@@ -48,8 +47,12 @@
       return currentUser;
     } catch(e) {
       if(e.code==='auth/popup-blocked'||e.code==='auth/popup-closed-by-user'||e.code==='auth/operation-not-supported-in-this-environment'){
+        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
         await auth.signInWithRedirect(provider);
-      } else { throw e; }
+      } else {
+        console.error('login error:', e.code, e.message);
+        throw e;
+      }
     }
   };
 
@@ -128,9 +131,17 @@
     await db.collection('users').doc(currentUser.uid).collection('diet').doc(date).delete();
   };
 
+  // redirect 로그인 결과 처리 (모바일 복귀 시)
   auth.getRedirectResult().then(result => {
-    if (result && result.user) currentUser = result.user;
-  }).catch(e => console.log('redirect:', e));
+    if (result && result.user) {
+      currentUser = result.user;
+      // redirect 결과가 있으면 onAuthStateChanged보다 먼저 이벤트 발생
+      window.dispatchEvent(new CustomEvent('firebase-login', { detail: result.user }));
+    }
+  }).catch(e => {
+    // auth/credential-already-in-use 등 무시 가능한 에러
+    if(e.code !== 'auth/no-current-user') console.log('redirect result:', e.code);
+  });
 
   auth.onAuthStateChanged(user => {
     currentUser = user;
