@@ -26,6 +26,8 @@
 
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
+  // 로그인 세션을 IndexedDB에 영구 저장 (캐시 삭제해도 유지)
+  auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.log('persistence:',e));
   const db = firebase.firestore();
   const provider = new firebase.auth.GoogleAuthProvider();
   let currentUser = null;
