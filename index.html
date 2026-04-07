@@ -1611,6 +1611,7 @@ function renderWorkout(){
         +'<div class="ex-tags">'+mTags+wTags+'</div>'
         +'<div class="ex-actions">'
         +'<button class="eab ai-guide" data-action="aiguide" data-exname="'+encodeURIComponent(ex.n)+'" data-tags="'+encodeURIComponent(ex.tags.join(','))+'" data-warn="'+encodeURIComponent((ex.w||[]).join(','))+'">🤖 AI 가이드</button>'
+        +'<button class="eab yt" data-action="yt" data-q="'+encodeURIComponent((info?.yt||ex.n)+' 운동 방법')+'">▶ 유튜브</button>'
         +(isTimeBased?'<button class="eab" style="color:var(--green);border-color:#3ecf8e33;" data-action="timer" data-si="'+si+'" data-ei="'+ei+'" data-sec="'+timerSec+'" data-name="'+encodeURIComponent(ex.n)+'">⏱ 타이머</button>':'')
         +'<button class="eab edit" data-action="edit" data-tk="'+tk+'" data-si="'+si+'" data-ei="'+ei+'">✏️ 수정</button>'
         +'<button class="eab" style="color:#ff6b6b;border-color:#ff6b6b33;" data-action="del" data-tk="'+tk+'" data-si="'+si+'" data-ei="'+ei+'">🗑️ 삭제</button>'
