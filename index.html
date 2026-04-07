@@ -27,12 +27,21 @@
   let currentUser = null;
 
   window.firebaseLogin = async () => {
+    // 인앱 브라우저 감지 (카카오톡, 네이버, 인스타그램 등)
+    const ua = navigator.userAgent.toLowerCase();
+    const isInApp = /kakaotalk|naver|instagram|fban|fbav|line|wechat|micromessenger/.test(ua)
+                 || /android/.test(ua) && /version\/[\d.]+.*chrome\/[\d.]+ mobile safari/.test(ua) === false && /samsung/.test(ua) === false;
     try {
+      if(isInApp){
+        // 인앱 브라우저 → redirect 방식 사용
+        await auth.signInWithRedirect(provider);
+        return null;
+      }
       const result = await auth.signInWithPopup(provider);
       currentUser = result.user;
       return currentUser;
     } catch(e) {
-      if(e.code==='auth/popup-blocked'||e.code==='auth/popup-closed-by-user'){
+      if(e.code==='auth/popup-blocked'||e.code==='auth/popup-closed-by-user'||e.code==='auth/operation-not-supported-in-this-environment'){
         await auth.signInWithRedirect(provider);
       } else { throw e; }
     }
@@ -298,6 +307,33 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .sets-hdr{display:grid;grid-template-columns:28px 1fr 1fr 32px;gap:6px;padding:8px 2px 4px;font-size:10px;color:var(--muted);font-family:var(--mono);text-align:center;}
 .set-row{display:grid;grid-template-columns:28px 1fr 1fr 32px;gap:6px;align-items:center;margin-bottom:5px;}
 .set-num{font-size:11px;font-family:var(--mono);color:var(--muted);text-align:center;}
+/* ── 인라인 타이머 ── */
+.timer-wrap{display:flex;align-items:center;gap:8px;padding:8px 14px 10px;border-top:1px solid var(--border);}
+.timer-display{font-size:22px;font-weight:900;font-family:var(--mono);color:var(--accent);min-width:56px;letter-spacing:1px;}
+.timer-display.running{color:var(--green);}
+.timer-adj{display:flex;gap:4px;flex:1;flex-wrap:wrap;}
+.timer-adj button{padding:3px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--mono);}
+.timer-adj button:hover{border-color:var(--accent);color:var(--accent);}
+.timer-start{padding:6px 14px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.timer-start.stop{background:#555;}
+.timer-reset{padding:6px 10px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);}
+/* ── 타이머 오버레이 (전체화면) ── */
+#timer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
+#timer-overlay.show{display:flex;}
+#timer-ov-name{font-size:18px;font-weight:700;color:#fff;}
+#timer-ov-time{font-size:80px;font-weight:900;font-family:var(--mono);color:var(--accent);line-height:1;}
+#timer-ov-time.running{color:var(--green);}
+#timer-ov-bar-wrap{width:260px;height:6px;background:rgba(255,255,255,.15);border-radius:3px;}
+#timer-ov-bar{height:100%;background:var(--accent);border-radius:3px;transition:width .5s linear;}
+.timer-ov-btns{display:flex;gap:12px;}
+.timer-ov-btns button{padding:10px 24px;border-radius:10px;border:none;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);}
+#ov-start-btn{background:var(--accent);color:#fff;}
+#ov-start-btn.stop{background:#555;}
+#ov-reset-btn{background:var(--surface2);color:var(--muted);}
+#ov-close-btn{background:none;border:1px solid rgba(255,255,255,.2)!important;color:rgba(255,255,255,.6);border-radius:10px;padding:8px 20px;font-size:13px;cursor:pointer;font-family:var(--font);}
+.ov-adj-row{display:flex;gap:8px;}
+.ov-adj-row button{padding:6px 14px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:none;color:rgba(255,255,255,.7);font-size:13px;cursor:pointer;font-family:var(--mono);}
+.ov-adj-row button:hover{border-color:var(--accent);color:var(--accent);}
 
 /* ── 식단 탭 ── */
 .diet-date-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
@@ -460,7 +496,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .cal-detail{padding:13px 15px;border-radius:10px;border:1px solid var(--border);background:var(--surface);margin-top:5px;}
 
 /* 기록 */
-.log-item{display:flex;align-items:flex-start;gap:9px;padding:12px 13px;border-radius:8px;margin-bottom:5px;border:1px solid var(--border);background:var(--surface);}
+.log-item{border-radius:10px;margin-bottom:8px;border:1px solid var(--border);background:var(--surface);overflow:hidden;cursor:pointer;transition:border-color .15s;}
+.log-item:hover{border-color:var(--muted);}
+.log-item-hdr{display:flex;align-items:flex-start;gap:9px;padding:12px 13px;}
 .log-date{font-size:11px;font-family:var(--mono);color:var(--muted);min-width:72px;}
 .log-badge{font-size:11px;font-weight:700;padding:2px 8px;border-radius:5px;font-family:var(--mono);flex-shrink:0;}
 .bA{background:#4a9eff1a;color:var(--blue);}.bB{background:#4caf7d1a;color:var(--green);}
@@ -469,7 +507,21 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .log-info{flex:1;}
 .log-name{font-size:13px;font-weight:500;}
 .log-sub{font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px;line-height:1.6;}
-.log-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:3px;}
+.log-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:13px;padding:3px;flex-shrink:0;}
+.log-chevron{font-size:11px;color:var(--muted);flex-shrink:0;margin-top:3px;transition:transform .2s;}
+.log-chevron.open{transform:rotate(180deg);}
+/* 기록 상세 펼치기 */
+.log-detail{display:none;padding:0 13px 12px;border-top:1px solid var(--border);}
+.log-detail.open{display:block;}
+.log-detail-ex{margin-bottom:10px;}
+.log-detail-ex-name{font-size:12px;font-weight:700;color:var(--text);margin-bottom:4px;display:flex;align-items:center;gap:6px;}
+.log-detail-ex-name span{font-size:10px;font-weight:400;color:var(--muted);}
+.log-detail-sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(90px,1fr));gap:4px;}
+.log-set-chip{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:5px 8px;text-align:center;}
+.log-set-chip.done-chip{border-color:var(--green);background:#4caf7d12;}
+.log-set-no{font-size:9px;color:var(--muted);font-family:var(--mono);margin-bottom:2px;}
+.log-set-val{font-size:12px;font-weight:700;font-family:var(--mono);color:var(--text);}
+.log-set-val.na{color:var(--muted);font-weight:400;}
 
 /* 통계 */
 .stats-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:9px;margin-bottom:18px;}
@@ -550,6 +602,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       구글 계정으로 시작하기
     </button>
     <div class="login-note">로그인 시 운동 기록이 구글 계정에 안전하게 저장됩니다</div>
+    <div id="inapp-warn" style="display:none;margin-top:10px;padding:10px;background:#e8533a15;border:1px solid var(--accent);border-radius:8px;font-size:12px;color:var(--accent);line-height:1.7;text-align:left;">
+      ⚠️ <strong>카카오톡·네이버 앱 내 브라우저</strong>에서는 구글 로그인이 차단될 수 있습니다.<br>
+      👉 <strong>Chrome 또는 Safari</strong>에서 열어주세요:<br>
+      <span style="color:var(--muted);font-size:11px;">주소창에 직접 입력 → ssunsmg-smg.github.io/fitlog/</span>
+    </div>
   </div>
 </div>
 
@@ -753,6 +810,24 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- 타이머 오버레이 -->
+<div id="timer-overlay">
+  <div id="timer-ov-name">플랭크</div>
+  <div id="timer-ov-time">00:45</div>
+  <div id="timer-ov-bar-wrap"><div id="timer-ov-bar" style="width:100%"></div></div>
+  <div class="ov-adj-row">
+    <button onclick="ovAdjTime(-15)">-15초</button>
+    <button onclick="ovAdjTime(-5)">-5초</button>
+    <button onclick="ovAdjTime(5)">+5초</button>
+    <button onclick="ovAdjTime(15)">+15초</button>
+  </div>
+  <div class="timer-ov-btns">
+    <button id="ov-start-btn" onclick="ovToggle()">▶ 시작</button>
+    <button id="ov-reset-btn" onclick="ovReset()">↺ 리셋</button>
+  </div>
+  <button id="ov-close-btn" onclick="closeTimerOverlay()">✕ 닫기</button>
+</div>
 
 <!-- 식단 추가 모달 -->
 <div class="modal-bg" id="diet-modal">
@@ -1140,13 +1215,27 @@ function renderSets(key,cId){
     </div>`).join('')}
     <button class="add-set" onclick="addSet('${key}','${cId}')">+ 세트 추가</button>`;
 }
-function updSet(k,i,f,v){if(!setData[k])return;setData[k][i][f]=v;}
+function saveSetDataLocal(){try{localStorage.setItem('fitlog_setData',JSON.stringify({day:selDay,data:setData}));}catch(e){}}
+function loadSetDataLocal(){try{const s=localStorage.getItem('fitlog_setData');if(!s)return;const p=JSON.parse(s);if(p.day===selDay){Object.assign(setData,p.data);}}catch(e){}}
+function saveChkLocal(){
+  const chks={};document.querySelectorAll('.ex-chk').forEach(el=>{const k=el.id.replace('echk-','');chks[k]=el.classList.contains('done');});
+  try{localStorage.setItem('fitlog_chkData',JSON.stringify({day:selDay,chks}));}catch(e){}
+}
+function loadChkLocal(){
+  try{const s=localStorage.getItem('fitlog_chkData');if(!s)return;const p=JSON.parse(s);if(p.day!==selDay)return;
+  Object.entries(p.chks).forEach(([k,done])=>{
+    const chk=document.getElementById('echk-'+k),card=document.getElementById('ec-'+k);
+    if(chk)chk.classList.toggle('done',done);if(card)card.classList.toggle('done',done);
+  });}catch(e){}
+}
+function updSet(k,i,f,v){if(!setData[k])return;setData[k][i][f]=v;saveSetDataLocal();}
 function toggleSetDone(k,i){
   if(!setData[k])return;setData[k][i].done=!setData[k][i].done;
   const btn=document.querySelector(`#sr-${k}-${i} .set-ok`);if(btn)btn.classList.toggle('done',setData[k][i].done);
   const parts=k.split('-'),allDone=setData[k].every(s=>s.done);
   const card=document.getElementById(`ec-${parts[1]}-${parts[2]}`),chk=document.getElementById(`echk-${parts[1]}-${parts[2]}`);
-  if(card)card.classList.toggle('done',allDone);if(chk)chk.classList.toggle('done',allDone);updateProg();
+  if(card)card.classList.toggle('done',allDone);if(chk)chk.classList.toggle('done',allDone);
+  saveSetDataLocal();saveChkLocal();updateProg();
 }
 function addSet(k,cId){if(!setData[k])setData[k]=[];setData[k].push({weight:'',reps:'',done:false});renderSets(k,cId);}
 
@@ -1206,7 +1295,7 @@ function renderWorkout(){
     const btn=document.createElement('button');
     btn.className='day-btn'+(i===selDay?' active':'')+(records.find(r=>r.date===getDateForDow(i))?' has-rec':'');
     btn.textContent=n;
-    btn.addEventListener('click',()=>{selDay=i;initSetData(DAY_SCHED[i]);renderWorkout();});
+    btn.addEventListener('click',()=>{selDay=i;setData={};try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}initSetData(DAY_SCHED[i]);renderWorkout();});
     sel.appendChild(btn);
   });
   const content=document.getElementById('routine-content'),bottom=document.getElementById('bottom-bar');
@@ -1224,6 +1313,9 @@ function renderWorkout(){
       const k=exKey(si,ei),hasSets=ex.sets>0,saId='sa-'+si+'-'+ei,descId='desc-'+si+'-'+ei;
       const info=EX_INFO[ex.n];
       const ytQ=info?(info.yt||ex.n):'';
+      // 시간형 운동 판별 (초/분 포함 or 플랭크류)
+      const isTimeBased=!hasSets&&/초|분/.test(ex.d);
+      const timerSec=isTimeBased?parseTimerSec(ex.d):0;
       html+='<div class="ex-card" id="ec-'+si+'-'+ei+'" data-si="'+si+'" data-ei="'+ei+'">'
         +'<div class="ex-card-hdr">'
         +'<div class="ex-chk" id="echk-'+si+'-'+ei+'" data-action="chk" data-si="'+si+'" data-ei="'+ei+'"></div>'
@@ -1234,6 +1326,7 @@ function renderWorkout(){
         +'<div class="ex-actions">'
         +(info?'<button class="eab info" data-action="desc" data-descid="'+descId+'">📖 설명</button>':'')
         +(info?'<button class="eab yt" data-action="yt" data-q="'+encodeURIComponent(ytQ)+'">▶ 유튜브</button>':'')
+        +(isTimeBased?'<button class="eab" style="color:var(--green);border-color:#3ecf8e33;" data-action="timer" data-si="'+si+'" data-ei="'+ei+'" data-sec="'+timerSec+'" data-name="'+encodeURIComponent(ex.n)+'">⏱ 타이머</button>':'')
         +'<button class="eab edit" data-action="edit" data-tk="'+tk+'" data-si="'+si+'" data-ei="'+ei+'">✏️ 수정</button>'
         +'<button class="eab" style="color:#ff6b6b;border-color:#ff6b6b33;" data-action="del" data-tk="'+tk+'" data-si="'+si+'" data-ei="'+ei+'">🗑️ 삭제</button>'
         +'</div></div>'
@@ -1249,6 +1342,8 @@ function renderWorkout(){
   // 이벤트 위임 등록
   content.addEventListener('click',handleWorkoutClick);
   rt.sections.forEach((sec,si)=>sec.exs.forEach((ex,ei)=>{if(ex.sets>0){const k=exKey(si,ei);if(!setData[k])setData[k]=Array.from({length:ex.sets},()=>({weight:'',reps:'',done:false}));}}));
+  loadSetDataLocal();
+  loadChkLocal();
   updateProg();
 }
 
@@ -1271,6 +1366,7 @@ function handleWorkoutClick(e){
   }
   else if(act==='desc'){document.getElementById(el.dataset.descid)?.classList.toggle('open');}
   else if(act==='yt'){window.open('https://www.youtube.com/results?search_query='+el.dataset.q,'_blank');}
+  else if(act==='timer'){openTimerOverlay(decodeURIComponent(el.dataset.name),parseInt(el.dataset.sec),el.dataset.si,el.dataset.ei);}
   else if(act==='edit'){openEdit(el.dataset.tk,parseInt(el.dataset.si),parseInt(el.dataset.ei));}
   else if(act==='del'){delEx(el.dataset.tk,parseInt(el.dataset.si),parseInt(el.dataset.ei));}
   else if(act==='lib'){openLib(el.dataset.tk,parseInt(el.dataset.si));}
@@ -1286,7 +1382,7 @@ function toggleCard(si,ei,k,saId){
 function toggleExChk(si,ei){
   document.getElementById(`echk-${si}-${ei}`).classList.toggle('done');
   document.getElementById(`ec-${si}-${ei}`).classList.toggle('done');
-  updateProg();
+  saveChkLocal();updateProg();
 }
 function updateProg(){
   const all=document.querySelectorAll('.ex-chk').length,done=document.querySelectorAll('.ex-chk.done').length;
@@ -1325,6 +1421,7 @@ async function doSaveRecord(){
 
   if(ok){
     records=records.filter(r=>r.date!==ds);records.unshift(rec);
+    try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}
     showToast('✅ 클라우드에 저장 완료!','success');
   } else {
     showToast('⚠️ 저장 실패. 다시 시도해주세요.','error');
@@ -1405,14 +1502,50 @@ function renderLog(){
   document.getElementById('log-count').textContent=`총 ${records.length}회`;
   const list=document.getElementById('log-list');
   if(!records.length){list.innerHTML=`<div style="text-align:center;padding:40px;color:var(--muted);font-size:13px;">아직 기록이 없어요. 오늘 운동 후 저장해보세요! 💪</div>`;return;}
-  list.innerHTML=records.map(rec=>{
-    const sp=rec.sets&&rec.sets.length?rec.sets.slice(0,3).map(s=>`${s.ex.slice(0,5)} ${s.set}세트:${s.weight||'?'}kg`).join(' / '):'';
-    return`<div class="log-item"><div class="log-date">${rec.date}</div><span class="log-badge b${rec.type}">Type ${rec.type}</span>
-      <div class="log-info"><div class="log-name">${RT[rec.type]?.title||rec.type}</div>
-      <div class="log-sub">${rec.exDone}/${rec.exTotal}완료 · ${'⭐'.repeat(rec.cond||3)}${rec.memo?' · '+rec.memo:''}</div>
-      ${sp?`<div class="log-sub">⚖️ ${sp}</div>`:''}</div>
-      <button class="log-del" onclick="delRec('${rec.date}')">✕</button></div>`;
+  list.innerHTML=records.map((rec,idx)=>{
+    // ── 헤더 요약 ──
+    const condStr='⭐'.repeat(rec.cond||3);
+    const memoStr=rec.memo?` · ${rec.memo}`:'';
+    // ── 세트 상세 그룹핑 (운동별) ──
+    let detailHtml='';
+    if(rec.sets&&rec.sets.length){
+      // 운동 이름별로 묶기
+      const exMap={};
+      rec.sets.forEach(s=>{if(!exMap[s.ex])exMap[s.ex]=[];exMap[s.ex].push(s);});
+      detailHtml=Object.entries(exMap).map(([exName,sets])=>{
+        const chips=sets.map(s=>`<div class="log-set-chip ${s.done?'done-chip':''}">
+          <div class="log-set-no">${s.set}세트</div>
+          <div class="log-set-val ${(!s.weight&&!s.reps)?'na':''}">${s.weight?s.weight+'kg':'—'}${s.reps?' × '+s.reps+'회':''}</div>
+        </div>`).join('');
+        return`<div class="log-detail-ex">
+          <div class="log-detail-ex-name">${exName} <span>${sets.length}세트</span></div>
+          <div class="log-detail-sets">${chips}</div>
+        </div>`;
+      }).join('');
+    } else {
+      detailHtml=`<div style="font-size:12px;color:var(--muted);padding:4px 0;">세트 기록 없음 (체크만 완료)</div>`;
+    }
+    return`<div class="log-item" id="log-item-${idx}">
+      <div class="log-item-hdr" onclick="toggleLogDetail(${idx})">
+        <div class="log-date">${rec.date}</div>
+        <span class="log-badge b${rec.type}">Type ${rec.type}</span>
+        <div class="log-info">
+          <div class="log-name">${RT[rec.type]?.title||rec.type}</div>
+          <div class="log-sub">${rec.exDone}/${rec.exTotal}완료 · ${condStr}${memoStr}</div>
+        </div>
+        <div class="log-chevron" id="log-chev-${idx}">▼</div>
+        <button class="log-del" onclick="event.stopPropagation();delRec('${rec.date}')">✕</button>
+      </div>
+      <div class="log-detail" id="log-detail-${idx}">${detailHtml}</div>
+    </div>`;
   }).join('');
+}
+function toggleLogDetail(idx){
+  const detail=document.getElementById('log-detail-'+idx);
+  const chev=document.getElementById('log-chev-'+idx);
+  if(!detail)return;
+  const open=detail.classList.toggle('open');
+  if(chev)chev.classList.toggle('open',open);
 }
 async function delRec(date){
   if(!confirm('삭제할까요?'))return;
@@ -2274,8 +2407,76 @@ setTimeout(()=>{
   if(!user){
     document.getElementById('loading').style.display='none';
     document.getElementById('login-screen').style.display='flex';
+    // 인앱 브라우저 경고 표시
+    const ua = navigator.userAgent.toLowerCase();
+    const isInApp = /kakaotalk|naver|instagram|fban|fbav|line|wechat/.test(ua);
+    const warn = document.getElementById('inapp-warn');
+    if(warn && isInApp) warn.style.display='block';
   }
 }, 5000);
-</script>
+// ══════════════════════════════
+// 타이머 시스템
+// ══════════════════════════════
+let _timerState={name:'',total:45,current:45,running:false,interval:null,exSiEi:null};
+
+function parseTimerSec(detailStr){
+  // "3세트 × 45초" / "45초" / "30초" / "2분" 등에서 초 추출
+  const sec=detailStr.match(/(\d+)\s*초/);if(sec)return parseInt(sec[1]);
+  const min=detailStr.match(/(\d+)\s*분/);if(min)return parseInt(min[1])*60;
+  return 45;
+}
+
+function openTimerOverlay(name,sec,si,ei){
+  _timerState={name,total:sec,current:sec,running:false,interval:null,exSiEi:si+'-'+ei};
+  clearInterval(_timerState.interval);
+  document.getElementById('timer-ov-name').textContent=name;
+  document.getElementById('timer-overlay').classList.add('show');
+  ovUpdateDisplay();
+}
+function closeTimerOverlay(){
+  clearInterval(_timerState.interval);_timerState.running=false;
+  document.getElementById('timer-overlay').classList.remove('show');
+}
+function ovFmtTime(s){const m=Math.floor(s/60),ss=s%60;return(m?m+':':'')+(ss<10&&m?'0':'')+ss+(m?'':'초');}
+function ovUpdateDisplay(){
+  const t=document.getElementById('timer-ov-time');
+  t.textContent=ovFmtTime(_timerState.current);
+  t.className=_timerState.running?'running':'';
+  const pct=Math.max(0,_timerState.current/_timerState.total*100);
+  document.getElementById('timer-ov-bar').style.width=pct+'%';
+  document.getElementById('ov-start-btn').textContent=_timerState.running?'⏸ 일시정지':'▶ 시작';
+  document.getElementById('ov-start-btn').className=_timerState.running?'stop':'';
+}
+function ovToggle(){
+  if(_timerState.running){
+    clearInterval(_timerState.interval);_timerState.running=false;ovUpdateDisplay();return;
+  }
+  if(_timerState.current<=0){ovReset();return;}
+  _timerState.running=true;
+  _timerState.interval=setInterval(()=>{
+    _timerState.current--;ovUpdateDisplay();
+    if(_timerState.current<=0){
+      clearInterval(_timerState.interval);_timerState.running=false;
+      // 타이머 완료 → 운동 체크 자동
+      if(_timerState.exSiEi){
+        const [si,ei]=_timerState.exSiEi.split('-');
+        const chk=document.getElementById('echk-'+si+'-'+ei);
+        const card=document.getElementById('ec-'+si+'-'+ei);
+        if(chk&&!chk.classList.contains('done')){chk.classList.add('done');if(card)card.classList.add('done');saveChkLocal();updateProg();}
+      }
+      // 진동 + 알림음
+      try{if(navigator.vibrate)navigator.vibrate([300,100,300]);}catch(e){}
+      document.getElementById('timer-ov-time').textContent='완료! 🎉';
+      document.getElementById('timer-ov-time').style.color='var(--green)';
+      setTimeout(()=>{ovUpdateDisplay();document.getElementById('timer-ov-time').style.color='';},1500);
+    }
+  },1000);
+}
+function ovReset(){clearInterval(_timerState.interval);_timerState.running=false;_timerState.current=_timerState.total;ovUpdateDisplay();}
+function ovAdjTime(delta){
+  _timerState.current=Math.max(5,_timerState.current+delta);
+  if(!_timerState.running)_timerState.total=_timerState.current;
+  ovUpdateDisplay();
+}</script>
 </body>
 </html>
