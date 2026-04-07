@@ -331,15 +331,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .sets-hdr{display:grid;grid-template-columns:28px 1fr 36px;gap:6px;padding:8px 2px 4px;font-size:10px;color:var(--muted);font-family:var(--mono);text-align:center;}
 .set-row{display:grid;grid-template-columns:28px 1fr 36px;gap:6px;align-items:center;margin-bottom:5px;}
 .set-num{font-size:11px;font-family:var(--mono);color:var(--muted);text-align:center;}
-/* 시간 운동 세트 체크 영역 */
-.timer-sets-area{padding:6px 14px 12px;border-top:1px solid var(--border);}
-.timer-sets-hdr{font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;}
-.timer-set-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
-.timer-set-label{font-size:11px;font-family:var(--mono);color:var(--muted);min-width:40px;}
-.timer-set-btn{flex:1;padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);text-align:center;transition:all .15s;}
-.timer-set-btn.done{background:#4caf7d18;border-color:var(--green);color:var(--green);}
-.timer-set-ok{width:34px;height:34px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
-.timer-set-ok.done{background:var(--green);border-color:var(--green);color:#fff;}
+
 /* ── 인라인 타이머 ── */
 .timer-wrap{display:flex;align-items:center;gap:8px;padding:8px 14px 10px;border-top:1px solid var(--border);}
 .timer-display{font-size:22px;font-weight:900;font-family:var(--mono);color:var(--accent);min-width:56px;letter-spacing:1px;}
@@ -1619,12 +1611,6 @@ function renderWorkout(){
         +(hasSets?'<div class="ex-arrow" id="arr-'+si+'-'+ei+'" data-action="toggle" data-k="'+k+'" data-said="'+saId+'">▼</div>':'')
         +'</div>'
         +(hasSets?'<div class="sets-area" id="'+saId+'"></div>':'')
-        +(isTimeBased&&timerSetCount>=1?'<div class="timer-sets-area" id="'+tsaId+'">'
-          +Array.from({length:timerSetCount},(_,i)=>`<div class="timer-set-row">
-            <div class="timer-set-label">${timerSetCount>1?i+1+'세트':''}</div>
-            <button class="timer-set-btn" id="tsb-${si}-${ei}-${i}" data-action="timer" data-si="${si}" data-ei="${ei}" data-sec="${timerSec}" data-name="${encodeURIComponent(ex.n)}">⏱ ${timerSec>=60?Math.floor(timerSec/60)+'분':timerSec+'초'} 타이머</button>
-            <button class="timer-set-ok" id="tso-${si}-${ei}-${i}" onclick="toggleTimerSetDone(${si},${ei},${i},${timerSetCount})">✓</button>
-          </div>`).join('')+'</div>':'')
         +'</div>';
     });
     html+='<button class="add-ex-btn" data-action="lib" data-tk="'+tk+'" data-si="'+si+'">＋ 운동 추가</button>';
