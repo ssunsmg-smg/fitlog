@@ -17,7 +17,7 @@
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyAsT3dKVusnbmh1lrOrM6jwcPiiBCm0W7Y",
-    authDomain: "ssunsmg-smg.github.io",
+    authDomain: "fitlog-d94cc.firebaseapp.com",
     projectId: "fitlog-d94cc",
     storageBucket: "fitlog-d94cc.firebasestorage.app",
     messagingSenderId: "326616081755",
@@ -33,7 +33,6 @@
   let currentUser = null;
 
   window.firebaseLogin = async () => {
-    // PC/모바일 모두 popup 방식으로 통일
     try {
       const result = await auth.signInWithPopup(provider);
       currentUser = result.user;
