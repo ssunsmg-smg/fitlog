@@ -312,6 +312,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .ai-guide-content .warn-box{background:#e8533a12;border-left:3px solid var(--accent);border-radius:0 8px 8px 0;padding:8px 12px;margin:10px 0;color:var(--accent);font-size:12px;}
 .ai-guide-content .tip-box{background:#4a9eff12;border-left:3px solid var(--blue);border-radius:0 8px 8px 0;padding:8px 12px;margin:10px 0;color:var(--blue);font-size:12px;}
 .ai-guide-content strong{color:var(--text);font-weight:700;}
+.ai-guide-media{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:14px;text-align:center;}
 /* 로딩 애니메이션 */
 .ai-loading{display:flex;flex-direction:column;align-items:center;padding:30px 0;gap:12px;}
 .ai-loading-dots{display:flex;gap:6px;}
@@ -324,11 +325,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 @keyframes blink{0%,100%{opacity:1;}50%{opacity:0;}}
 .ex-arrow{font-size:11px;color:var(--muted);flex-shrink:0;margin-top:3px;transition:transform .2s;cursor:pointer;}
 .ex-arrow.open{transform:rotate(180deg);}
-.ex-desc-panel{padding:10px 14px;background:var(--surface2);border-top:1px solid var(--border);display:none;}
-.ex-desc-panel.open{display:block;}
-.ex-desc-title{font-size:11px;font-weight:700;color:var(--blue);margin-bottom:5px;}
-.ex-desc-body{font-size:12px;color:var(--muted);line-height:1.8;}
-.ex-desc-tip{font-size:11px;color:var(--accent);margin-top:6px;padding:6px 10px;background:#e8533a15;border-radius:6px;border-left:2px solid var(--accent);}
+
 .sets-area{padding:0 14px 12px;border-top:1px solid var(--border);display:none;}
 .sets-area.open{display:block;}
 .rm-badge{margin:6px 2px 4px;padding:6px 10px;background:linear-gradient(90deg,#4a9eff18,#3ecf8e18);border:1px solid #4a9eff33;border-radius:7px;font-size:11px;color:var(--muted);font-family:var(--mono);}
@@ -1630,7 +1627,6 @@ function renderWorkout(){
         +'<div class="ex-detail">'+ex.d+'</div>'
         +'<div class="ex-tags">'+mTags+wTags+'</div>'
         +'<div class="ex-actions">'
-        +(info?'<button class="eab info" data-action="desc" data-descid="'+descId+'">📖 설명</button>':'')
         +'<button class="eab ai-guide" data-action="aiguide" data-exname="'+encodeURIComponent(ex.n)+'" data-tags="'+encodeURIComponent(ex.tags.join(','))+'" data-warn="'+encodeURIComponent((ex.w||[]).join(','))+'">🤖 AI 가이드</button>'
         +(isTimeBased?'<button class="eab" style="color:var(--green);border-color:#3ecf8e33;" data-action="timer" data-si="'+si+'" data-ei="'+ei+'" data-sec="'+timerSec+'" data-name="'+encodeURIComponent(ex.n)+'">⏱ 타이머</button>':'')
         +'<button class="eab edit" data-action="edit" data-tk="'+tk+'" data-si="'+si+'" data-ei="'+ei+'">✏️ 수정</button>'
@@ -1638,7 +1634,6 @@ function renderWorkout(){
         +'</div></div>'
         +(hasSets?'<div class="ex-arrow" id="arr-'+si+'-'+ei+'" data-action="toggle" data-k="'+k+'" data-said="'+saId+'">▼</div>':'')
         +'</div>'
-        +(info?'<div class="ex-desc-panel" id="'+descId+'"><div class="ex-desc-title">📋 운동 방법</div><div class="ex-desc-body">'+info.desc+'</div><div class="ex-desc-tip">⚠️ '+info.tip+'</div></div>':'')
         +(hasSets?'<div class="sets-area" id="'+saId+'"></div>':'')
         +(isTimeBased&&timerSetCount>=1?'<div class="timer-sets-area" id="'+tsaId+'">'
           +Array.from({length:timerSetCount},(_,i)=>`<div class="timer-set-row">
@@ -1676,7 +1671,6 @@ function handleWorkoutClick(e){
     if(arr)arr.classList.toggle('open',!isOpen);
     if(!isOpen)renderSets(el.dataset.k,el.dataset.said);
   }
-  else if(act==='desc'){document.getElementById(el.dataset.descid)?.classList.toggle('open');}
   else if(act==='yt'){window.open('https://www.youtube.com/results?search_query='+el.dataset.q,'_blank');}
   else if(act==='aiguide'){openAiGuide(decodeURIComponent(el.dataset.exname),decodeURIComponent(el.dataset.tags),decodeURIComponent(el.dataset.warn));}
   else if(act==='timer'){openTimerOverlay(decodeURIComponent(el.dataset.name),parseInt(el.dataset.sec),el.dataset.si,el.dataset.ei);}
@@ -2859,11 +2853,193 @@ async function fetchAiGuide(prompt, exName){
   }, 600); // 자연스러운 로딩감을 위한 짧은 딜레이
 }
 
+// 운동별 공개 GIF 이미지 (Wikimedia Commons 공개도메인)
+const EX_GIF={
+  '랫 풀다운':'https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Lat_pulldown.gif/220px-Lat_pulldown.gif',
+  '시티드 케이블 로우':'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c3/Seated_cable_rows.gif/220px-Seated_cable_rows.gif',
+  '플랭크':'https://upload.wikimedia.org/wikipedia/commons/thumb/5/58/Plank_position.gif/220px-Plank_position.gif',
+  '크런치':'https://upload.wikimedia.org/wikipedia/commons/thumb/1/16/Crunch_exercise.gif/220px-Crunch_exercise.gif',
+  '레그 레이즈':'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/Leg_raise_abdo_exercise.gif/220px-Leg_raise_abdo_exercise.gif',
+  '바이시클 크런치':'https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Bicycle_crunch.gif/220px-Bicycle_crunch.gif',
+  '누워서 브릿지':'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/Bridge_exercise.gif/220px-Bridge_exercise.gif',
+  '힙 어브덕션 (기계)':'https://upload.wikimedia.org/wikipedia/commons/thumb/9/98/Hip_abduction_machine.gif/220px-Hip_abduction_machine.gif',
+  '데드버그':'https://upload.wikimedia.org/wikipedia/commons/thumb/4/46/Dead_bug_exercise.gif/220px-Dead_bug_exercise.gif',
+  '클램쉘 (밴드)':'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Clamshell_exercise.gif/220px-Clamshell_exercise.gif',
+  '시티드 덤벨 컬':'https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Dumbbell_curl.gif/220px-Dumbbell_curl.gif',
+  '고양이-소 스트레칭':'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Cat_Cow_Stretch.gif/220px-Cat_Cow_Stretch.gif',
+};
+
+// 운동별 SVG 자세 일러스트 (GIF 없는 운동용)
+function getExSvg(exName){
+  const svgs={
+    '사이드 플랭크':`<svg viewBox="0 0 280 130" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:280px;height:auto;">
+      <rect width="280" height="130" rx="8" fill="#1a1a2e"/>
+      <!-- 바닥 -->
+      <line x1="20" y1="108" x2="260" y2="108" stroke="#4a9eff" stroke-width="2" opacity="0.4"/>
+      <!-- 몸통 (일직선) -->
+      <line x1="50" y1="60" x2="220" y2="108" stroke="#e8533a" stroke-width="5" stroke-linecap="round"/>
+      <!-- 머리 -->
+      <circle cx="40" cy="52" r="13" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+      <!-- 팔꿈치 지지 -->
+      <ellipse cx="185" cy="106" rx="12" ry="5" fill="#4a9eff" opacity="0.6"/>
+      <!-- 팔 -->
+      <line x1="155" y1="88" x2="187" y2="106" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round"/>
+      <!-- 위쪽 팔 (하늘을 향해) -->
+      <line x1="120" y1="76" x2="110" y2="45" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="110" cy="40" r="4" fill="#4a9eff"/>
+      <!-- 발 -->
+      <ellipse cx="50" cy="107" rx="8" ry="4" fill="#4a9eff" opacity="0.6"/>
+      <!-- 일직선 강조 -->
+      <line x1="38" y1="52" x2="220" y2="108" stroke="#3ecf8e" stroke-width="1" stroke-dasharray="6,4" opacity="0.5"/>
+      <!-- 라벨 -->
+      <text x="140" y="125" text-anchor="middle" fill="#4a9eff" font-size="10" font-family="sans-serif">머리·어깨·엉덩이·발 일직선 유지</text>
+    </svg>`,
+    '맥켄지 운동':`<svg viewBox="0 0 280 140" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:280px;height:auto;">
+      <rect width="280" height="140" rx="8" fill="#1a1a2e"/>
+      <line x1="20" y1="115" x2="260" y2="115" stroke="#4a9eff" stroke-width="2" opacity="0.4"/>
+      <!-- 골반 (바닥 고정) -->
+      <rect x="120" y="105" width="50" height="10" rx="4" fill="#3ecf8e" opacity="0.5"/>
+      <!-- 하체 -->
+      <line x1="120" y1="110" x2="220" y2="113" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
+      <!-- 상체 들림 -->
+      <path d="M 120 110 Q 90 85 60 60" stroke="#e8533a" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- 머리 -->
+      <circle cx="52" cy="52" r="13" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+      <!-- 팔 지지 -->
+      <line x1="100" y1="95" x2="75" y2="112" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round"/>
+      <line x1="120" y1="95" x2="145" y2="112" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round"/>
+      <!-- 화살표 (들어올리는 방향) -->
+      <path d="M 75 75 Q 68 60 62 55" stroke="#3ecf8e" stroke-width="2" fill="none" marker-end="url(#arr)" stroke-dasharray="4,3"/>
+      <defs><marker id="arr" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#3ecf8e"/></marker></defs>
+      <text x="140" y="132" text-anchor="middle" fill="#3ecf8e" font-size="10" font-family="sans-serif">골반 바닥 고정 · 상체만 들어올리기</text>
+    </svg>`,
+    '친 턱 당기기 (Chin Tuck)':`<svg viewBox="0 0 280 140" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:280px;height:auto;">
+      <rect width="280" height="140" rx="8" fill="#1a1a2e"/>
+      <!-- 잘못된 자세 (왼쪽) -->
+      <text x="60" y="20" text-anchor="middle" fill="#e8533a" font-size="10" font-family="sans-serif">❌ 거북목</text>
+      <ellipse cx="60" cy="45" rx="18" ry="18" fill="none" stroke="#e8533a" stroke-width="2.5"/>
+      <line x1="55" y1="62" x2="60" y2="95" stroke="#888" stroke-width="4" stroke-linecap="round"/>
+      <line x1="60" y1="95" x2="60" y2="130" stroke="#888" stroke-width="4" stroke-linecap="round"/>
+      <!-- 목이 앞으로 나옴 -->
+      <path d="M 60 62 Q 50 72 48 80" stroke="#e8533a" stroke-width="3" fill="none"/>
+      <!-- 올바른 자세 (오른쪽) -->
+      <text x="200" y="20" text-anchor="middle" fill="#3ecf8e" font-size="10" font-family="sans-serif">✅ 올바른 자세</text>
+      <ellipse cx="200" cy="45" rx="18" ry="18" fill="none" stroke="#3ecf8e" stroke-width="2.5"/>
+      <line x1="200" y1="62" x2="200" y2="130" stroke="#888" stroke-width="4" stroke-linecap="round"/>
+      <!-- 턱 당기는 화살표 -->
+      <path d="M 215 55 L 205 55" stroke="#4a9eff" stroke-width="2.5" marker-end="url(#arr2)"/>
+      <defs><marker id="arr2" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#4a9eff"/></marker></defs>
+      <!-- 중간 화살표 -->
+      <text x="140" y="75" text-anchor="middle" fill="#4a9eff" font-size="18">→</text>
+      <text x="140" y="125" text-anchor="middle" fill="#4a9eff" font-size="10" font-family="sans-serif">턱을 수평으로 뒤로 당기기</text>
+    </svg>`,
+    '피전 포즈':`<svg viewBox="0 0 280 140" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:280px;height:auto;">
+      <rect width="280" height="140" rx="8" fill="#1a1a2e"/>
+      <line x1="20" y1="118" x2="260" y2="118" stroke="#4a9eff" stroke-width="2" opacity="0.4"/>
+      <!-- 앞다리 (접힌) -->
+      <path d="M 120 118 Q 130 90 150 80 Q 160 75 155 65" stroke="#e8533a" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- 뒷다리 (뻗은) -->
+      <line x1="120" y1="118" x2="230" y2="115" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
+      <!-- 상체 (앞으로 숙임) -->
+      <path d="M 150 80 Q 120 70 85 75 Q 65 78 50 85" stroke="#4a9eff" stroke-width="5" fill="none" stroke-linecap="round"/>
+      <!-- 머리 -->
+      <circle cx="42" cy="90" r="12" fill="none" stroke="#e8e8e8" stroke-width="2"/>
+      <!-- 팔 지지 -->
+      <line x1="100" y1="72" x2="75" y2="112" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round"/>
+      <line x1="130" y1="68" x2="155" y2="110" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round"/>
+      <!-- 엉덩이 강조 -->
+      <circle cx="122" cy="105" r="8" fill="#3ecf8e" opacity="0.4"/>
+      <text x="140" y="133" text-anchor="middle" fill="#3ecf8e" font-size="10" font-family="sans-serif">엉덩이 바깥쪽 당기는 느낌 집중</text>
+    </svg>`,
+    '폼롤러 흉추 이완':`<svg viewBox="0 0 280 140" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:280px;height:auto;">
+      <rect width="280" height="140" rx="8" fill="#1a1a2e"/>
+      <line x1="20" y1="118" x2="260" y2="118" stroke="#4a9eff" stroke-width="2" opacity="0.4"/>
+      <!-- 폼롤러 -->
+      <ellipse cx="140" cy="100" rx="18" ry="12" fill="#e8533a" opacity="0.7"/>
+      <text x="140" y="104" text-anchor="middle" fill="white" font-size="8" font-family="sans-serif">폼롤러</text>
+      <!-- 몸통 -->
+      <line x1="60" y1="95" x2="220" y2="95" stroke="#e8e8e8" stroke-width="6" stroke-linecap="round"/>
+      <!-- 무릎 -->
+      <path d="M 80 95 Q 75 110 70 118" stroke="#e8e8e8" stroke-width="4" stroke-linecap="round"/>
+      <path d="M 200 95 Q 205 110 210 118" stroke="#e8e8e8" stroke-width="4" stroke-linecap="round"/>
+      <!-- 머리 (살짝 뒤로) -->
+      <circle cx="48" cy="88" r="13" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+      <!-- 팔 가슴에 모음 -->
+      <path d="M 110 88 Q 125 83 140 88 Q 125 93 110 88" stroke="#4a9eff" stroke-width="3" fill="none"/>
+      <!-- 강조 위치 -->
+      <ellipse cx="140" cy="93" rx="25" ry="8" fill="none" stroke="#3ecf8e" stroke-width="2" stroke-dasharray="4,3"/>
+      <text x="140" y="133" text-anchor="middle" fill="#3ecf8e" font-size="10" font-family="sans-serif">흉추(등 중간)에만 대기 — 허리(요추) ❌</text>
+    </svg>`,
+    '업라이트 바이크':`<svg viewBox="0 0 280 140" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:280px;height:auto;">
+      <rect width="280" height="140" rx="8" fill="#1a1a2e"/>
+      <!-- 바이크 바디 -->
+      <line x1="100" y1="90" x2="180" y2="90" stroke="#555" stroke-width="4"/>
+      <line x1="140" y1="90" x2="140" y2="50" stroke="#555" stroke-width="4"/>
+      <!-- 핸들 -->
+      <line x1="115" y1="50" x2="165" y2="50" stroke="#888" stroke-width="4" stroke-linecap="round"/>
+      <!-- 안장 -->
+      <rect x="125" y="75" width="30" height="8" rx="4" fill="#888"/>
+      <!-- 페달 -->
+      <circle cx="140" cy="110" r="14" fill="none" stroke="#4a9eff" stroke-width="3"/>
+      <line x1="130" y1="105" x2="150" y2="115" stroke="#4a9eff" stroke-width="3" stroke-linecap="round"/>
+      <!-- 사람 -->
+      <circle cx="145" cy="45" r="12" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+      <line x1="145" y1="57" x2="140" y2="76" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round"/>
+      <line x1="140" y1="76" x2="128" y2="100" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round"/>
+      <line x1="128" y1="100" x2="130" y2="115" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round"/>
+      <line x1="140" y1="65" x2="125" y2="53" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round"/>
+      <line x1="140" y1="65" x2="155" y2="53" stroke="#e8e8e8" stroke-width="3" stroke-linecap="round"/>
+      <!-- 회전 화살표 -->
+      <path d="M 154 104 Q 160 110 154 116" stroke="#3ecf8e" stroke-width="2" fill="none" marker-end="url(#arrc)"/>
+      <defs><marker id="arrc" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#3ecf8e"/></marker></defs>
+      <text x="140" y="135" text-anchor="middle" fill="#4a9eff" font-size="10" font-family="sans-serif">저항 최소 · 허리 곧게 · 무릎 정면</text>
+    </svg>`,
+    '관절 돌리기':`<svg viewBox="0 0 280 130" xmlns="http://www.w3.org/2000/svg" style="width:100%;max-width:280px;height:auto;">
+      <rect width="280" height="130" rx="8" fill="#1a1a2e"/>
+      <!-- 목 원 -->
+      <circle cx="60" cy="50" r="22" fill="none" stroke="#4a9eff" stroke-width="2" stroke-dasharray="5,3" opacity="0.6"/>
+      <circle cx="60" cy="50" r="14" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+      <path d="M 60 35 Q 72 42 72 50 Q 72 58 60 65" stroke="#3ecf8e" stroke-width="2" fill="none" marker-end="url(#arrj)"/>
+      <text x="60" y="88" text-anchor="middle" fill="#4a9eff" font-size="9" font-family="sans-serif">목</text>
+      <!-- 어깨 원 -->
+      <circle cx="140" cy="50" r="22" fill="none" stroke="#4a9eff" stroke-width="2" stroke-dasharray="5,3" opacity="0.6"/>
+      <circle cx="140" cy="50" r="10" fill="#e8533a" opacity="0.4"/>
+      <path d="M 130 40 Q 140 28 150 40 Q 162 52 150 62 Q 140 70 130 60" stroke="#3ecf8e" stroke-width="2" fill="none"/>
+      <text x="140" y="88" text-anchor="middle" fill="#4a9eff" font-size="9" font-family="sans-serif">어깨</text>
+      <!-- 손목 원 -->
+      <circle cx="220" cy="50" r="22" fill="none" stroke="#4a9eff" stroke-width="2" stroke-dasharray="5,3" opacity="0.6"/>
+      <circle cx="220" cy="50" r="8" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
+      <path d="M 220 38 Q 232 44 232 52 Q 232 62 220 62 Q 208 62 208 52 Q 208 42 220 38" stroke="#3ecf8e" stroke-width="2" fill="none"/>
+      <text x="220" y="88" text-anchor="middle" fill="#4a9eff" font-size="9" font-family="sans-serif">손목</text>
+      <defs><marker id="arrj" markerWidth="6" markerHeight="6" refX="3" refY="3" orient="auto"><path d="M0,0 L6,3 L0,6 Z" fill="#3ecf8e"/></marker></defs>
+      <text x="140" y="115" text-anchor="middle" fill="#3ecf8e" font-size="10" font-family="sans-serif">각 관절 천천히 · 통증 범위 내에서만</text>
+    </svg>`,
+  };
+  return svgs[exName]||null;
+}
+
 function buildGuideHtml(exName, g){
   const startItems=g.start.map((s,i)=>`<li><strong>${i+1}.</strong> ${s}</li>`).join('');
   const stepItems=g.steps.map((s,i)=>`<li><strong>${i+1}.</strong> ${s}</li>`).join('');
   const pointItems=g.points.map(p=>`<li>${p}</li>`).join('');
+
+  // 이미지: GIF 우선, 없으면 SVG, 없으면 없음
+  const gifUrl=EX_GIF[exName];
+  const svgHtml=getExSvg(exName);
+  let mediaHtml='';
+  if(gifUrl){
+    mediaHtml=`<div class="ai-guide-media">
+      <img src="${gifUrl}" alt="${exName} 동작" loading="lazy"
+        onerror="this.parentElement.style.display='none'"
+        style="width:100%;max-width:260px;border-radius:10px;display:block;margin:0 auto;"/>
+      <div style="font-size:10px;color:var(--muted);text-align:center;margin-top:5px;">동작 애니메이션</div>
+    </div>`;
+  } else if(svgHtml){
+    mediaHtml=`<div class="ai-guide-media">${svgHtml}</div>`;
+  }
+
   return `
+    ${mediaHtml}
     <h3>🎯 운동 목적</h3>
     <p>${g.purpose}</p>
     <h3>📐 시작 자세</h3>
