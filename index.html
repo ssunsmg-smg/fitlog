@@ -17,7 +17,7 @@
 <script>
   const firebaseConfig = {
     apiKey: "AIzaSyAsT3dKVusnbmh1lrOrM6jwcPiiBCm0W7Y",
-    authDomain: "fitlog-d94cc.firebaseapp.com",
+    authDomain: "ssunsmg-smg.github.io",
     projectId: "fitlog-d94cc",
     storageBucket: "fitlog-d94cc.firebasestorage.app",
     messagingSenderId: "326616081755",
@@ -26,34 +26,22 @@
 
   firebase.initializeApp(firebaseConfig);
   const auth = firebase.auth();
-  // 로그인 세션을 IndexedDB에 영구 저장 (캐시 삭제해도 유지)
   auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(e=>console.log('persistence:',e));
   const db = firebase.firestore();
   const provider = new firebase.auth.GoogleAuthProvider();
+  provider.setCustomParameters({'prompt': 'select_account'});
   let currentUser = null;
 
   window.firebaseLogin = async () => {
-    const ua = navigator.userAgent.toLowerCase();
-    const isMobile = /android|iphone|ipad|ipod/.test(ua);
-
-    if(isMobile){
-      // 모바일은 redirect 방식 (팝업은 모바일 Chrome에서 차단됨)
-      try{
-        await auth.signInWithRedirect(provider);
-      }catch(e){ console.error('redirect error:',e.code); }
-      return null;
-    }
-
-    // PC는 팝업
+    // PC/모바일 모두 popup 방식으로 통일
     try {
       const result = await auth.signInWithPopup(provider);
       currentUser = result.user;
       return currentUser;
     } catch(e) {
       console.error('login error:', e.code);
-      if(e.code === 'auth/popup-blocked'){
-        // 팝업 차단 시 redirect로 폴백
-        await auth.signInWithRedirect(provider);
+      if(e.code === 'auth/popup-blocked' || e.code === 'auth/operation-not-supported-in-this-environment'){
+        alert('팝업이 차단되었습니다.\n브라우저 설정에서 팝업을 허용해 주세요.');
       } else if(e.code === 'auth/cancelled-popup-request' || e.code === 'auth/popup-closed-by-user'){
         return null;
       } else {
@@ -137,30 +125,10 @@
     await db.collection('users').doc(currentUser.uid).collection('diet').doc(date).delete();
   };
 
-  // redirect 로그인 결과 처리 (모바일 복귀 시)
-  let _redirectHandled = false;
-  auth.getRedirectResult().then(result => {
-    if (result && result.user && !_redirectHandled) {
-      _redirectHandled = true;
-      currentUser = result.user;
-      window.dispatchEvent(new CustomEvent('firebase-login', { detail: result.user }));
-    }
-  }).catch(e => {
-    if(e.code && e.code !== 'auth/no-current-user'){
-      console.log('redirect result error:', e.code);
-    }
-  });
-
   auth.onAuthStateChanged(user => {
     currentUser = user;
-    if (user) {
-      window.dispatchEvent(new CustomEvent('firebase-login', { detail: user }));
-    } else {
-      // redirect 처리 중이면 logout 이벤트 지연
-      setTimeout(()=>{
-        if(!currentUser) window.dispatchEvent(new CustomEvent('firebase-logout'));
-      }, 2000);
-    }
+    if (user) window.dispatchEvent(new CustomEvent('firebase-login', { detail: user }));
+    else window.dispatchEvent(new CustomEvent('firebase-logout'));
   });
 
   window.getCurrentUser = () => currentUser;
@@ -2771,7 +2739,7 @@ window.addEventListener('firebase-logout', ()=>{
       document.getElementById('loading').style.display='none';
       document.getElementById('login-screen').style.display='flex';
     }
-  }, 3000);
+  }, 1500);
 });
 
 // 초기 로딩 — Firebase 응답이 늦을 경우 대비 (5초 후 강제 로그인 화면 표시)
