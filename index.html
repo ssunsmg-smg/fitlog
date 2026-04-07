@@ -697,7 +697,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="tc-label" id="tc-label">오늘의 루틴</div>
       <div class="tc-title" id="tc-title">로딩 중...</div>
       <div class="tc-sub" id="tc-sub"></div>
-      <button class="tc-btn" onclick="startWorkoutMode()">운동 시작하기 →</button>
+      <button class="tc-btn" onclick="goWorkout()">운동 시작하기 →</button>
     </div>
     <div class="week-row" id="week-row"></div>
     <div class="stat-row">
@@ -3199,17 +3199,6 @@ function wmRender(){
   const _t=(item.ex.tags||[]).join(',').replace(/'/g,"\\'");
   const _w=(item.ex.w||[]).join(',').replace(/'/g,"\\'");
   html+=`<button onclick="openAiGuide('${_n}','${_t}','${_w}')" style="width:100%;padding:10px;border-radius:10px;border:1px solid #8b5cf633;background:#8b5cf608;color:#8b5cf6;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:14px;">🤖 AI 자세 가이드 생성</button>`;
-
-  // 시간 운동
-  if(item.isTime){
-    const timerSec=item.timerSec;
-    const setCount=parseInt(item.ex.d.match(/(\d+)\s*세트/)?.[1]||'1');
-    html+=`<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">`;
-    for(let i=0;i<setCount;i++){
-      html+=`<button onclick="openTimerOverlay('${encodeURIComponent(item.ex.n)}',${timerSec},'${item.si}','${item.ei}')" style="padding:14px;border-radius:10px;border:1px solid var(--green);background:#4caf7d10;color:var(--green);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);">⏱ ${setCount>1?i+1+'세트 · ':''} ${timerSec}초 타이머 시작</button>`;
-    }
-    html+=`</div>`;
-  }
 
   // 세트 운동
   if(item.sets.length>0){
