@@ -304,9 +304,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .ex-desc-tip{font-size:11px;color:var(--accent);margin-top:6px;padding:6px 10px;background:#e8533a15;border-radius:6px;border-left:2px solid var(--accent);}
 .sets-area{padding:0 14px 12px;border-top:1px solid var(--border);display:none;}
 .sets-area.open{display:block;}
-.sets-hdr{display:grid;grid-template-columns:28px 1fr 1fr 32px;gap:6px;padding:8px 2px 4px;font-size:10px;color:var(--muted);font-family:var(--mono);text-align:center;}
-.set-row{display:grid;grid-template-columns:28px 1fr 1fr 32px;gap:6px;align-items:center;margin-bottom:5px;}
+.sets-hdr{display:grid;grid-template-columns:28px 1fr 36px;gap:6px;padding:8px 2px 4px;font-size:10px;color:var(--muted);font-family:var(--mono);text-align:center;}
+.set-row{display:grid;grid-template-columns:28px 1fr 36px;gap:6px;align-items:center;margin-bottom:5px;}
 .set-num{font-size:11px;font-family:var(--mono);color:var(--muted);text-align:center;}
+/* 시간 운동 세트 체크 영역 */
+.timer-sets-area{padding:8px 14px 12px;border-top:1px solid var(--border);}
+.timer-sets-hdr{font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;}
+.timer-set-row{display:flex;align-items:center;gap:8px;margin-bottom:5px;}
+.timer-set-label{font-size:11px;font-family:var(--mono);color:var(--muted);min-width:40px;}
+.timer-set-btn{flex:1;padding:7px 12px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);text-align:center;transition:all .15s;}
+.timer-set-btn.done{background:#4caf7d18;border-color:var(--green);color:var(--green);}
+.timer-set-ok{width:34px;height:34px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;flex-shrink:0;}
+.timer-set-ok.done{background:var(--green);border-color:var(--green);color:#fff;}
 /* ── 인라인 타이머 ── */
 .timer-wrap{display:flex;align-items:center;gap:8px;padding:8px 14px 10px;border-top:1px solid var(--border);}
 .timer-display{font-size:22px;font-weight:900;font-family:var(--mono);color:var(--accent);min-width:56px;letter-spacing:1px;}
@@ -1206,27 +1215,30 @@ function initSetData(tk){
 function renderSets(key,cId){
   const sets=setData[key];if(!sets)return;
   const c=document.getElementById(cId);if(!c)return;
-  c.innerHTML=`<div class="sets-hdr"><div>세트</div><div>중량 kg</div><div>횟수</div><div>✓</div></div>
+  c.innerHTML=`<div class="sets-hdr"><div>세트</div><div>중량 kg</div><div>✓</div></div>
     ${sets.map((s,i)=>`<div class="set-row" id="sr-${key}-${i}">
       <div class="set-num">${i+1}</div>
       <input class="set-inp ${s.weight?'filled':''}" type="number" value="${s.weight}" placeholder="0" min="0" step="0.5" oninput="updSet('${key}',${i},'weight',this.value)"/>
-      <input class="set-inp ${s.reps?'filled':''}" type="number" value="${s.reps}" placeholder="0" min="0" oninput="updSet('${key}',${i},'reps',this.value)"/>
       <button class="set-ok ${s.done?'done':''}" onclick="toggleSetDone('${key}',${i})">✓</button>
     </div>`).join('')}
     <button class="add-set" onclick="addSet('${key}','${cId}')">+ 세트 추가</button>`;
 }
 function saveSetDataLocal(){try{localStorage.setItem('fitlog_setData',JSON.stringify({day:selDay,data:setData}));}catch(e){}}
 function loadSetDataLocal(){try{const s=localStorage.getItem('fitlog_setData');if(!s)return;const p=JSON.parse(s);if(p.day===selDay){Object.assign(setData,p.data);}}catch(e){}}
-function saveChkLocal(){
-  const chks={};document.querySelectorAll('.ex-chk').forEach(el=>{const k=el.id.replace('echk-','');chks[k]=el.classList.contains('done');});
-  try{localStorage.setItem('fitlog_chkData',JSON.stringify({day:selDay,chks}));}catch(e){}
-}
 function loadChkLocal(){
   try{const s=localStorage.getItem('fitlog_chkData');if(!s)return;const p=JSON.parse(s);if(p.day!==selDay)return;
   Object.entries(p.chks).forEach(([k,done])=>{
     const chk=document.getElementById('echk-'+k),card=document.getElementById('ec-'+k);
     if(chk)chk.classList.toggle('done',done);if(card)card.classList.toggle('done',done);
-  });}catch(e){}
+  });
+  // 타이머 세트 ok 복원
+  if(p.timerSets){Object.entries(p.timerSets).forEach(([k,done])=>{const el=document.getElementById(k);if(el)el.classList.toggle('done',done);});}
+  }catch(e){}
+}
+function saveChkLocal(){
+  const chks={};document.querySelectorAll('.ex-chk').forEach(el=>{const k=el.id.replace('echk-','');chks[k]=el.classList.contains('done');});
+  const timerSets={};document.querySelectorAll('.timer-set-ok').forEach(el=>{timerSets[el.id]=el.classList.contains('done');});
+  try{localStorage.setItem('fitlog_chkData',JSON.stringify({day:selDay,chks,timerSets}));}catch(e){}
 }
 function updSet(k,i,f,v){if(!setData[k])return;setData[k][i][f]=v;saveSetDataLocal();}
 function toggleSetDone(k,i){
@@ -1238,6 +1250,17 @@ function toggleSetDone(k,i){
   saveSetDataLocal();saveChkLocal();updateProg();
 }
 function addSet(k,cId){if(!setData[k])setData[k]=[];setData[k].push({weight:'',reps:'',done:false});renderSets(k,cId);}
+
+function toggleTimerSetDone(si,ei,setIdx,total){
+  const ok=document.getElementById(`tso-${si}-${ei}-${setIdx}`);
+  if(!ok)return;
+  ok.classList.toggle('done');
+  // 모든 세트 완료 시 운동 카드 체크
+  const allDone=Array.from({length:total},(_,i)=>document.getElementById(`tso-${si}-${ei}-${i}`)?.classList.contains('done')).every(Boolean);
+  const chk=document.getElementById(`echk-${si}-${ei}`),card=document.getElementById(`ec-${si}-${ei}`);
+  if(chk)chk.classList.toggle('done',allDone);if(card)card.classList.toggle('done',allDone);
+  saveChkLocal();updateProg();
+}
 
 // ══════════════════════════════
 // 홈
@@ -1313,9 +1336,12 @@ function renderWorkout(){
       const k=exKey(si,ei),hasSets=ex.sets>0,saId='sa-'+si+'-'+ei,descId='desc-'+si+'-'+ei;
       const info=EX_INFO[ex.n];
       const ytQ=info?(info.yt||ex.n):'';
-      // 시간형 운동 판별 (초/분 포함 or 플랭크류)
+      // 시간형 운동 판별 (초/분 포함 + sets:0)
       const isTimeBased=!hasSets&&/초|분/.test(ex.d);
       const timerSec=isTimeBased?parseTimerSec(ex.d):0;
+      // 시간 운동 세트 수 파싱 (예: "3세트 × 45초" → 3)
+      const timerSetCount=isTimeBased?(parseInt(ex.d.match(/(\d+)\s*세트/)?.[1]||'1')):0;
+      const tsaId='tsa-'+si+'-'+ei;
       html+='<div class="ex-card" id="ec-'+si+'-'+ei+'" data-si="'+si+'" data-ei="'+ei+'">'
         +'<div class="ex-card-hdr">'
         +'<div class="ex-chk" id="echk-'+si+'-'+ei+'" data-action="chk" data-si="'+si+'" data-ei="'+ei+'"></div>'
@@ -1334,6 +1360,12 @@ function renderWorkout(){
         +'</div>'
         +(info?'<div class="ex-desc-panel" id="'+descId+'"><div class="ex-desc-title">📋 운동 방법</div><div class="ex-desc-body">'+info.desc+'</div><div class="ex-desc-tip">⚠️ '+info.tip+'</div></div>':'')
         +(hasSets?'<div class="sets-area" id="'+saId+'"></div>':'')
+        +(isTimeBased&&timerSetCount>1?'<div class="timer-sets-area" id="'+tsaId+'"><div class="timer-sets-hdr">세트별 완료 체크</div>'
+          +Array.from({length:timerSetCount},(_,i)=>`<div class="timer-set-row">
+            <div class="timer-set-label">${i+1}세트</div>
+            <button class="timer-set-btn" id="tsb-${si}-${ei}-${i}" data-action="timer" data-si="${si}" data-ei="${ei}" data-sec="${timerSec}" data-name="${encodeURIComponent(ex.n)}">⏱ ${timerSec}초 타이머</button>
+            <button class="timer-set-ok" id="tso-${si}-${ei}-${i}" onclick="toggleTimerSetDone(${si},${ei},${i},${timerSetCount})">✓</button>
+          </div>`).join('')+'</div>':'')
         +'</div>';
     });
     html+='<button class="add-ex-btn" data-action="lib" data-tk="'+tk+'" data-si="'+si+'">＋ 운동 추가</button>';
@@ -1394,6 +1426,7 @@ function resetAll(){
   document.querySelectorAll('.ex-card').forEach(e=>e.classList.remove('done'));
   document.querySelectorAll('.set-ok').forEach(e=>e.classList.remove('done'));
   document.querySelectorAll('.set-inp').forEach(e=>{e.value='';e.classList.remove('filled');});
+  document.querySelectorAll('.timer-set-ok').forEach(e=>e.classList.remove('done'));
   initSetData(DAY_SCHED[selDay]);updateProg();
 }
 function setCond(v){selCond=v;document.querySelectorAll('.cond-btn').forEach((b,i)=>b.classList.toggle('active',i+1===v));}
