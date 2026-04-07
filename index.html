@@ -33,24 +33,18 @@
   let currentUser = null;
 
   window.firebaseLogin = async () => {
-    const ua = navigator.userAgent.toLowerCase();
-    const isMobile = /android|iphone|ipad|ipod/.test(ua);
     try {
-      if(isMobile){
-        // 모바일은 무조건 redirect (popup은 모바일에서 차단됨)
-        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-        await auth.signInWithRedirect(provider);
-        return null;
-      }
       const result = await auth.signInWithPopup(provider);
       currentUser = result.user;
       return currentUser;
     } catch(e) {
-      if(e.code==='auth/popup-blocked'||e.code==='auth/popup-closed-by-user'||e.code==='auth/operation-not-supported-in-this-environment'){
-        await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-        await auth.signInWithRedirect(provider);
+      console.error('login error:', e.code);
+      if(e.code === 'auth/popup-blocked'){
+        alert('팝업이 차단됐습니다.\n브라우저 주소창 오른쪽의 팝업 허용 버튼을 눌러주세요.');
+      } else if(e.code === 'auth/cancelled-popup-request' || e.code === 'auth/popup-closed-by-user'){
+        // 사용자가 닫은 경우 - 무시
+        return null;
       } else {
-        console.error('login error:', e.code, e.message);
         throw e;
       }
     }
@@ -130,18 +124,6 @@
     if (!currentUser) return;
     await db.collection('users').doc(currentUser.uid).collection('diet').doc(date).delete();
   };
-
-  // redirect 로그인 결과 처리 (모바일 복귀 시)
-  auth.getRedirectResult().then(result => {
-    if (result && result.user) {
-      currentUser = result.user;
-      // redirect 결과가 있으면 onAuthStateChanged보다 먼저 이벤트 발생
-      window.dispatchEvent(new CustomEvent('firebase-login', { detail: result.user }));
-    }
-  }).catch(e => {
-    // auth/credential-already-in-use 등 무시 가능한 에러
-    if(e.code !== 'auth/no-current-user') console.log('redirect result:', e.code);
-  });
 
   auth.onAuthStateChanged(user => {
     currentUser = user;
@@ -653,6 +635,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#EA4335" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#4285F4" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#FBBC05" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#34A853" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
       구글 계정으로 시작하기
     </button>
+    <div style="margin-top:10px;font-size:11px;color:var(--muted);text-align:center;line-height:1.7;">
+      📱 모바일에서 로그인이 안 되면<br>
+      <strong style="color:var(--text);">Chrome 브라우저</strong>에서 열어주세요
+    </div>
     <div class="login-note">로그인 시 운동 기록이 구글 계정에 안전하게 저장됩니다</div>
     <div id="inapp-warn" style="display:none;margin-top:10px;padding:10px;background:#e8533a15;border:1px solid var(--accent);border-radius:8px;font-size:12px;color:var(--accent);line-height:1.7;text-align:left;">
       ⚠️ <strong>카카오톡·네이버 앱 내 브라우저</strong>에서는 구글 로그인이 차단될 수 있습니다.<br>
