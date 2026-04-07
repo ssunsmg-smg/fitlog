@@ -2850,6 +2850,13 @@ const EX_GIF={
   '클램쉘 (밴드)':'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4e/Clamshell_exercise.gif/220px-Clamshell_exercise.gif',
   '시티드 덤벨 컬':'https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Dumbbell_curl.gif/220px-Dumbbell_curl.gif',
   '고양이-소 스트레칭':'https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Cat_Cow_Stretch.gif/220px-Cat_Cow_Stretch.gif',
+  '케이블 킥백':'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Cable_kickback.gif/220px-Cable_kickback.gif',
+  '케이블 크런치':'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Cable_crunch.gif/220px-Cable_crunch.gif',
+  '케이블 사이드 레터럴':'https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Cable_lateral_raise.gif/220px-Cable_lateral_raise.gif',
+  '케이블 체스트 플라이':'https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/Cable_fly.gif/220px-Cable_fly.gif',
+  '사이드 라잉 레그 레이즈':'https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Side_leg_raise.gif/220px-Side_leg_raise.gif',
+  '행잉 니 레이즈':'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Hanging_knee_raise.gif/220px-Hanging_knee_raise.gif',
+  '리버스 크런치':'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1e/Reverse_crunch.gif/220px-Reverse_crunch.gif',
 };
 
 // 운동별 SVG 자세 일러스트 (GIF 없는 운동용)
@@ -3006,7 +3013,7 @@ function buildGuideHtml(exName, g){
   const stepItems=g.steps.map((s,i)=>`<li><strong>${i+1}.</strong> ${s}</li>`).join('');
   const pointItems=g.points.map(p=>`<li>${p}</li>`).join('');
 
-  // 이미지: GIF 우선, 없으면 SVG, 없으면 없음
+  // 이미지: GIF 우선, 없으면 SVG
   const gifUrl=EX_GIF[exName];
   const svgHtml=getExSvg(exName);
   let mediaHtml='';
@@ -3021,8 +3028,24 @@ function buildGuideHtml(exName, g){
     mediaHtml=`<div class="ai-guide-media">${svgHtml}</div>`;
   }
 
+  // 유튜브 검색어 (EX_INFO에서 가져오기)
+  const info=EX_INFO[exName];
+  const ytQuery=info?.yt||exName+' 운동 방법';
+  const ytUrl='https://www.youtube.com/results?search_query='+encodeURIComponent(ytQuery);
+
+  // 유튜브 버튼
+  const ytBtn=`<a href="${ytUrl}" target="_blank" rel="noopener"
+    style="display:flex;align-items:center;justify-content:center;gap:8px;
+    width:100%;padding:11px;border-radius:10px;border:1px solid #ff444433;
+    background:#ff444408;color:#ff4444;font-size:13px;font-weight:700;
+    text-decoration:none;margin-bottom:14px;box-sizing:border-box;">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="#ff4444"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>
+    ▶ 유튜브에서 동작 영상 보기
+  </a>`;
+
   return `
     ${mediaHtml}
+    ${ytBtn}
     <h3>🎯 운동 목적</h3>
     <p>${g.purpose}</p>
     <h3>📐 시작 자세</h3>
@@ -3039,7 +3062,17 @@ function buildGuideHtml(exName, g){
 function buildOfflineGuide(exName, info){
   const steps=info.desc.split(/[.。]\s*/).filter(s=>s.trim().length>3);
   const stepsHtml=steps.map((s,i)=>`<li><strong>${i+1}.</strong> ${s.trim()}.</li>`).join('');
+  const ytQuery=info?.yt||exName+' 운동 방법';
+  const ytUrl='https://www.youtube.com/results?search_query='+encodeURIComponent(ytQuery);
   return `
+    <a href="${ytUrl}" target="_blank" rel="noopener"
+      style="display:flex;align-items:center;justify-content:center;gap:8px;
+      width:100%;padding:11px;border-radius:10px;border:1px solid #ff444433;
+      background:#ff444408;color:#ff4444;font-size:13px;font-weight:700;
+      text-decoration:none;margin-bottom:14px;box-sizing:border-box;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="#ff4444"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>
+      ▶ 유튜브에서 동작 영상 보기
+    </a>
     <ul>${stepsHtml}</ul>
     <div class="warn-box">⚠️ ${info.tip}</div>
     <div class="tip-box">💡 재활 운동은 천천히, 정확하게가 원칙입니다. 무게보다 자세를 우선하세요.</div>
