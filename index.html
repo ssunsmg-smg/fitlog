@@ -293,6 +293,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .lib-cadd{padding:7px 13px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;}
 .eab{padding:3px 8px;border-radius:5px;border:1px solid var(--border);background:none;font-size:10px;cursor:pointer;font-family:var(--font);}
 .eab.info{color:var(--blue);border-color:#4a9eff33;}
+.eab.pf{color:#1D9E75;border-color:#1D9E7533;font-weight:600;}
 .eab.yt{color:#ff4444;border-color:#ff444433;}
 .eab.edit{color:var(--muted);}
 .ex-arrow{font-size:11px;color:var(--muted);flex-shrink:0;margin-top:3px;transition:transform .2s;cursor:pointer;}
@@ -304,6 +305,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .ex-desc-tip{font-size:11px;color:var(--accent);margin-top:6px;padding:6px 10px;background:#e8533a15;border-radius:6px;border-left:2px solid var(--accent);}
 .sets-area{padding:0 14px 12px;border-top:1px solid var(--border);display:none;}
 .sets-area.open{display:block;}
+.rm-badge{margin:6px 2px 4px;padding:6px 10px;background:linear-gradient(90deg,#4a9eff18,#3ecf8e18);border:1px solid #4a9eff33;border-radius:7px;font-size:11px;color:var(--muted);font-family:var(--mono);}
+.rm-badge strong{color:var(--accent2);font-weight:700;}
 .sets-hdr{display:grid;grid-template-columns:28px 1fr 36px;gap:6px;padding:8px 2px 4px;font-size:10px;color:var(--muted);font-family:var(--mono);text-align:center;}
 .set-row{display:grid;grid-template-columns:28px 1fr 36px;gap:6px;align-items:center;margin-bottom:5px;}
 .set-num{font-size:11px;font-family:var(--mono);color:var(--muted);text-align:center;}
@@ -667,7 +670,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="tc-label" id="tc-label">오늘의 루틴</div>
       <div class="tc-title" id="tc-title">로딩 중...</div>
       <div class="tc-sub" id="tc-sub"></div>
-      <button class="tc-btn" onclick="goWorkout()">운동 시작하기 →</button>
+      <button class="tc-btn" onclick="startWorkoutMode()">운동 시작하기 →</button>
     </div>
     <div class="week-row" id="week-row"></div>
     <div class="stat-row">
@@ -800,7 +803,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="stats-grid" id="stats-grid"></div>
     <div style="margin-bottom:10px;font-size:13px;font-weight:700;">루틴별 횟수</div>
     <div id="type-stats"></div>
-    <div style="margin:20px 0 10px;font-size:13px;font-weight:700;">💪 중량 성장 추이</div>
+    <div style="margin:20px 0 10px;font-size:13px;font-weight:700;">📈 주별 운동 볼륨</div>
+    <div id="volume-chart-wrap" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;"></div>
+    <div style="margin:0 0 10px;font-size:13px;font-weight:700;">🎯 부위별 볼륨 분포</div>
+    <div id="muscle-chart-wrap" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;"></div>
+    <div style="margin:0 0 10px;font-size:13px;font-weight:700;">💪 중량 성장 추이</div>
     <div id="weight-history"></div>
   </div>
 </div>
@@ -836,6 +843,25 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <button id="ov-reset-btn" onclick="ovReset()">↺ 리셋</button>
   </div>
   <button id="ov-close-btn" onclick="closeTimerOverlay()">✕ 닫기</button>
+</div>
+
+<!-- 운동 중 모드 오버레이 -->
+<div id="workout-mode" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:8888;flex-direction:column;overflow-y:auto;">
+  <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:1;">
+    <div>
+      <div style="font-size:10px;color:var(--muted);font-family:var(--mono);" id="wm-type-label"></div>
+      <div style="font-size:15px;font-weight:700;" id="wm-title"></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;">
+      <div style="font-size:12px;font-family:var(--mono);color:var(--accent2);" id="wm-timer-total">00:00</div>
+      <button onclick="closeWorkoutMode()" style="padding:5px 12px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);">✕ 종료</button>
+    </div>
+  </div>
+  <div style="padding:0 16px 16px;" id="wm-content"></div>
+  <div style="position:sticky;bottom:0;background:var(--bg);border-top:1px solid var(--border);padding:12px 16px;display:flex;gap:10px;">
+    <button id="wm-prev-btn" onclick="wmNav(-1)" style="flex:1;padding:12px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">← 이전</button>
+    <button id="wm-next-btn" onclick="wmNav(1)" style="flex:2;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">다음 운동 →</button>
+  </div>
 </div>
 
 <!-- 식단 추가 모달 -->
@@ -910,39 +936,39 @@ let editTarget=null, RT={}, userProfile=null, isLoggedIn=false;
 // 운동 설명
 // ══════════════════════════════
 const EX_INFO={
-  '업라이트 바이크':{desc:'안장 높이는 페달이 가장 아래일 때 무릎이 약간 구부러질 정도로 조정. 허리를 곧게 세우고 핸들 가볍게 잡기.',tip:'무릎 수술 후 — 처음엔 저항 최소화',yt:'업라이트 바이크 자세'},
-  '시티드 체스트 프레스':{desc:'등받이에 등을 완전히 밀착. 핸들을 가슴 높이에서 앞으로 밀기. 날개뼈를 모아서 시작.',tip:'어깨 통증 시 팔꿈치가 어깨보다 위로 올라가지 않게',yt:'시티드 체스트 프레스 머신 자세'},
-  '케이블 체스트 플라이':{desc:'팔꿈치를 살짝 구부린 채 유지. 가슴을 쥐어짜는 느낌으로 마무리.',tip:'팔꿈치를 완전히 펴면 관절에 무리',yt:'케이블 체스트 플라이 자세'},
-  '시티드 숄더 프레스':{desc:'핸들을 귀 옆 높이에서 시작. 팔을 위로 뻗되 귀 높이까지만.',tip:'어깨 통증 있으면 귀 높이 이상 올리지 말 것!',yt:'시티드 숄더 프레스 머신 자세'},
-  '케이블 사이드 레터럴':{desc:'케이블을 가장 낮은 위치에 설정. 반동 없이 천천히 내리기.',tip:'중량보다 자세가 중요',yt:'케이블 사이드 레터럴 레이즈 자세'},
-  '크런치':{desc:'복근으로 상체를 말아 올리되 허리는 바닥에서 떼지 않기.',tip:'목을 당기지 말 것. 복근이 당기는 느낌에 집중',yt:'크런치 복근 운동 자세'},
-  '레그 레이즈':{desc:'다리를 곧게 펴서 90도까지 올리기. 천천히 내리기.',tip:'허리가 뜨는 느낌이 나면 무릎을 살짝 구부리기',yt:'레그 레이즈 복근 자세'},
-  '데드버그':{desc:'오른팔-왼다리를 동시에 펴고 복근으로 버티기. 반대편 반복.',tip:'허리가 바닥에서 떨어지지 않는 게 핵심',yt:'데드버그 운동 자세'},
-  '랫 풀다운':{desc:'가슴 상단을 향해 바를 당기기. 등 근육이 수축하는 느낌에 집중.',tip:'팔꿈치를 아래-뒤쪽으로 당기는 느낌',yt:'랫 풀다운 자세 등운동'},
-  '시티드 케이블 로우':{desc:'핸들을 배꼽 방향으로 당기기. 팔꿈치를 몸 가까이 붙여서 등 중간을 수축.',tip:'허리를 앞뒤로 흔들지 말 것',yt:'시티드 케이블 로우 자세'},
-  '시티드 리어 델트 플라이':{desc:'팔을 옆으로 벌려 후면 삼각근 수축.',tip:'승모근이 아닌 후면 삼각근을 쓰는 느낌으로',yt:'리어 델트 플라이 후면 어깨 운동'},
-  '시티드 덤벨 컬':{desc:'팔꿈치 위치 고정하고 손목을 돌리며 올리기.',tip:'반동 사용 금지. 팔꿈치를 몸 옆에 고정',yt:'덤벨 컬 이두근 운동 자세'},
-  '플랭크':{desc:'팔꿈치를 어깨 아래에 위치. 발끝으로 버티며 몸이 일직선이 되게.',tip:'허리 통증 시 즉시 중단',yt:'플랭크 올바른 자세'},
-  '바이시클 크런치':{desc:'자전거 페달 밟는 동작.',tip:'빠르게 하지 말고 복사근이 당기는 느낌으로',yt:'바이시클 크런치 복사근 운동'},
-  '사이드 플랭크':{desc:'옆으로 누워 팔꿈치로 지지. 몸이 일직선이 되게.',tip:'허리 통증 시 무릎을 바닥에 대고 변형 동작으로',yt:'사이드 플랭크 올바른 자세'},
-  '힙 어브덕션 (기계)':{desc:'다리를 천천히 벌리기. 엉덩이 근육이 수축하는 느낌에 집중.',tip:'무릎 수술 후 초경량부터',yt:'힙 어브덕션 머신 자세 중둔근'},
-  '누워서 브릿지':{desc:'발바닥으로 바닥을 밀며 엉덩이를 최대한 높이 들기.',tip:'엉덩이를 끝까지 올려야 대둔근 완전 수축',yt:'힙 브릿지 대둔근 운동'},
-  '클램쉘 (밴드)':{desc:'발끝은 붙인 채 위쪽 무릎만 열기.',tip:'골반이 뒤로 젖혀지지 않게',yt:'클램쉘 운동 중둔근 밴드'},
-  '사이드 라잉 레그 레이즈':{desc:'위쪽 다리를 45도 정도 들어올리기.',tip:'골반이 앞뒤로 흔들리지 않게',yt:'사이드 레그 레이즈 중둔근 운동'},
-  '케이블 킥백':{desc:'다리를 뒤로 뻗어 엉덩이 수축.',tip:'허리로 하지 말고 엉덩이만 사용',yt:'케이블 킥백 대둔근 운동 자세'},
-  '시티드 레그 프레스(초경량)':{desc:'무릎을 천천히 굽혔다 펴기.',tip:'⚠️ 의사 확인 후만!',yt:'레그 프레스 초보자 자세'},
-  '친 턱 당기기 (Chin Tuck)':{desc:'턱을 뒤로 당기기. 이중 턱이 생기는 느낌.',tip:'거북목과 경추 통증에 매우 효과적',yt:'친 턱 운동 거북목 교정'},
+  '업라이트 바이크':{desc:'안장 높이는 페달이 가장 아래일 때 무릎이 약간 구부러질 정도로 조정. 허리를 곧게 세우고 핸들 가볍게 잡기.',tip:'무릎 수술 후 — 처음엔 저항 최소화',yt:'업라이트 바이크 자세',pf:'upright-bike'},
+  '시티드 체스트 프레스':{desc:'등받이에 등을 완전히 밀착. 핸들을 가슴 높이에서 앞으로 밀기. 날개뼈를 모아서 시작.',tip:'어깨 통증 시 팔꿈치가 어깨보다 위로 올라가지 않게',yt:'시티드 체스트 프레스 머신 자세',pf:'seated-chest-press-machine'},
+  '케이블 체스트 플라이':{desc:'팔꿈치를 살짝 구부린 채 유지. 가슴을 쥐어짜는 느낌으로 마무리.',tip:'팔꿈치를 완전히 펴면 관절에 무리',yt:'케이블 체스트 플라이 자세',pf:'cable-chest-fly'},
+  '시티드 숄더 프레스':{desc:'핸들을 귀 옆 높이에서 시작. 팔을 위로 뻗되 귀 높이까지만.',tip:'어깨 통증 있으면 귀 높이 이상 올리지 말 것!',yt:'시티드 숄더 프레스 머신 자세',pf:'shoulder-press-machine'},
+  '케이블 사이드 레터럴':{desc:'케이블을 가장 낮은 위치에 설정. 반동 없이 천천히 내리기.',tip:'중량보다 자세가 중요',yt:'케이블 사이드 레터럴 레이즈 자세',pf:'cable-lateral-raise'},
+  '크런치':{desc:'복근으로 상체를 말아 올리되 허리는 바닥에서 떼지 않기.',tip:'목을 당기지 말 것. 복근이 당기는 느낌에 집중',yt:'크런치 복근 운동 자세',pf:'crunch'},
+  '레그 레이즈':{desc:'다리를 곧게 펴서 90도까지 올리기. 천천히 내리기.',tip:'허리가 뜨는 느낌이 나면 무릎을 살짝 구부리기',yt:'레그 레이즈 복근 자세',pf:'leg-raise'},
+  '데드버그':{desc:'오른팔-왼다리를 동시에 펴고 복근으로 버티기. 반대편 반복.',tip:'허리가 바닥에서 떨어지지 않는 게 핵심',yt:'데드버그 운동 자세',pf:'dead-bug'},
+  '랫 풀다운':{desc:'가슴 상단을 향해 바를 당기기. 등 근육이 수축하는 느낌에 집중.',tip:'팔꿈치를 아래-뒤쪽으로 당기는 느낌',yt:'랫 풀다운 자세 등운동',pf:'lat-pulldown'},
+  '시티드 케이블 로우':{desc:'핸들을 배꼽 방향으로 당기기. 팔꿈치를 몸 가까이 붙여서 등 중간을 수축.',tip:'허리를 앞뒤로 흔들지 말 것',yt:'시티드 케이블 로우 자세',pf:'seated-cable-row'},
+  '시티드 리어 델트 플라이':{desc:'팔을 옆으로 벌려 후면 삼각근 수축.',tip:'승모근이 아닌 후면 삼각근을 쓰는 느낌으로',yt:'리어 델트 플라이 후면 어깨 운동',pf:'rear-delt-fly-machine'},
+  '시티드 덤벨 컬':{desc:'팔꿈치 위치 고정하고 손목을 돌리며 올리기.',tip:'반동 사용 금지. 팔꿈치를 몸 옆에 고정',yt:'덤벨 컬 이두근 운동 자세',pf:'dumbbell-curl'},
+  '플랭크':{desc:'팔꿈치를 어깨 아래에 위치. 발끝으로 버티며 몸이 일직선이 되게.',tip:'허리 통증 시 즉시 중단',yt:'플랭크 올바른 자세',pf:'plank'},
+  '바이시클 크런치':{desc:'자전거 페달 밟는 동작.',tip:'빠르게 하지 말고 복사근이 당기는 느낌으로',yt:'바이시클 크런치 복사근 운동',pf:'bicycle-crunch'},
+  '사이드 플랭크':{desc:'옆으로 누워 팔꿈치로 지지. 몸이 일직선이 되게.',tip:'허리 통증 시 무릎을 바닥에 대고 변형 동작으로',yt:'사이드 플랭크 올바른 자세',pf:'side-plank'},
+  '힙 어브덕션 (기계)':{desc:'다리를 천천히 벌리기. 엉덩이 근육이 수축하는 느낌에 집중.',tip:'무릎 수술 후 초경량부터',yt:'힙 어브덕션 머신 자세 중둔근',pf:'hip-abduction-machine'},
+  '누워서 브릿지':{desc:'발바닥으로 바닥을 밀며 엉덩이를 최대한 높이 들기.',tip:'엉덩이를 끝까지 올려야 대둔근 완전 수축',yt:'힙 브릿지 대둔근 운동',pf:'glute-bridge'},
+  '클램쉘 (밴드)':{desc:'발끝은 붙인 채 위쪽 무릎만 열기.',tip:'골반이 뒤로 젖혀지지 않게',yt:'클램쉘 운동 중둔근 밴드',pf:'clamshell'},
+  '사이드 라잉 레그 레이즈':{desc:'위쪽 다리를 45도 정도 들어올리기.',tip:'골반이 앞뒤로 흔들리지 않게',yt:'사이드 레그 레이즈 중둔근 운동',pf:'side-lying-hip-abduction'},
+  '케이블 킥백':{desc:'다리를 뒤로 뻗어 엉덩이 수축.',tip:'허리로 하지 말고 엉덩이만 사용',yt:'케이블 킥백 대둔근 운동 자세',pf:'cable-kickback'},
+  '시티드 레그 프레스(초경량)':{desc:'무릎을 천천히 굽혔다 펴기.',tip:'⚠️ 의사 확인 후만!',yt:'레그 프레스 초보자 자세',pf:'leg-press'},
+  '친 턱 당기기 (Chin Tuck)':{desc:'턱을 뒤로 당기기. 이중 턱이 생기는 느낌.',tip:'거북목과 경추 통증에 매우 효과적',yt:'친 턱 운동 거북목 교정',pf:'chin-tuck'},
   '목 등척성 운동':{desc:'손으로 머리를 밀고 머리로 손에 저항하기.',tip:'실제로 머리가 움직이지 않아야 함',yt:'목 근력 강화 등척성 운동'},
-  '폼롤러 흉추 이완':{desc:'폼롤러를 등 중간(흉추)에 가로로 놓기.',tip:'허리(요추)가 아닌 등 중간만!',yt:'폼롤러 흉추 이완 등 스트레칭'},
-  '고양이-소 스트레칭':{desc:'고양이: 등을 위로 둥글게. 소: 등을 아래로. 호흡에 맞춰.',tip:'디스크 환자에게 매우 좋음',yt:'고양이 소 스트레칭 척추 이완'},
+  '폼롤러 흉추 이완':{desc:'폼롤러를 등 중간(흉추)에 가로로 놓기.',tip:'허리(요추)가 아닌 등 중간만!',yt:'폼롤러 흉추 이완 등 스트레칭',pf:'thoracic-spine-foam-rolling'},
+  '고양이-소 스트레칭':{desc:'고양이: 등을 위로 둥글게. 소: 등을 아래로. 호흡에 맞춰.',tip:'디스크 환자에게 매우 좋음',yt:'고양이 소 스트레칭 척추 이완',pf:'cat-cow-stretch'},
   '맥켄지 운동':{desc:'엎드려 눕기. 상체를 들어올리기.',tip:'통증이 다리로 퍼지면 즉시 중단',yt:'맥켄지 운동 허리 디스크 재활'},
-  '피전 포즈':{desc:'한 다리를 앞으로 접어 놓고 뒷다리를 뒤로 쭉 뻗기.',tip:'둔근이 당기는 느낌이 나야 정상',yt:'피전 포즈 고관절 스트레칭'},
-  '누워서 무릎 당기기':{desc:'한쪽 무릎을 가슴 쪽으로 당기기. 30-60초 유지.',tip:'허리 수술 후 재활에 기본 스트레칭',yt:'무릎 당기기 스트레칭 허리'},
-  '밴드 풀어파트':{desc:'밴드를 양손으로 잡고 양쪽으로 당기기.',tip:'라운드숄더와 굽은 등 교정에 효과적',yt:'밴드 풀어파트 어깨 교정 운동'},
-  '케이블 크런치':{desc:'케이블 머신 앞에 무릎 꿇기. 복근으로 몸을 아래로 말기.',tip:'허리로 당기지 말고 복근만 사용',yt:'케이블 크런치 복근 운동 자세'},
-  '행잉 니 레이즈':{desc:'철봉에 매달리기. 무릎을 구부려 가슴까지 당기기.',tip:'처음엔 무릎을 90도까지만',yt:'행잉 니 레이즈 하복부 운동'},
-  '리버스 크런치':{desc:'무릎을 구부려 가슴 쪽으로 당기기.',tip:'복근이 당기는 느낌에 집중',yt:'리버스 크런치 하복부 운동'},
-  '덤벨 숄더 프레스':{desc:'덤벨을 귀 옆 높이에 위치. 팔을 위로 뻗기.',tip:'어깨 통증 주의',yt:'덤벨 숄더 프레스 어깨 운동'},
+  '피전 포즈':{desc:'한 다리를 앞으로 접어 놓고 뒷다리를 뒤로 쭉 뻗기.',tip:'둔근이 당기는 느낌이 나야 정상',yt:'피전 포즈 고관절 스트레칭',pf:'pigeon-pose'},
+  '누워서 무릎 당기기':{desc:'한쪽 무릎을 가슴 쪽으로 당기기. 30-60초 유지.',tip:'허리 수술 후 재활에 기본 스트레칭',yt:'무릎 당기기 스트레칭 허리',pf:'lying-knee-to-chest-stretch'},
+  '밴드 풀어파트':{desc:'밴드를 양손으로 잡고 양쪽으로 당기기.',tip:'라운드숄더와 굽은 등 교정에 효과적',yt:'밴드 풀어파트 어깨 교정 운동',pf:'band-pull-apart'},
+  '케이블 크런치':{desc:'케이블 머신 앞에 무릎 꿇기. 복근으로 몸을 아래로 말기.',tip:'허리로 당기지 말고 복근만 사용',yt:'케이블 크런치 복근 운동 자세',pf:'cable-crunch'},
+  '행잉 니 레이즈':{desc:'철봉에 매달리기. 무릎을 구부려 가슴까지 당기기.',tip:'처음엔 무릎을 90도까지만',yt:'행잉 니 레이즈 하복부 운동',pf:'hanging-knee-raise'},
+  '리버스 크런치':{desc:'무릎을 구부려 가슴 쪽으로 당기기.',tip:'복근이 당기는 느낌에 집중',yt:'리버스 크런치 하복부 운동',pf:'reverse-crunch'},
+  '덤벨 숄더 프레스':{desc:'덤벨을 귀 옆 높이에 위치. 팔을 위로 뻗기.',tip:'어깨 통증 주의',yt:'덤벨 숄더 프레스 어깨 운동',pf:'dumbbell-shoulder-press'},
   '전신 스트레칭':{
     desc:'🔵 전신 마무리 순서 (총 10분)\n\n① 폼롤러 전신 이완 — 3분\n   등→허벅지→종아리 순서로 천천히 롤링\n\n② 피전 포즈 — 양쪽 각 60초\n   엉덩이와 고관절을 깊게 이완\n\n③ 고양이-소 스트레칭 — 10회\n   척추 전체를 부드럽게 이완\n\n④ 어깨 가로 스트레칭 — 양쪽 각 30초\n   한 팔을 가슴 앞으로 당겨 어깨 뒤쪽 이완\n\n⑤ 햄스트링 스트레칭 — 양쪽 각 30초\n   다리 펴고 앉아 발끝 당기기',
     tip:'각 동작 사이 10초 휴식. 통증이 아닌 당기는 느낌이 정상',
@@ -1212,16 +1238,36 @@ function initSetData(tk){
   setData={};const rt=RT[tk];if(!rt||!rt.sections)return;
   rt.sections.forEach((sec,si)=>sec.exs.forEach((ex,ei)=>{if(ex.sets>0){const k=exKey(si,ei);setData[k]=Array.from({length:ex.sets},()=>({weight:'',reps:'',done:false}));}}));
 }
+function calc1RM(weight,reps){
+  if(!weight||!reps||reps<=0)return 0;
+  return Math.round(parseFloat(weight)*(1+parseInt(reps)/30)*10)/10;
+}
 function renderSets(key,cId){
   const sets=setData[key];if(!sets)return;
   const c=document.getElementById(cId);if(!c)return;
+  // 1RM 계산 (입력된 세트 중 최고값)
+  let best1RM=0;
+  sets.forEach(s=>{if(s.weight&&s.reps){const v=calc1RM(s.weight,s.reps);if(v>best1RM)best1RM=v;}});
+  const rmHtml=best1RM>0?`<div class="rm-badge">추정 1RM <strong>${best1RM}kg</strong> · 다음 목표 <strong>${Math.round(best1RM*0.75*10)/10}kg × 10회</strong></div>`:'';
   c.innerHTML=`<div class="sets-hdr"><div>세트</div><div>중량 kg</div><div>✓</div></div>
     ${sets.map((s,i)=>`<div class="set-row" id="sr-${key}-${i}">
       <div class="set-num">${i+1}</div>
-      <input class="set-inp ${s.weight?'filled':''}" type="number" value="${s.weight}" placeholder="0" min="0" step="0.5" oninput="updSet('${key}',${i},'weight',this.value)"/>
+      <input class="set-inp ${s.weight?'filled':''}" type="number" value="${s.weight}" placeholder="0" min="0" step="0.5" oninput="updSet('${key}',${i},'weight',this.value);refreshRM('${key}','${cId}')"/>
       <button class="set-ok ${s.done?'done':''}" onclick="toggleSetDone('${key}',${i})">✓</button>
     </div>`).join('')}
+    ${rmHtml}
     <button class="add-set" onclick="addSet('${key}','${cId}')">+ 세트 추가</button>`;
+}
+function refreshRM(key,cId){
+  // weight 입력시 1RM 배지만 실시간 갱신
+  const c=document.getElementById(cId);if(!c)return;
+  const sets=setData[key];if(!sets)return;
+  let best=0;sets.forEach(s=>{if(s.weight&&s.reps){const v=calc1RM(s.weight,s.reps);if(v>best)best=v;}});
+  let badge=c.querySelector('.rm-badge');
+  if(best>0){
+    if(!badge){badge=document.createElement('div');badge.className='rm-badge';c.insertBefore(badge,c.lastElementChild);}
+    badge.innerHTML=`추정 1RM <strong>${best}kg</strong> · 다음 목표 <strong>${Math.round(best*0.75*10)/10}kg × 10회</strong>`;
+  } else if(badge){badge.remove();}
 }
 function saveSetDataLocal(){try{localStorage.setItem('fitlog_setData',JSON.stringify({day:selDay,data:setData}));}catch(e){}}
 function loadSetDataLocal(){try{const s=localStorage.getItem('fitlog_setData');if(!s)return;const p=JSON.parse(s);if(p.day===selDay){Object.assign(setData,p.data);}}catch(e){}}
@@ -1351,7 +1397,8 @@ function renderWorkout(){
         +'<div class="ex-tags">'+mTags+wTags+'</div>'
         +'<div class="ex-actions">'
         +(info?'<button class="eab info" data-action="desc" data-descid="'+descId+'">📖 설명</button>':'')
-        +(info?'<button class="eab yt" data-action="yt" data-q="'+encodeURIComponent(ytQ)+'">▶ 유튜브</button>':'')
+        +(info&&info.pf?'<button class="eab pf" data-action="pf" data-pf="'+info.pf+'">🏋️ 자세가이드</button>':'')
+        +(info&&!info.pf?'<button class="eab yt" data-action="yt" data-q="'+encodeURIComponent(ytQ)+'">▶ 유튜브</button>':'')
         +(isTimeBased?'<button class="eab" style="color:var(--green);border-color:#3ecf8e33;" data-action="timer" data-si="'+si+'" data-ei="'+ei+'" data-sec="'+timerSec+'" data-name="'+encodeURIComponent(ex.n)+'">⏱ 타이머</button>':'')
         +'<button class="eab edit" data-action="edit" data-tk="'+tk+'" data-si="'+si+'" data-ei="'+ei+'">✏️ 수정</button>'
         +'<button class="eab" style="color:#ff6b6b;border-color:#ff6b6b33;" data-action="del" data-tk="'+tk+'" data-si="'+si+'" data-ei="'+ei+'">🗑️ 삭제</button>'
@@ -1398,6 +1445,7 @@ function handleWorkoutClick(e){
   }
   else if(act==='desc'){document.getElementById(el.dataset.descid)?.classList.toggle('open');}
   else if(act==='yt'){window.open('https://www.youtube.com/results?search_query='+el.dataset.q,'_blank');}
+  else if(act==='pf'){window.open('https://planfit.ai/ko/exercise/'+el.dataset.pf,'_blank');}
   else if(act==='timer'){openTimerOverlay(decodeURIComponent(el.dataset.name),parseInt(el.dataset.sec),el.dataset.si,el.dataset.ei);}
   else if(act==='edit'){openEdit(el.dataset.tk,parseInt(el.dataset.si),parseInt(el.dataset.ei));}
   else if(act==='del'){delEx(el.dataset.tk,parseInt(el.dataset.si),parseInt(el.dataset.ei));}
@@ -1605,12 +1653,62 @@ function renderStats(){
   const tC={A:'var(--blue)',B:'var(--green)',C:'var(--purple)',D:'var(--accent2)',E:'var(--accent)',F:'var(--purple)'};
   const maxC=Math.max(...Object.values(tc),1);
   document.getElementById('type-stats').innerHTML=Object.entries(tL).map(([t,lb])=>{const cnt=tc[t]||0;return`<div style="margin-bottom:9px;"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;"><span style="color:${tC[t]};">${lb}</span><span style="font-family:var(--mono);color:var(--muted);">${cnt}회</span></div><div style="height:5px;background:var(--border);border-radius:3px;"><div style="height:100%;width:${Math.round(cnt/maxC*100)}%;background:${tC[t]};border-radius:3px;"></div></div></div>`;}).join('');
+
+  // ── 주별 볼륨 그래프 ──
+  const volWrap=document.getElementById('volume-chart-wrap');
+  const weeks=[];
+  for(let w=7;w>=0;w--){
+    const wStart=new Date(today);wStart.setDate(today.getDate()-w*7-6);
+    const wEnd=new Date(today);wEnd.setDate(today.getDate()-w*7);
+    const wRecs=records.filter(r=>{const d=new Date(r.date);return d>=wStart&&d<=wEnd;});
+    let vol=0;wRecs.forEach(r=>{if(r.sets)r.sets.forEach(s=>{if(s.weight)vol+=parseFloat(s.weight)*4;});vol+=r.exDone*50;});
+    const label=wEnd.getMonth()+1+'/'+(wEnd.getDate());
+    weeks.push({label,vol:Math.round(vol),cnt:wRecs.length});
+  }
+  const maxVol=Math.max(...weeks.map(w=>w.vol),1);
+  if(records.length<2){volWrap.innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px;text-align:center;">2회 이상 기록하면 볼륨 그래프가 표시됩니다</div>';}
+  else{
+    volWrap.innerHTML=`<div style="display:flex;align-items:flex-end;gap:4px;height:80px;margin-bottom:8px;">
+      ${weeks.map(w=>`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
+        <div style="font-size:9px;color:var(--muted);font-family:var(--mono);">${w.vol>0?w.vol:''}</div>
+        <div style="width:100%;background:${w.vol>0?'var(--green)':'var(--border)'};border-radius:3px 3px 0 0;height:${Math.max(w.vol/maxVol*60,w.cnt>0?3:0)}px;opacity:${w.vol===maxVol?'1':'0.6'};transition:height .3s;"></div>
+      </div>`).join('')}
+    </div>
+    <div style="display:flex;gap:4px;">
+      ${weeks.map(w=>`<div style="flex:1;text-align:center;font-size:9px;color:var(--muted);font-family:var(--mono);">${w.label}</div>`).join('')}
+    </div>
+    <div style="font-size:10px;color:var(--muted);margin-top:6px;">* 볼륨 = 중량 × 세트 추정치. 높을수록 이번 주 운동량 많음</div>`;
+  }
+
+  // ── 부위별 볼륨 분포 ──
+  const muscleWrap=document.getElementById('muscle-chart-wrap');
+  const muscleMap={가슴:0,등:0,어깨:0,팔:0,하체:0,둔근:0,코어:0,유산소:0};
+  const typeToMuscle={A:['가슴','어깨'],B:['등','팔'],C:['하체','둔근'],D:['유산소'],E:['코어'],F:['하체','둔근']};
+  records.forEach(r=>{const ms=typeToMuscle[r.type]||[];ms.forEach(m=>{if(muscleMap[m]!==undefined)muscleMap[m]+=(r.exDone||1);});});
+  const muscTotal=Object.values(muscleMap).reduce((a,b)=>a+b,0)||1;
+  const mColors={가슴:'var(--blue)',등:'var(--green)',어깨:'var(--accent2)',팔:'var(--purple)',하체:'var(--accent)',둔근:'#e91e8c',코어:'#3ecf8e',유산소:'#ff9800'};
+  const muscEntries=Object.entries(muscleMap).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
+  if(!muscEntries.length){muscleWrap.innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px;text-align:center;">운동을 기록하면 부위별 분포가 표시됩니다</div>';}
+  else{
+    const maxM=muscEntries[0][1];
+    muscleWrap.innerHTML=muscEntries.map(([m,v])=>`<div style="margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+        <span style="color:${mColors[m]};">${m}</span>
+        <span style="font-family:var(--mono);color:var(--muted);">${Math.round(v/muscTotal*100)}%</span>
+      </div>
+      <div style="height:6px;background:var(--border);border-radius:3px;">
+        <div style="height:100%;width:${Math.round(v/maxM*100)}%;background:${mColors[m]};border-radius:3px;transition:width .4s;"></div>
+      </div></div>`).join('');
+  }
+
   const wMap={};records.forEach(rec=>{if(!rec.sets)return;rec.sets.forEach(s=>{if(!s.weight)return;if(!wMap[s.ex])wMap[s.ex]=[];wMap[s.ex].push({date:rec.date,weight:parseFloat(s.weight),reps:s.reps});});});
   const topExs=Object.entries(wMap).sort((a,b)=>b[1].length-a[1].length).slice(0,5);
   document.getElementById('weight-history').innerHTML=topExs.length?topExs.map(([ex,arr])=>{
     const sorted=arr.sort((a,b)=>a.date.localeCompare(b.date)),latest=sorted[sorted.length-1],first=sorted[0];
     const diff=+(latest.weight-first.weight).toFixed(1),dc=diff>0?'var(--green)':diff<0?'var(--accent)':'var(--muted)';
-    return`<div class="w-card"><div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span style="font-size:12px;font-weight:500;">${ex}</span><span style="font-size:11px;font-family:var(--mono);color:${dc};">${diff>0?'+':''}${diff}kg${diff>0?'↑':diff<0?'↓':''}</span></div><div style="font-size:11px;color:var(--muted);font-family:var(--mono);">최근 ${latest.weight}kg × ${latest.reps||'?'}회 · ${latest.date}</div></div>`;
+    const est1rm=calc1RM(latest.weight,latest.reps||12);
+    return`<div class="w-card"><div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span style="font-size:12px;font-weight:500;">${ex}</span><span style="font-size:11px;font-family:var(--mono);color:${dc};">${diff>0?'+':''}${diff}kg${diff>0?'↑':diff<0?'↓':''}</span></div>
+    <div style="font-size:11px;color:var(--muted);font-family:var(--mono);">최근 ${latest.weight}kg · ${latest.date}${est1rm?' · 추정1RM '+est1rm+'kg':''}</div></div>`;
   }).join(''):`<div style="color:var(--muted);font-size:13px;padding:10px;">중량 기록이 쌓이면 여기에 표시됩니다.</div>`;
 }
 
@@ -2447,6 +2545,161 @@ setTimeout(()=>{
     if(warn && isInApp) warn.style.display='block';
   }
 }, 5000);
+// ══════════════════════════════
+// 운동 중 모드
+// ══════════════════════════════
+let _wm={exList:[],cur:0,startTime:null,totalInterval:null,restInterval:null,restRemain:0};
+
+function startWorkoutMode(){
+  const tk=DAY_SCHED[new Date().getDay()],rt=RT[tk];
+  if(!rt||tk==='REST'){showToast('오늘은 휴식일이에요 😴','info');return;}
+  // 모든 운동 평탄화 (워밍업 포함)
+  _wm.exList=[];
+  rt.sections.forEach((sec,si)=>sec.exs.forEach((ex,ei)=>{
+    _wm.exList.push({ex,si,ei,sec:sec.n,tk,
+      isTime:!( ex.sets>0)&&/초|분/.test(ex.d),
+      timerSec:(!( ex.sets>0)&&/초|분/.test(ex.d))?parseTimerSec(ex.d):0,
+      sets:ex.sets>0?Array.from({length:ex.sets},()=>({weight:'',done:false})):[]
+    });
+  }));
+  _wm.cur=0;_wm.startTime=Date.now();
+  initSetData(tk);
+  document.getElementById('workout-mode').style.display='flex';
+  document.body.style.overflow='hidden';
+  // 총 운동시간 카운터
+  _wm.totalInterval=setInterval(()=>{
+    const s=Math.floor((Date.now()-_wm.startTime)/1000);
+    const m=Math.floor(s/60),ss=s%60;
+    document.getElementById('wm-timer-total').textContent=(m<10?'0':'')+m+':'+(ss<10?'0':'')+ss;
+  },1000);
+  wmRender();
+}
+
+function closeWorkoutMode(){
+  clearInterval(_wm.totalInterval);clearInterval(_wm.restInterval);
+  document.getElementById('workout-mode').style.display='none';
+  document.body.style.overflow='';
+  // 운동탭으로 이동해서 저장 유도
+  showPage('workout');showToast('운동 완료! 아래에서 저장해주세요 💾','success');
+}
+
+function wmNav(dir){
+  _wm.cur=Math.max(0,Math.min(_wm.exList.length-1,_wm.cur+dir));
+  wmRender();
+  document.getElementById('wm-content').scrollIntoView({behavior:'smooth'});
+}
+
+function wmSetWeight(idx,val){_wm.exList[_wm.cur].sets[idx].weight=val;}
+function wmToggleSet(idx){
+  const item=_wm.exList[_wm.cur];
+  item.sets[idx].done=!item.sets[idx].done;
+  const btn=document.getElementById('wm-setok-'+idx);
+  if(btn)btn.classList.toggle('done',item.sets[idx].done);
+  // 전체 세트 완료 → 자동 휴식 타이머
+  if(item.sets.every(s=>s.done)){wmStartRest(90);}
+  wmUpdateProg();
+}
+function wmUpdateProg(){
+  const item=_wm.exList[_wm.cur];
+  const done=item.sets.filter(s=>s.done).length,total=item.sets.length;
+  const bar=document.getElementById('wm-ex-prog');
+  if(bar&&total>0)bar.style.width=Math.round(done/total*100)+'%';
+}
+
+function wmStartRest(sec){
+  clearInterval(_wm.restInterval);
+  _wm.restRemain=sec;
+  const restEl=document.getElementById('wm-rest-timer');
+  if(!restEl)return;
+  restEl.style.display='flex';
+  const upd=()=>{
+    const r=document.getElementById('wm-rest-sec');
+    if(r)r.textContent=_wm.restRemain;
+    if(_wm.restRemain<=0){clearInterval(_wm.restInterval);if(restEl)restEl.style.display='none';try{if(navigator.vibrate)navigator.vibrate([200,100,200]);}catch(e){}showToast('휴식 완료! 다음 세트 시작 💪','success');}
+    else _wm.restRemain--;
+  };
+  upd();_wm.restInterval=setInterval(upd,1000);
+}
+function wmSkipRest(){clearInterval(_wm.restInterval);const r=document.getElementById('wm-rest-timer');if(r)r.style.display='none';}
+
+function wmRender(){
+  const item=_wm.exList[_wm.cur];if(!item)return;
+  const info=EX_INFO[item.ex.n];
+  const total=_wm.exList.length,cur=_wm.cur;
+  const pct=Math.round(cur/total*100);
+  // 헤더
+  document.getElementById('wm-type-label').textContent=`${cur+1} / ${total} · ${item.sec}`;
+  document.getElementById('wm-title').textContent=item.ex.n;
+  // 이전/다음 버튼
+  document.getElementById('wm-prev-btn').disabled=cur===0;
+  const nextBtn=document.getElementById('wm-next-btn');
+  nextBtn.textContent=cur===total-1?'✅ 운동 완료':'다음 운동 →';
+  nextBtn.onclick=cur===total-1?closeWorkoutMode:()=>wmNav(1);
+
+  let html=`
+  <div style="height:4px;background:var(--border);border-radius:2px;margin:12px 0 16px;">
+    <div style="height:100%;width:${pct}%;background:var(--accent);border-radius:2px;transition:width .3s;"></div>
+  </div>`;
+
+  // 운동 상세
+  const wTags=item.ex.w.map(w=>`<span class="etag ${w.includes('허리')?'t-back':w.includes('무릎')?'t-knee':w.includes('어깨')?'t-sh':''}">${w}</span>`).join('');
+  const mTags=item.ex.tags.map(t=>`<span class="etag t-main">${t}</span>`).join('');
+  html+=`<div style="margin-bottom:14px;">
+    <div style="font-size:22px;font-weight:900;margin-bottom:4px;">${item.ex.n}</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:8px;">${item.ex.d}</div>
+    <div>${mTags}${wTags}</div>
+  </div>`;
+
+  // 플랜핏 가이드 버튼
+  if(info&&info.pf){
+    html+=`<button onclick="window.open('https://planfit.ai/ko/exercise/${info.pf}','_blank')" style="width:100%;padding:10px;border-radius:10px;border:1px solid #1D9E7533;background:#1D9E7508;color:#1D9E75;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:14px;">🏋️ 플랜핏 자세 가이드 보기</button>`;
+  }
+
+  // 시간 운동
+  if(item.isTime){
+    const timerSec=item.timerSec;
+    const setCount=parseInt(item.ex.d.match(/(\d+)\s*세트/)?.[1]||'1');
+    html+=`<div style="display:flex;flex-direction:column;gap:8px;margin-bottom:14px;">`;
+    for(let i=0;i<setCount;i++){
+      html+=`<button onclick="openTimerOverlay('${encodeURIComponent(item.ex.n)}',${timerSec},'${item.si}','${item.ei}')" style="padding:14px;border-radius:10px;border:1px solid var(--green);background:#4caf7d10;color:var(--green);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);">⏱ ${setCount>1?i+1+'세트 · ':''} ${timerSec}초 타이머 시작</button>`;
+    }
+    html+=`</div>`;
+  }
+
+  // 세트 운동
+  if(item.sets.length>0){
+    html+=`<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:14px;">
+      <div style="display:grid;grid-template-columns:28px 1fr 40px;gap:6px;padding:8px 14px;font-size:10px;color:var(--muted);font-family:var(--mono);border-bottom:1px solid var(--border);">
+        <div>세트</div><div>중량 kg</div><div>✓</div>
+      </div>`;
+    item.sets.forEach((s,i)=>{
+      html+=`<div style="display:grid;grid-template-columns:28px 1fr 40px;gap:6px;padding:8px 14px;align-items:center;border-bottom:1px solid var(--border);">
+        <div style="font-size:12px;font-family:var(--mono);color:var(--muted);text-align:center;">${i+1}</div>
+        <input type="number" value="${s.weight}" placeholder="0" min="0" step="0.5" style="background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:8px;font-size:15px;color:var(--text);font-family:var(--mono);text-align:center;width:100%;" oninput="wmSetWeight(${i},this.value)"/>
+        <button id="wm-setok-${i}" class="set-ok ${s.done?'done':''}" onclick="wmToggleSet(${i})" style="width:36px;height:36px;">✓</button>
+      </div>`;
+    });
+    html+=`<div style="height:4px;background:var(--border);"><div id="wm-ex-prog" style="height:100%;background:var(--green);transition:width .3s;width:${Math.round(item.sets.filter(s=>s.done).length/item.sets.length*100)}%;"></div></div>`;
+    html+=`</div>`;
+    // 휴식 타이머 (처음엔 숨김)
+    html+=`<div id="wm-rest-timer" style="display:none;align-items:center;justify-content:space-between;background:#4caf7d15;border:1px solid var(--green);border-radius:10px;padding:12px 16px;margin-bottom:12px;">
+      <div style="font-size:13px;color:var(--green);">💤 휴식 중 <strong id="wm-rest-sec">90</strong>초</div>
+      <button onclick="wmSkipRest()" style="padding:5px 12px;border-radius:7px;border:1px solid var(--green);background:none;color:var(--green);font-size:12px;cursor:pointer;font-family:var(--font);">건너뛰기</button>
+    </div>`;
+  }
+
+  // 설명
+  if(info){
+    html+=`<div style="background:var(--surface2);border-radius:10px;padding:12px 14px;">
+      <div style="font-size:11px;font-weight:700;color:var(--blue);margin-bottom:6px;">📋 운동 방법</div>
+      <div style="font-size:12px;color:var(--muted);line-height:1.8;white-space:pre-line;">${info.desc}</div>
+      <div style="font-size:11px;color:var(--accent);margin-top:8px;padding:6px 10px;background:#e8533a15;border-radius:6px;border-left:2px solid var(--accent);">⚠️ ${info.tip}</div>
+    </div>`;
+  }
+
+  document.getElementById('wm-content').innerHTML=html;
+}
+
 // ══════════════════════════════
 // 타이머 시스템
 // ══════════════════════════════
