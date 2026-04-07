@@ -2759,6 +2759,7 @@ setTimeout(()=>{
 // ══════════════════════════════
 // AI 운동 가이드 (Claude API)
 // ══════════════════════════════
+const _CACHE_VER='v3';
 const _aiCache={};  // 운동명 → 생성된 가이드 캐시
 
 function openAiGuide(exName,tags,warn){
@@ -2771,10 +2772,11 @@ function openAiGuide(exName,tags,warn){
   document.getElementById('ai-guide-title').textContent=exName;
   document.getElementById('ai-guide-content').innerHTML='';
 
-  // 캐시 확인
-  if(_aiCache[exName]){
+  // 캐시 확인 (버전이 같을 때만)
+  const cacheKey=_CACHE_VER+':'+exName;
+  if(_aiCache[cacheKey]){
     document.getElementById('ai-loading').style.display='none';
-    document.getElementById('ai-guide-content').innerHTML=_aiCache[exName];
+    document.getElementById('ai-guide-content').innerHTML=_aiCache[cacheKey];
     return;
   }
   document.getElementById('ai-loading').style.display='flex';
@@ -2822,19 +2824,20 @@ async function fetchAiGuide(prompt, exName){
     loadingEl.style.display='none';
     const guide=EX_GUIDE[exName];
     const info=EX_INFO[exName];
+    const cacheKey=_CACHE_VER+':'+exName;
 
     if(guide){
       const html=buildGuideHtml(exName, guide);
       contentEl.innerHTML=html;
-      _aiCache[exName]=html;
+      _aiCache[cacheKey]=html;
     } else if(info){
       const html=buildOfflineGuide(exName, info);
       contentEl.innerHTML=html;
-      _aiCache[exName]=html;
+      _aiCache[cacheKey]=html;
     } else {
       contentEl.innerHTML=`<div class="warn-box">⚠️ 해당 운동의 가이드가 준비 중입니다.</div>`;
     }
-  }, 600); // 자연스러운 로딩감을 위한 짧은 딜레이
+  }, 400);
 }
 
 // 운동별 공개 GIF 이미지 (Wikimedia Commons 공개도메인)
@@ -2983,32 +2986,6 @@ function getExAnimation(exName){
   <line x1="175" y1="118" x2="185" y2="128" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
   <line x1="185" y1="128" x2="192" y2="120" stroke="#e8e8e8" stroke-width="4" stroke-linecap="round"/>
   <text x="140" y="145" text-anchor="middle" fill="#e8533a" font-size="11" font-family="sans-serif">엉덩이 최대한 높이 들기</text>
-</svg>`,
-
-'랫 풀다운':`<svg viewBox="0 0 280 180" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#111;">
-  <defs><style>
-    .lp2-bar{animation:lp2 2s ease-in-out infinite;}
-    .lp2-al{animation:lp2-al 2s ease-in-out infinite;transform-origin:140px 95px;}
-    .lp2-ar{animation:lp2-ar 2s ease-in-out infinite;transform-origin:140px 95px;}
-    @keyframes lp2{0%,100%{transform:translateY(0);}50%{transform:translateY(38px);}}
-    @keyframes lp2-al{0%,100%{transform:rotate(-30deg);}50%{transform:rotate(5deg);}}
-    @keyframes lp2-ar{0%,100%{transform:rotate(30deg);}50%{transform:rotate(-5deg);}}
-  </style></defs>
-  <rect x="22" y="8" width="6" height="155" rx="3" fill="#444"/>
-  <rect x="252" y="8" width="6" height="155" rx="3" fill="#444"/>
-  <rect x="22" y="8" width="236" height="7" rx="3" fill="#444"/>
-  <line x1="140" y1="15" x2="140" y2="48" stroke="#888" stroke-width="2" class="lp2-bar"/>
-  <g class="lp2-bar">
-    <rect x="78" y="46" width="124" height="7" rx="3" fill="#e8533a"/>
-  </g>
-  <circle cx="140" cy="72" r="13" fill="none" stroke="#e8e8e8" stroke-width="2.5"/>
-  <line x1="140" y1="85" x2="140" y2="128" stroke="#e8e8e8" stroke-width="5" stroke-linecap="round"/>
-  <line x1="140" y1="128" x2="118" y2="155" stroke="#e8e8e8" stroke-width="4" stroke-linecap="round"/>
-  <line x1="140" y1="128" x2="162" y2="155" stroke="#e8e8e8" stroke-width="4" stroke-linecap="round"/>
-  <g class="lp2-al"><line x1="140" y1="95" x2="88" y2="53" stroke="#4a9eff" stroke-width="4" stroke-linecap="round"/></g>
-  <g class="lp2-ar"><line x1="140" y1="95" x2="192" y2="53" stroke="#4a9eff" stroke-width="4" stroke-linecap="round"/></g>
-  <rect x="118" y="155" width="44" height="7" rx="3" fill="#555"/>
-  <text x="140" y="174" text-anchor="middle" fill="#4a9eff" font-size="11" font-family="sans-serif">등으로 당기기 — 팔은 보조</text>
 </svg>`,
 
 '시티드 케이블 로우':`<svg viewBox="0 0 280 160" xmlns="http://www.w3.org/2000/svg" style="width:100%;border-radius:10px;background:#111;">
