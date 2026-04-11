@@ -432,6 +432,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .diet-goal-inp:focus{outline:none;border-color:var(--green);}
 .diet-save-btn{width:100%;padding:11px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:12px;}
 .diet-save-btn:hover{opacity:.9;}
+/* ── 보충 운동 이전 ── */
+.makeup-card{background:linear-gradient(135deg,#f0a5000d,#e8533a0d);border:1px solid #f0a50044;border-radius:10px;padding:14px 16px;margin:10px 0 0;}
+.makeup-title{font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:10px;}
+.makeup-day-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
+.makeup-day-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);transition:all .15s;}
+.makeup-day-btn.sel{background:#f0a50020;border-color:var(--accent2);color:var(--accent2);font-weight:700;}
+.makeup-confirm-btn{width:100%;padding:9px;border-radius:8px;border:none;background:var(--accent2);color:#000;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.makeup-confirm-btn:disabled{opacity:.4;cursor:not-allowed;background:var(--border);color:var(--muted);}
+
 /* ── AI 식단 ── */
 .ai-diet-card{background:linear-gradient(135deg,#4a9eff0d,#9b7fe80d);border:1px solid #4a9eff44;border-radius:12px;padding:16px;margin-bottom:16px;}
 .ai-diet-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;color:var(--blue);}
@@ -1575,7 +1584,8 @@ function renderWorkout(){
   });
   const content=document.getElementById('routine-content'),bottom=document.getElementById('bottom-bar');
   if(tk==='REST'){
-    content.innerHTML='<div class="rest-card"><div style="font-size:34px;margin-bottom:10px;">😴</div><div style="font-size:17px;font-weight:700;margin-bottom:7px;">오늘은 휴식일!</div><div style="font-size:13px;color:var(--muted);line-height:1.9;">근육은 쉴 때 성장합니다<br>가벼운 산책 20분 OK<br>단백질 식사 꼭 챙기기</div></div>';
+    content.innerHTML='<div class="rest-card"><div style="font-size:34px;margin-bottom:10px;">😴</div><div style="font-size:17px;font-weight:700;margin-bottom:7px;">오늘은 휴식일!</div><div style="font-size:13px;color:var(--muted);line-height:1.9;">근육은 쉴 때 성장합니다<br>가벼운 산책 20분 OK<br>단백질 식사 꼭 챙기기</div></div>'
+      + buildMakeupCard(selDay);
     bottom.style.display='none';document.getElementById('prog-txt').textContent='휴식일';document.getElementById('prog-fill').style.width='0%';return;
   }
   bottom.style.display='block';
@@ -2076,6 +2086,26 @@ const EX_LIB=[
   {n:'점프 로프',d:'10분',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소'},
   {n:'스타트레이너',d:'20분',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소'},
   {n:'수영',d:'30분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소'},
+  {n:'실내 사이클',d:'30분 · 중강도',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소'},
+  {n:'스핀 바이크',d:'20분 · 고강도 인터벌',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소'},
+  {n:'걷기 (실외)',d:'30~60분 · 빠른 걸음',tags:['심폐'],w:[],sets:0,cat:'유산소'},
+  {n:'파워워킹',d:'30분 · 시속 6km 이상',tags:['심폐'],w:[],sets:0,cat:'유산소'},
+  {n:'조깅',d:'20~30분 · 가벼운 달리기',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소'},
+  {n:'인터벌 달리기',d:'20분 · 1분 전력+1분 회복 반복',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소'},
+  {n:'계단 오르기',d:'15분',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소'},
+  {n:'크로스트레이너',d:'25분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소'},
+  {n:'케틀벨 스윙',d:'4세트 × 20회',tags:['심폐','둔근','등'],w:['허리주의'],sets:4,cat:'유산소'},
+  {n:'배틀로프',d:'4세트 × 30초',tags:['심폐','상체'],w:['어깨주의'],sets:0,cat:'유산소'},
+  {n:'마운틴 클라이머',d:'3세트 × 30초',tags:['심폐','복근'],w:['허리주의'],sets:0,cat:'유산소'},
+  {n:'하이니즈',d:'3세트 × 30초',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소'},
+  {n:'점핑잭',d:'3세트 × 30초',tags:['심폐'],w:[],sets:0,cat:'유산소'},
+  {n:'박스 점프',d:'3세트 × 10회',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소'},
+  {n:'제자리 달리기',d:'3세트 × 1분',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소'},
+  {n:'댄스 유산소',d:'30분 줌바 등',tags:['심폐','전신'],w:[],sets:0,cat:'유산소'},
+  {n:'인클라인 워크',d:'20분 · 경사 10도 · 시속 5km',tags:['심폐','둔근'],w:['무릎주의'],sets:0,cat:'유산소'},
+  {n:'저강도 유산소 LISS',d:'40분 · 최대심박의 60~65%',tags:['심폐','지방연소'],w:[],sets:0,cat:'유산소'},
+  {n:'고강도 인터벌 HIIT',d:'20분 · 20초 전력+10초 휴식',tags:['심폐','전신'],w:['무릎주의'],sets:0,cat:'유산소'},
+  {n:'아쿠아로빅',d:'30분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소'},
   // ── 재활 ──
   {n:'고양이-소 스트레칭',d:'10회',tags:['척추유연성'],w:['허리주의'],sets:0,cat:'재활'},
   {n:'맥켄지 운동',d:'10회',tags:['요추안정화'],w:['허리주의'],sets:0,cat:'재활'},
@@ -2795,6 +2825,70 @@ function applyAIDiet(){
     '<div style="text-align:center;padding:10px;color:var(--green);font-size:13px;font-weight:700;">✅ 식단 적용 완료! 아래에서 수정 가능합니다.</div>';
   showToast('✅ AI 식단이 오늘 식단에 추가됐어요!','success');
 }
+
+// ══════════════════════════════
+// 보충 운동 이전 기능
+// ══════════════════════════════
+let makeupSel = null;
+
+function buildMakeupCard(restDay){
+  // 이번 주 기록 없는 운동일 탐색
+  const missed = [];
+  const DN = ['일','월','화','수','목','금','토'];
+  for(let i=0;i<7;i++){
+    if(DAY_SCHED[i]==='REST') continue;
+    const ds = getDateForDow(i);
+    if(!records.find(r=>r.date===ds)) missed.push(i);
+  }
+  if(!missed.length){
+    return '<div style="margin-top:10px;padding:10px;background:#4caf7d15;border-radius:8px;font-size:12px;color:var(--green);text-align:center;">✅ 이번 주 빠진 운동 없음!</div>';
+  }
+  const btnHtml = missed.map(i=>{
+    const tk=DAY_SCHED[i];
+    const sel=(makeupSel===i);
+    return '<button class="makeup-day-btn'+(sel?' sel':'')+'" onclick="pickMakeup('+i+','+restDay+')" title="'+(RT[tk]&&RT[tk].title||tk)+'">'+DN[i]+'('+tk+')</button>';
+  }).join('');
+  const DN_sel = makeupSel!==null ? DN[makeupSel] : '';
+  const tk_sel = makeupSel!==null ? DAY_SCHED[makeupSel] : '';
+  const title_sel = tk_sel && RT[tk_sel] ? RT[tk_sel].title : '';
+  return '<div class="makeup-card">'
+    +'<div class="makeup-title">📅 빠진 운동 오늘 하기</div>'
+    +'<div style="font-size:11px;color:var(--muted);margin-bottom:8px;">이번 주 기록 없는 요일 → 오늘 휴일에 보충</div>'
+    +'<div class="makeup-day-row">'+btnHtml+'</div>'
+    +(makeupSel!==null?'<div style="font-size:11px;color:var(--accent2);margin-bottom:8px;font-family:var(--mono);">▶ '+title_sel+'</div>':'')
+    +'<button class="makeup-confirm-btn" '+(makeupSel!==null?'':'disabled ')+'onclick="doMakeup('+restDay+')">'
+    +(makeupSel!==null?'✅ '+DN_sel+'요일 루틴으로 운동 시작':'위에서 요일 선택')
+    +'</button></div>';
+}
+
+function pickMakeup(missedDay, restDay){
+  makeupSel = (makeupSel===missedDay) ? null : missedDay;
+  // 휴식일 카드 영역만 갱신
+  const rc = document.getElementById('routine-content');
+  rc.innerHTML = '<div class="rest-card"><div style="font-size:34px;margin-bottom:10px;">😴</div><div style="font-size:17px;font-weight:700;margin-bottom:7px;">오늘은 휴식일!</div><div style="font-size:13px;color:var(--muted);line-height:1.9;">근육은 쉴 때 성장합니다<br>가벼운 산책 20분 OK<br>단백질 식사 꼭 챙기기</div></div>'
+    + buildMakeupCard(restDay);
+}
+
+function doMakeup(restDay){
+  if(makeupSel===null) return;
+  const tk = DAY_SCHED[makeupSel];
+  if(!tk||tk==='REST') return;
+  const DN = ['일','월','화','수','목','금','토'];
+
+  // 오늘(휴일)에 임시로 해당 루틴 적용
+  window._makeupOrig = {day:restDay, tk:DAY_SCHED[restDay]};
+  DAY_SCHED[restDay] = tk;
+  makeupSel = null;
+  initSetData(tk);
+
+  // 메모에 보충 운동 표시
+  const memo = document.getElementById('memo-inp');
+  if(memo) memo.value = '[보충운동] '+DN[makeupSel===null?restDay:Object.keys(window._makeupOrig||{}).length]+'요일 → 오늘 진행';
+
+  showToast('📅 보충 운동 시작! 완료 후 저장해주세요.','success');
+  renderWorkout();
+}
+
 function copyLink(){
   const url=window.location.href.split('?')[0];
   navigator.clipboard.writeText(url).then(()=>showToast('✅ 링크 복사됨! 친구에게 공유해보세요','success')).catch(()=>{
