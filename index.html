@@ -620,6 +620,31 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="loading-dot"></div>
 </div>
 
+<!-- 인앱 브라우저 전용 안내 화면 -->
+<div id="inapp-screen" style="display:none;min-height:100vh;display:none;flex-direction:column;align-items:center;justify-content:center;padding:24px;background:var(--bg);">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:32px 24px;width:100%;max-width:380px;text-align:center;">
+    <div style="font-size:48px;margin-bottom:12px;">📱</div>
+    <div style="font-size:22px;font-weight:900;color:var(--accent);margin-bottom:8px;">핏로그</div>
+    <div style="font-size:14px;font-weight:700;color:var(--text);margin-bottom:8px;">카카오톡에서는 로그인이 차단돼요</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:24px;">
+      Google 보안 정책으로 인해<br>카카오톡 내 브라우저에서는<br>구글 로그인을 사용할 수 없습니다.
+    </div>
+    <button onclick="openInChrome()" style="width:100%;padding:14px;border-radius:12px;border:none;background:#4285F4;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:10px;display:flex;align-items:center;justify-content:center;gap:8px;">
+      <svg width="18" height="18" viewBox="0 0 48 48"><path fill="#fff" d="M24 9.5c3.54 0 6.71 1.22 9.21 3.6l6.85-6.85C35.9 2.38 30.47 0 24 0 14.62 0 6.51 5.38 2.56 13.22l7.98 6.19C12.43 13.72 17.74 9.5 24 9.5z"/><path fill="#fff" d="M46.98 24.55c0-1.57-.15-3.09-.38-4.55H24v9.02h12.94c-.58 2.96-2.26 5.48-4.78 7.18l7.73 6c4.51-4.18 7.09-10.36 7.09-17.65z"/><path fill="#fff" d="M10.53 28.59c-.48-1.45-.76-2.99-.76-4.59s.27-3.14.76-4.59l-7.98-6.19C.92 16.46 0 20.12 0 24c0 3.88.92 7.54 2.56 10.78l7.97-6.19z"/><path fill="#fff" d="M24 48c6.48 0 11.93-2.13 15.89-5.81l-7.73-6c-2.18 1.48-4.97 2.31-8.16 2.31-6.26 0-11.57-4.22-13.47-9.91l-7.98 6.19C6.51 42.62 14.62 48 24 48z"/></svg>
+      Chrome으로 열기
+    </button>
+    <button onclick="copyAppLink()" style="width:100%;padding:12px;border-radius:12px;border:1px solid var(--border);background:none;color:var(--text);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:10px;">
+      🔗 링크 복사하기
+    </button>
+    <button onclick="tryAnyway()" style="width:100%;padding:10px;border-radius:12px;border:none;background:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font);">
+      그냥 계속하기 (로그인 안 될 수 있음)
+    </button>
+    <div style="margin-top:16px;padding:10px;background:var(--surface2);border-radius:8px;font-size:11px;color:var(--muted);line-height:1.7;">
+      💡 <strong>방법:</strong> 링크 복사 → Chrome 앱 열기<br>→ 주소창에 붙여넣기 → 접속
+    </div>
+  </div>
+</div>
+
 <!-- 로그인 화면 -->
 <div class="login-screen" id="login-screen" style="display:none;">
   <div class="login-card">
@@ -640,10 +665,16 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <strong style="color:var(--text);">Chrome 브라우저</strong>에서 열어주세요
     </div>
     <div class="login-note">로그인 시 운동 기록이 구글 계정에 안전하게 저장됩니다</div>
-    <div id="inapp-warn" style="display:none;margin-top:10px;padding:10px;background:#e8533a15;border:1px solid var(--accent);border-radius:8px;font-size:12px;color:var(--accent);line-height:1.7;text-align:left;">
-      ⚠️ <strong>카카오톡·네이버 앱 내 브라우저</strong>에서는 구글 로그인이 차단될 수 있습니다.<br>
-      👉 <strong>Chrome 또는 Safari</strong>에서 열어주세요:<br>
-      <span style="color:var(--muted);font-size:11px;">주소창에 직접 입력 → ssunsmg-smg.github.io/fitlog/</span>
+    <div id="inapp-warn" style="display:none;margin-top:12px;padding:14px;background:#e8533a15;border:1px solid var(--accent);border-radius:10px;font-size:13px;color:var(--text);line-height:1.8;text-align:left;">
+      <div style="font-weight:700;color:var(--accent);margin-bottom:6px;">⚠️ 카카오톡 브라우저에서는 로그인이 차단됩니다</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:10px;">Google 보안 정책으로 인앱 브라우저 로그인이 막혀있어요.</div>
+      <button onclick="openInChrome()" style="width:100%;padding:10px;border-radius:8px;border:none;background:#4285F4;color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:8px;">
+        🌐 Chrome으로 열기
+      </button>
+      <button onclick="copyAppLink()" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);">
+        🔗 링크 복사 → Chrome에서 직접 열기
+      </button>
+      <div style="font-size:10px;color:var(--muted);margin-top:8px;text-align:center;">ssunsmg-smg.github.io/fitlog/</div>
     </div>
   </div>
 </div>
@@ -2983,20 +3014,88 @@ window.addEventListener('firebase-logout', ()=>{
   }, 1500);
 });
 
+// 인앱 브라우저 감지 함수
+function detectInApp(){
+  const ua = navigator.userAgent.toLowerCase();
+  return /kakaotalk|kakaostory|naver|instagram|fban|fbav|line|wechat|micromessenger|twitter|everytimeapp/.test(ua)
+      || (window.location !== window.parent.location); // iframe
+}
+
+// Chrome으로 열기 (intent URL - Android)
+function openInChrome(){
+  const url = 'https://ssunsmg-smg.github.io/fitlog/';
+  const isAndroid = /android/i.test(navigator.userAgent);
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+  if(isAndroid){
+    // Android: intent로 Chrome 강제 실행
+    window.location.href = 'intent://' + url.replace('https://','') + '#Intent;scheme=https;package=com.android.chrome;end';
+  } else if(isIOS){
+    // iOS: Chrome 앱 URL 스킴
+    window.location.href = 'googlechrome://' + url.replace('https://','');
+    setTimeout(()=>{ window.location.href = url; }, 1000);
+  } else {
+    window.open(url, '_blank');
+  }
+}
+
+// 링크 복사
+function copyAppLink(){
+  const url = 'https://ssunsmg-smg.github.io/fitlog/';
+  if(navigator.clipboard){
+    navigator.clipboard.writeText(url).then(()=>{
+      showInAppToast('✅ 링크 복사됨! Chrome 주소창에 붙여넣으세요');
+    }).catch(()=> fallbackCopy(url));
+  } else { fallbackCopy(url); }
+}
+function fallbackCopy(url){
+  const el=document.createElement('textarea');
+  el.value=url; el.style.position='fixed'; el.style.opacity='0';
+  document.body.appendChild(el); el.select();
+  document.execCommand('copy'); document.body.removeChild(el);
+  showInAppToast('✅ 링크 복사됨! Chrome 주소창에 붙여넣으세요');
+}
+function showInAppToast(msg){
+  let t=document.getElementById('inapp-toast');
+  if(!t){
+    t=document.createElement('div');
+    t.id='inapp-toast';
+    t.style.cssText='position:fixed;bottom:30px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 18px;border-radius:20px;font-size:13px;z-index:9999;max-width:90%;text-align:center;';
+    document.body.appendChild(t);
+  }
+  t.textContent=msg; t.style.display='block';
+  setTimeout(()=>{ t.style.display='none'; }, 3500);
+}
+function tryAnyway(){
+  document.getElementById('inapp-screen').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+}
+
 // 초기 로딩 — Firebase 응답이 늦을 경우 대비 (5초 후 강제 로그인 화면 표시)
 setTimeout(()=>{
   if(_appStarted) return;
   const user = window.getCurrentUser ? window.getCurrentUser() : null;
   if(!user){
     document.getElementById('loading').style.display='none';
-    document.getElementById('login-screen').style.display='flex';
-    // 인앱 브라우저 경고 표시
-    const ua = navigator.userAgent.toLowerCase();
-    const isInApp = /kakaotalk|naver|instagram|fban|fbav|line|wechat/.test(ua);
-    const warn = document.getElementById('inapp-warn');
-    if(warn && isInApp) warn.style.display='block';
+    if(detectInApp()){
+      // 인앱 브라우저 → 전용 안내 화면
+      document.getElementById('inapp-screen').style.display='flex';
+    } else {
+      document.getElementById('login-screen').style.display='flex';
+    }
   }
 }, 5000);
+
+// 페이지 로드 즉시 인앱 감지 (5초 안 기다리고 바로)
+(function(){
+  if(detectInApp()){
+    setTimeout(()=>{
+      if(!_appStarted){
+        document.getElementById('loading').style.display='none';
+        document.getElementById('inapp-screen').style.display='flex';
+      }
+    }, 800);
+  }
+})();
 // ══════════════════════════════
 // AI 운동 가이드 (Claude API)
 // ══════════════════════════════
