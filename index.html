@@ -713,6 +713,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <!-- 운동 -->
   <div class="page" id="page-workout">
     <div class="today-meta" id="today-meta"></div>
+    <div id="missed-banner" style="display:none;background:#f0a5000d;border:1px solid #f0a50033;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;line-height:1.8;"></div>
     <div class="today-title" id="today-title">오늘의 루틴</div>
     <div class="today-type" id="today-type"></div>
     <div class="day-sel" id="day-sel"></div>
@@ -1572,6 +1573,8 @@ function renderWorkout(){
   const dayNames=['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
   const ds=getDateForDow(selDay);
   document.getElementById('today-meta').textContent='오늘: '+toStr(new Date())+' ('+DAY_KR[new Date().getDay()]+')';
+  // 빠진 운동 배너 갱신
+  renderMissedBanner();
   document.getElementById('today-title').textContent=rt.title;
   document.getElementById('today-type').textContent=tk==='REST'?'휴식일':'Type '+tk+' · '+dayNames[selDay]+' · '+ds;
   const sel=document.getElementById('day-sel');sel.innerHTML='';
@@ -2831,6 +2834,33 @@ function applyAIDiet(){
 // ══════════════════════════════
 let makeupSel = null;
 
+
+function renderMissedBanner(){
+  const DN=['일','월','화','수','목','금','토'];
+  const missed=[];
+  for(let i=0;i<7;i++){
+    if(DAY_SCHED[i]==='REST') continue;
+    if(!records.find(r=>r.date===getDateForDow(i))) missed.push(i);
+  }
+  const el=document.getElementById('missed-banner');
+  if(!el) return;
+  if(!missed.length){el.style.display='none';return;}
+  const restDays=[];
+  for(let i=0;i<7;i++){if(DAY_SCHED[i]==='REST')restDays.push(i);}
+  el.style.display='block';
+  el.innerHTML='<span style="color:var(--accent2);font-weight:700;">📅 이번 주 미완료: </span>'
+    +missed.map(i=>'<span style="background:#f0a50020;border:1px solid #f0a50066;border-radius:5px;padding:2px 8px;font-size:11px;color:var(--accent2);font-family:var(--mono);cursor:pointer;" onclick="jumpToRest('+(restDays[0]||0)+')" title="휴일 탭에서 보충 가능">'+DN[i]+'('+DAY_SCHED[i]+')</span>').join(' ')
+    +'<span style="font-size:10px;color:var(--muted);margin-left:6px;">→ 휴일 탭 클릭 시 보충 가능</span>';
+}
+
+function jumpToRest(restDay){
+  selDay=restDay;
+  makeupSel=null;
+  initSetData(DAY_SCHED[restDay]);
+  renderWorkout();
+  showToast('📅 '+['일','월','화','수','목','금','토'][restDay]+'요일(휴일) 탭으로 이동했어요','info');
+}
+
 function buildMakeupCard(restDay){
   // 이번 주 기록 없는 운동일 탐색
   const missed = [];
@@ -2874,18 +2904,24 @@ function doMakeup(restDay){
   const tk = DAY_SCHED[makeupSel];
   if(!tk||tk==='REST') return;
   const DN = ['일','월','화','수','목','금','토'];
+  const missedDay = makeupSel; // 먼저 저장
+  const missedName = DN[missedDay];
+  const missedTk = tk;
 
-  // 오늘(휴일)에 임시로 해당 루틴 적용
+  // 오늘(선택된 휴일)에 임시로 해당 루틴 적용
   window._makeupOrig = {day:restDay, tk:DAY_SCHED[restDay]};
-  DAY_SCHED[restDay] = tk;
+  DAY_SCHED[restDay] = missedTk;
   makeupSel = null;
-  initSetData(tk);
+
+  // selDay를 휴일로 변경해서 해당 루틴 표시
+  selDay = restDay;
+  initSetData(missedTk);
 
   // 메모에 보충 운동 표시
   const memo = document.getElementById('memo-inp');
-  if(memo) memo.value = '[보충운동] '+DN[makeupSel===null?restDay:Object.keys(window._makeupOrig||{}).length]+'요일 → 오늘 진행';
+  if(memo) memo.value = '[보충운동] '+missedName+'요일('+missedTk+') 루틴 → 오늘 진행';
 
-  showToast('📅 보충 운동 시작! 완료 후 저장해주세요.','success');
+  showToast('📅 '+missedName+'요일 보충 운동 시작! 완료 후 저장해주세요.','success');
   renderWorkout();
 }
 
