@@ -2893,8 +2893,8 @@ function renderDiet(){
     const mk=mealKcal(dietDate,meal);
     const foodsHtml=foods.length ? foods.map((f,fi)=>`
       <div class="diet-food-card">
-        <div class="diet-food-emoji" onclick="showFoodInfo('${f.name}',f.kcal,f.carb,f.prot,f.fat,'${f.amount}')" style="cursor:pointer;">${foodEmoji(f.name)}</div>
-        <div class="diet-food-info" onclick="showFoodInfo('${f.name}',f.kcal,f.carb,f.prot,f.fat,'${f.amount}')" style="cursor:pointer;">
+        <div class="diet-food-emoji" onclick="showFoodInfoById(this)" data-name="${f.name}" data-kcal="${f.kcal}" data-carb="${f.carb}" data-prot="${f.prot}" data-fat="${f.fat}" data-amount="${f.amount}" style="cursor:pointer;">${foodEmoji(f.name)}</div>
+        <div class="diet-food-info" onclick="showFoodInfoById(this)" data-name="${f.name}" data-kcal="${f.kcal}" data-carb="${f.carb}" data-prot="${f.prot}" data-fat="${f.fat}" data-amount="${f.amount}" style="cursor:pointer;">
           <div class="diet-food-name">${f.name} <span style="font-size:10px;color:var(--muted);">ℹ️</span></div>
           <div class="diet-food-amount">${f.amount}</div>
           <div class="diet-food-macros">
@@ -2975,7 +2975,7 @@ function filterDietDB(){
         <div class="diet-db-sub">${f.per} · 탄${f.carb}g 단${f.prot}g 지${f.fat}g</div>
       </div>
       <span class="diet-db-kcal" style="cursor:pointer;" onclick="startAddFood(${i})">${f.kcal}kcal</span>
-      <button style="padding:3px 7px;border-radius:5px;border:1px solid #4a9eff33;background:none;color:var(--blue);font-size:10px;cursor:pointer;margin-left:4px;" onclick="showFoodInfo('${f.n}',${f.kcal},${f.carb},${f.prot},${f.fat},'${f.per}')">ℹ️</button>
+      <button class="diet-db-info-btn" onclick="showFoodInfoById(this)" data-name="${f.n}" data-kcal="${f.kcal}" data-carb="${f.carb}" data-prot="${f.prot}" data-fat="${f.fat}" data-amount="${f.per}" style="padding:3px 7px;border-radius:5px;border:1px solid #4a9eff33;background:none;color:var(--blue);font-size:10px;cursor:pointer;margin-left:4px;">ℹ️</button>
     </div>`).join('')
     :`<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">검색 결과 없음</div>`;
 }
@@ -3354,7 +3354,7 @@ function renderAIDietResult(plan){
       html+=foods.map((f,fi)=>`
         <div class="ai-food-item">
           <div class="ai-food-item-emoji">${foodEmoji(f.name)}</div>
-          <div class="ai-food-item-info" onclick="showFoodInfo('${f.name}',${0}||f.kcal,f.carb,f.prot,f.fat,'${f.amount}')" style="cursor:pointer;">
+          <div class="ai-food-item-info" onclick="showFoodInfoById(this)" data-name="${f.name}" data-kcal="${f.kcal}" data-carb="${f.carb}" data-prot="${f.prot}" data-fat="${f.fat}" data-amount="${f.amount}" style="cursor:pointer;">
             <div class="ai-food-item-name">${f.name} <span style="font-size:10px;color:var(--muted);">ℹ️</span></div>
             <div class="ai-food-item-amount">${f.amount}</div>
             <div class="ai-food-item-macros">
@@ -3394,6 +3394,19 @@ function renderAIDietResult(plan){
 
 
 // ── 식품 정보 상세 팝업 ──
+
+// data-* 속성에서 식품 정보 읽어서 showFoodInfo 호출
+function showFoodInfoById(el){
+  const d = el.dataset;
+  showFoodInfo(
+    d.name,
+    parseFloat(d.kcal)||0,
+    parseFloat(d.carb)||0,
+    parseFloat(d.prot)||0,
+    parseFloat(d.fat)||0,
+    d.amount||''
+  );
+}
 function showFoodInfo(foodName, kcal, carb, prot, fat, amount){
   // FOOD_INFO_DB에서 검색
   let info = null;
