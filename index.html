@@ -432,65 +432,43 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .diet-goal-inp:focus{outline:none;border-color:var(--green);}
 .diet-save-btn{width:100%;padding:11px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:12px;}
 .diet-save-btn:hover{opacity:.9;}
-/* ── 보충 운동 이전 ── */
-.makeup-card{background:linear-gradient(135deg,#f0a5000d,#e8533a0d);border:1px solid #f0a50044;border-radius:10px;padding:14px 16px;margin:10px 0 0;}
-.makeup-title{font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:10px;}
-.makeup-day-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px;}
-.makeup-day-btn{padding:5px 12px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);transition:all .15s;}
-.makeup-day-btn.sel{background:#f0a50020;border-color:var(--accent2);color:var(--accent2);font-weight:700;}
-.makeup-confirm-btn{width:100%;padding:9px;border-radius:8px;border:none;background:var(--accent2);color:#000;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);}
-.makeup-confirm-btn:disabled{opacity:.4;cursor:not-allowed;background:var(--border);color:var(--muted);}
-
-/* ── AI 식단 ── */
-.ai-diet-card{background:linear-gradient(135deg,#4a9eff0d,#9b7fe80d);border:1px solid #4a9eff44;border-radius:12px;padding:16px;margin-bottom:16px;}
-.ai-diet-title{font-size:13px;font-weight:700;margin-bottom:10px;display:flex;align-items:center;justify-content:space-between;color:var(--blue);}
-.ai-diet-btn{width:100%;padding:11px;border-radius:8px;border:none;background:linear-gradient(135deg,var(--blue),var(--purple));color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:8px;}
-.ai-diet-btn:disabled{opacity:.5;cursor:not-allowed;}
-.ai-diet-result{margin-top:10px;}
-.ai-meal-block{margin-bottom:12px;}
-.ai-meal-hdr{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border);margin-bottom:5px;}
-.ai-meal-name{font-size:12px;font-weight:700;}
-.ai-meal-kcal{font-size:11px;font-family:var(--mono);color:var(--muted);}
-.ai-food-row{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;background:var(--surface2);margin-bottom:4px;}
-.ai-food-info{flex:1;}
-.ai-food-name{font-size:12px;font-weight:500;}
-.ai-food-macro{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:1px;}
-.ai-food-kcal{font-size:12px;font-weight:700;color:var(--accent);font-family:var(--mono);white-space:nowrap;}
-.ai-food-del{padding:3px 7px;border-radius:5px;border:1px solid var(--border);background:none;color:var(--muted);font-size:10px;cursor:pointer;}
-.ai-food-del:hover{border-color:var(--accent);color:var(--accent);}
-.ai-apply-btn{width:100%;padding:10px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:8px;}
-.ai-summary-txt{font-size:11px;color:var(--blue);padding:6px 0 8px;line-height:1.6;border-bottom:1px solid #4a9eff22;margin-bottom:8px;}
-.ai-loading{text-align:center;padding:18px;color:var(--muted);font-size:12px;}
-
-
-/* ── 체중 관리 ── */
-.weight-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;}
-.weight-card-title{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
-.weight-input-row{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
-.weight-inp{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;font-size:22px;font-weight:900;color:var(--text);font-family:var(--mono);text-align:center;}
-.weight-inp:focus{outline:none;border-color:var(--green);}
-.weight-unit{font-size:14px;color:var(--muted);font-weight:700;}
-.weight-save-btn{padding:10px 18px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;}
-.weight-save-btn:active{opacity:.8;}
-.weight-stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px;}
-.weight-stat{background:var(--surface2);border-radius:8px;padding:9px;text-align:center;}
-.weight-stat-val{font-size:17px;font-weight:900;font-family:var(--mono);}
-.weight-stat-lbl{font-size:10px;color:var(--muted);margin-top:2px;}
-.weight-chart-wrap{margin-bottom:10px;}
-.weight-history-list{max-height:150px;overflow-y:auto;}
-.weight-hist-item{display:flex;align-items:center;justify-content:space-between;padding:6px 2px;border-bottom:1px solid var(--border);font-size:12px;}
-.weight-hist-item:last-child{border:none;}
-.weight-hist-date{color:var(--muted);font-family:var(--mono);}
-.weight-hist-val{font-weight:700;font-family:var(--mono);}
-.weight-hist-diff{font-size:11px;font-family:var(--mono);}
-.weight-hist-del{background:none;border:none;color:var(--muted);cursor:pointer;font-size:12px;padding:2px 6px;border-radius:4px;}
-.weight-hist-del:hover{color:var(--accent);}
-@media(max-width:420px){
-  .diet-summary{grid-template-columns:repeat(2,1fr);}
-  .diet-custom-grid{grid-template-columns:1fr 1fr;row-gap:6px;}
-  .diet-custom-grid button{grid-column:1/-1;}
-  .diet-goal-inputs{grid-template-columns:repeat(2,1fr);}
-}
+/* ── 성장 단계·설정 ── */
+.level-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;}
+.level-card-title{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
+.level-steps{display:flex;gap:0;margin-bottom:14px;border-radius:10px;overflow:hidden;border:1px solid var(--border);}
+.level-step{flex:1;padding:10px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:500;border:none;background:none;font-family:var(--font);color:var(--muted);transition:all .15s;line-height:1.5;border-right:1px solid var(--border);}
+.level-step:last-child{border-right:none;}
+.level-step.active{background:var(--accent);color:#fff;font-weight:700;}
+.level-step.done{background:#4caf7d22;color:var(--green);}
+.level-desc-box{background:var(--surface2);border-radius:8px;padding:12px;font-size:12px;color:var(--muted);line-height:1.8;margin-bottom:10px;}
+.level-apply-btn{width:100%;padding:11px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.level-apply-btn:hover{opacity:.9;}
+.orm-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.orm-item{background:var(--surface2);border-radius:8px;padding:10px 12px;}
+.orm-name{font-size:11px;color:var(--muted);margin-bottom:6px;}
+.orm-row{display:flex;align-items:center;gap:6px;}
+.orm-inp{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:6px;padding:6px 8px;font-size:16px;font-weight:900;color:var(--text);font-family:var(--mono);text-align:center;width:100%;}
+.orm-inp:focus{outline:none;border-color:var(--accent);}
+.orm-unit{font-size:11px;color:var(--muted);}
+.orm-1rm{font-size:10px;color:var(--accent);font-family:var(--mono);margin-top:4px;}
+.adj-row{display:flex;align-items:center;justify-content:space-between;padding:9px 10px;background:var(--surface2);border-radius:8px;margin-bottom:5px;gap:8px;}
+.adj-name{font-size:12px;font-weight:500;flex:1;}
+.adj-sub{font-size:10px;color:var(--muted);font-family:var(--mono);margin-top:1px;}
+.adj-ctrl{display:flex;align-items:center;gap:4px;}
+.adj-btn{width:26px;height:26px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--text);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.adj-btn:hover{border-color:var(--accent);color:var(--accent);}
+.adj-val{font-size:12px;font-weight:700;font-family:var(--mono);min-width:28px;text-align:center;}
+.adj-unit{font-size:10px;color:var(--muted);min-width:20px;}
+.adj-save-btn{width:100%;padding:10px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:6px;}
+.adj-reset-btn{width:100%;padding:8px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);margin-top:5px;}
+.posture-item{background:var(--surface2);border-radius:8px;padding:12px;margin-bottom:6px;cursor:pointer;}
+.posture-name{font-size:13px;font-weight:500;margin-bottom:4px;display:flex;align-items:center;justify-content:space-between;}
+.posture-tags{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;}
+.posture-desc{font-size:11px;color:var(--muted);line-height:1.7;display:none;}
+.posture-desc.open{display:block;}
+.posture-tip{font-size:11px;color:var(--accent);margin-top:5px;padding:5px 8px;background:#e8533a12;border-radius:5px;border-left:2px solid var(--accent);}
+.posture-yt{display:inline-block;margin-top:6px;padding:4px 10px;border-radius:5px;background:#ff000018;border:1px solid #ff444433;color:#ff4444;font-size:10px;cursor:pointer;text-decoration:none;}
+@media(max-width:480px){.orm-grid{grid-template-columns:1fr 1fr;}.level-step{font-size:9px;padding:8px 2px;}}
 .set-inp{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 4px;font-size:14px;color:var(--text);font-family:var(--mono);text-align:center;width:100%;}
 .set-inp:focus{outline:none;border-color:var(--accent2);}
 .set-inp.filled{border-color:#4caf7d55;color:var(--green);}
@@ -712,6 +690,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <button class="nav-tab" onclick="showPage('calendar')">캘린더</button>
         <button class="nav-tab" onclick="showPage('log')">기록</button>
         <button class="nav-tab" onclick="showPage('stats')">통계</button>
+        <button class="nav-tab" onclick="showPage('settings')">설정</button>
       </div>
     </div>
   </nav>
@@ -868,6 +847,71 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div id="muscle-chart-wrap" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;"></div>
     <div style="margin:0 0 10px;font-size:13px;font-weight:700;">💪 중량 성장 추이</div>
     <div id="weight-history"></div>
+  </div>
+
+  <!-- 설정 -->
+  <div class="page" id="page-settings">
+    <div style="margin-bottom:16px;">
+      <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;">SETTINGS</div>
+      <div style="font-size:21px;font-weight:900;">⚙️ 나의 운동 설정</div>
+    </div>
+
+    <!-- 성장 단계 -->
+    <div class="level-card">
+      <div class="level-card-title">
+        <span>🏆 나의 성장 단계</span>
+        <span id="cur-level-badge" style="font-size:10px;padding:2px 10px;border-radius:10px;background:var(--accent);color:#fff;font-family:var(--mono);">입문</span>
+      </div>
+      <div class="level-steps">
+        <button class="level-step" onclick="selectLevel(1,this)">🌱<br>입문</button>
+        <button class="level-step" onclick="selectLevel(2,this)">⚡<br>초급</button>
+        <button class="level-step" onclick="selectLevel(3,this)">💪<br>중급</button>
+        <button class="level-step" onclick="selectLevel(4,this)">🔥<br>고급</button>
+        <button class="level-step" onclick="selectLevel(5,this)">👑<br>마스터</button>
+      </div>
+      <div class="level-desc-box" id="level-desc"></div>
+      <button class="level-apply-btn" onclick="applyLevel()">✅ 이 단계로 루틴 적용</button>
+    </div>
+
+    <!-- 기준 중량 (1RM) -->
+    <div class="level-card">
+      <div class="level-card-title">
+        <span>⚖️ 나의 기준 중량 (1RM)</span>
+        <button onclick="save1RM()" style="padding:4px 12px;border-radius:6px;border:none;background:var(--green);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);">저장</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">1회 최대 중량을 입력하면 적정 운동 중량(%)을 계산해드려요.</div>
+      <div class="orm-grid" id="orm-grid"></div>
+      <div style="font-size:10px;color:var(--muted);padding:8px;background:var(--surface2);border-radius:6px;line-height:1.7;">
+        💡 <strong>목적별 권장 중량</strong><br>
+        근력: 1RM의 85~95% · 근비대: 67~85% · 근지구력: 50~67%
+      </div>
+    </div>
+
+    <!-- 운동별 세트·횟수·시간 조정 -->
+    <div class="level-card">
+      <div class="level-card-title">
+        <span>🎛️ 운동별 세부 조정</span>
+        <select id="adj-day-sel" onchange="renderAdjPanel()" style="font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:var(--font);">
+          <option value="A">월(A) 가슴·어깨</option>
+          <option value="B">화(B) 등·이두</option>
+          <option value="C">수(C) 하체·재활</option>
+          <option value="D">목(D) 유산소·척추</option>
+          <option value="E">금(E) 복근·전신</option>
+          <option value="F">토(F) 하체경량</option>
+        </select>
+      </div>
+      <div id="adj-panel"></div>
+      <button class="adj-save-btn" onclick="saveAdjustments()">💾 저장</button>
+      <button class="adj-reset-btn" onclick="resetAdjustments()">↺ 기본값으로 초기화</button>
+    </div>
+
+    <!-- 자세 가이드 -->
+    <div class="level-card">
+      <div class="level-card-title"><span>📋 주요 운동 자세 가이드</span></div>
+      <input type="text" id="posture-search" placeholder="운동 검색..." oninput="renderPostureList()"
+        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);font-family:var(--font);margin-bottom:10px;">
+      <div id="posture-list"></div>
+    </div>
   </div>
 </div>
 
@@ -1484,6 +1528,9 @@ function showApp(){
   // 1분마다 날짜 체크
   setInterval(()=>{const nd=new Date().getDay();if(nd!==selDay){selDay=nd;initSetData(DAY_SCHED[selDay]);renderHome();renderWorkout();}},60000);
 
+  // 저장된 재활 단계 복원
+  curLevel = parseInt(localStorage.getItem('fitlog-level')||'1');
+  orm1RM = JSON.parse(localStorage.getItem('fitlog-1rm')||'{}');
   showToast(`환영합니다, ${userProfile?.name||''}님! 💪`,'success');
 }
 
@@ -3113,6 +3160,317 @@ function doMakeup(restDay){
   renderWorkout();
 }
 
+
+// ══════════════════════════════
+// 성장 단계 & 운동 설정
+// ══════════════════════════════
+let curLevel = parseInt(localStorage.getItem('fitlog-level')||'1');
+let orm1RM = JSON.parse(localStorage.getItem('fitlog-1rm')||'{}');
+
+const LEVEL_INFO = {
+  1:{
+    label:'🌱 입문',
+    badge:'입문',
+    color:'var(--green)',
+    desc:'<strong style="color:var(--green);">🌱 입문 단계</strong><br>운동을 시작하는 단계입니다.<br>• 목표: 올바른 자세 습득, 기초 체력 형성<br>• 세트수: 기본의 60% · 중량: 가볍게<br>• 휴식: 충분히 (90초~2분)<br>• 핵심: 자세 > 중량. 거울 보며 체크!',
+    setMult:0.6, repMult:0.8
+  },
+  2:{
+    label:'⚡ 초급',
+    badge:'초급',
+    color:'var(--blue)',
+    desc:'<strong style="color:var(--blue);">⚡ 초급 단계</strong><br>기본기가 잡히기 시작하는 단계입니다.<br>• 목표: 근신경 발달, 기본 근력 향상<br>• 세트수: 기본의 80% · 점진적 중량 증가<br>• 휴식: 60~90초<br>• 핵심: 주 3회 이상 꾸준함이 답!',
+    setMult:0.8, repMult:0.9
+  },
+  3:{
+    label:'💪 중급',
+    badge:'중급',
+    color:'var(--accent2)',
+    desc:'<strong style="color:var(--accent2);">💪 중급 단계</strong><br>본격적인 근력·근비대 훈련 단계입니다.<br>• 목표: 근비대, 근력 지속 성장<br>• 세트수: 기본 100% · 무게 주기화 적용<br>• 휴식: 60초 (근지구력) / 2~3분 (근력)<br>• 핵심: 점진적 과부하 원칙 적용!',
+    setMult:1.0, repMult:1.0
+  },
+  4:{
+    label:'🔥 고급',
+    badge:'고급',
+    color:'var(--accent)',
+    desc:'<strong style="color:var(--accent);">🔥 고급 단계</strong><br>퍼포먼스 최적화 훈련 단계입니다.<br>• 목표: 최대 근력, 폭발력 향상<br>• 세트수: 기본의 120% · 고중량·저반복 포함<br>• 휴식: 3~5분 (고중량 세트)<br>• 핵심: 분할 훈련 + 영양·수면 최적화!',
+    setMult:1.2, repMult:1.1
+  },
+  5:{
+    label:'👑 마스터',
+    badge:'마스터',
+    color:'var(--purple)',
+    desc:'<strong style="color:var(--purple);">👑 마스터 단계</strong><br>선수급 훈련 단계입니다.<br>• 목표: 경기력·체형 완성, 개인 최고 기록<br>• 세트수: 기본의 140% · 주기화 프로그램 적용<br>• 훈련: 1일 2부할 또는 전문 분할<br>• 핵심: 코치·영양사와 함께 체계적 관리!',
+    setMult:1.4, repMult:1.2
+  }
+};
+
+// 주요 운동 1RM 목록
+const ORM_EXERCISES = [
+  {key:'bench',   name:'벤치프레스',   icon:'🏋️'},
+  {key:'squat',   name:'스쿼트',       icon:'🦵'},
+  {key:'dead',    name:'데드리프트',   icon:'⬆️'},
+  {key:'ohp',     name:'오버헤드프레스',icon:'🙌'},
+  {key:'row',     name:'바벨로우',     icon:'🔙'},
+  {key:'pullup',  name:'풀업',         icon:'⬆️'},
+  {key:'dip',     name:'딥스',         icon:'💪'},
+  {key:'curl',    name:'바벨컬',       icon:'💪'},
+];
+
+// 자세 가이드 DB
+const POSTURE_DB = [
+  {name:'벤치프레스',tags:['가슴','삼두','어깨'],
+   key:'벤치프레스',
+   steps:['① 등받이에 어깨·엉덩이·발바닥 완전 밀착','② 바 그립: 어깨너비보다 약간 넓게 (손목 중립)','③ 가슴까지 천천히 내리기 (1.5~2초)','④ 폭발적으로 밀어올리기','⑤ 팔꿈치가 90도 이하로 내려올 때까지'],
+   tip:'팔꿈치를 45~60도 각도로. 어깨 으쓱하지 말 것.',
+   mistake:'팔꿈치 너무 벌림 → 어깨 부상 위험. 엉덩이 들리면 하중 줄이기.',
+   yt:'벤치프레스 올바른 자세'},
+  {name:'스쿼트',tags:['하체','둔근','코어'],
+   key:'스쿼트',
+   steps:['① 발 어깨너비, 발끝 10~15도 외회전','② 바는 승모근 위(하이바) 또는 후면삼각근(로우바)','③ 가슴 펴고 코어 조이며 고관절부터 내려앉기','④ 무릎이 발끝 방향으로 (안으로 모이지 않게)','⑤ 허벅지 평행 이하까지 내려가기'],
+   tip:'시선은 정면 약간 위. 발뒤꿈치에 무게 실기.',
+   mistake:'무릎이 안으로 모임 → 중둔근 약화 신호. 힐 웨지 또는 박스 스쿼트로 교정.',
+   yt:'스쿼트 올바른 자세'},
+  {name:'데드리프트',tags:['등','둔근','하체'],
+   key:'데드리프트',
+   steps:['① 발은 힙너비, 바가 발등 위에 위치','② 엉덩이 내리고 가슴 들어 척추 중립','③ 바를 몸에 붙여 다리로 밀며 일어서기','④ 고관절 잠금(lockout)으로 마무리','⑤ 내릴 때는 고관절 먼저, 무릎 구부리며'],
+   tip:'허리로 당기지 말 것. 광배근으로 바를 몸에 붙이는 느낌.',
+   mistake:'등이 둥글어짐 → 즉시 중량 감소. 허리 부상의 주원인.',
+   yt:'데드리프트 올바른 자세'},
+  {name:'오버헤드프레스',tags:['어깨','삼두'],
+   key:'오버헤드프레스',
+   steps:['① 바를 쇄골 바로 위에 그립','② 코어·둔근 조이고 발은 어깨너비','③ 바가 얼굴을 스치듯 위로 밀기','④ 완전히 팔이 펴질 때까지','⑤ 내릴 때 쇄골 위치로'],
+   tip:'뒤로 젖히지 말 것. 코어가 핵심.',
+   mistake:'허리 과신전 → 요추 부상. 가슴 앞에서 밀지 말고 머리 위로.',
+   yt:'오버헤드프레스 올바른 자세'},
+  {name:'랫 풀다운',tags:['등','이두'],
+   key:'랫 풀다운',
+   steps:['① 허벅지 패드 단단히 고정, 약간 뒤로 기울기','② 그립: 어깨보다 넓게, 오버그립','③ 날개뼈를 내리고 모으며 가슴 쪽으로 당기기','④ 팔꿈치를 옆구리로 당기는 느낌','⑤ 천천히 완전히 펴주며 광배 스트레칭'],
+   tip:'팔로 당기지 말고 등으로 당기는 느낌. 팔꿈치를 아래-뒤로.',
+   mistake:'앞뒤로 과도하게 흔들기 → 반동 사용 금지.',
+   yt:'랫 풀다운 올바른 자세'},
+  {name:'덤벨 컬',tags:['이두'],
+   key:'덤벨 컬',
+   steps:['① 팔꿈치를 옆구리에 고정','② 손목을 중립으로 시작해 올리며 외회전','③ 이두 완전 수축 느낌까지 올리기','④ 천천히 내리며 완전 신전','⑤ 양쪽 교대 또는 동시에'],
+   tip:'팔꿈치가 앞으로 나오면 승모근 개입. 고정 필수.',
+   mistake:'반동 사용 → 중량 줄이고 천천히.',
+   yt:'덤벨 컬 이두 운동 자세'},
+  {name:'플랭크',tags:['코어','복근'],
+   key:'플랭크',
+   steps:['① 팔꿈치를 어깨 바로 아래에 위치','② 발끝으로 지지, 몸이 일직선','③ 둔근·복근·광배근 동시에 수축','④ 고개는 척추 중립 유지','⑤ 호흡 멈추지 말 것'],
+   tip:'엉덩이가 올라가거나 처지지 않게. 복횡근 의식.',
+   mistake:'허리 처짐 → 즉시 중단 또는 무릎 플랭크로 변형.',
+   yt:'플랭크 올바른 자세'},
+  {name:'힙 쓰러스트',tags:['둔근'],
+   key:'힙 쓰러스트',
+   steps:['① 벤치에 어깨뼈(날개뼈) 걸치기','② 발은 무릎 바로 아래 위치','③ 코어 조이고 엉덩이를 하늘로 들기','④ 고관절 완전 신전 (몸 일직선)','⑤ 천천히 내리며 둔근 긴장 유지'],
+   tip:'턱 당기고 복부 조이기. 허리로 하지 말고 엉덩이만.',
+   mistake:'발 위치가 너무 멀거나 가까우면 둔근 대신 햄스트링·요추 개입.',
+   yt:'힙 쓰러스트 둔근 운동'},
+  {name:'케이블 크런치',tags:['복근'],
+   key:'케이블 크런치',
+   steps:['① 케이블 머신 앞에 무릎 꿇기','② 로프를 귀 옆에 고정','③ 복근으로만 상체를 둥글게 말아 내리기','④ 고관절은 고정, 척추만 굴곡','⑤ 위로 올릴 때 완전 펴지 말고 긴장 유지'],
+   tip:'허리로 당기지 말 것. 배꼽을 바닥 쪽으로 당기는 느낌.',
+   mistake:'고관절이 구부러지면 복근 대신 장요근 운동.',
+   yt:'케이블 크런치 복근 운동'},
+  {name:'인클라인 트레드밀',tags:['유산소','둔근'],
+   key:'인클라인 트레드밀',
+   steps:['① 경사 8~15도 설정','② 속도: 4.5~6km/h','③ 손잡이 잡지 말 것 (칼로리 급감)','④ 발바닥 전체로 착지','⑤ 상체는 약간 앞으로 기울기'],
+   tip:'손잡이 사용 시 효과가 70% 감소. 코어 힘으로 버티기.',
+   mistake:'손잡이 의존 → 경사 낮추거나 속도 줄이기.',
+   yt:'인클라인 트레드밀 올바른 자세'},
+];
+
+function selectLevel(n, btn){
+  curLevel = n;
+  document.querySelectorAll('.level-step').forEach((b,i)=>{
+    b.classList.toggle('active', i+1===n);
+    b.classList.toggle('done', i+1<n);
+  });
+  renderLevelDesc();
+}
+
+function renderLevelDesc(){
+  const lv = LEVEL_INFO[curLevel];
+  if(!lv) return;
+  const desc = document.getElementById('level-desc');
+  if(desc) desc.innerHTML = lv.desc;
+  const badge = document.getElementById('cur-level-badge');
+  if(badge){ badge.textContent=lv.badge; badge.style.background=lv.color; }
+}
+
+function applyLevel(){
+  const lv = LEVEL_INFO[curLevel];
+  if(!confirm(`${lv.label} 단계로 루틴을 조정할까요?`)) return;
+  const snap = JSON.parse(JSON.stringify(RT_BASE));
+  Object.keys(RT).forEach(tk=>{
+    if(tk==='REST') return;
+    const base = snap[tk];
+    if(!base) return;
+    RT[tk].sections.forEach((sec,si)=>{
+      sec.exs.forEach((ex,ei)=>{
+        const bx = base.sections[si]?.exs[ei];
+        if(!bx) return;
+        if(bx.sets>0) ex.sets=Math.max(1,Math.round(bx.sets*lv.setMult));
+        if(bx.d && bx.d.includes('×') && bx.d.includes('회')){
+          const m=bx.d.match(/×\s*(\d+)회/);
+          if(m) ex.d=bx.d.replace(/×\s*\d+회/,'× '+Math.max(5,Math.round(parseInt(m[1])*lv.repMult))+'회');
+        }
+      });
+    });
+  });
+  localStorage.setItem('fitlog-level', curLevel);
+  window.saveRoutine(RT);
+  showToast(`✅ ${lv.label} 단계 적용 완료!`,'success');
+  renderAdjPanel();
+}
+
+// ── 1RM 기준 중량 ──
+function renderORMGrid(){
+  const grid = document.getElementById('orm-grid');
+  if(!grid) return;
+  grid.innerHTML = ORM_EXERCISES.map(ex=>{
+    const val = orm1RM[ex.key]||'';
+    const pct = val ? `<div class="orm-1rm">67%: ${Math.round(val*0.67)}kg · 75%: ${Math.round(val*0.75)}kg · 85%: ${Math.round(val*0.85)}kg</div>` : '';
+    return `<div class="orm-item">
+      <div class="orm-name">${ex.icon} ${ex.name}</div>
+      <div class="orm-row">
+        <input class="orm-inp" type="number" id="orm-${ex.key}" value="${val}" placeholder="0" min="0" step="2.5"
+          oninput="updateORMCalc('${ex.key}')"/>
+        <span class="orm-unit">kg</span>
+      </div>
+      <div id="orm-calc-${ex.key}">${pct}</div>
+    </div>`;
+  }).join('');
+}
+
+function updateORMCalc(key){
+  const val = parseFloat(document.getElementById('orm-'+key)?.value)||0;
+  const el = document.getElementById('orm-calc-'+key);
+  if(!el) return;
+  if(val>0){
+    el.innerHTML=`<div class="orm-1rm">근지구력: ${Math.round(val*0.6)}kg · 근비대: ${Math.round(val*0.75)}kg · 근력: ${Math.round(val*0.87)}kg</div>`;
+  } else { el.innerHTML=''; }
+}
+
+function save1RM(){
+  ORM_EXERCISES.forEach(ex=>{
+    const val = parseFloat(document.getElementById('orm-'+ex.key)?.value)||0;
+    if(val>0) orm1RM[ex.key]=val;
+  });
+  localStorage.setItem('fitlog-1rm', JSON.stringify(orm1RM));
+  showToast('✅ 기준 중량 저장 완료!','success');
+}
+
+// ── 운동별 조정 ──
+function renderAdjPanel(){
+  const tk = document.getElementById('adj-day-sel')?.value||'A';
+  const rt = RT[tk];
+  if(!rt) return;
+  const panel = document.getElementById('adj-panel');
+  if(!panel) return;
+  let html='';
+  rt.sections.forEach((sec,si)=>{
+    if(!sec.exs.length) return;
+    html+=`<div style="font-size:10px;font-family:var(--mono);color:var(--muted);letter-spacing:.08em;margin:10px 0 5px;">${sec.n}</div>`;
+    sec.exs.forEach((ex,ei)=>{
+      const hasSets=ex.sets>0;
+      const hasReps=ex.d&&ex.d.includes('회');
+      const hasTime=ex.d&&ex.d.includes('분');
+      const curSets=ex.sets||0;
+      const curReps=ex.d?.match(/×\s*(\d+)회/)?parseInt(ex.d.match(/×\s*(\d+)회/)[1]):0;
+      const curMin=ex.d?.match(/(\d+)분/)?parseInt(ex.d.match(/(\d+)분/)[1]):0;
+      html+=`<div class="adj-row">
+        <div style="flex:1;min-width:0;">
+          <div class="adj-name" style="white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${ex.n}</div>
+          <div class="adj-sub" id="adj-sub-${tk}-${si}-${ei}">${ex.d}</div>
+        </div>
+        <div style="display:flex;flex-direction:column;gap:3px;align-items:flex-end;flex-shrink:0;">
+          ${hasSets?`<div class="adj-ctrl"><span class="adj-unit">세트</span><button class="adj-btn" onclick="adjV('${tk}',${si},${ei},'sets',-1)">−</button><span class="adj-val" id="av-sets-${tk}-${si}-${ei}">${curSets}</span><button class="adj-btn" onclick="adjV('${tk}',${si},${ei},'sets',1)">+</button></div>`:''}
+          ${hasReps?`<div class="adj-ctrl"><span class="adj-unit">횟수</span><button class="adj-btn" onclick="adjV('${tk}',${si},${ei},'reps',-1)">−</button><span class="adj-val" id="av-reps-${tk}-${si}-${ei}">${curReps}</span><button class="adj-btn" onclick="adjV('${tk}',${si},${ei},'reps',1)">+</button></div>`:''}
+          ${hasTime?`<div class="adj-ctrl"><span class="adj-unit">분</span><button class="adj-btn" onclick="adjV('${tk}',${si},${ei},'min',-1)">−</button><span class="adj-val" id="av-min-${tk}-${si}-${ei}">${curMin}</span><button class="adj-btn" onclick="adjV('${tk}',${si},${ei},'min',1)">+</button></div>`:''}
+        </div>
+      </div>`;
+    });
+  });
+  panel.innerHTML=html||'<div style="color:var(--muted);font-size:12px;padding:8px;">운동이 없습니다.</div>';
+}
+
+function adjV(tk,si,ei,type,delta){
+  const ex=RT[tk]?.sections[si]?.exs[ei];
+  if(!ex) return;
+  const el=document.getElementById(`av-${type}-${tk}-${si}-${ei}`);
+  if(!el) return;
+  let cur=Math.max(0,(parseInt(el.textContent)||0)+delta);
+  el.textContent=cur;
+  if(type==='sets') ex.sets=cur;
+  else if(type==='reps') ex.d=ex.d.replace(/×\s*\d+회/,'× '+cur+'회');
+  else if(type==='min') ex.d=ex.d.replace(/\d+분/,cur+'분');
+  const sub=document.getElementById(`adj-sub-${tk}-${si}-${ei}`);
+  if(sub) sub.textContent=ex.d;
+}
+
+async function saveAdjustments(){
+  await window.saveRoutine(RT);
+  showToast('✅ 조정 저장 완료!','success');
+  initSetData(DAY_SCHED[selDay]);
+}
+
+async function resetAdjustments(){
+  const tk=document.getElementById('adj-day-sel')?.value||'A';
+  if(!confirm(`${tk} 루틴을 기본값으로 초기화할까요?`)) return;
+  RT[tk]=JSON.parse(JSON.stringify(RT_BASE[tk]));
+  await window.saveRoutine(RT);
+  renderAdjPanel();
+  showToast(`↺ ${tk} 루틴 초기화 완료`,'info');
+}
+
+// ── 자세 가이드 ──
+function renderPostureList(){
+  const kw=(document.getElementById('posture-search')?.value||'').toLowerCase();
+  const list=document.getElementById('posture-list');
+  if(!list) return;
+  const filtered=POSTURE_DB.filter(p=>!kw||p.name.toLowerCase().includes(kw)||p.tags.some(t=>t.includes(kw)));
+  if(!filtered.length){list.innerHTML='<div style="color:var(--muted);font-size:12px;padding:10px;text-align:center;">검색 결과 없음</div>';return;}
+  list.innerHTML=filtered.map((p,i)=>`
+    <div class="posture-item" onclick="togglePosture(${i})">
+      <div class="posture-name">
+        <span>${p.name}</span>
+        <span style="font-size:12px;color:var(--muted);" id="posture-arrow-${i}">▼</span>
+      </div>
+      <div class="posture-tags">${p.tags.map(t=>`<span style="font-size:10px;padding:1px 6px;border-radius:5px;background:var(--surface);border:1px solid var(--border);color:var(--muted);">${t}</span>`).join('')}</div>
+      <div class="posture-desc" id="posture-desc-${i}">
+        <div style="font-size:11px;font-weight:700;color:var(--blue);margin-bottom:5px;">📋 자세 순서</div>
+        <div style="font-size:11px;color:var(--muted);line-height:1.9;">${p.steps.join('<br>')}</div>
+        <div class="posture-tip">⚠️ ${p.tip}</div>
+        <div style="font-size:11px;color:var(--accent);margin-top:5px;">❌ 흔한 실수: ${p.mistake}</div>
+        <a class="posture-yt" href="https://www.youtube.com/results?search_query=${encodeURIComponent(p.yt)}" target="_blank">▶ 유튜브로 자세 보기</a>
+      </div>
+    </div>`).join('');
+}
+
+function togglePosture(i){
+  const desc=document.getElementById(`posture-desc-${i}`);
+  const arrow=document.getElementById(`posture-arrow-${i}`);
+  if(!desc) return;
+  const isOpen=desc.classList.contains('open');
+  desc.classList.toggle('open',!isOpen);
+  if(arrow) arrow.textContent=isOpen?'▼':'▲';
+}
+
+// 설정 탭 초기화
+function initSettingsTab(){
+  // 레벨 버튼 상태 복원
+  document.querySelectorAll('.level-step').forEach((b,i)=>{
+    b.classList.toggle('active',i+1===curLevel);
+    b.classList.toggle('done',i+1<curLevel);
+  });
+  renderLevelDesc();
+  renderORMGrid();
+  renderAdjPanel();
+  renderPostureList();
+}
+
 function copyLink(){
   const url=window.location.href.split('?')[0];
   navigator.clipboard.writeText(url).then(()=>showToast('✅ 링크 복사됨! 친구에게 공유해보세요','success')).catch(()=>{
@@ -3139,6 +3497,7 @@ function showPage(id){
     renderWorkout();
   }
   if(id==='diet')renderDiet();
+  if(id==='settings') initSettingsTab();
 }
 let tTimer=null;
 function showToast(msg,type='info'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;if(tTimer)clearTimeout(tTimer);tTimer=setTimeout(()=>t.classList.remove('show'),3500);}
