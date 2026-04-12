@@ -500,6 +500,44 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .diet-goal-inp:focus{outline:none;border-color:var(--green);}
 .diet-save-btn{width:100%;padding:11px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:12px;}
 .diet-save-btn:hover{opacity:.9;}
+/* ── AI 식단 결과 카드 ── */
+.ai-result-summary{font-size:11px;color:var(--blue);padding:8px 10px;background:#4a9eff0d;border-radius:8px;margin-bottom:12px;line-height:1.7;border-left:3px solid var(--blue);}
+.ai-nutri-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px;}
+.ai-nutri-box{border-radius:10px;padding:10px 6px;text-align:center;border:1px solid transparent;}
+.ai-nutri-box.n-kcal{background:#e8533a12;border-color:#e8533a30;}
+.ai-nutri-box.n-carb{background:#f0a50012;border-color:#f0a50030;}
+.ai-nutri-box.n-prot{background:#4caf7d12;border-color:#4caf7d30;}
+.ai-nutri-box.n-fat{background:#9b7fe812;border-color:#9b7fe830;}
+.ai-nutri-val{font-size:16px;font-weight:900;font-family:var(--mono);}
+.ai-nutri-lbl{font-size:9px;color:var(--muted);margin-top:2px;}
+.ai-meal-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;margin-bottom:10px;overflow:hidden;}
+.ai-meal-card-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;background:var(--surface2);border-bottom:1px solid var(--border);}
+.ai-meal-card-title{font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.ai-meal-card-kcal{font-size:11px;font-family:var(--mono);padding:3px 10px;border-radius:20px;background:var(--surface);border:1px solid var(--border);color:var(--muted);}
+.ai-food-item{display:flex;align-items:center;gap:10px;padding:10px 14px;border-bottom:1px solid var(--border);}
+.ai-food-item:last-of-type{border-bottom:none;}
+.ai-food-item-emoji{font-size:22px;flex-shrink:0;width:30px;text-align:center;}
+.ai-food-item-info{flex:1;min-width:0;}
+.ai-food-item-name{font-size:13px;font-weight:600;margin-bottom:2px;}
+.ai-food-item-amount{font-size:10px;color:var(--muted);margin-bottom:4px;}
+.ai-food-item-macros{display:flex;gap:4px;flex-wrap:wrap;}
+.ai-macro{font-size:10px;padding:2px 6px;border-radius:4px;font-family:var(--mono);font-weight:500;}
+.ai-macro-c{background:#f0a50018;color:var(--accent2);}
+.ai-macro-p{background:#4caf7d18;color:var(--green);}
+.ai-macro-f{background:#9b7fe818;color:var(--purple);}
+.ai-food-item-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0;}
+.ai-food-item-kcal{font-size:15px;font-weight:900;color:var(--accent);font-family:var(--mono);line-height:1;}
+.ai-food-item-kcal-lbl{font-size:9px;color:var(--muted);}
+.ai-food-item-del{padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);font-size:11px;cursor:pointer;transition:all .15s;}
+.ai-food-item-del:hover{border-color:var(--accent);color:var(--accent);}
+.ai-meal-add-row{padding:8px 14px;display:flex;gap:6px;}
+.ai-meal-add-inp{flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:7px 10px;font-size:12px;color:var(--text);font-family:var(--font);}
+.ai-meal-add-inp:focus{outline:none;border-color:var(--green);}
+.ai-meal-add-btn{padding:7px 12px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;}
+.ai-bottom-btns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:4px;}
+.ai-apply-btn{padding:12px;border-radius:10px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.ai-regen-btn{padding:12px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.ai-regen-btn:hover{border-color:var(--blue);color:var(--blue);}
 /* ── 성장 단계·설정 ── */
 .level-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;}
 .level-card-title{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;}
@@ -866,7 +904,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <span>🤖 AI 식단 추천</span>
         <span style="font-size:10px;color:var(--muted);font-weight:400;">체중·목표 기반 자동 생성</span>
       </div>
-      <button class="ai-diet-btn" id="ai-gen-btn" onclick="generateAIDiet()">✨ 오늘 식단 AI로 짜기</button>
+      <button class="ai-diet-btn" id="ai-gen-btn" onclick="generateAIDiet()">🤖 BMI·기초대사량으로 식단 자동 생성</button>
       <div class="ai-diet-result" id="ai-diet-result"></div>
     </div>
     <!-- 날짜 네비게이션 -->
@@ -3216,65 +3254,106 @@ function renderAIDietResult(plan){
   const result=document.getElementById('ai-diet-result');
   const ICONS={아침:'🌅',점심:'☀️',저녁:'🌙',간식:'🍎'};
 
-  // 영양소 합산
   const allFoods=['아침','점심','저녁','간식'].flatMap(m=>plan.meals[m]||[]);
   const totKcal=Math.round(allFoods.reduce((s,f)=>s+(f.kcal||0),0));
   const totCarb=Math.round(allFoods.reduce((s,f)=>s+(f.carb||0),0));
   const totProt=Math.round(allFoods.reduce((s,f)=>s+(f.prot||0),0));
   const totFat =Math.round(allFoods.reduce((s,f)=>s+(f.fat||0),0));
 
-  let html=`<div class="ai-summary-txt">${plan.summary}</div>
-  <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:12px;">
-    <div style="background:#e8533a15;border-radius:6px;padding:7px;text-align:center;">
-      <div style="font-size:14px;font-weight:900;font-family:var(--mono);color:var(--accent);">${totKcal}</div>
-      <div style="font-size:9px;color:var(--muted);">kcal</div>
-    </div>
-    <div style="background:#f0a50015;border-radius:6px;padding:7px;text-align:center;">
-      <div style="font-size:14px;font-weight:900;font-family:var(--mono);color:var(--accent2);">${totCarb}g</div>
-      <div style="font-size:9px;color:var(--muted);">탄수화물</div>
-    </div>
-    <div style="background:#4caf7d15;border-radius:6px;padding:7px;text-align:center;">
-      <div style="font-size:14px;font-weight:900;font-family:var(--mono);color:var(--green);">${totProt}g</div>
-      <div style="font-size:9px;color:var(--muted);">단백질</div>
-    </div>
-    <div style="background:#9b7fe815;border-radius:6px;padding:7px;text-align:center;">
-      <div style="font-size:14px;font-weight:900;font-family:var(--mono);color:var(--purple);">${totFat}g</div>
-      <div style="font-size:9px;color:var(--muted);">지방</div>
-    </div>
+  let html=`
+  <div class="ai-result-summary">${plan.summary}</div>
+  <div class="ai-nutri-grid">
+    <div class="ai-nutri-box n-kcal"><div class="ai-nutri-val" style="color:var(--accent);">${totKcal}</div><div class="ai-nutri-lbl">🔥 칼로리</div></div>
+    <div class="ai-nutri-box n-carb"><div class="ai-nutri-val" style="color:var(--accent2);">${totCarb}g</div><div class="ai-nutri-lbl">🌾 탄수화물</div></div>
+    <div class="ai-nutri-box n-prot"><div class="ai-nutri-val" style="color:var(--green);">${totProt}g</div><div class="ai-nutri-lbl">💪 단백질</div></div>
+    <div class="ai-nutri-box n-fat"><div class="ai-nutri-val" style="color:var(--purple);">${totFat}g</div><div class="ai-nutri-lbl">🥑 지방</div></div>
   </div>`;
 
   ['아침','점심','저녁','간식'].forEach(meal=>{
     const foods=plan.meals[meal]||[];
-    if(!foods.length) return;
     const mk=Math.round(foods.reduce((s,f)=>s+(f.kcal||0),0));
-    html+=`<div class="ai-meal-block">
-      <div class="ai-meal-hdr">
-        <span class="ai-meal-name">${ICONS[meal]} ${meal}</span>
-        <span class="ai-meal-kcal">${mk}kcal</span>
-      </div>
-      ${foods.map((f,fi)=>`<div class="ai-food-row">
-        <div style="font-size:18px;flex-shrink:0;width:28px;text-align:center;">${foodEmoji(f.name)}</div>
-        <div class="ai-food-info">
-          <div class="ai-food-name">${f.name} <span style="color:var(--muted);font-size:10px;">${f.amount}</span></div>
-          <div class="ai-food-macro" style="display:flex;gap:5px;margin-top:2px;">
-            <span style="font-size:10px;padding:1px 5px;border-radius:4px;background:#f0a50018;color:var(--accent2);">탄${f.carb}g</span>
-            <span style="font-size:10px;padding:1px 5px;border-radius:4px;background:#4caf7d18;color:var(--green);">단${f.prot}g</span>
-            <span style="font-size:10px;padding:1px 5px;border-radius:4px;background:#9b7fe818;color:var(--purple);">지${f.fat}g</span>
+    html+=`<div class="ai-meal-card">
+      <div class="ai-meal-card-hdr">
+        <span class="ai-meal-card-title">${ICONS[meal]} ${meal}</span>
+        <span class="ai-meal-card-kcal">${mk} kcal</span>
+      </div>`;
+
+    if(foods.length){
+      html+=foods.map((f,fi)=>`
+        <div class="ai-food-item">
+          <div class="ai-food-item-emoji">${foodEmoji(f.name)}</div>
+          <div class="ai-food-item-info">
+            <div class="ai-food-item-name">${f.name}</div>
+            <div class="ai-food-item-amount">${f.amount}</div>
+            <div class="ai-food-item-macros">
+              <span class="ai-macro ai-macro-c">탄 ${f.carb}g</span>
+              <span class="ai-macro ai-macro-p">단 ${f.prot}g</span>
+              <span class="ai-macro ai-macro-f">지 ${f.fat}g</span>
+            </div>
           </div>
-        </div>
-        <div style="text-align:right;flex-shrink:0;">
-          <div style="font-size:14px;font-weight:900;color:var(--accent);font-family:var(--mono);">${f.kcal}</div>
-          <div style="font-size:9px;color:var(--muted);">kcal</div>
-        </div>
-        <button class="ai-food-del" onclick="removeAIFood('${meal}',${fi})">✕</button>
-      </div>`).join('')}
+          <div class="ai-food-item-right">
+            <div>
+              <div class="ai-food-item-kcal">${f.kcal}</div>
+              <div class="ai-food-item-kcal-lbl">kcal</div>
+            </div>
+            <button class="ai-food-item-del" onclick="removeAIFood('${meal}',${fi})">✕ 삭제</button>
+          </div>
+        </div>`).join('');
+    } else {
+      html+=`<div style="padding:12px 14px;font-size:12px;color:var(--muted);">음식을 추가해주세요</div>`;
+    }
+
+    // 식품 직접 추가 입력창
+    html+=`<div class="ai-meal-add-row">
+      <input class="ai-meal-add-inp" id="ai-add-${meal}" type="text"
+        placeholder="${meal}에 추가할 음식 이름..." onkeydown="if(event.key==='Enter')addAIFood('${meal}')">
+      <button class="ai-meal-add-btn" onclick="addAIFood('${meal}')">＋ 추가</button>
+    </div>
     </div>`;
   });
 
-  html+=`<button class="ai-apply-btn" onclick="applyAIDiet()">📋 이 식단을 오늘에 적용</button>`;
+  html+=`<div class="ai-bottom-btns">
+    <button class="ai-apply-btn" onclick="applyAIDiet()">📋 오늘 식단에 적용</button>
+    <button class="ai-regen-btn" onclick="generateAIDiet()">🔄 다시 생성</button>
+  </div>`;
+
   result.innerHTML=html;
 }
 
+function addAIFood(meal){
+  if(!aiDietPlan) return;
+  const inp = document.getElementById(`ai-add-${meal}`);
+  if(!inp) return;
+  const name = inp.value.trim();
+  if(!name){ showToast('음식 이름을 입력해주세요','error'); return; }
+
+  // FOOD_DB에서 검색
+  const found = FOOD_DB.find(f=>f.n.includes(name)||name.includes(f.n));
+  if(found){
+    const ratio = found.per ? 1 : 1; // 기본 1회 분량
+    const grams = found.per || 100;
+    aiDietPlan.meals[meal].push({
+      name: found.n,
+      amount: found.per ? `1${found.unit||'회'}` : `${grams}g`,
+      kcal: Math.round(found.kcal * (grams/100)),
+      carb: Math.round(found.carb * (grams/100) * 10)/10,
+      prot: Math.round(found.prot * (grams/100) * 10)/10,
+      fat:  Math.round(found.fat  * (grams/100) * 10)/10,
+    });
+    inp.value='';
+    renderAIDietResult(aiDietPlan);
+    showToast(`✅ "${found.n}" 추가됨!`,'success');
+  } else {
+    // DB에 없으면 기본값으로 추가
+    aiDietPlan.meals[meal].push({
+      name, amount:'1회',
+      kcal:150, carb:15, prot:8, fat:5
+    });
+    inp.value='';
+    renderAIDietResult(aiDietPlan);
+    showToast(`✅ "${name}" 추가됨! (영양소는 직접 수정하거나 식단 적용 후 조정해주세요)`,'info');
+  }
+}
 function removeAIFood(meal,fi){
   if(!aiDietPlan?.meals[meal]) return;
   aiDietPlan.meals[meal].splice(fi,1);
