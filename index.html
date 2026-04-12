@@ -2720,6 +2720,26 @@ function mealKcal(date,meal){
   return Math.round((getDietDay(date).meals[meal]||[]).reduce((s,f)=>s+(f.kcal||0),0));
 }
 
+// ── 식품 이모지 매핑 (전역) ──
+function foodEmoji(name){
+  const map={
+    '밥':'🍚','쌀':'🍚','현미':'🍚','오트밀':'🥣','빵':'🍞','통밀빵':'🍞','파스타':'🍝',
+    '닭':'🍗','달걀':'🥚','두부':'⬜','연어':'🐟','참치':'🐟','고등어':'🐟','새우':'🦐','소고기':'🥩','돼지':'🥩',
+    '그릭요거트':'🥛','우유':'🥛','치즈':'🧀','프로틴':'💪',
+    '고구마':'🍠','감자':'🥔','바나나':'🍌','사과':'🍎','귤':'🍊','딸기':'🍓','블루베리':'🫐',
+    '아보카도':'🥑','브로콜리':'🥦','시금치':'🥬','당근':'🥕','오이':'🥒','토마토':'🍅','양배추':'🥬',
+    '아몬드':'🥜','땅콩':'🥜','견과류':'🥜','올리브':'🫒',
+    '김치':'🥢','된장':'🍲','미역':'🌿','라면':'🍜','김밥':'🍱','비빔밥':'🍱','삼겹살':'🥓',
+    '커피':'☕','아메리카노':'☕','라떼':'☕','주스':'🧃','물':'💧',
+    '초코':'🍫','케이크':'🎂','아이스크림':'🍦','과자':'🍪',
+    '오이':'🥒','상추':'🥬','깻잎':'🌿','버섯':'🍄','콩':'🫘',
+  };
+  for(const [k,v] of Object.entries(map)){
+    if(name.includes(k)) return v;
+  }
+  return '🍽️';
+}
+
 function renderDiet(){
   renderWeightCard();
   const today=toStr(new Date());
@@ -2758,25 +2778,6 @@ function renderDiet(){
   // 식사별 섹션
   const area=document.getElementById('diet-meals-area');
   const day=getDietDay(dietDate);
-
-  // 식품 이모지 자동 매핑
-  function foodEmoji(name){
-    const map={
-      '밥':'🍚','쌀':'🍚','현미':'🍚','오트밀':'🥣','빵':'🍞','통밀빵':'🍞','파스타':'🍝',
-      '닭':'🍗','달걀':'🥚','두부':'⬜','연어':'🐟','참치':'🐟','고등어':'🐟','새우':'🦐','소고기':'🥩','돼지':'🥩',
-      '그릭요거트':'🥛','우유':'🥛','치즈':'🧀','프로틴':'💪',
-      '고구마':'🍠','감자':'🥔','바나나':'🍌','사과':'🍎','귤':'🍊','딸기':'🍓','블루베리':'🫐',
-      '아보카도':'🥑','브로콜리':'🥦','시금치':'🥬','당근':'🥕','오이':'🥒','토마토':'🍅','양배추':'🥬',
-      '아몬드':'🥜','땅콩':'🥜','견과류':'🥜','올리브':'🫒',
-      '김치':'🥢','된장':'🍲','미역':'🌿','라면':'🍜','김밥':'🍱','비빔밥':'🍱','삼겹살':'🥓',
-      '커피':'☕','아메리카노':'☕','라떼':'☕','주스':'🧃','물':'💧',
-      '초코':'🍫','케이크':'🎂','아이스크림':'🍦','과자':'🍪',
-    };
-    for(const [k,v] of Object.entries(map)){
-      if(name.includes(k)) return v;
-    }
-    return '🍽️';
-  }
 
   area.innerHTML=DIET_MEALS.map(meal=>{
     const foods=day.meals[meal]||[];
@@ -3252,7 +3253,7 @@ function renderAIDietResult(plan){
         <span class="ai-meal-kcal">${mk}kcal</span>
       </div>
       ${foods.map((f,fi)=>`<div class="ai-food-row">
-        <div style="font-size:18px;flex-shrink:0;width:28px;text-align:center;">${foodEmoji?foodEmoji(f.name):'🍽️'}</div>
+        <div style="font-size:18px;flex-shrink:0;width:28px;text-align:center;">${foodEmoji(f.name)}</div>
         <div class="ai-food-info">
           <div class="ai-food-name">${f.name} <span style="color:var(--muted);font-size:10px;">${f.amount}</span></div>
           <div class="ai-food-macro" style="display:flex;gap:5px;margin-top:2px;">
