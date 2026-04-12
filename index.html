@@ -1161,6 +1161,51 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <button id="ov-close-btn" onclick="closeTimerOverlay()">✕ 닫기</button>
 </div>
 
+
+<!-- 식품 정보 상세 모달 -->
+<div class="modal-bg" id="food-info-modal">
+  <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;width:100%;max-width:380px;max-height:85vh;overflow-y:auto;">
+    <div style="padding:18px 18px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <div>
+        <div id="fi-icon" style="font-size:36px;margin-bottom:4px;"></div>
+        <div id="fi-name" style="font-size:18px;font-weight:900;"></div>
+        <div id="fi-cat" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-top:2px;"></div>
+      </div>
+      <button class="modal-close" onclick="closeFoodInfo()">✕</button>
+    </div>
+    <div style="padding:16px 18px;">
+      <!-- 영양소 수치 -->
+      <div id="fi-nutri-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:16px;"></div>
+      <!-- 설명 -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:10px;font-family:var(--mono);color:var(--muted);letter-spacing:.08em;margin-bottom:5px;">📌 식품 소개</div>
+        <div id="fi-desc" style="font-size:13px;color:var(--text);line-height:1.7;"></div>
+      </div>
+      <!-- 효능 -->
+      <div style="background:#4caf7d10;border:1px solid #4caf7d30;border-radius:10px;padding:12px;margin-bottom:10px;">
+        <div style="font-size:10px;font-family:var(--mono);color:var(--green);letter-spacing:.08em;margin-bottom:6px;">✅ 주요 효능</div>
+        <div id="fi-benefit" style="font-size:12px;color:var(--text);line-height:1.8;"></div>
+      </div>
+      <!-- 주요 영양소 -->
+      <div style="background:#4a9eff10;border:1px solid #4a9eff30;border-radius:10px;padding:12px;margin-bottom:10px;">
+        <div style="font-size:10px;font-family:var(--mono);color:var(--blue);letter-spacing:.08em;margin-bottom:6px;">💊 주요 영양소</div>
+        <div id="fi-vitamin" style="font-size:12px;color:var(--text);line-height:1.8;"></div>
+      </div>
+      <!-- 섭취 팁 -->
+      <div style="background:#f0a50010;border:1px solid #f0a50030;border-radius:10px;padding:12px;margin-bottom:10px;">
+        <div style="font-size:10px;font-family:var(--mono);color:var(--accent2);letter-spacing:.08em;margin-bottom:6px;">💡 섭취 팁</div>
+        <div id="fi-tip" style="font-size:12px;color:var(--text);line-height:1.8;"></div>
+      </div>
+      <!-- 주의사항 -->
+      <div style="background:#e8533a10;border:1px solid #e8533a30;border-radius:10px;padding:12px;margin-bottom:10px;">
+        <div style="font-size:10px;font-family:var(--mono);color:var(--accent);letter-spacing:.08em;margin-bottom:6px;">⚠️ 주의사항</div>
+        <div id="fi-warn" style="font-size:12px;color:var(--text);line-height:1.8;"></div>
+      </div>
+      <!-- 추천 대상 -->
+      <div id="fi-best-wrap" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+    </div>
+  </div>
+</div>
 <!-- 식단 추가 모달 -->
 <div class="modal-bg" id="diet-modal">
   <div class="diet-modal">
@@ -2681,6 +2726,32 @@ let dietDbCat='전체';
 let _dietFiltered=[];
 
 // ── 식품 DB ──
+
+// ── 식품 상세 정보 DB ──
+const FOOD_INFO_DB = {
+  '오트밀':      {icon:'🥣', desc:'귀리를 가공한 통곡물 식품', benefit:'식이섬유 풍부 → 포만감 지속·혈당 안정·콜레스테롤 감소', vitamin:'베타글루칸·비타민B1·마그네슘·철분', tip:'물 또는 우유에 끓여 먹기. 과일·견과류 추가 시 영양 UP', warn:'과도 섭취 시 복부 가스 유발 가능', best:'다이어트·당뇨·심장건강', color:'#f0a500'},
+  '닭가슴살':    {icon:'🍗', desc:'저지방 고단백 대표 식품', benefit:'근육 합성 최적 단백질·포화지방 낮음·체중 감량에 이상적', vitamin:'단백질·비타민B3(나이아신)·인·셀레늄', tip:'삶거나 에어프라이어 조리 권장. 허브·레몬즙으로 맛 향상', warn:'과조리 시 퍽퍽함. 껍질 제거 필수', best:'근력강화·다이어트', color:'#e8533a'},
+  '달걀':        {icon:'🥚', desc:'완전식품으로 불리는 영양 덩어리', benefit:'필수아미노산 완전 함유·뇌건강(콜린)·눈건강(루테인)', vitamin:'단백질·비타민A·D·B12·엽산·셀레늄', tip:'흰자만이 아닌 노른자도 함께! 영양소 대부분이 노른자에', warn:'하루 2~3개 적정. 콜레스테롤 주의가 필요한 분은 의사 상담', best:'근육강화·두뇌건강·눈건강', color:'#f0a500'},
+  '두부':        {icon:'⬜', desc:'콩으로 만든 식물성 단백질', benefit:'식물성 단백질·이소플라본·골다공증 예방·콜레스테롤 감소', vitamin:'단백질·칼슘·마그네슘·철분·이소플라본', tip:'칼슘 흡수를 위해 멸치와 함께. 구워서 먹으면 맛과 식감 UP', warn:'갑상선 기능 저하증 환자는 과다 섭취 주의', best:'다이어트·뼈건강·여성건강', color:'#4a9eff'},
+  '연어':        {icon:'🐟', desc:'오메가-3 최고의 공급원', benefit:'오메가-3→심장·뇌·염증 감소·피부 건강·우울증 예방', vitamin:'오메가-3·비타민D·B12·단백질·셀레늄·아스타잔틴', tip:'주 2회 이상 권장. 생연어·구운연어 모두 OK', warn:'임산부는 생연어 주의. 열량 높으므로 적정량', best:'심장건강·뇌건강·항염', color:'#e8533a'},
+  '고구마':      {icon:'🍠', desc:'천연 에너지원·다이어트 필수템', benefit:'복합탄수화물로 혈당 천천히 올림·항산화·면역력 강화', vitamin:'베타카로틴(비타민A)·비타민C·칼륨·식이섬유', tip:'껍질째 먹으면 식이섬유 2배. 삶는 것보다 쪄먹기', warn:'당뇨 환자는 섭취량 조절 필요. 너무 많이 먹으면 속쓰림', best:'다이어트·면역력·운동전 에너지', color:'#e8533a'},
+  '현미밥':      {icon:'🍚', desc:'도정하지 않은 통곡물 쌀밥', benefit:'식이섬유·혈당 안정·포만감 지속·대장 건강', vitamin:'식이섬유·비타민B1·B3·마그네슘·아연', tip:'흰쌀과 7:3 혼합부터 시작. 충분히 씹어서 먹기', warn:'소화가 약한 분은 처음엔 소량씩. 위장이 약한 경우 주의', best:'혈당관리·다이어트·장건강', color:'#4caf50'},
+  '흰쌀밥':      {icon:'🍚', desc:'한국인 주식 탄수화물', benefit:'빠른 에너지 공급·운동 후 글리코겐 회복에 효과적', vitamin:'탄수화물·비타민B1(소량)·칼륨', tip:'운동 전후 섭취하면 에너지 효율 UP', warn:'혈당 빠르게 상승. 다이어트 중이라면 현미밥으로 대체 권장', best:'운동전후·에너지보충', color:'#f0a500'},
+  '바나나':      {icon:'🍌', desc:'천연 에너지 바', benefit:'운동 전 즉각적 에너지·근육경련 예방(칼륨)·기분 향상(세로토닌)', vitamin:'칼륨·비타민B6·비타민C·마그네슘·식이섬유', tip:'운동 30분 전 섭취 최적. 냉동해서 스무디 활용', warn:'당뇨 환자는 1개 이내로. 과숙된 바나나 혈당 영향 큼', best:'운동전에너지·심장건강·기분향상', color:'#f0a500'},
+  '아보카도':    {icon:'🥑', desc:'건강한 지방의 왕', benefit:'불포화지방산→심장 건강·피부 광채·포만감 오래 지속', vitamin:'올레산·칼륨(바나나의 2배)·비타민K·E·엽산', tip:'올리브오일 대신 사용. 레몬즙으로 갈변 방지', warn:'열량 높음(하루 반개 권장). 임산부 과다섭취 주의', best:'심장건강·피부건강·다이어트', color:'#4caf50'},
+  '브로콜리':    {icon:'🥦', desc:'채소의 왕·슈퍼푸드', benefit:'항암(설포라판)·면역력·뼈건강(비타민K)·해독 작용', vitamin:'비타민C(귤의 2배)·K·엽산·설포라판·칼슘', tip:'살짝만 데쳐 먹기. 너무 익히면 영양소 파괴', warn:'갑상선 환자는 생브로콜리 과다 주의', best:'항암·면역력·다이어트', color:'#4caf50'},
+  '그릭요거트':  {icon:'🥛', desc:'단백질 가득한 발효유', benefit:'장 건강(유산균)·근육 회복·뼈 건강·포만감', vitamin:'단백질·칼슘·프로바이오틱스·B12', tip:'무가당 선택 필수. 과일·견과류 토핑으로 맛 향상', warn:'유당불내증 있으면 소량부터. 가당 제품은 당 높음', best:'장건강·근육회복·다이어트', color:'#4a9eff'},
+  '아몬드':      {icon:'🥜', desc:'견과류의 왕', benefit:'불포화지방산·심장 보호·혈당 안정·피부 건강(비타민E)', vitamin:'비타민E·마그네슘·칼슘·불포화지방·식이섬유', tip:'하루 한 줌(23알). 껍질째 먹기. 소금 없는 것 선택', warn:'열량 높음. 과다 섭취 금물. 알레르기 주의', best:'심장건강·피부건강·다이어트스낵', color:'#e8533a'},
+  '시금치':      {icon:'🥬', desc:'철분의 보고·슈퍼 채소', benefit:'빈혈 예방(철분)·뼈 건강·항산화·시력 보호', vitamin:'철분·칼슘·비타민K·A·C·엽산·루테인', tip:'비타민C 식품과 함께 먹으면 철분 흡수 UP', warn:'신장결석 주의(옥살산). 혈액응고제 복용자는 주의', best:'빈혈예방·뼈건강·임산부', color:'#4caf50'},
+  '참치캔':      {icon:'🐟', desc:'간편한 고단백 식품', benefit:'고단백·저지방·오메가-3·근육 합성 도움', vitamin:'단백질·오메가-3·비타민D·B12·셀레늄', tip:'기름 제거 후 사용. 물참치 선택 권장', warn:'나트륨 높음. 임산부는 주 1~2회 이내(수은)', best:'근력강화·다이어트', color:'#4a9eff'},
+  '고등어':      {icon:'🐟', desc:'등 푸른 생선의 대표', benefit:'EPA·DHA 풍부→뇌건강·심장보호·혈압 감소·우울증 예방', vitamin:'오메가-3·비타민D·B12·단백질·코엔자임Q10', tip:'구워서 먹기. 식초 절임(초고등어)도 영양가 높음', warn:'통풍 환자 주의. 신선도 떨어지면 히스타민 알레르기', best:'뇌건강·심장건강·성장기', color:'#4a9eff'},
+  '새우':        {icon:'🦐', desc:'저지방 고단백 해산물', benefit:'고단백 저지방·아스타잔틴(강력 항산화)·갑상선 건강(요오드)', vitamin:'단백질·아스타잔틴·요오드·셀레늄·칼슘', tip:'살짝 데쳐서 레몬즙과. 내장 제거 후 조리', warn:'콜레스테롤 주의. 갑각류 알레르기 확인', best:'다이어트·피부건강·근력강화', color:'#e8533a'},
+  '소고기':      {icon:'🥩', desc:'완전 단백질 공급원', benefit:'헴철(흡수율 높음)→빈혈예방·아연→면역력·근육 성장', vitamin:'단백질·철분(헴철)·아연·비타민B12·크레아틴', tip:'등심·안심 등 부위별 지방 차이 큼. 주 2~3회 적정', warn:'붉은 육류 과다섭취는 심장질환 위험. 가공육(소시지)는 제한', best:'빈혈예방·근육강화·면역력', color:'#e8533a'},
+  '저지방우유':  {icon:'🥛', desc:'칼슘의 최고 공급원', benefit:'뼈·치아 강화·근육 수축·수면 개선(트립토판)', vitamin:'칼슘·단백질·비타민D·B2·칼륨', tip:'운동 후 초콜릿 우유도 회복에 효과적', warn:'유당불내증 주의. 성인은 저지방 선택 권장', best:'뼈건강·수면개선·근육강화', color:'#4a9eff'},
+  '통밀빵':      {icon:'🍞', desc:'건강한 탄수화물 선택', benefit:'식이섬유 풍부·혈당 천천히 오름·소화 건강·포만감', vitamin:'식이섬유·비타민B·마그네슘·아연', tip:'흰 빵 대신 통밀빵으로 교체. 성분표에서 통밀가루 확인', warn:'밀 알레르기·셀리악병 주의', best:'혈당관리·다이어트·장건강', color:'#f0a500'},
+  '김치':        {icon:'🥢', desc:'한국의 프로바이오틱스 보고', benefit:'유산균→장 건강·면역력·항암(캡사이신)·비만 예방', vitamin:'유산균·비타민C·K·식이섬유·캡사이신', tip:'익은 김치일수록 유산균 많음. 적당량이 핵심', warn:'나트륨 높음. 고혈압 환자는 소량씩. 위염에는 자극적', best:'장건강·면역력·다이어트', color:'#e8533a'},
+  '된장':        {icon:'🍲', desc:'발효된 콩의 영양 결정체', benefit:'이소플라본·항암·심장 건강·뼈 건강·장 건강(유익균)', vitamin:'단백질·이소플라본·유산균·비타민K·마그네슘', tip:'끓이면 유산균 죽음 → 생으로 쌈장 활용도 좋음', warn:'나트륨 매우 높음. 고혈압·신장 환자 주의', best:'항암·심장건강·여성건강', color:'#4caf50'},
+};
 const FOOD_DB=[
   // 단백질
   {n:'닭가슴살(삶은)',cat:'단백질',per:'100g',kcal:165,carb:0,prot:31,fat:3.6},
@@ -2822,9 +2893,9 @@ function renderDiet(){
     const mk=mealKcal(dietDate,meal);
     const foodsHtml=foods.length ? foods.map((f,fi)=>`
       <div class="diet-food-card">
-        <div class="diet-food-emoji">${foodEmoji(f.name)}</div>
-        <div class="diet-food-info">
-          <div class="diet-food-name">${f.name}</div>
+        <div class="diet-food-emoji" onclick="showFoodInfo('${f.name}',f.kcal,f.carb,f.prot,f.fat,'${f.amount}')" style="cursor:pointer;">${foodEmoji(f.name)}</div>
+        <div class="diet-food-info" onclick="showFoodInfo('${f.name}',f.kcal,f.carb,f.prot,f.fat,'${f.amount}')" style="cursor:pointer;">
+          <div class="diet-food-name">${f.name} <span style="font-size:10px;color:var(--muted);">ℹ️</span></div>
           <div class="diet-food-amount">${f.amount}</div>
           <div class="diet-food-macros">
             <span class="diet-macro-tag diet-macro-c">탄 ${f.carb}g</span>
@@ -2898,12 +2969,13 @@ function filterDietDB(){
   const kw=document.getElementById('diet-search-inp').value.toLowerCase();
   _dietFiltered=FOOD_DB.filter(f=>(dietDbCat==='전체'||f.cat===dietDbCat)&&(!kw||f.n.toLowerCase().includes(kw)));
   document.getElementById('diet-db-list').innerHTML=_dietFiltered.length
-    ?_dietFiltered.map((f,i)=>`<div class="diet-db-item" onclick="startAddFood(${i})">
-      <div class="diet-db-info">
+    ?_dietFiltered.map((f,i)=>`<div class="diet-db-item">
+      <div class="diet-db-info" onclick="startAddFood(${i})" style="flex:1;cursor:pointer;">
         <div class="diet-db-name">${f.n}</div>
         <div class="diet-db-sub">${f.per} · 탄${f.carb}g 단${f.prot}g 지${f.fat}g</div>
       </div>
-      <span class="diet-db-kcal">${f.kcal}kcal</span>
+      <span class="diet-db-kcal" style="cursor:pointer;" onclick="startAddFood(${i})">${f.kcal}kcal</span>
+      <button style="padding:3px 7px;border-radius:5px;border:1px solid #4a9eff33;background:none;color:var(--blue);font-size:10px;cursor:pointer;margin-left:4px;" onclick="showFoodInfo('${f.n}',${f.kcal},${f.carb},${f.prot},${f.fat},'${f.per}')">ℹ️</button>
     </div>`).join('')
     :`<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">검색 결과 없음</div>`;
 }
@@ -3282,8 +3354,8 @@ function renderAIDietResult(plan){
       html+=foods.map((f,fi)=>`
         <div class="ai-food-item">
           <div class="ai-food-item-emoji">${foodEmoji(f.name)}</div>
-          <div class="ai-food-item-info">
-            <div class="ai-food-item-name">${f.name}</div>
+          <div class="ai-food-item-info" onclick="showFoodInfo('${f.name}',${0}||f.kcal,f.carb,f.prot,f.fat,'${f.amount}')" style="cursor:pointer;">
+            <div class="ai-food-item-name">${f.name} <span style="font-size:10px;color:var(--muted);">ℹ️</span></div>
             <div class="ai-food-item-amount">${f.amount}</div>
             <div class="ai-food-item-macros">
               <span class="ai-macro ai-macro-c">탄 ${f.carb}g</span>
@@ -3320,6 +3392,68 @@ function renderAIDietResult(plan){
   result.innerHTML=html;
 }
 
+
+// ── 식품 정보 상세 팝업 ──
+function showFoodInfo(foodName, kcal, carb, prot, fat, amount){
+  // FOOD_INFO_DB에서 검색
+  let info = null;
+  for(const [key, val] of Object.entries(FOOD_INFO_DB)){
+    if(foodName.includes(key) || key.includes(foodName.split('(')[0].trim())){
+      info = val; break;
+    }
+  }
+
+  // FOOD_DB에서 정확한 영양 수치 찾기
+  const dbItem = FOOD_DB.find(f=>foodName.includes(f.n)||f.n.includes(foodName.split('(')[0]));
+  const baseKcal = kcal || (dbItem ? dbItem.kcal : 0);
+  const baseCarb = carb ?? (dbItem ? dbItem.carb : 0);
+  const baseProt = prot ?? (dbItem ? dbItem.prot : 0);
+  const baseFat  = fat  ?? (dbItem ? dbItem.fat  : 0);
+
+  document.getElementById('fi-icon').textContent = info?.icon || foodEmoji(foodName);
+  document.getElementById('fi-name').textContent = foodName;
+  document.getElementById('fi-cat').textContent  = (dbItem?.cat || '') + (amount ? ' · '+amount : '');
+
+  // 영양소 그리드
+  document.getElementById('fi-nutri-grid').innerHTML = `
+    <div style="background:#e8533a12;border-radius:8px;padding:10px;text-align:center;border:1px solid #e8533a25;">
+      <div style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--accent);">${baseKcal}</div>
+      <div style="font-size:9px;color:var(--muted);margin-top:2px;">🔥 칼로리</div>
+    </div>
+    <div style="background:#f0a50012;border-radius:8px;padding:10px;text-align:center;border:1px solid #f0a50025;">
+      <div style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--accent2);">${baseCarb}g</div>
+      <div style="font-size:9px;color:var(--muted);margin-top:2px;">🌾 탄수화물</div>
+    </div>
+    <div style="background:#4caf7d12;border-radius:8px;padding:10px;text-align:center;border:1px solid #4caf7d25;">
+      <div style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--green);">${baseProt}g</div>
+      <div style="font-size:9px;color:var(--muted);margin-top:2px;">💪 단백질</div>
+    </div>
+    <div style="background:#9b7fe812;border-radius:8px;padding:10px;text-align:center;border:1px solid #9b7fe825;">
+      <div style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--purple);">${baseFat}g</div>
+      <div style="font-size:9px;color:var(--muted);margin-top:2px;">🥑 지방</div>
+    </div>`;
+
+  if(info){
+    document.getElementById('fi-desc').textContent    = info.desc;
+    document.getElementById('fi-benefit').textContent = info.benefit;
+    document.getElementById('fi-vitamin').textContent = info.vitamin;
+    document.getElementById('fi-tip').textContent     = info.tip;
+    document.getElementById('fi-warn').textContent    = info.warn;
+    document.getElementById('fi-best-wrap').innerHTML =
+      info.best.split('·').map(b=>`<span style="padding:4px 10px;border-radius:20px;font-size:11px;font-weight:600;background:${info.color}18;border:1px solid ${info.color}44;color:${info.color};">✓ ${b.trim()}</span>`).join('');
+  } else {
+    document.getElementById('fi-desc').textContent    = '상세 정보가 준비 중입니다.';
+    document.getElementById('fi-benefit').textContent = '균형 잡힌 영양소를 함유하고 있습니다.';
+    document.getElementById('fi-vitamin').textContent = `칼로리 ${baseKcal}kcal · 탄수화물 ${baseCarb}g · 단백질 ${baseProt}g · 지방 ${baseFat}g`;
+    document.getElementById('fi-tip').textContent     = '적정량을 규칙적으로 섭취하세요.';
+    document.getElementById('fi-warn').textContent    = '개인 건강 상태에 따라 섭취량을 조절하세요.';
+    document.getElementById('fi-best-wrap').innerHTML = '';
+  }
+  document.getElementById('food-info-modal').classList.add('open');
+}
+function closeFoodInfo(){
+  document.getElementById('food-info-modal').classList.remove('open');
+}
 function addAIFood(meal){
   if(!aiDietPlan) return;
   const inp = document.getElementById(`ai-add-${meal}`);
