@@ -856,6 +856,52 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div style="font-size:21px;font-weight:900;">⚙️ 나의 운동 설정</div>
     </div>
 
+    <!-- 신체 정보 설정 -->
+    <div class="level-card" id="body-info-card">
+      <div class="level-card-title">
+        <span>👤 신체 정보</span>
+        <button onclick="saveBodyInfo()" style="padding:5px 14px;border-radius:6px;border:none;background:var(--green);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);">저장 · 재계산</button>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <!-- 성별 -->
+        <div>
+          <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;">성별</div>
+          <div style="display:flex;gap:6px;">
+            <button id="bi-male" onclick="selectGender('male')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--blue);background:#4a9eff15;color:var(--blue);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">👨 남성</button>
+            <button id="bi-female" onclick="selectGender('female')" style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">👩 여성</button>
+          </div>
+        </div>
+        <!-- 나이 -->
+        <div>
+          <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;">나이</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input id="bi-age" type="number" oninput="calcBodyMetrics()" min="10" max="99" placeholder="40"
+              style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono);text-align:center;width:100%;">
+            <span style="font-size:12px;color:var(--muted);">세</span>
+          </div>
+        </div>
+        <!-- 키 -->
+        <div>
+          <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;">키</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input id="bi-height" type="number" oninput="calcBodyMetrics()" min="100" max="230" placeholder="170"
+              style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono);text-align:center;width:100%;">
+            <span style="font-size:12px;color:var(--muted);">cm</span>
+          </div>
+        </div>
+        <!-- 몸무게 -->
+        <div>
+          <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;">몸무게</div>
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input id="bi-weight" type="number" oninput="calcBodyMetrics()" min="20" max="300" step="0.1" placeholder="70"
+              style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono);text-align:center;width:100%;">
+            <span style="font-size:12px;color:var(--muted);">kg</span>
+          </div>
+        </div>
+      </div>
+      <!-- 계산 결과 -->
+      <div id="body-calc-result" style="background:var(--surface2);border-radius:10px;padding:12px;font-size:12px;line-height:2;"></div>
+    </div>
     <!-- 운동 분류 + 목적 선택 -->
     <div class="level-card">
       <div class="level-card-title">
@@ -3304,6 +3350,250 @@ const POSTURE_DB = [
 ];
 
 
+
+// ══════════════════════════════
+// 신체 정보 설정 + 건강 계산
+// ══════════════════════════════
+let bodyGender = ''; // 설정탭에서 임시 선택
+
+function initBodyInfo(){
+  const p = userProfile || {};
+  // 기존 프로필에서 값 채우기
+  const age    = p.age    || '';
+  const height = p.height || '';
+  const weight = p.weight || (weightLog?.[toStr(new Date())] || p.weight || '');
+  const gender = p.gender || 'male';
+  bodyGender = gender;
+
+  const ageEl    = document.getElementById('bi-age');
+  const heightEl = document.getElementById('bi-height');
+  const weightEl = document.getElementById('bi-weight');
+  if(ageEl)    ageEl.value    = age;
+  if(heightEl) heightEl.value = height;
+  if(weightEl) weightEl.value = weight;
+
+  // 성별 버튼 상태
+  selectGender(gender, false);
+  // 계산 결과 표시
+  calcBodyMetrics();
+}
+
+function selectGender(g, updateUI=true){
+  bodyGender = g;
+  const male   = document.getElementById('bi-male');
+  const female = document.getElementById('bi-female');
+  if(!male||!female) return;
+  if(g==='male'){
+    male.style.border   = '2px solid var(--blue)';
+    male.style.background = '#4a9eff15';
+    male.style.color    = 'var(--blue)';
+    female.style.border = '1px solid var(--border)';
+    female.style.background = 'none';
+    female.style.color  = 'var(--muted)';
+  } else {
+    female.style.border = '2px solid var(--purple)';
+    female.style.background = '#9b7fe815';
+    female.style.color  = 'var(--purple)';
+    male.style.border   = '1px solid var(--border)';
+    male.style.background = 'none';
+    male.style.color    = 'var(--muted)';
+  }
+  if(updateUI) calcBodyMetrics();
+}
+
+function calcBodyMetrics(){
+  const age    = parseFloat(document.getElementById('bi-age')?.value)    || 0;
+  const height = parseFloat(document.getElementById('bi-height')?.value) || 0;
+  const weight = parseFloat(document.getElementById('bi-weight')?.value) || 0;
+  const el     = document.getElementById('body-calc-result');
+  if(!el) return;
+  if(!age||!height||!weight){ el.innerHTML='<span style="color:var(--muted);">나이·키·몸무게를 입력하면 건강 지표가 계산됩니다.</span>'; return; }
+
+  const h = height/100;
+  // BMI
+  const bmi = +(weight/(h*h)).toFixed(1);
+  let bmiLabel='', bmiColor='';
+  if(bmi<18.5){bmiLabel='저체중';bmiColor='var(--blue)';}
+  else if(bmi<23){bmiLabel='정상';bmiColor='var(--green)';}
+  else if(bmi<25){bmiLabel='과체중';bmiColor='var(--accent2)';}
+  else if(bmi<30){bmiLabel='비만';bmiColor='var(--accent)';}
+  else{bmiLabel='고도비만';bmiColor='#ff0000';}
+
+  // 표준체중
+  const idealWeight = bodyGender==='female' ? +(h*h*21).toFixed(1) : +(h*h*22).toFixed(1);
+
+  // BMR (Harris-Benedict)
+  const bmr = bodyGender==='female'
+    ? Math.round(655 + (9.6*weight) + (1.8*height) - (4.7*age))
+    : Math.round(66  + (13.7*weight) + (5*height)  - (6.8*age));
+
+  // TDEE (활동계수 1.375 - 가벼운 활동)
+  const tdee = Math.round(bmr * 1.375);
+
+  // 목표별 칼로리
+  const dietKcal   = Math.round(tdee * 0.82);
+  const maintKcal  = tdee;
+  const bulkKcal   = Math.round(tdee * 1.10);
+
+  // 권장 단백질
+  const protMin = Math.round(weight * 1.6);
+  const protMax = Math.round(weight * 2.2);
+
+  // 체지방 추정 (BMI 기반 Deurenberg 공식)
+  const bfp = +(1.2*bmi + 0.23*age - (bodyGender==='male'?16.2:5.4)).toFixed(1);
+
+  // 나이별 운동 권고
+  let ageAdvice = '';
+  if(age < 30)       ageAdvice = '💪 고강도 훈련 가능 · 근력+유산소 균형';
+  else if(age < 40)  ageAdvice = '⚡ 점진적 과부하 · 회복에 신경 쓰기';
+  else if(age < 50)  ageAdvice = '🎯 근력 유지 중요 · 유연성·코어 강화';
+  else if(age < 60)  ageAdvice = '🧘 저충격 운동 권장 · 관절 보호';
+  else               ageAdvice = '🌿 균형·유연성 중심 · 무리 금물';
+
+  el.innerHTML = `
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
+      <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:${bmiColor};">${bmi}</div>
+        <div style="font-size:10px;color:var(--muted);">BMI</div>
+        <div style="font-size:11px;font-weight:700;color:${bmiColor};">${bmiLabel}</div>
+      </div>
+      <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--accent2);">${bfp}%</div>
+        <div style="font-size:10px;color:var(--muted);">체지방 추정</div>
+        <div style="font-size:11px;color:var(--muted);">±3% 오차</div>
+      </div>
+      <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--green);">${bmr}</div>
+        <div style="font-size:10px;color:var(--muted);">기초대사량</div>
+        <div style="font-size:11px;color:var(--muted);">kcal/일</div>
+      </div>
+      <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center;">
+        <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--blue);">${tdee}</div>
+        <div style="font-size:10px;color:var(--muted);">활동대사량</div>
+        <div style="font-size:11px;color:var(--muted);">kcal/일</div>
+      </div>
+    </div>
+    <div style="border-top:1px solid var(--border);padding-top:10px;">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+        <span style="color:var(--muted);">표준체중</span>
+        <span style="font-weight:700;font-family:var(--mono);">${idealWeight} kg</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+        <span style="color:var(--muted);">권장 단백질</span>
+        <span style="font-weight:700;font-family:var(--mono);color:var(--green);">${protMin}~${protMax} g/일</span>
+      </div>
+      <div style="border-top:1px solid var(--border);margin:8px 0;"></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">🔥 목적별 하루 칼로리</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;">
+        <span style="padding:3px 10px;border-radius:12px;background:#e8533a15;border:1px solid var(--accent);color:var(--accent);font-size:11px;font-family:var(--mono);">감량 ${dietKcal}</span>
+        <span style="padding:3px 10px;border-radius:12px;background:#4caf7d15;border:1px solid var(--green);color:var(--green);font-size:11px;font-family:var(--mono);">유지 ${maintKcal}</span>
+        <span style="padding:3px 10px;border-radius:12px;background:#4a9eff15;border:1px solid var(--blue);color:var(--blue);font-size:11px;font-family:var(--mono);">증량 ${bulkKcal}</span>
+      </div>
+      <div style="margin-top:10px;padding:8px;background:var(--surface);border-radius:8px;font-size:11px;color:var(--accent2);">
+        ${ageAdvice}
+      </div>
+    </div>`;
+}
+
+async function saveBodyInfo(){
+  const age    = document.getElementById('bi-age')?.value;
+  const height = document.getElementById('bi-height')?.value;
+  const weight = document.getElementById('bi-weight')?.value;
+
+  if(!age||!height||!weight){ showToast('나이·키·몸무게를 모두 입력해주세요','error'); return; }
+
+  // userProfile 업데이트
+  if(!userProfile) userProfile={};
+  userProfile.age    = age;
+  userProfile.height = height;
+  userProfile.weight = weight;
+  userProfile.gender = bodyGender;
+
+  // 오늘 체중도 weightLog에 반영
+  const today = toStr(new Date());
+  if(weight && !weightLog[today]){
+    weightLog[today] = parseFloat(weight);
+    saveWeightToStorage();
+  }
+
+  // 신체정보 기반으로 루틴 세트수 재계산
+  applyBodyToRoutine();
+
+  // Firebase에 저장
+  await window.saveUserProfile(userProfile);
+  showToast('✅ 신체 정보 저장 및 루틴 재계산 완료!','success');
+  calcBodyMetrics();
+
+  // AI 식단 목표 칼로리 자동 업데이트
+  const h=parseFloat(height)/100, w=parseFloat(weight), a=parseInt(age);
+  const bmr = bodyGender==='female'
+    ? Math.round(655+(9.6*w)+(1.8*parseFloat(height))-(4.7*a))
+    : Math.round(66+(13.7*w)+(5*parseFloat(height))-(6.8*a));
+  const tdee = Math.round(bmr*1.375);
+  // 목적에 따라 칼로리 자동 설정
+  const goals = userProfile?.goals||[];
+  let autoKcal = tdee;
+  if(goals.some(g=>g.includes('감량')||g.includes('다이어트'))) autoKcal=Math.round(tdee*0.82);
+  else if(goals.some(g=>g.includes('근육')||g.includes('증가'))) autoKcal=Math.round(tdee*1.10);
+  dietGoal.kcal = autoKcal;
+  localStorage.setItem('fitlog-diet-goal', JSON.stringify(dietGoal));
+  showToast(`🍽️ 식단 목표 칼로리 자동 설정: ${autoKcal}kcal`, 'info');
+}
+
+function applyBodyToRoutine(){
+  const age    = parseFloat(userProfile?.age)    || 30;
+  const weight = parseFloat(userProfile?.weight) || 70;
+  const height = parseFloat(userProfile?.height) || 170;
+  const gender = userProfile?.gender || 'male';
+
+  // BMI 계산
+  const bmi = weight / ((height/100)**2);
+
+  // 나이별 세트 조정 계수
+  let ageFactor = 1.0;
+  if(age < 20)       ageFactor = 0.8;   // 성장기 - 무리 금지
+  else if(age < 30)  ageFactor = 1.1;   // 전성기
+  else if(age < 40)  ageFactor = 1.0;   // 표준
+  else if(age < 50)  ageFactor = 0.9;   // 회복 고려
+  else if(age < 60)  ageFactor = 0.8;   // 저강도 권장
+  else               ageFactor = 0.65;  // 시니어
+
+  // BMI별 운동 강도 조정
+  let bmiFactor = 1.0;
+  if(bmi > 30)       bmiFactor = 0.85;  // 고도비만: 관절 보호
+  else if(bmi < 18.5) bmiFactor = 0.9;  // 저체중: 무리 금지
+
+  // 성별 조정 (여성: 하체 세트 증가, 상체 소폭 감소)
+  const finalMult = ageFactor * bmiFactor;
+
+  // RT 전체 조정
+  const snap = JSON.parse(JSON.stringify(RT_BASE));
+  Object.keys(RT).forEach(tk=>{
+    if(tk==='REST') return;
+    const base = snap[tk];
+    if(!base) return;
+    RT[tk].sections.forEach((sec,si)=>{
+      sec.exs.forEach((ex,ei)=>{
+        const bx = base.sections[si]?.exs[ei];
+        if(!bx || bx.sets<=0) return;
+        let mult = finalMult;
+        // 여성: 하체·둔근 섹션 세트 증가
+        if(gender==='female' && (sec.n.includes('하체')||sec.n.includes('둔근'))){
+          mult *= 1.15;
+        }
+        // 여성: 상체 세트 소폭 감소
+        if(gender==='female' && (sec.n.includes('가슴')||sec.n.includes('어깨'))){
+          mult *= 0.9;
+        }
+        ex.sets = Math.max(1, Math.min(6, Math.round(bx.sets * mult)));
+      });
+    });
+  });
+
+  window.saveRoutine(RT);
+  initSetData(DAY_SCHED[selDay]);
+}
+
 // ══════════════════════════════
 // 운동 분류 + 목적별 루틴
 // ══════════════════════════════
@@ -3750,6 +4040,7 @@ function togglePosture(i){
 
 // 설정 탭 초기화
 function initSettingsTab(){
+  initBodyInfo();
   initClassSettings();
   // 레벨 버튼 상태 복원
   document.querySelectorAll('.level-step').forEach((b,i)=>{
