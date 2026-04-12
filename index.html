@@ -402,36 +402,63 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .ov-adj-row button:hover{border-color:var(--accent);color:var(--accent);}
 
 /* ── 식단 탭 ── */
-.diet-date-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;}
-.diet-date-btn{padding:6px 12px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:18px;cursor:pointer;line-height:1;}
+.diet-date-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.diet-date-btn{padding:8px 16px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:20px;cursor:pointer;line-height:1;}
 .diet-date-btn:hover{border-color:var(--green);color:var(--green);}
-.diet-date-label{font-size:15px;font-weight:700;font-family:var(--mono);color:var(--text);cursor:pointer;}
+.diet-date-label{font-size:14px;font-weight:700;font-family:var(--mono);color:var(--text);cursor:pointer;text-align:center;}
 .diet-date-label:hover{color:var(--accent);}
-.diet-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;}
-.diet-sum-box{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 8px;text-align:center;}
-.diet-sum-val{font-size:20px;font-weight:900;font-family:var(--mono);color:var(--green);}
+
+/* 영양소 요약 카드 */
+.diet-summary{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:14px;}
+.diet-sum-box{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 6px;text-align:center;position:relative;overflow:hidden;}
+.diet-sum-box::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;}
+.diet-sum-box.b-kcal::before{background:var(--accent);}
+.diet-sum-box.b-carb::before{background:var(--accent2);}
+.diet-sum-box.b-prot::before{background:var(--green);}
+.diet-sum-box.b-fat::before{background:var(--purple);}
+.diet-sum-val{font-size:18px;font-weight:900;font-family:var(--mono);color:var(--text);}
 .diet-sum-val.kcal{color:var(--accent);}
 .diet-sum-val.carb{color:var(--accent2);}
 .diet-sum-val.fat{color:var(--purple);}
-.diet-sum-lbl{font-size:10px;color:var(--muted);margin-top:2px;}
-.diet-goal-bar{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 14px;margin-bottom:16px;}
-.diet-goal-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px;font-family:var(--mono);}
-.diet-goal-bar-bg{height:6px;background:var(--border);border-radius:3px;overflow:hidden;}
-.diet-goal-bar-fill{height:100%;border-radius:3px;background:var(--green);transition:width .4s;max-width:100%;}
-.diet-goal-bar-fill.over{background:var(--accent);}
-.diet-meal-section{margin-bottom:14px;}
-.diet-meal-hdr{display:flex;align-items:center;justify-content:space-between;padding:8px 2px;margin-bottom:6px;border-bottom:1px solid var(--border);}
-.diet-meal-title{font-size:13px;font-weight:700;}
-.diet-meal-kcal{font-size:11px;font-family:var(--mono);color:var(--muted);}
-.diet-food-card{background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:10px 12px;margin-bottom:5px;display:flex;align-items:center;gap:10px;}
-.diet-food-info{flex:1;}
-.diet-food-name{font-size:13px;font-weight:500;margin-bottom:2px;}
-.diet-food-sub{font-size:11px;color:var(--muted);font-family:var(--mono);}
-.diet-food-kcal{font-size:13px;font-weight:700;color:var(--accent);font-family:var(--mono);white-space:nowrap;}
-.diet-food-del{padding:3px 7px;border-radius:5px;border:1px solid var(--border);background:none;color:var(--muted);font-size:11px;cursor:pointer;}
-.diet-food-del:hover{border-color:var(--accent);color:var(--accent);}
-.diet-add-btn{width:100%;padding:8px;border-radius:8px;border:1px dashed var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);margin-top:4px;}
-.diet-add-btn:hover{border-color:var(--green);color:var(--green);}
+.diet-sum-lbl{font-size:9px;color:var(--muted);margin-top:3px;letter-spacing:.05em;}
+
+/* 칼로리 진행 바 */
+.diet-goal-bar{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:14px;}
+.diet-goal-row{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px;font-family:var(--mono);}
+.diet-goal-bar-bg{height:8px;background:var(--border);border-radius:4px;overflow:hidden;}
+.diet-goal-bar-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,var(--green),#6fcf97);transition:width .5s ease;max-width:100%;}
+.diet-goal-bar-fill.over{background:linear-gradient(90deg,var(--accent2),var(--accent));}
+
+/* 식사별 섹션 */
+.diet-meal-section{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:14px;margin-bottom:12px;overflow:hidden;}
+.diet-meal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;padding-bottom:10px;border-bottom:1px solid var(--border);}
+.diet-meal-title{font-size:14px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.diet-meal-kcal-badge{font-size:11px;font-family:var(--mono);padding:3px 10px;border-radius:20px;background:var(--surface2);color:var(--muted);border:1px solid var(--border);}
+
+/* 식품 카드 */
+.diet-food-card{display:flex;align-items:center;gap:10px;padding:10px 12px;background:var(--surface2);border-radius:10px;margin-bottom:6px;border:1px solid transparent;transition:border-color .15s;}
+.diet-food-card:hover{border-color:var(--border);}
+.diet-food-emoji{font-size:20px;flex-shrink:0;width:32px;text-align:center;}
+.diet-food-info{flex:1;min-width:0;}
+.diet-food-name{font-size:13px;font-weight:600;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.diet-food-amount{font-size:10px;color:var(--muted);margin-bottom:3px;}
+.diet-food-macros{display:flex;gap:6px;}
+.diet-macro-tag{font-size:10px;padding:1px 6px;border-radius:4px;font-family:var(--mono);}
+.diet-macro-c{background:#f0a50018;color:var(--accent2);}
+.diet-macro-p{background:#4caf7d18;color:var(--green);}
+.diet-macro-f{background:#9b7fe818;color:var(--purple);}
+.diet-food-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0;}
+.diet-food-kcal{font-size:14px;font-weight:900;color:var(--accent);font-family:var(--mono);}
+.diet-food-kcal-lbl{font-size:9px;color:var(--muted);}
+.diet-food-del{padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);font-size:11px;cursor:pointer;transition:all .15s;}
+.diet-food-del:hover{border-color:var(--accent);color:var(--accent);background:#e8533a10;}
+
+/* 추가 버튼 */
+.diet-add-btn{width:100%;padding:10px;border-radius:10px;border:1px dashed var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);margin-top:6px;transition:all .15s;display:flex;align-items:center;justify-content:center;gap:6px;}
+.diet-add-btn:hover{border-color:var(--green);color:var(--green);background:#4caf7d08;}
+
+/* 빈 식사 */
+.diet-empty{text-align:center;padding:14px;color:var(--muted);font-size:12px;}
 .diet-modal{background:var(--surface);border:1px solid var(--border);border-radius:14px;width:100%;max-width:500px;max-height:90vh;overflow:hidden;display:flex;flex-direction:column;}
 .diet-modal-hdr{padding:16px 18px 12px;border-bottom:1px solid var(--border);}
 .diet-modal-title{font-size:16px;font-weight:700;display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
@@ -865,10 +892,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
     <!-- 영양 요약 -->
     <div class="diet-summary">
-      <div class="diet-sum-box"><div class="diet-sum-val kcal" id="ds-kcal">0</div><div class="diet-sum-lbl">칼로리 kcal</div></div>
-      <div class="diet-sum-box"><div class="diet-sum-val carb" id="ds-carb">0</div><div class="diet-sum-lbl">탄수화물 g</div></div>
-      <div class="diet-sum-box"><div class="diet-sum-val" id="ds-prot">0</div><div class="diet-sum-lbl">단백질 g</div></div>
-      <div class="diet-sum-box"><div class="diet-sum-val fat" id="ds-fat">0</div><div class="diet-sum-lbl">지방 g</div></div>
+      <div class="diet-sum-box b-kcal"><div class="diet-sum-val kcal" id="ds-kcal">0</div><div class="diet-sum-lbl">🔥 칼로리</div></div>
+      <div class="diet-sum-box b-carb"><div class="diet-sum-val carb" id="ds-carb">0</div><div class="diet-sum-lbl">🌾 탄수화물</div></div>
+      <div class="diet-sum-box b-prot"><div class="diet-sum-val" style="color:var(--green);" id="ds-prot">0</div><div class="diet-sum-lbl">💪 단백질</div></div>
+      <div class="diet-sum-box b-fat"><div class="diet-sum-val fat" id="ds-fat">0</div><div class="diet-sum-lbl">🥑 지방</div></div>
     </div>
     <!-- 칼로리 진행 바 -->
     <div class="diet-goal-bar">
@@ -2731,22 +2758,54 @@ function renderDiet(){
   // 식사별 섹션
   const area=document.getElementById('diet-meals-area');
   const day=getDietDay(dietDate);
+
+  // 식품 이모지 자동 매핑
+  function foodEmoji(name){
+    const map={
+      '밥':'🍚','쌀':'🍚','현미':'🍚','오트밀':'🥣','빵':'🍞','통밀빵':'🍞','파스타':'🍝',
+      '닭':'🍗','달걀':'🥚','두부':'⬜','연어':'🐟','참치':'🐟','고등어':'🐟','새우':'🦐','소고기':'🥩','돼지':'🥩',
+      '그릭요거트':'🥛','우유':'🥛','치즈':'🧀','프로틴':'💪',
+      '고구마':'🍠','감자':'🥔','바나나':'🍌','사과':'🍎','귤':'🍊','딸기':'🍓','블루베리':'🫐',
+      '아보카도':'🥑','브로콜리':'🥦','시금치':'🥬','당근':'🥕','오이':'🥒','토마토':'🍅','양배추':'🥬',
+      '아몬드':'🥜','땅콩':'🥜','견과류':'🥜','올리브':'🫒',
+      '김치':'🥢','된장':'🍲','미역':'🌿','라면':'🍜','김밥':'🍱','비빔밥':'🍱','삼겹살':'🥓',
+      '커피':'☕','아메리카노':'☕','라떼':'☕','주스':'🧃','물':'💧',
+      '초코':'🍫','케이크':'🎂','아이스크림':'🍦','과자':'🍪',
+    };
+    for(const [k,v] of Object.entries(map)){
+      if(name.includes(k)) return v;
+    }
+    return '🍽️';
+  }
+
   area.innerHTML=DIET_MEALS.map(meal=>{
     const foods=day.meals[meal]||[];
     const mk=mealKcal(dietDate,meal);
-    const foodsHtml=foods.map((f,fi)=>`
+    const foodsHtml=foods.length ? foods.map((f,fi)=>`
       <div class="diet-food-card">
+        <div class="diet-food-emoji">${foodEmoji(f.name)}</div>
         <div class="diet-food-info">
           <div class="diet-food-name">${f.name}</div>
-          <div class="diet-food-sub">${f.amount} · 탄${f.carb}g 단${f.prot}g 지${f.fat}g</div>
+          <div class="diet-food-amount">${f.amount}</div>
+          <div class="diet-food-macros">
+            <span class="diet-macro-tag diet-macro-c">탄 ${f.carb}g</span>
+            <span class="diet-macro-tag diet-macro-p">단 ${f.prot}g</span>
+            <span class="diet-macro-tag diet-macro-f">지 ${f.fat}g</span>
+          </div>
         </div>
-        <span class="diet-food-kcal">${f.kcal}kcal</span>
-        <button class="diet-food-del" onclick="deleteDietFood('${meal}',${fi})">✕</button>
-      </div>`).join('');
+        <div class="diet-food-right">
+          <div>
+            <div class="diet-food-kcal">${f.kcal}</div>
+            <div class="diet-food-kcal-lbl">kcal</div>
+          </div>
+          <button class="diet-food-del" onclick="deleteDietFood('${meal}',${fi})">✕</button>
+        </div>
+      </div>`).join('')
+      : `<div class="diet-empty">아직 기록된 음식이 없어요</div>`;
     return`<div class="diet-meal-section">
       <div class="diet-meal-hdr">
         <span class="diet-meal-title">${DIET_MEAL_ICONS[meal]} ${meal}</span>
-        <span class="diet-meal-kcal">${mk} kcal</span>
+        <span class="diet-meal-kcal-badge">${mk > 0 ? mk+' kcal' : '0 kcal'}</span>
       </div>
       ${foodsHtml}
       <button class="diet-add-btn" onclick="openDietModal('${meal}')">＋ ${meal} 음식 추가</button>
@@ -3193,11 +3252,19 @@ function renderAIDietResult(plan){
         <span class="ai-meal-kcal">${mk}kcal</span>
       </div>
       ${foods.map((f,fi)=>`<div class="ai-food-row">
+        <div style="font-size:18px;flex-shrink:0;width:28px;text-align:center;">${foodEmoji?foodEmoji(f.name):'🍽️'}</div>
         <div class="ai-food-info">
           <div class="ai-food-name">${f.name} <span style="color:var(--muted);font-size:10px;">${f.amount}</span></div>
-          <div class="ai-food-macro">탄${f.carb}g · 단${f.prot}g · 지${f.fat}g</div>
+          <div class="ai-food-macro" style="display:flex;gap:5px;margin-top:2px;">
+            <span style="font-size:10px;padding:1px 5px;border-radius:4px;background:#f0a50018;color:var(--accent2);">탄${f.carb}g</span>
+            <span style="font-size:10px;padding:1px 5px;border-radius:4px;background:#4caf7d18;color:var(--green);">단${f.prot}g</span>
+            <span style="font-size:10px;padding:1px 5px;border-radius:4px;background:#9b7fe818;color:var(--purple);">지${f.fat}g</span>
+          </div>
         </div>
-        <span class="ai-food-kcal">${f.kcal}kcal</span>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:14px;font-weight:900;color:var(--accent);font-family:var(--mono);">${f.kcal}</div>
+          <div style="font-size:9px;color:var(--muted);">kcal</div>
+        </div>
         <button class="ai-food-del" onclick="removeAIFood('${meal}',${fi})">✕</button>
       </div>`).join('')}
     </div>`;
