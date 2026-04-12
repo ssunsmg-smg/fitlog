@@ -745,6 +745,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="page" id="page-workout">
     <div class="today-meta" id="today-meta"></div>
     <div id="missed-banner" style="display:none;background:#f0a5000d;border:1px solid #f0a50033;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;line-height:1.8;"></div>
+    <div id="makeup-banner" style="display:none;background:#4a9eff0d;border:1px solid #4a9eff55;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--blue);font-weight:500;"></div>
     <div class="today-title" id="today-title">오늘의 루틴</div>
     <div class="today-type" id="today-type"></div>
     <div class="day-sel" id="day-sel"></div>
@@ -988,6 +989,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 // 상태
 // ══════════════════════════════
 let records=[], setData={}, selDay=new Date().getDay(), selCond=3;
+let makeupActive=null; // {restDay, missedDay, missedTk, missedName} — 보충 운동 진행 중 상태
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 let editTarget=null, RT={}, userProfile=null, isLoggedIn=false;
 
@@ -1600,24 +1602,45 @@ function goWorkout(){
 // 운동 탭
 // ══════════════════════════════
 function renderWorkout(){
-  const tk=DAY_SCHED[selDay],rt=RT[tk];
+  // 보충 운동 진행 중이면 해당 루틴을 우선 사용
+  const activeTk = makeupActive ? makeupActive.missedTk : DAY_SCHED[selDay];
+  const tk = activeTk;
+  const rt=RT[tk];
   const dayNames=['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
   const ds=getDateForDow(selDay);
   document.getElementById('today-meta').textContent='오늘: '+toStr(new Date())+' ('+DAY_KR[new Date().getDay()]+')';
   // 빠진 운동 배너 갱신
   renderMissedBanner();
+  renderMakeupBanner();
   document.getElementById('today-title').textContent=rt.title;
-  document.getElementById('today-type').textContent=tk==='REST'?'휴식일':'Type '+tk+' · '+dayNames[selDay]+' · '+ds;
+  const dispLabel = makeupActive
+    ? '📅 보충운동 · '+makeupActive.missedName+'요일('+makeupActive.missedTk+') 루틴 · '+ds
+    : (tk==='REST'?'휴식일':'Type '+tk+' · '+dayNames[selDay]+' · '+ds);
+  document.getElementById('today-type').textContent=dispLabel;
   const sel=document.getElementById('day-sel');sel.innerHTML='';
   DAY_KR.forEach((n,i)=>{
     const btn=document.createElement('button');
     btn.className='day-btn'+(i===selDay?' active':'')+(records.find(r=>r.date===getDateForDow(i))?' has-rec':'');
     btn.textContent=n;
-    btn.addEventListener('click',()=>{selDay=i;setData={};try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}initSetData(DAY_SCHED[i]);renderWorkout();});
+    btn.addEventListener('click',()=>{
+      // 보충 운동 진행 중 다른 요일 클릭 시 확인
+      if(makeupActive && i !== makeupActive.restDay){
+        if(!confirm('보충 운동 진행 중입니다. 다른 요일로 이동하면 보충 운동이 취소됩니다. 계속하시겠어요?')){
+          return;
+        }
+        makeupActive=null;
+      }
+      selDay=i;
+      setData={};
+      try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}
+      initSetData(DAY_SCHED[i]);
+      renderWorkout();
+    });
     sel.appendChild(btn);
   });
   const content=document.getElementById('routine-content'),bottom=document.getElementById('bottom-bar');
-  if(tk==='REST'){
+  // 보충 운동 진행 중이면 휴일이어도 루틴 표시
+  if(tk==='REST' && !makeupActive){
     content.innerHTML='<div class="rest-card"><div style="font-size:34px;margin-bottom:10px;">😴</div><div style="font-size:17px;font-weight:700;margin-bottom:7px;">오늘은 휴식일!</div><div style="font-size:13px;color:var(--muted);line-height:1.9;">근육은 쉴 때 성장합니다<br>가벼운 산책 20분 OK<br>단백질 식사 꼭 챙기기</div></div>'
       + buildMakeupCard(selDay);
     bottom.style.display='none';document.getElementById('prog-txt').textContent='휴식일';document.getElementById('prog-fill').style.width='0%';return;
@@ -1722,7 +1745,9 @@ function setCond(v){selCond=v;document.querySelectorAll('.cond-btn').forEach((b,
 
 // ── 저장 (Firebase) ──
 async function doSaveRecord(){
-  const tk=DAY_SCHED[selDay];if(tk==='REST')return;
+  // 보충 운동 중이면 해당 루틴 키 사용
+  const tk = makeupActive ? makeupActive.missedTk : DAY_SCHED[selDay];
+  if(!makeupActive && tk==='REST')return;
   const ds=getDateForDow(selDay);
   const allSets=[];
   Object.entries(setData).forEach(([k,sets])=>{
@@ -2924,10 +2949,28 @@ function buildMakeupCard(restDay){
 
 function pickMakeup(missedDay, restDay){
   makeupSel = (makeupSel===missedDay) ? null : missedDay;
-  // 휴식일 카드 영역만 갱신
   const rc = document.getElementById('routine-content');
   rc.innerHTML = '<div class="rest-card"><div style="font-size:34px;margin-bottom:10px;">😴</div><div style="font-size:17px;font-weight:700;margin-bottom:7px;">오늘은 휴식일!</div><div style="font-size:13px;color:var(--muted);line-height:1.9;">근육은 쉴 때 성장합니다<br>가벼운 산책 20분 OK<br>단백질 식사 꼭 챙기기</div></div>'
     + buildMakeupCard(restDay);
+}
+
+// 보충 운동 진행 중 상태 배너 (운동 중 상단에 표시)
+function renderMakeupBanner(){
+  const el=document.getElementById('makeup-banner');
+  if(!el) return;
+  if(!makeupActive){el.style.display='none';return;}
+  el.style.display='block';
+  el.innerHTML='📅 <strong>보충 운동 진행 중</strong> — '+makeupActive.missedName+'요일('+makeupActive.missedTk+') 루틴'
+    +' <button onclick="cancelMakeup()" style="margin-left:8px;padding:2px 8px;border-radius:5px;border:1px solid var(--border);background:none;color:var(--muted);font-size:10px;cursor:pointer;">취소</button>';
+}
+function cancelMakeup(){
+  if(!confirm('보충 운동을 취소하시겠어요?')) return;
+  makeupActive=null;
+  makeupSel=null;
+  selDay=new Date().getDay();
+  initSetData(DAY_SCHED[selDay]);
+  renderWorkout();
+  showToast('보충 운동 취소됨','info');
 }
 
 function doMakeup(restDay){
@@ -2935,17 +2978,16 @@ function doMakeup(restDay){
   const tk = DAY_SCHED[makeupSel];
   if(!tk||tk==='REST') return;
   const DN = ['일','월','화','수','목','금','토'];
-  const missedDay = makeupSel; // 먼저 저장
+  const missedDay = makeupSel;
   const missedName = DN[missedDay];
   const missedTk = tk;
 
-  // 오늘(선택된 휴일)에 임시로 해당 루틴 적용
-  window._makeupOrig = {day:restDay, tk:DAY_SCHED[restDay]};
-  DAY_SCHED[restDay] = missedTk;
+  // DAY_SCHED는 건드리지 않고 makeupActive 상태만 설정
+  makeupActive = {restDay, missedDay, missedTk, missedName};
   makeupSel = null;
-
-  // selDay를 휴일로 변경해서 해당 루틴 표시
   selDay = restDay;
+
+  // 세트 데이터 초기화 (새 루틴)
   initSetData(missedTk);
 
   // 메모에 보충 운동 표시
@@ -2976,7 +3018,11 @@ function showPage(id){
   if(id==='calendar')renderCalendar();
   if(id==='log')renderLog();
   if(id==='stats')renderStats();
-  if(id==='workout')renderWorkout();
+  if(id==='workout'){
+    // 보충 운동 진행 중이면 selDay를 restDay로 유지
+    if(makeupActive) selDay=makeupActive.restDay;
+    renderWorkout();
+  }
   if(id==='diet')renderDiet();
 }
 let tTimer=null;
