@@ -138,6 +138,25 @@
   };
   window.getCurrentUser = () => currentUser;
 
+  // ── 체중 로그 Firebase 저장/로드 ──
+  window.saveWeightLog = async (log) => {
+    if (!currentUser) return false;
+    try {
+      await db.collection('users').doc(currentUser.uid)
+        .collection('settings').doc('weightLog')
+        .set({ log, savedAt: new Date().toISOString() });
+      return true;
+    } catch(e) { return false; }
+  };
+  window.loadWeightLog = async () => {
+    if (!currentUser) return null;
+    try {
+      const snap = await db.collection('users').doc(currentUser.uid)
+        .collection('settings').doc('weightLog').get();
+      return snap.exists ? (snap.data().log || null) : null;
+    } catch(e) { return null; }
+  };
+
   // ── Redirect 결과 처리 (팝업 차단으로 redirect 했을 경우) ──
   if(sessionStorage.getItem('fitlog-redirect-login')) {
     sessionStorage.removeItem('fitlog-redirect-login');
@@ -616,6 +635,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .cal-type.C{color:var(--purple);}.cal-type.D{color:var(--accent2);}
 .cal-type.E{color:var(--accent);}.cal-type.F{color:var(--purple);}
 .cal-dot{width:5px;height:5px;border-radius:50%;background:var(--green);margin-top:2px;}
+.cal-wt{font-size:8px;color:#4a9eff;font-family:var(--mono);margin-top:1px;line-height:1.2;letter-spacing:-.02em;}
 .cal-detail{padding:13px 15px;border-radius:10px;border:1px solid var(--border);background:var(--surface);margin-top:5px;}
 
 /* 기록 */
@@ -2258,9 +2278,11 @@ function renderCalendar(){
     const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const dow=new Date(calYear,calMonth,d).getDay(),tk=DAY_SCHED[dow],rec=records.find(r=>r.date===ds);
     const isRest=tk==='REST';
+    const wtVal=weightLog[ds]; // 해당 날짜 체중 (없으면 undefined)
     html+=`<div class="cal-cell${ds===ts?' today':''}${rec?' has-rec':''}${isRest&&!rec?' rest-day':''}" onclick="showCalDetail('${ds}')">
       <div class="cal-date">${d}</div><div class="cal-type ${isRest?'':tk}">${isRest?'휴':tk}</div>
       ${rec?'<div class="cal-dot"></div>':''}
+      ${wtVal?`<div class="cal-wt">${wtVal}kg</div>`:''}
     </div>`;
   }
   document.getElementById('cal-grid').innerHTML=html;document.getElementById('cal-detail').innerHTML='';
@@ -2269,14 +2291,20 @@ function changeMonth(dir){calMonth+=dir;if(calMonth<0){calMonth=11;calYear--;}if
 function showCalDetail(ds){
   const rec=records.find(r=>r.date===ds),dow=new Date(ds+'T12:00:00').getDay(),tk=DAY_SCHED[dow];
   const detail=document.getElementById('cal-detail');
-  if(!rec){detail.innerHTML=`<div class="cal-detail" style="color:var(--muted);font-size:13px;">${ds} (${DAY_KR[dow]}) — ${tk==='REST'?'휴식일':'기록 없음'}</div>`;return;}
-  const sHtml=rec.sets&&rec.sets.length?rec.sets.map(s=>`<div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0;border-bottom:1px solid var(--border);font-family:var(--mono);"><span>${s.ex.slice(0,12)}</span><span>세트${s.set}: ${s.weight||'?'}kg×${s.reps||'?'}</span></div>`).join(''):'';
+  const wtVal=weightLog[ds];
+  const wtHtml=wtVal?`<span style="font-size:11px;color:#4a9eff;font-family:var(--mono);">⚖️ ${wtVal}kg</span>`:'';
+  if(!rec){
+    detail.innerHTML=`<div class="cal-detail" style="font-size:13px;color:var(--muted);">${ds} (${DAY_KR[dow]}) — ${tk==='REST'?'휴식일':'기록 없음'}${wtVal?` &nbsp;${wtHtml}`:''}</div>`;
+    return;
+  }
+  const sHtml=rec.sets&&rec.sets.length?rec.sets.map(s=>`<div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0;border-bottom:1px solid var(--border);font-family:var(--mono);"><span>${s.ex.slice(0,12)}</span><span>세트${s.set}: ${s.weight?s.weight+'kg×':''}${s.reps||'?'}회</span></div>`).join(''):'';
   detail.innerHTML=`<div class="cal-detail">
     <div style="font-size:11px;font-family:var(--mono);color:var(--muted);margin-bottom:7px;">${ds} (${DAY_KR[dow]})</div>
     <div style="display:flex;gap:7px;flex-wrap:wrap;align-items:center;margin-bottom:8px;">
       <span class="log-badge b${rec.type}">Type ${rec.type}</span>
       <span>${'⭐'.repeat(rec.cond||3)}</span>
       <span style="font-size:12px;color:var(--muted);">${rec.exDone}/${rec.exTotal}완료</span>
+      ${wtHtml}
       <span style="font-size:10px;color:var(--green);">☁️ 클라우드</span>
     </div>
     ${sHtml?`<div>${sHtml}</div>`:''}
@@ -3141,8 +3169,9 @@ async function loadDietData(){
         goal:d.goal||null
       };
     });
-    loadWeightFromStorage();
-  }catch(e){console.log('식단 로드 실패',e);}
+    // 체중은 loadWeightData()에서 Firebase와 병합 로드
+    loadWeightData(); // 비동기 – Firebase + localStorage 병합
+  }catch(e){console.log('식단 로드 실패',e);loadWeightFromStorage();}
 }
 // ══════════════════════════════
 // 체중 관리
@@ -3169,6 +3198,8 @@ function deleteWeight(date){
 
 function saveWeightToStorage(){
   localStorage.setItem('fitlog-weight-log', JSON.stringify(weightLog));
+  // Firebase에도 비동기 백업 (모드 변경·다기기에서도 유지)
+  if(window.getCurrentUser()) window.saveWeightLog(weightLog).catch(()=>{});
 }
 
 function loadWeightFromStorage(){
@@ -3176,6 +3207,24 @@ function loadWeightFromStorage(){
     const s = localStorage.getItem('fitlog-weight-log');
     if(s) weightLog = JSON.parse(s);
   } catch(e) {}
+}
+
+// Firebase와 localStorage 체중 데이터 병합 로드
+async function loadWeightData(){
+  loadWeightFromStorage(); // 1) localStorage 먼저 로드 (오프라인 대비)
+  try{
+    const remote = await window.loadWeightLog();
+    if(remote && typeof remote === 'object'){
+      // 2) Firebase 데이터와 병합 (모든 날짜를 보존, 같은 날짜는 Firebase 우선)
+      weightLog = Object.assign({}, weightLog, remote);
+      localStorage.setItem('fitlog-weight-log', JSON.stringify(weightLog));
+    } else if(Object.keys(weightLog).length > 0){
+      // 3) Firebase에 기록이 없으면 localStorage 데이터를 업로드
+      window.saveWeightLog(weightLog).catch(()=>{});
+    }
+  }catch(e){/* 오프라인 또는 권한 없음 – localStorage 유지 */}
+  renderWeightCard();
+  renderCalendar(); // 캘린더 체중 표시 갱신
 }
 
 function toggleWeightHistory(){
