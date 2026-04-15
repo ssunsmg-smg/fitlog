@@ -371,6 +371,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .rm-badge strong{color:var(--accent2);font-weight:700;}
 .sets-hdr{display:grid;grid-template-columns:24px 50px 1fr 1fr 32px;gap:4px;padding:8px 2px 4px;font-size:10px;color:var(--muted);font-family:var(--mono);text-align:center;}
 .set-row{display:grid;grid-template-columns:24px 50px 1fr 1fr 32px;gap:4px;align-items:center;margin-bottom:5px;}
+/* 횟수 전용 (noWt) 변형 */
+.sets-hdr.nwt{grid-template-columns:24px 1fr 1fr 32px;}
+.set-row.nwt{grid-template-columns:24px 1fr 1fr 32px;}
 .set-num{font-size:11px;font-family:var(--mono);color:var(--muted);text-align:center;}
 .pre-inp{font-size:12px;color:var(--muted);font-family:var(--mono);text-align:center;opacity:.6;padding:7px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
@@ -1129,6 +1132,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="modal-field"><div class="modal-label">운동 이름</div><input class="modal-inp" id="edit-name" type="text"/></div>
     <div class="modal-field"><div class="modal-label">세트 × 횟수</div><input class="modal-inp" id="edit-detail" type="text"/></div>
     <div class="modal-field"><div class="modal-label">기본 세트 수</div><input class="modal-inp" id="edit-sets" type="number" min="0" max="10"/></div>
+    <div class="modal-field" style="display:flex;align-items:center;gap:8px;padding:6px 0;">
+      <input type="checkbox" id="edit-nowt" style="width:16px;height:16px;accent-color:var(--accent2);cursor:pointer;flex-shrink:0;">
+      <label for="edit-nowt" style="font-size:12px;color:var(--muted);cursor:pointer;">중량 없음 (횟수만 기록) — 맨몸·밴드 운동</label>
+    </div>
     <div class="modal-field"><div class="modal-label">운동 설명</div><textarea class="modal-ta" id="edit-desc"></textarea></div>
     <div class="modal-field"><div class="modal-label">주의사항 (쉼표 구분)</div><input class="modal-inp" id="edit-warn" type="text"/></div>
     <div class="modal-btns"><button class="modal-cancel" onclick="closeEdit()">취소</button><button class="modal-save" onclick="saveEdit()">저장</button></div>
@@ -1281,6 +1288,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 </div>
 
 <script>
+// ══════════════════════════════
+// 중량 없는 운동 자동 감지 목록 (맨몸·밴드)
+// ══════════════════════════════
+const NO_WEIGHT_EX=new Set([
+  '크런치','레그 레이즈','리버스 크런치','바이시클 크런치','데드버그','버드독',
+  '플랭크','사이드 플랭크','마운틴 클라이머',
+  '누워서 브릿지','힙 브릿지','힙 쓰러스트 (맨몸)',
+  '클램쉘','클램쉘 (밴드)','사이드 라잉 레그 레이즈',
+  '킥백 (맨몸)','힙 어브덕션 (맨몸)','밴드 사이드 워크',
+  '친 턱 당기기 (Chin Tuck)','목 등척성 운동',
+  '고양이-소 스트레칭','맥켄지 운동','버드독',
+  '행잉 레그 레이즈','행잉 니 레이즈',
+]);
 // ══════════════════════════════
 // 상태
 // ══════════════════════════════
@@ -1858,14 +1878,18 @@ function calc1RM(weight,reps){
   if(!weight||!reps||reps<=0)return 0;
   return Math.round(parseFloat(weight)*(1+parseInt(reps)/30)*10)/10;
 }
-// ── 이전 기록에서 해당 운동의 세트 목록을 가져옴
-function getPrevSets(key){
+// ── key → 운동 객체 반환
+function getExFromKey(key){
   const parts=key.split('-'),si=parseInt(parts[1]),ei=parseInt(parts[2]);
   const tk=makeupActive?makeupActive.missedTk:DAY_SCHED[selDay];
-  const rt=RT[tk];if(!rt||!rt.sections[si]||!rt.sections[si].exs[ei])return[];
-  const exName=rt.sections[si].exs[ei].n;
+  const rt=RT[tk];
+  return(rt&&rt.sections[si]&&rt.sections[si].exs[ei])||null;
+}
+// ── 이전 기록에서 해당 운동의 세트 목록을 가져옴
+function getPrevSets(key){
+  const ex=getExFromKey(key);if(!ex)return[];
   for(const rec of records){
-    const exSets=(rec.sets||[]).filter(s=>s.ex===exName);
+    const exSets=(rec.sets||[]).filter(s=>s.ex===ex.n);
     if(exSets.length>0)return exSets;
   }
   return[];
@@ -1873,33 +1897,54 @@ function getPrevSets(key){
 function renderSets(key,cId){
   const sets=setData[key];if(!sets)return;
   const c=document.getElementById(cId);if(!c)return;
+  const ex=getExFromKey(key);
+  // 중량 없는 운동 판단: ex.noWt 직접 설정 OR 자동 감지 목록
+  const noWt=!!(ex&&(ex.noWt||NO_WEIGHT_EX.has(ex.n)));
   const prevSets=getPrevSets(key);
   // 이전 기록으로 빈 값 pre-fill (처음 열 때만)
   sets.forEach((s,i)=>{
     const p=prevSets[i]||{};
-    if(s.weight===''&&p.weight!=null&&p.weight!=='')s.weight=p.weight;
+    if(!noWt&&s.weight===''&&p.weight!=null&&p.weight!=='')s.weight=p.weight;
     if(s.reps===''&&p.reps!=null&&p.reps!=='')s.reps=p.reps;
   });
-  // 1RM 계산 (입력된 세트 중 최고값)
-  let best1RM=0;
-  sets.forEach(s=>{if(s.weight&&s.reps){const v=calc1RM(s.weight,s.reps);if(v>best1RM)best1RM=v;}});
-  const rmHtml=best1RM>0?`<div class="rm-badge">추정 1RM <strong>${best1RM}kg</strong> · 다음 목표 <strong>${Math.round(best1RM*0.75*10)/10}kg × 10회</strong></div>`:'';
-  c.innerHTML=`<div class="sets-hdr"><div>세트</div><div>이전kg</div><div>횟수</div><div>cr중량kg</div><div>✓</div></div>
-    ${sets.map((s,i)=>{
-      const p=prevSets[i]||{};
-      const preW=p.weight!=null&&p.weight!==''?p.weight+'kg':'—';
-      return`<div class="set-row" id="sr-${key}-${i}">
-        <div class="set-num">${i+1}</div>
-        <div class="pre-inp">${preW}</div>
-        <input class="set-inp ${s.reps?'filled':''}" type="number" value="${s.reps}" placeholder="—" min="0" max="99"
-               oninput="updSet('${key}',${i},'reps',this.value);refreshRM('${key}','${cId}')"/>
-        <input class="set-inp ${s.weight?'filled':''}" type="number" value="${s.weight}" placeholder="—" min="0" step="0.5"
-               oninput="updSet('${key}',${i},'weight',this.value);refreshRM('${key}','${cId}')"/>
-        <button class="set-ok ${s.done?'done':''}" onclick="toggleSetDone('${key}',${i})">✓</button>
-      </div>`;
-    }).join('')}
-    ${rmHtml}
-    <button class="add-set" onclick="addSet('${key}','${cId}')">+ 세트 추가</button>`;
+
+  if(noWt){
+    // ── 횟수 전용 레이아웃: 세트 | pre횟수 | 횟수 | ✓ ──
+    c.innerHTML=`<div class="sets-hdr nwt"><div>세트</div><div>이전횟수</div><div>횟수</div><div>✓</div></div>
+      ${sets.map((s,i)=>{
+        const p=prevSets[i]||{};
+        const preR=p.reps!=null&&p.reps!==''?p.reps+'회':'—';
+        return`<div class="set-row nwt" id="sr-${key}-${i}">
+          <div class="set-num">${i+1}</div>
+          <div class="pre-inp">${preR}</div>
+          <input class="set-inp ${s.reps?'filled':''}" type="number" value="${s.reps}" placeholder="—" min="0" max="999"
+                 oninput="updSet('${key}',${i},'reps',this.value)"/>
+          <button class="set-ok ${s.done?'done':''}" onclick="toggleSetDone('${key}',${i})">✓</button>
+        </div>`;
+      }).join('')}
+      <button class="add-set" onclick="addSet('${key}','${cId}')">+ 세트 추가</button>`;
+  } else {
+    // ── 중량 + 횟수 레이아웃: 세트 | 이전kg | 횟수 | cr중량kg | ✓ ──
+    let best1RM=0;
+    sets.forEach(s=>{if(s.weight&&s.reps){const v=calc1RM(s.weight,s.reps);if(v>best1RM)best1RM=v;}});
+    const rmHtml=best1RM>0?`<div class="rm-badge">추정 1RM <strong>${best1RM}kg</strong> · 다음 목표 <strong>${Math.round(best1RM*0.75*10)/10}kg × 10회</strong></div>`:'';
+    c.innerHTML=`<div class="sets-hdr"><div>세트</div><div>이전kg</div><div>횟수</div><div>cr중량kg</div><div>✓</div></div>
+      ${sets.map((s,i)=>{
+        const p=prevSets[i]||{};
+        const preW=p.weight!=null&&p.weight!==''?p.weight+'kg':'—';
+        return`<div class="set-row" id="sr-${key}-${i}">
+          <div class="set-num">${i+1}</div>
+          <div class="pre-inp">${preW}</div>
+          <input class="set-inp ${s.reps?'filled':''}" type="number" value="${s.reps}" placeholder="—" min="0" max="99"
+                 oninput="updSet('${key}',${i},'reps',this.value);refreshRM('${key}','${cId}')"/>
+          <input class="set-inp ${s.weight?'filled':''}" type="number" value="${s.weight}" placeholder="—" min="0" step="0.5"
+                 oninput="updSet('${key}',${i},'weight',this.value);refreshRM('${key}','${cId}')"/>
+          <button class="set-ok ${s.done?'done':''}" onclick="toggleSetDone('${key}',${i})">✓</button>
+        </div>`;
+      }).join('')}
+      ${rmHtml}
+      <button class="add-set" onclick="addSet('${key}','${cId}')">+ 세트 추가</button>`;
+  }
   saveSetDataLocal();
 }
 function refreshRM(key,cId){
@@ -2181,6 +2226,7 @@ function openEdit(tk,si,ei){
   document.getElementById('edit-name').value=ex.n||'';
   document.getElementById('edit-detail').value=ex.d||'';
   document.getElementById('edit-sets').value=ex.sets||0;
+  document.getElementById('edit-nowt').checked=!!(ex.noWt||NO_WEIGHT_EX.has(ex.n));
   document.getElementById('edit-desc').value=(EX_INFO[ex.n]&&EX_INFO[ex.n].desc)||'';
   document.getElementById('edit-warn').value=(ex.w||[]).join(', ');
   document.getElementById('edit-modal').classList.add('open');
@@ -2191,6 +2237,7 @@ async function saveEdit(){
   ex.n=document.getElementById('edit-name').value.trim()||ex.n;
   ex.d=document.getElementById('edit-detail').value.trim()||ex.d;
   ex.sets=parseInt(document.getElementById('edit-sets').value)||0;
+  ex.noWt=document.getElementById('edit-nowt').checked;
   ex.w=document.getElementById('edit-warn').value.split(',').map(s=>s.trim()).filter(Boolean);
   const dv=document.getElementById('edit-desc').value.trim();
   if(dv)EX_INFO[ex.n]={...(EX_INFO[ex.n]||{}),desc:dv};
