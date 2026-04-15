@@ -369,9 +369,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .sets-area.open{display:block;}
 .rm-badge{margin:6px 2px 4px;padding:6px 10px;background:linear-gradient(90deg,#4a9eff18,#3ecf8e18);border:1px solid #4a9eff33;border-radius:7px;font-size:11px;color:var(--muted);font-family:var(--mono);}
 .rm-badge strong{color:var(--accent2);font-weight:700;}
-.sets-hdr{display:grid;grid-template-columns:28px 1fr 36px;gap:6px;padding:8px 2px 4px;font-size:10px;color:var(--muted);font-family:var(--mono);text-align:center;}
-.set-row{display:grid;grid-template-columns:28px 1fr 36px;gap:6px;align-items:center;margin-bottom:5px;}
+.sets-hdr{display:grid;grid-template-columns:24px 50px 1fr 1fr 32px;gap:4px;padding:8px 2px 4px;font-size:10px;color:var(--muted);font-family:var(--mono);text-align:center;}
+.set-row{display:grid;grid-template-columns:24px 50px 1fr 1fr 32px;gap:4px;align-items:center;margin-bottom:5px;}
 .set-num{font-size:11px;font-family:var(--mono);color:var(--muted);text-align:center;}
+.pre-inp{font-size:12px;color:var(--muted);font-family:var(--mono);text-align:center;opacity:.6;padding:7px 2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 
 /* ── 인라인 타이머 ── */
 .timer-wrap{display:flex;align-items:center;gap:8px;padding:8px 14px 10px;border-top:1px solid var(--border);}
@@ -575,10 +576,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .posture-tip{font-size:11px;color:var(--accent);margin-top:5px;padding:5px 8px;background:#e8533a12;border-radius:5px;border-left:2px solid var(--accent);}
 .posture-yt{display:inline-block;margin-top:6px;padding:4px 10px;border-radius:5px;background:#ff000018;border:1px solid #ff444433;color:#ff4444;font-size:10px;cursor:pointer;text-decoration:none;}
 @media(max-width:480px){.orm-grid{grid-template-columns:1fr 1fr;}.level-step{font-size:9px;padding:8px 2px;}}
-.set-inp{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:7px 4px;font-size:14px;color:var(--text);font-family:var(--mono);text-align:center;width:100%;}
+.set-inp{background:var(--surface2);border:1px solid var(--border);border-radius:6px;padding:6px 3px;font-size:13px;color:var(--text);font-family:var(--mono);text-align:center;width:100%;-moz-appearance:textfield;}
+.set-inp::-webkit-outer-spin-button,.set-inp::-webkit-inner-spin-button{-webkit-appearance:none;}
 .set-inp:focus{outline:none;border-color:var(--accent2);}
 .set-inp.filled{border-color:#4caf7d55;color:var(--green);}
-.set-ok{width:30px;height:30px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.set-ok{width:28px;height:28px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:13px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
 .set-ok.done{background:var(--green);border-color:var(--green);color:#fff;}
 .add-set{width:100%;padding:6px;border-radius:6px;border:1px dashed var(--border);background:none;color:var(--muted);font-size:11px;cursor:pointer;margin-top:5px;font-family:var(--font);}
 .bottom-bar{margin-top:14px;}
@@ -1856,21 +1858,49 @@ function calc1RM(weight,reps){
   if(!weight||!reps||reps<=0)return 0;
   return Math.round(parseFloat(weight)*(1+parseInt(reps)/30)*10)/10;
 }
+// ── 이전 기록에서 해당 운동의 세트 목록을 가져옴
+function getPrevSets(key){
+  const parts=key.split('-'),si=parseInt(parts[1]),ei=parseInt(parts[2]);
+  const tk=makeupActive?makeupActive.missedTk:DAY_SCHED[selDay];
+  const rt=RT[tk];if(!rt||!rt.sections[si]||!rt.sections[si].exs[ei])return[];
+  const exName=rt.sections[si].exs[ei].n;
+  for(const rec of records){
+    const exSets=(rec.sets||[]).filter(s=>s.ex===exName);
+    if(exSets.length>0)return exSets;
+  }
+  return[];
+}
 function renderSets(key,cId){
   const sets=setData[key];if(!sets)return;
   const c=document.getElementById(cId);if(!c)return;
+  const prevSets=getPrevSets(key);
+  // 이전 기록으로 빈 값 pre-fill (처음 열 때만)
+  sets.forEach((s,i)=>{
+    const p=prevSets[i]||{};
+    if(s.weight===''&&p.weight!=null&&p.weight!=='')s.weight=p.weight;
+    if(s.reps===''&&p.reps!=null&&p.reps!=='')s.reps=p.reps;
+  });
   // 1RM 계산 (입력된 세트 중 최고값)
   let best1RM=0;
   sets.forEach(s=>{if(s.weight&&s.reps){const v=calc1RM(s.weight,s.reps);if(v>best1RM)best1RM=v;}});
   const rmHtml=best1RM>0?`<div class="rm-badge">추정 1RM <strong>${best1RM}kg</strong> · 다음 목표 <strong>${Math.round(best1RM*0.75*10)/10}kg × 10회</strong></div>`:'';
-  c.innerHTML=`<div class="sets-hdr"><div>세트</div><div>중량 kg</div><div>✓</div></div>
-    ${sets.map((s,i)=>`<div class="set-row" id="sr-${key}-${i}">
-      <div class="set-num">${i+1}</div>
-      <input class="set-inp ${s.weight?'filled':''}" type="number" value="${s.weight}" placeholder="0" min="0" step="0.5" oninput="updSet('${key}',${i},'weight',this.value);refreshRM('${key}','${cId}')"/>
-      <button class="set-ok ${s.done?'done':''}" onclick="toggleSetDone('${key}',${i})">✓</button>
-    </div>`).join('')}
+  c.innerHTML=`<div class="sets-hdr"><div>세트</div><div>이전kg</div><div>횟수</div><div>cr중량kg</div><div>✓</div></div>
+    ${sets.map((s,i)=>{
+      const p=prevSets[i]||{};
+      const preW=p.weight!=null&&p.weight!==''?p.weight+'kg':'—';
+      return`<div class="set-row" id="sr-${key}-${i}">
+        <div class="set-num">${i+1}</div>
+        <div class="pre-inp">${preW}</div>
+        <input class="set-inp ${s.reps?'filled':''}" type="number" value="${s.reps}" placeholder="—" min="0" max="99"
+               oninput="updSet('${key}',${i},'reps',this.value);refreshRM('${key}','${cId}')"/>
+        <input class="set-inp ${s.weight?'filled':''}" type="number" value="${s.weight}" placeholder="—" min="0" step="0.5"
+               oninput="updSet('${key}',${i},'weight',this.value);refreshRM('${key}','${cId}')"/>
+        <button class="set-ok ${s.done?'done':''}" onclick="toggleSetDone('${key}',${i})">✓</button>
+      </div>`;
+    }).join('')}
     ${rmHtml}
     <button class="add-set" onclick="addSet('${key}','${cId}')">+ 세트 추가</button>`;
+  saveSetDataLocal();
 }
 function refreshRM(key,cId){
   // weight 입력시 1RM 배지만 실시간 갱신
