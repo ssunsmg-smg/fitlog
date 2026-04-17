@@ -1602,7 +1602,7 @@ const RT_BASE={
       {n:'등',exs:[{n:'랫 풀다운',d:'4세트 × 12회',tags:['광배근(주)'],w:['어깨주의'],sets:4},{n:'시티드 케이블 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3}]},
       {n:'후면 어깨',exs:[{n:'시티드 리어 델트 플라이',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:3}]},
       {n:'이두',exs:[{n:'시티드 덤벨 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3}]},
-      {n:'코어',exs:[{n:'플랭크',d:'3세트 × 45초',tags:['복횡근(주)'],w:[],sets:0},{n:'바이시클 크런치',d:'3세트 × 20회',tags:['복사근(주)'],w:[],sets:0},{n:'사이드 플랭크',d:'2세트 × 30초',tags:['외복사근(주)'],w:['허리주의'],sets:0}]},
+      {n:'코어',exs:[{n:'플랭크',d:'3세트 × 45초',tags:['복횡근(주)'],w:[],sets:0},{n:'바이시클 크런치',d:'3세트 × 20회',tags:['복사근(주)'],w:[],sets:3},{n:'사이드 플랭크',d:'2세트 × 30초',tags:['외복사근(주)'],w:['허리주의'],sets:0}]},
       {n:'마무리',exs:[{n:'마무리 스트레칭',d:'5분',tags:['회복'],w:[],sets:0}]}]},
   C:{label:'수요일 · TypeC',title:'하체 · 둔근 · 무릎재활',color:'rh-c',muscles:['대둔근','중둔근','대퇴사두근','햄스트링'],
     sections:[
@@ -1625,7 +1625,7 @@ const RT_BASE={
         {n:'업라이트 바이크',d:'3분 · 저강도',tags:['심폐'],w:['무릎주의'],sets:0},
         {n:'관절 돌리기',d:'2분 · 전신 관절 풀기',tags:['관절가동성'],w:[],sets:0}
       ]},
-      {n:'복근 집중',exs:[{n:'케이블 크런치',d:'4세트 × 20회',tags:['복직근(주)'],w:['허리주의'],sets:4},{n:'행잉 니 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:[],sets:0},{n:'바이시클 크런치',d:'3세트 × 30회',tags:['복사근(주)'],w:[],sets:0},{n:'리버스 크런치',d:'3세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:0}]},
+      {n:'복근 집중',exs:[{n:'케이블 크런치',d:'4세트 × 20회',tags:['복직근(주)'],w:['허리주의'],sets:4},{n:'행잉 니 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:[],sets:3},{n:'바이시클 크런치',d:'3세트 × 30회',tags:['복사근(주)'],w:[],sets:3},{n:'리버스 크런치',d:'3세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:3}]},
       {n:'전신 복합',exs:[{n:'시티드 케이블 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3},{n:'덤벨 숄더 프레스',d:'3세트 × 12회',tags:['삼각근(주)'],w:['어깨주의'],sets:3},{n:'힙 어브덕션 (기계)',d:'3세트 × 15회',tags:['중둔근(주)'],w:['무릎주의'],sets:3}]},
       {n:'마무리',exs:[{n:'업라이트 바이크',d:'10분 · 중강도',tags:['체지방'],w:['무릎주의'],sets:0}]}]},
   F:{label:'토요일 · TypeF',title:'하체 · 둔근 2회차 (경량)',color:'rh-f',muscles:['대둔근','중둔근','햄스트링'],
@@ -2586,10 +2586,10 @@ const EX_LIB=[
   // ── 복근 ──
   {n:'크런치',d:'3세트 × 20회',tags:['복직근(주)'],w:[],sets:3,cat:'복근'},
   {n:'리버스 크런치',d:'3세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:3,cat:'복근'},
-  {n:'바이시클 크런치',d:'3세트 × 30회',tags:['복사근(주)'],w:[],sets:0,cat:'복근'},
+  {n:'바이시클 크런치',d:'3세트 × 30회',tags:['복사근(주)'],w:[],sets:3,cat:'복근'},
   {n:'레그 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:3,cat:'복근'},
-  {n:'행잉 레그 레이즈',d:'3세트 × 12회',tags:['복직근하부(주)'],w:[],sets:0,cat:'복근'},
-  {n:'행잉 니 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:[],sets:0,cat:'복근'},
+  {n:'행잉 레그 레이즈',d:'3세트 × 12회',tags:['복직근하부(주)'],w:[],sets:3,cat:'복근'},
+  {n:'행잉 니 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:[],sets:3,cat:'복근'},
   {n:'플랭크',d:'3세트 × 45초',tags:['복횡근(주)'],w:[],sets:0,cat:'복근'},
   {n:'사이드 플랭크',d:'2세트 × 30초',tags:['외복사근(주)'],w:['허리주의'],sets:0,cat:'복근'},
   {n:'케이블 크런치',d:'4세트 × 20회',tags:['복직근(주)'],w:['허리주의'],sets:4,cat:'복근'},
@@ -4966,7 +4966,8 @@ function closeAiGuide(){
 // ══════════════════════════════
 // 타이머 시스템
 // ══════════════════════════════
-let _timerState={name:'',total:45,current:45,running:false,interval:null,exSiEi:null};
+// endTime: 타이머 종료 타임스탬프(ms). 백그라운드 throttling 방지용.
+let _timerState={name:'',total:45,current:45,running:false,interval:null,exSiEi:null,endTime:0,completed:false};
 
 function parseTimerSec(detailStr){
   // "3세트 × 45초" / "45초" / "30초" / "2분" 등에서 초 추출
@@ -4976,52 +4977,79 @@ function parseTimerSec(detailStr){
 }
 
 function openTimerOverlay(name,sec,si,ei){
-  _timerState={name,total:sec,current:sec,running:false,interval:null,exSiEi:si+'-'+ei};
   clearInterval(_timerState.interval);
+  _timerState={name,total:sec,current:sec,running:false,interval:null,exSiEi:si+'-'+ei,endTime:0,completed:false};
   document.getElementById('timer-ov-name').textContent=name;
   document.getElementById('timer-overlay').classList.add('show');
   ovUpdateDisplay();
 }
 function closeTimerOverlay(){
-  clearInterval(_timerState.interval);_timerState.running=false;
+  clearInterval(_timerState.interval);_timerState.running=false;_timerState.endTime=0;
   document.getElementById('timer-overlay').classList.remove('show');
 }
 function ovFmtTime(s){const m=Math.floor(s/60),ss=s%60;return(m?m+':':'')+(ss<10&&m?'0':'')+ss+(m?'':'초');}
 function ovUpdateDisplay(){
   const t=document.getElementById('timer-ov-time');
-  t.textContent=ovFmtTime(_timerState.current);
+  t.textContent=ovFmtTime(Math.max(0,_timerState.current));
   t.className=_timerState.running?'running':'';
   const pct=Math.max(0,_timerState.current/_timerState.total*100);
   document.getElementById('timer-ov-bar').style.width=pct+'%';
   document.getElementById('ov-start-btn').textContent=_timerState.running?'⏸ 일시정지':'▶ 시작';
   document.getElementById('ov-start-btn').className=_timerState.running?'stop':'';
 }
+// 타이머 완료 처리 (한 번만 실행)
+function _timerFinish(){
+  if(_timerState.completed)return;
+  _timerState.completed=true;
+  clearInterval(_timerState.interval);
+  _timerState.running=false;_timerState.current=0;_timerState.endTime=0;
+  // 타이머 완료 → 운동 체크 자동
+  if(_timerState.exSiEi){
+    const [si,ei]=_timerState.exSiEi.split('-');
+    const chk=document.getElementById('echk-'+si+'-'+ei);
+    const card=document.getElementById('ec-'+si+'-'+ei);
+    if(chk&&!chk.classList.contains('done')){chk.classList.add('done');if(card)card.classList.add('done');saveChkLocal();updateProg();}
+  }
+  // 진동 + 알림음 (Web Audio API)
+  try{if(navigator.vibrate)navigator.vibrate([300,100,300,100,300]);}catch(e){}
+  playTimerAlarm();
+  const timeEl=document.getElementById('timer-ov-time');
+  if(timeEl){
+    timeEl.textContent='완료! 🎉';
+    timeEl.style.color='var(--green)';
+    setTimeout(()=>{ovUpdateDisplay();timeEl.style.color='';},2000);
+  }
+}
+// 타임스탬프 기반 tick: 실제 경과 시간으로 재계산 → 백그라운드에서도 정확
+function _timerTick(){
+  if(!_timerState.running)return;
+  const remainMs=_timerState.endTime-Date.now();
+  _timerState.current=Math.max(0,Math.ceil(remainMs/1000));
+  ovUpdateDisplay();
+  if(remainMs<=0)_timerFinish();
+}
 function ovToggle(){
   if(_timerState.running){
-    clearInterval(_timerState.interval);_timerState.running=false;ovUpdateDisplay();return;
+    // 일시정지: 남은 시간 저장
+    clearInterval(_timerState.interval);
+    const remainMs=Math.max(0,_timerState.endTime-Date.now());
+    _timerState.current=Math.ceil(remainMs/1000);
+    _timerState.running=false;_timerState.endTime=0;
+    ovUpdateDisplay();return;
   }
   if(_timerState.current<=0){ovReset();return;}
-  _timerState.running=true;
-  _timerState.interval=setInterval(()=>{
-    _timerState.current--;ovUpdateDisplay();
-    if(_timerState.current<=0){
-      clearInterval(_timerState.interval);_timerState.running=false;
-      // 타이머 완료 → 운동 체크 자동
-      if(_timerState.exSiEi){
-        const [si,ei]=_timerState.exSiEi.split('-');
-        const chk=document.getElementById('echk-'+si+'-'+ei);
-        const card=document.getElementById('ec-'+si+'-'+ei);
-        if(chk&&!chk.classList.contains('done')){chk.classList.add('done');if(card)card.classList.add('done');saveChkLocal();updateProg();}
-      }
-      // 진동 + 알림음 (Web Audio API)
-      try{if(navigator.vibrate)navigator.vibrate([300,100,300,100,300]);}catch(e){}
-      playTimerAlarm();
-      document.getElementById('timer-ov-time').textContent='완료! 🎉';
-      document.getElementById('timer-ov-time').style.color='var(--green)';
-      setTimeout(()=>{ovUpdateDisplay();document.getElementById('timer-ov-time').style.color='';},2000);
-    }
-  },1000);
+  // 시작/재개: 절대 종료 시각 기록
+  _timerState.endTime=Date.now()+_timerState.current*1000;
+  _timerState.running=true;_timerState.completed=false;
+  _timerState.interval=setInterval(_timerTick,250);
+  _timerTick();
 }
+// 앱/탭 포커스 복귀 시 즉시 재계산 (다른 앱 위에 있을 때 throttle 보정)
+document.addEventListener('visibilitychange',()=>{
+  if(!document.hidden && _timerState.running)_timerTick();
+});
+window.addEventListener('focus',()=>{if(_timerState.running)_timerTick();});
+window.addEventListener('pageshow',()=>{if(_timerState.running)_timerTick();});
 
 // ── 타이머 알람 소리 (Web Audio API - 서버 불필요) ──
 function playTimerAlarm(){
@@ -5046,10 +5074,12 @@ function playTimerAlarm(){
     });
   } catch(e){ console.log('알람 소리 재생 실패:', e); }
 }
-function ovReset(){clearInterval(_timerState.interval);_timerState.running=false;_timerState.current=_timerState.total;ovUpdateDisplay();}
+function ovReset(){clearInterval(_timerState.interval);_timerState.running=false;_timerState.endTime=0;_timerState.completed=false;_timerState.current=_timerState.total;ovUpdateDisplay();}
 function ovAdjTime(delta){
   _timerState.current=Math.max(5,_timerState.current+delta);
   if(!_timerState.running)_timerState.total=_timerState.current;
+  // 동작 중이면 종료 시각도 같이 보정
+  if(_timerState.running)_timerState.endTime=Date.now()+_timerState.current*1000;
   ovUpdateDisplay();
 }</script>
 </body>
