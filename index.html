@@ -1890,9 +1890,19 @@ function showApp(){
 // 세트 관리
 // ══════════════════════════════
 function exKey(si,ei){return`${selDay}-${si}-${ei}`;}
+// 맨몸/밴드 운동인데 sets:0이고 "N세트 × M회" 포맷이면 자동으로 N세트 활성화
+function autoEnableBodyweightSets(ex){
+  if(!ex || ex.sets>0) return;
+  const isNoWt = ex.noWt || NO_WEIGHT_EX.has(ex.n);
+  if(!isNoWt) return;
+  // "초/분" 시간형은 제외 (기존 타이머 흐름 유지)
+  if(/초|분/.test(ex.d||'')) return;
+  const m = (ex.d||'').match(/(\d+)\s*세트\s*[×x\*]\s*\d+\s*회/);
+  if(m) ex.sets = parseInt(m[1]);
+}
 function initSetData(tk){
   setData={};const rt=RT[tk];if(!rt||!rt.sections)return;
-  rt.sections.forEach((sec,si)=>sec.exs.forEach((ex,ei)=>{if(ex.sets>0){const k=exKey(si,ei);setData[k]=Array.from({length:ex.sets},()=>({weight:'',reps:'',done:false}));}}));
+  rt.sections.forEach((sec,si)=>sec.exs.forEach((ex,ei)=>{autoEnableBodyweightSets(ex);if(ex.sets>0){const k=exKey(si,ei);setData[k]=Array.from({length:ex.sets},()=>({weight:'',reps:'',done:false}));}}));
 }
 function calc1RM(weight,reps){
   if(!weight||!reps||reps<=0)return 0;
@@ -2110,6 +2120,8 @@ function renderWorkout(){
   rt.sections.forEach((sec,si)=>{
     html+='<div class="sec-lbl">'+sec.n+'</div>';
     sec.exs.forEach((ex,ei)=>{
+      // 맨몸 운동 자동 세트 감지 (커스텀 반복수 포함)
+      autoEnableBodyweightSets(ex);
       const wTags=ex.w.map(w=>w.includes('허리')?'<span class="etag t-back">'+w+'</span>':w.includes('무릎')?'<span class="etag t-knee">'+w+'</span>':w.includes('어깨')?'<span class="etag t-sh">'+w+'</span>':'<span class="etag">'+w+'</span>').join('');
       const mTags=ex.tags.map(t=>'<span class="etag t-main">'+t+'</span>').join('');
       const k=exKey(si,ei),hasSets=ex.sets>0,saId='sa-'+si+'-'+ei;
