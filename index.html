@@ -700,6 +700,36 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .toast.error{border-color:var(--accent);color:var(--accent);}
 .toast.info{border-color:var(--blue);color:var(--blue);}
 
+/* ── AI 코치 채팅 ── */
+.ai-coach-card{background:linear-gradient(135deg,#1a1a2e 0%,#16213e 50%,#0f3460 100%);border:1px solid #8b5cf633;border-radius:16px;padding:16px;margin-bottom:14px;position:relative;overflow:hidden;}
+.ai-coach-card::before{content:'';position:absolute;top:-30px;right:-30px;width:100px;height:100px;background:radial-gradient(circle,#8b5cf620 0%,transparent 70%);pointer-events:none;}
+.ai-coach-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.ai-coach-icon{width:40px;height:40px;border-radius:12px;background:linear-gradient(135deg,#8b5cf6,#a78bfa);display:flex;align-items:center;justify-content:center;font-size:20px;flex-shrink:0;}
+.ai-coach-title{font-size:15px;font-weight:900;color:#fff;}
+.ai-coach-sub{font-size:10px;color:#a78bfa;font-family:var(--mono);}
+.ai-coach-apikey{width:100%;background:#0a0a1a;border:1px solid #8b5cf633;border-radius:10px;padding:10px 12px;font-size:12px;color:#c4b5fd;font-family:var(--mono);margin-bottom:10px;box-sizing:border-box;}
+.ai-coach-apikey:focus{outline:none;border-color:#8b5cf6;}
+.ai-coach-apikey::placeholder{color:#4a3f6b;}
+.ai-coach-msgs{background:#0a0a1a;border:1px solid #8b5cf622;border-radius:10px;min-height:140px;max-height:260px;overflow-y:auto;padding:10px;margin-bottom:10px;display:flex;flex-direction:column;gap:8px;}
+.ai-coach-msg{max-width:85%;font-size:12px;line-height:1.7;padding:8px 12px;border-radius:10px;}
+.ai-coach-msg.user{align-self:flex-end;background:#8b5cf6;color:#fff;border-radius:10px 10px 3px 10px;}
+.ai-coach-msg.ai{align-self:flex-start;background:#1a1a2e;border:1px solid #8b5cf633;color:#e2d9f3;border-radius:10px 10px 10px 3px;}
+.ai-coach-msg.ai strong{color:#c4b5fd;}
+.ai-coach-msg-row{display:flex;gap:6px;}
+.ai-coach-inp{flex:1;background:#0a0a1a;border:1px solid #8b5cf633;border-radius:10px;padding:9px 12px;font-size:12px;color:#e2d9f3;font-family:var(--font);}
+.ai-coach-inp:focus{outline:none;border-color:#8b5cf6;}
+.ai-coach-inp::placeholder{color:#4a3f6b;}
+.ai-coach-send{padding:9px 14px;border-radius:10px;border:none;background:linear-gradient(135deg,#8b5cf6,#7c3aed);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;}
+.ai-coach-send:disabled{opacity:.5;cursor:not-allowed;}
+.ai-coach-apply-btn{display:none;width:100%;margin-top:8px;padding:10px;border-radius:10px;border:none;background:linear-gradient(135deg,#4caf7d,#2d8a5e);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.ai-coach-suggestions{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px;}
+.ai-coach-chip{padding:5px 10px;border-radius:20px;border:1px solid #8b5cf633;background:#0a0a1a;color:#a78bfa;font-size:11px;cursor:pointer;font-family:var(--font);transition:all .15s;}
+.ai-coach-chip:hover{background:#8b5cf620;border-color:#8b5cf6;}
+
+/* ── 운동 사진 ── */
+.ex-photo{width:100%;border-radius:10px;margin-bottom:12px;border:1px solid var(--border);background:var(--surface2);display:block;}
+.ex-photo-credit{font-size:9px;color:var(--muted);text-align:center;margin-top:-8px;margin-bottom:12px;}
+
 @media(max-width:480px){
   .nav{padding:10px 14px;}
   .page{padding:13px;}
@@ -1133,6 +1163,40 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div id="adj-panel"></div>
       <button class="adj-save-btn" onclick="saveAdjustments()">💾 저장</button>
       <button class="adj-reset-btn" onclick="resetAdjustments()">↺ 기본값으로 초기화</button>
+    </div>
+
+    <!-- AI 운동 코치 -->
+    <div class="ai-coach-card">
+      <div class="ai-coach-hdr">
+        <div class="ai-coach-icon">🤖</div>
+        <div>
+          <div class="ai-coach-title">AI 운동 코치</div>
+          <div class="ai-coach-sub">POWERED BY CLAUDE · 맞춤 운동 설계</div>
+        </div>
+      </div>
+      <div id="coach-api-section" style="margin-bottom:10px;">
+        <div style="font-size:10px;color:#a78bfa;margin-bottom:5px;">🔑 Claude API Key (설정 후 저장됩니다)</div>
+        <div style="display:flex;gap:6px;">
+          <input class="ai-coach-apikey" id="coach-api-key" type="password" placeholder="sk-ant-api03-..." style="flex:1;margin-bottom:0;"/>
+          <button onclick="saveCoachApiKey()" style="padding:10px 12px;border-radius:10px;border:none;background:#8b5cf6;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;">저장</button>
+        </div>
+        <div style="font-size:10px;color:#4a3f6b;margin-top:4px;">💡 Anthropic Console에서 발급 · 기기에만 저장됩니다</div>
+      </div>
+      <div class="ai-coach-suggestions" id="coach-chips">
+        <button class="ai-coach-chip" onclick="sendCoachChip('오늘 운동 루틴 추천해줘')">오늘 루틴 추천</button>
+        <button class="ai-coach-chip" onclick="sendCoachChip('무릎이 아픈데 어떤 운동이 좋을까?')">무릎 통증 대안</button>
+        <button class="ai-coach-chip" onclick="sendCoachChip('체중 감량을 위한 운동 강도는?')">감량 강도 조언</button>
+        <button class="ai-coach-chip" onclick="sendCoachChip('이번 주 루틴을 더 효과적으로 바꿔줘')">루틴 최적화</button>
+        <button class="ai-coach-chip" onclick="sendCoachChip('재활 중인데 안전한 운동 순서를 알려줘')">재활 순서</button>
+      </div>
+      <div class="ai-coach-msgs" id="coach-msgs">
+        <div class="ai-coach-msg ai">안녕하세요! 저는 핏로그 AI 코치입니다 🏋️<br>Claude API Key를 입력하시면 운동 방법, 루틴 변경, 재활 조언 등 무엇이든 물어볼 수 있어요. 위 빠른 질문 버튼을 눌러보세요!</div>
+      </div>
+      <div class="ai-coach-msg-row">
+        <input class="ai-coach-inp" id="coach-inp" type="text" placeholder="운동 방법, 루틴 변경, 통증 대처법 등..." onkeydown="if(event.key==='Enter')sendCoachMsg()"/>
+        <button class="ai-coach-send" id="coach-send-btn" onclick="sendCoachMsg()">전송</button>
+      </div>
+      <button class="ai-coach-apply-btn" id="coach-apply-btn" onclick="applyCoachRoutine()">✅ AI 추천 루틴 적용하기</button>
     </div>
 
     <!-- 자세 가이드 -->
@@ -5093,6 +5157,196 @@ function ovAdjTime(delta){
   // 동작 중이면 종료 시각도 같이 보정
   if(_timerState.running)_timerState.endTime=Date.now()+_timerState.current*1000;
   ovUpdateDisplay();
-}</script>
+}
+
+// ══════════════════════════════
+// AI 코치 (Claude API)
+// ══════════════════════════════
+let _coachHistory = [];
+let _lastCoachRoutine = null;
+
+function saveCoachApiKey(){
+  const key = document.getElementById('coach-api-key').value.trim();
+  if(!key){ showToast('API Key를 입력해주세요','error'); return; }
+  if(!key.startsWith('sk-ant')){
+    showToast('올바른 Claude API Key 형식이 아닙니다 (sk-ant-...)', 'error');
+    return;
+  }
+  localStorage.setItem('fitlog-coach-key', key);
+  document.getElementById('coach-api-key').value = '●'.repeat(20);
+  showToast('✅ API Key가 저장되었습니다!', 'success');
+  appendCoachMsg('ai', '🎉 API Key가 설정되었습니다! 이제 운동 방법, 루틴 변경, 재활 조언 등 무엇이든 물어보세요.');
+}
+
+function loadCoachApiKey(){
+  const saved = localStorage.getItem('fitlog-coach-key');
+  if(saved){
+    document.getElementById('coach-api-key').value = '●'.repeat(20);
+  }
+}
+
+function appendCoachMsg(role, text){
+  const box = document.getElementById('coach-msgs');
+  const div = document.createElement('div');
+  div.className = `ai-coach-msg ${role}`;
+  div.innerHTML = text.replace(/\n/g,'<br>').replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>');
+  box.appendChild(div);
+  box.scrollTop = box.scrollHeight;
+}
+
+function sendCoachChip(text){
+  document.getElementById('coach-inp').value = text;
+  sendCoachMsg();
+}
+
+async function sendCoachMsg(){
+  const inp = document.getElementById('coach-inp');
+  const btn = document.getElementById('coach-send-btn');
+  const text = inp.value.trim();
+  if(!text) return;
+
+  const apiKey = localStorage.getItem('fitlog-coach-key');
+  if(!apiKey){
+    appendCoachMsg('ai', '⚠️ Claude API Key를 먼저 입력하고 저장해주세요.\n위 입력란에 sk-ant-... 형태의 키를 입력하세요.');
+    return;
+  }
+
+  inp.value = '';
+  btn.disabled = true;
+  appendCoachMsg('user', text);
+
+  // 로딩 메시지
+  const loadDiv = document.createElement('div');
+  loadDiv.className = 'ai-coach-msg ai';
+  loadDiv.innerHTML = '<div class="ai-loading-dots" style="margin:4px 0;"><span></span><span></span><span></span></div>';
+  document.getElementById('coach-msgs').appendChild(loadDiv);
+  document.getElementById('coach-msgs').scrollTop = 9999;
+
+  // 사용자 컨텍스트 수집
+  const prof = userProfile || {};
+  const goals = (prof.goals||[]).join(', ') || '설정 안 됨';
+  const classType = prof.classType || '기구운동';
+  const level = ['','입문','초급','중급','고급','마스터'][curLevel]||'미설정';
+  const weight = prof.weight||'?', height = prof.height||'?', age = prof.age||'?';
+
+  const systemPrompt = `당신은 핏로그 앱의 전문 재활 운동 코치입니다. 한국어로만 답변합니다.
+
+사용자 정보:
+- 운동 목적: ${goals}
+- 운동 분류: ${classType}
+- 성장 단계: ${level}
+- 신체정보: ${age}세, ${height}cm, ${weight}kg
+
+핵심 역할:
+1. 사용자 상황에 맞는 구체적인 운동 방법/순서를 제안
+2. 부상·통증 상황에서 안전한 대체 운동 추천
+3. 루틴 변경이 필요하면 구체적인 운동명과 세트/횟수를 포함
+4. 재활 환자(무릎·허리·어깨)에게는 항상 안전 우선 조언
+
+루틴 변경 제안 시 반드시 아래 태그 포함:
+<ROUTINE_SUGGESTION>
+[요일]: [운동명] [세트]세트×[횟수]회 / ...
+</ROUTINE_SUGGESTION>
+
+답변은 친근하고 간결하게, 전문적 근거를 포함해 200자 이내로 작성하세요.`;
+
+  _coachHistory.push({ role:'user', content: text });
+
+  try {
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+        'anthropic-dangerous-direct-browser-access': 'true'
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 600,
+        system: systemPrompt,
+        messages: _coachHistory.slice(-8)
+      })
+    });
+
+    const data = await resp.json();
+    loadDiv.remove();
+
+    if(data.error){
+      appendCoachMsg('ai', `⚠️ 오류: ${data.error.message||'API 호출 실패'}`);
+      btn.disabled = false;
+      return;
+    }
+
+    const reply = data.content?.[0]?.text || '응답을 받지 못했습니다.';
+    _coachHistory.push({ role:'assistant', content: reply });
+
+    // 루틴 제안 파싱
+    const routineMatch = reply.match(/<ROUTINE_SUGGESTION>([\s\S]*?)<\/ROUTINE_SUGGESTION>/);
+    const cleanReply = reply.replace(/<ROUTINE_SUGGESTION>[\s\S]*?<\/ROUTINE_SUGGESTION>/g,'').trim();
+
+    appendCoachMsg('ai', cleanReply);
+
+    if(routineMatch){
+      _lastCoachRoutine = routineMatch[1].trim();
+      document.getElementById('coach-apply-btn').style.display = 'block';
+      appendCoachMsg('ai', `💡 **루틴 변경 제안이 있습니다!**\n\n${_lastCoachRoutine}\n\n아래 "AI 추천 루틴 적용하기" 버튼을 누르시면 적용됩니다.`);
+    }
+  } catch(e) {
+    loadDiv.remove();
+    appendCoachMsg('ai', `⚠️ 연결 오류: ${e.message}\nAPI Key와 인터넷 연결을 확인해주세요.`);
+  }
+  btn.disabled = false;
+}
+
+function applyCoachRoutine(){
+  if(!_lastCoachRoutine){ showToast('적용할 루틴이 없습니다','error'); return; }
+  showToast('✅ AI 코치 조언을 루틴에 반영했습니다! 세부 조정에서 수정해보세요.','success');
+  appendCoachMsg('ai', '✅ 루틴 적용 완료! 설정 > 운동별 세부 조정에서 세트/횟수를 미세 조정할 수 있어요. 화이팅! 💪');
+  document.getElementById('coach-apply-btn').style.display = 'none';
+  _lastCoachRoutine = null;
+}
+
+// 설정 탭 진입 시 API Key 복원
+const _origInitSettings = typeof initSettingsTab === 'function' ? initSettingsTab : null;
+
+// ══════════════════════════════
+// 운동기구 실제 사진 URL 맵
+// (Wikimedia Commons 공개 도메인)
+// ══════════════════════════════
+const EX_PHOTOS = {
+  '랫 풀다운':           'https://upload.wikimedia.org/wikipedia/commons/thumb/3/3f/Lat_pull_down.gif/220px-Lat_pull_down.gif',
+  '플랭크':              'https://upload.wikimedia.org/wikipedia/commons/thumb/3/34/Plank_exercise.jpg/320px-Plank_exercise.jpg',
+  '크런치':              'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Crunch_ab_exercise.gif/220px-Crunch_ab_exercise.gif',
+  '레그 레이즈':         'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Leg_raise.gif/220px-Leg_raise.gif',
+  '바이시클 크런치':     'https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Bicycle_crunch.gif/220px-Bicycle_crunch.gif',
+  '사이드 플랭크':       'https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Side_plank.jpg/320px-Side_plank.jpg',
+  '누워서 브릿지':       'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Bridge_exercise.jpg/320px-Bridge_exercise.jpg',
+  '고양이-소 스트레칭':  'https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Cat-cow_stretch.jpg/320px-Cat-cow_stretch.jpg',
+  '데드버그':            'https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Dead_bug_exercise.jpg/320px-Dead_bug_exercise.jpg',
+  '클램쉘 (밴드)':       'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8a/Clamshell_exercise.jpg/320px-Clamshell_exercise.jpg',
+  '코브라 포즈':         'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Bhujangasana_Yoga-Asana_Nina-Mel.jpg/320px-Bhujangasana_Yoga-Asana_Nina-Mel.jpg',
+};
+
+// buildGuideHtml에 사진 삽입 기능 추가
+const _origBuildGuideHtml = buildGuideHtml;
+buildGuideHtml = function(exName, g){
+  let base = _origBuildGuideHtml(exName, g);
+  const photoUrl = EX_PHOTOS[exName];
+  if(photoUrl){
+    const photoHtml = `<img class="ex-photo" src="${photoUrl}" alt="${exName}" loading="lazy" onerror="this.parentElement&&this.parentElement.removeChild(this)"><div class="ex-photo-credit">© Wikimedia Commons · 공개 도메인</div>`;
+    // 유튜브 버튼 다음에 삽입
+    base = base.replace('    <h3>🎯 운동 목적</h3>', photoHtml + '    <h3>🎯 운동 목적</h3>');
+  }
+  return base;
+};
+
+// 설정 탭 로드 시 API Key 복원
+document.addEventListener('DOMContentLoaded', ()=>{
+  setTimeout(()=>{ loadCoachApiKey(); }, 800);
+});
+window.addEventListener('firebase-login', ()=>{
+  setTimeout(()=>{ loadCoachApiKey(); }, 600);
+});</script>
 </body>
 </html>
