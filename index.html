@@ -5363,28 +5363,25 @@ const _origInitSettings = typeof initSettingsTab === 'function' ? initSettingsTa
 // 운동기구 실제 사진 URL 맵
 // (Wikimedia Commons 공개 도메인)
 // ══════════════════════════════
+// Everkinetic 3D 스타일 통일 (회색 3D 인체 + 근육 하이라이트)
 const EX_PHOTOS = {
-  '랫 풀다운':                    'https://upload.wikimedia.org/wikipedia/commons/8/82/Wide-grip-lat-pull-down-1.gif',
-  '시티드 케이블 로우':            'https://upload.wikimedia.org/wikipedia/commons/2/2d/Cable-seated-rows-1.png',
-  '시티드 체스트 프레스':          'https://upload.wikimedia.org/wikipedia/commons/f/f9/Girl_doing_chest_press_machine_exercise.jpg',
-  '케이블 체스트 플라이':          'https://upload.wikimedia.org/wikipedia/commons/b/bb/Cable-crossover-1.png',
-  '시티드 숄더 프레스':            'https://upload.wikimedia.org/wikipedia/commons/6/62/Seated-military-shoulder-press-1.png',
-  '케이블 사이드 레터럴':          'https://upload.wikimedia.org/wikipedia/commons/0/03/Bent-over-cable-lateral-raises-1.png',
-  '힙 어브덕션 (기계)':            'https://upload.wikimedia.org/wikipedia/commons/f/f9/Hip_abductor_machine.jpg',
-  '시티드 레그 프레스(초경량)':    'https://upload.wikimedia.org/wikipedia/commons/5/57/Leg_press_%28cropped%2C_flipped%29.jpg',
-  '크런치':                        'https://upload.wikimedia.org/wikipedia/commons/c/cf/FloorCrunch.JPG',
-  '플랭크':                        'https://upload.wikimedia.org/wikipedia/commons/e/ee/Plank.jpg',
-  '레그 레이즈':                   'https://upload.wikimedia.org/wikipedia/commons/5/50/Legraises.gif',
-  '누워서 브릿지':                 'https://upload.wikimedia.org/wikipedia/commons/3/34/Glute-bridge.png',
-  '클램쉘 (밴드)':                 'https://upload.wikimedia.org/wikipedia/commons/b/b5/Side-lying_abduction_begin.jpg',
-  '데드버그':                      'https://upload.wikimedia.org/wikipedia/commons/0/09/Bent-knee-hip-raise-1.png',
-  '바이시클 크런치':               'https://upload.wikimedia.org/wikipedia/commons/9/90/USMC-10513.jpg',
-  '사이드 플랭크':                 'https://upload.wikimedia.org/wikipedia/commons/7/7e/Side_Plank.jpg',
-  '시티드 덤벨 컬':               'https://upload.wikimedia.org/wikipedia/commons/d/d3/Standing-biceps-curl-1.gif',
-  '리버스 크런치':                 'https://upload.wikimedia.org/wikipedia/commons/4/41/Leg-raises-1.png',
-  '케이블 크런치':                 'https://upload.wikimedia.org/wikipedia/commons/7/78/Seated_ab_crunch_with_cable_1.svg',
-  '밴드 풀어파트':                 'https://upload.wikimedia.org/wikipedia/commons/7/72/Back-flyes-with-resistance-bands-1.png',
-  '코브라 포즈':                   'https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Bhujangasana_Yoga-Asana_Nina-Mel.jpg/320px-Bhujangasana_Yoga-Asana_Nina-Mel.jpg',
+  '랫 풀다운':                 'https://upload.wikimedia.org/wikipedia/commons/8/82/Wide-grip-lat-pull-down-1.gif',
+  '시티드 케이블 로우':         'https://upload.wikimedia.org/wikipedia/commons/2/2d/Cable-seated-rows-1.png',
+  '케이블 체스트 플라이':       'https://upload.wikimedia.org/wikipedia/commons/b/bb/Cable-crossover-1.png',
+  '시티드 숄더 프레스':         'https://upload.wikimedia.org/wikipedia/commons/6/62/Seated-military-shoulder-press-1.png',
+  '덤벨 숄더 프레스':           'https://upload.wikimedia.org/wikipedia/commons/1/15/Dumbbell-shoulder-press-1.png',
+  '케이블 사이드 레터럴':       'https://upload.wikimedia.org/wikipedia/commons/0/03/Bent-over-cable-lateral-raises-1.png',
+  '케이블 사이드 레터럴 레이즈':'https://upload.wikimedia.org/wikipedia/commons/f/fd/Dumbbell-lateral-raises-1.png',
+  '누워서 브릿지':              'https://upload.wikimedia.org/wikipedia/commons/3/34/Glute-bridge.png',
+  '레그 레이즈':                'https://upload.wikimedia.org/wikipedia/commons/4/41/Leg-raises-1.png',
+  '행잉 레그 레이즈':           'https://upload.wikimedia.org/wikipedia/commons/4/41/Leg-raises-1.png',
+  '데드버그':                   'https://upload.wikimedia.org/wikipedia/commons/0/09/Bent-knee-hip-raise-1.png',
+  '리버스 크런치':              'https://upload.wikimedia.org/wikipedia/commons/0/09/Bent-knee-hip-raise-1.png',
+  '시티드 덤벨 컬':             'https://upload.wikimedia.org/wikipedia/commons/d/d3/Standing-biceps-curl-1.gif',
+  '케이블 크런치':              'https://upload.wikimedia.org/wikipedia/commons/7/78/Seated_ab_crunch_with_cable_1.svg',
+  '밴드 풀어파트':              'https://upload.wikimedia.org/wikipedia/commons/7/72/Back-flyes-with-resistance-bands-1.png',
+  '사이드 플랭크':              'https://upload.wikimedia.org/wikipedia/commons/f/f0/Side-plank-1.png',
+  '시티드 리어 델트 플라이':    'https://upload.wikimedia.org/wikipedia/commons/7/72/Back-flyes-with-resistance-bands-1.png',
 };
 
 // buildGuideHtml에 사진 삽입 기능 추가
