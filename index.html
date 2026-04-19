@@ -5363,25 +5363,114 @@ const _origInitSettings = typeof initSettingsTab === 'function' ? initSettingsTa
 // 운동기구 실제 사진 URL 맵
 // (Wikimedia Commons 공개 도메인)
 // ══════════════════════════════
-// Everkinetic 3D 스타일 통일 (회색 3D 인체 + 근육 하이라이트)
+// 실제 기구 사진 (img/ 폴더) — 전체 매핑
 const EX_PHOTOS = {
-  '랫 풀다운':                 'https://upload.wikimedia.org/wikipedia/commons/8/82/Wide-grip-lat-pull-down-1.gif',
-  '시티드 케이블 로우':         'https://upload.wikimedia.org/wikipedia/commons/2/2d/Cable-seated-rows-1.png',
-  '케이블 체스트 플라이':       'https://upload.wikimedia.org/wikipedia/commons/b/bb/Cable-crossover-1.png',
-  '시티드 숄더 프레스':         'https://upload.wikimedia.org/wikipedia/commons/6/62/Seated-military-shoulder-press-1.png',
-  '덤벨 숄더 프레스':           'https://upload.wikimedia.org/wikipedia/commons/1/15/Dumbbell-shoulder-press-1.png',
-  '케이블 사이드 레터럴':       'https://upload.wikimedia.org/wikipedia/commons/0/03/Bent-over-cable-lateral-raises-1.png',
-  '케이블 사이드 레터럴 레이즈':'https://upload.wikimedia.org/wikipedia/commons/f/fd/Dumbbell-lateral-raises-1.png',
-  '누워서 브릿지':              'https://upload.wikimedia.org/wikipedia/commons/3/34/Glute-bridge.png',
-  '레그 레이즈':                'https://upload.wikimedia.org/wikipedia/commons/4/41/Leg-raises-1.png',
-  '행잉 레그 레이즈':           'https://upload.wikimedia.org/wikipedia/commons/4/41/Leg-raises-1.png',
-  '데드버그':                   'https://upload.wikimedia.org/wikipedia/commons/0/09/Bent-knee-hip-raise-1.png',
-  '리버스 크런치':              'https://upload.wikimedia.org/wikipedia/commons/0/09/Bent-knee-hip-raise-1.png',
-  '시티드 덤벨 컬':             'https://upload.wikimedia.org/wikipedia/commons/d/d3/Standing-biceps-curl-1.gif',
-  '케이블 크런치':              'https://upload.wikimedia.org/wikipedia/commons/7/78/Seated_ab_crunch_with_cable_1.svg',
-  '밴드 풀어파트':              'https://upload.wikimedia.org/wikipedia/commons/7/72/Back-flyes-with-resistance-bands-1.png',
-  '사이드 플랭크':              'https://upload.wikimedia.org/wikipedia/commons/f/f0/Side-plank-1.png',
-  '시티드 리어 델트 플라이':    'https://upload.wikimedia.org/wikipedia/commons/7/72/Back-flyes-with-resistance-bands-1.png',
+
+  // ── 유산소 ──
+  '업라이트 바이크':                      'img/elliptical machine.png',
+  '트레드밀':                             'img/treadmill running machine.png',
+  '스텝 머신':                            'img/step machine.png',
+  '로잉 머신':                            'img/rowing machine.png',
+
+  // ── 가슴 ──
+  '시티드 체스트 프레스':                 'img/bench press machine.png',
+  '벤치 프레스 머신':                     'img/bench press machine.png',
+  '케이블 체스트 플라이':                 'img/pec deck fly.png',
+  '펙 덱 플라이':                         'img/pec deck fly.png',
+  '인클라인 벤치 프레스 머신':            'img/incline bench press machine.png',
+  '디클라인 벤치 프레스 머신':            'img/decline bench press machine.png',
+  '스미스 머신 벤치 프레스':             'img/smith machine bench press.png',
+  '스미스 머신 인클라인 벤치 프레스':    'img/incline smith bench press machine.png',
+  '스미스 머신 디클라인 벤치 프레스':    'img/decline smith machine bench press.png',
+
+  // ── 어깨 ──
+  '시티드 숄더 프레스':                   'img/shoulder press machine.png',
+  '덤벨 숄더 프레스':                     'img/shoulder press machine.png',
+  '케이블 사이드 레터럴':                 'img/lateral raise machine.png',
+  '레터럴 레이즈 머신':                   'img/lateral raise machine.png',
+  '시티드 리어 델트 플라이':              'img/bent over lateral raise machine.png',
+  '벤트오버 레터럴 레이즈 머신':          'img/bent over lateral raise machine.png',
+  '스미스 머신 오버헤드 프레스':          'img/smith machine overhead press.png',
+  '스미스 머신 비하인드 넥 프레스':       'img/smith machine behind neck press.png',
+  '스미스 머신 슈러그':                   'img/smith machine shrug.png',
+
+  // ── 등 ──
+  '랫 풀다운':                            'img/lar pull down.png',
+  '와이드 그립 랫 풀다운':               'img/wide pull down.png',
+  '원암 랫 풀다운':                       'img/one arm lat pull down.png',
+  '원암 와이드 풀다운':                   'img/on arm wide pull down machine.png',
+  '시티드 케이블 로우':                   'img/seated low machine.png',
+  '로우 로우 머신':                       'img/low low machine.png',
+  '원암 시티드 로우':                     'img/one arm seate low.png',
+  '원암 하이 로우':                       'img/one arm high row machine.png',
+  '하이 로우 머신':                       'img/high low machine.png',
+  'T바 로우':                             'img/t bar low machine.png',
+  '스미스 머신 바벨 로우':               'img/smith machine barbell low.png',
+  '언더핸드 스미스 머신 로우':           'img/underchand smith machine barbell row.png',
+  '백 익스텐션 머신':                     'img/back extension machine.png',
+  '리버스 하이퍼 머신':                   'img/reverse hyper machine.png',
+  '맥켄지 운동':                          'img/back extension machine.png',
+  '폼롤러 흉추 이완':                     'img/back extension machine.png',
+  '행잉 니 레이즈':                       'img/assist pull up.png',
+  '행잉 레그 레이즈':                     'img/assist pull up.png',
+  '어시스트 풀업':                        'img/assist pull up.png',
+  '어시스트 친업':                        'img/assit chin up.png',
+  '패럴렐 그립 어시스트 풀업':           'img/parllel grip assist pull up.png',
+
+  // ── 삼두 ──
+  '오버헤드 트라이셉 익스텐션':           'img/overhead triceps extension machine.png',
+  '트라이셉 익스텐션 머신':              'img/tricep extension machine.png',
+  '어시스트 딥스':                        'img/assist dips.png',
+  '딥스 머신':                            'img/dips machine.png',
+
+  // ── 이두 ──
+  '시티드 덤벨 컬':                       'img/arm curl machine.png',
+  '암 컬 머신':                           'img/arm curl machine.png',
+  '프리처 컬 머신':                       'img/preacher curl machine.png',
+
+  // ── 복근 ──
+  '크런치':                               'img/crunch machine.png',
+  '크런치 머신':                          'img/crunch machine.png',
+  '케이블 크런치':                        'img/lying crunch machine.png',
+  '라잉 크런치 머신':                     'img/lying crunch machine.png',
+  '리버스 크런치':                        'img/lying crunch machine.png',
+
+  // ── 하체 ──
+  '시티드 레그 프레스(초경량)':           'img/hack squat machine.png',
+  '핵 스쿼트 머신':                       'img/hack squat machine.png',
+  '스미스 머신 스쿼트':                   'img/smith machine squart.png',
+  '스미스 머신 와이드 스쿼트':           'img/smitch machine wide squart.png',
+  '스미스 머신 스플릿 스쿼트':           'img/smith machine split squart.png',
+  '스미스 머신 불가리안 스플릿 스쿼트':  'img/smith machine bulgarian split squart.png',
+  '스미스 머신 런지':                     'img/smith machine lunge.png',
+  '스미스 머신 크로스 런지':              'img/smith machine cross lunge.png',
+  '스미스 머신 니링 스쿼트':             'img/smith machine kneeling squart.png',
+  '스미스 머신 데드리프트':              'img/smith machine deadlift.png',
+  '스미스 머신 스티프 레그 데드리프트':  'img/smith machine stiff leg deadlift.png',
+  '스미스 머신 수모 데드리프트':         'img/smith machine sumo deadlift.png',
+  '스미스 머신 원레그 데드리프트':       'img/one leg smith machine deadlift.png',
+  '스미스 머신 힙 스러스트':             'img/smith machine hip thrust.png',
+  '스미스 머신 동키 킥':                  'img/smith machine donkey kick.png',
+  '힙 어브덕션 (기계)':                   'img/hip abduction machine.png',
+  '힙 어덕션 머신':                       'img/hip adduction machine.png',
+  '힙 익스텐션 머신':                     'img/hip extension machine.png',
+  '힙 글루트 머신':                       'img/hip glute machine.png',
+  '몬스터 글루트 머신':                   'img/monster glute machine.png',
+  '힙 스러스트 머신':                     'img/hip thrust machine.png',
+  '누워서 브릿지':                        'img/hip thrust machine.png',
+  '힙 브릿지':                            'img/hip thrust machine.png',
+  '케이블 킥백':                          'img/hip extension machine.png',
+  '라잉 힙 익스텐션 머신':               'img/lying hip extension machine.png',
+  '클램쉘 (밴드)':                        'img/standing hip abduction.png',
+  '사이드 라잉 레그 레이즈':             'img/standing hip abduction.png',
+  '스탠딩 힙 어브덕션':                   'img/standing hip abduction.png',
+  '라잉 레그 컬':                         'img/lying leg curl machine.png',
+
+  // ── 종아리 ──
+  '카프 레이즈 머신':                     'img/calf raise machine.png',
+  '카프 익스텐션 머신':                   'img/calf extension machine.png',
+  '시티드 카프 레이즈':                   'img/seated calf raise.png',
+  '스미스 머신 카프 레이즈':             'img/smith machine calf raise.png',
 };
 
 // buildGuideHtml에 사진 삽입 기능 추가
@@ -5390,7 +5479,9 @@ buildGuideHtml = function(exName, g){
   let base = _origBuildGuideHtml(exName, g);
   const photoUrl = EX_PHOTOS[exName];
   if(photoUrl){
-    const photoHtml = `<img class="ex-photo" src="${photoUrl}" alt="${exName}" loading="lazy" onerror="this.parentElement&&this.parentElement.removeChild(this)"><div class="ex-photo-credit">© Wikimedia Commons · 공개 도메인</div>`;
+    const isLocal = photoUrl.startsWith('img/');
+    const credit = isLocal ? '📸 기구 참고 이미지' : '© Wikimedia Commons · 공개 도메인';
+    const photoHtml = `<img class="ex-photo" src="${photoUrl}" alt="${exName}" loading="lazy" onerror="this.style.display='none';this.nextElementSibling.style.display='none';"><div class="ex-photo-credit">${credit}</div>`;
     // 유튜브 버튼 다음에 삽입
     base = base.replace('    <h3>🎯 운동 목적</h3>', photoHtml + '    <h3>🎯 운동 목적</h3>');
   }
