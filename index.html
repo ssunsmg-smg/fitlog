@@ -1261,9 +1261,24 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
       <button class="modal-close" onclick="closeCoachModal()" style="color:#a78bfa;">✕</button>
     </div>
-    <div id="float-coach-auto-feedback" style="display:none;padding:10px 14px;background:#0f0f1f;border-bottom:1px solid #8b5cf622;">
-      <div style="font-size:10px;color:#a78bfa;font-family:var(--mono);margin-bottom:6px;">📊 오늘의 AI 분석</div>
-      <div id="float-auto-content" style="font-size:12px;color:#e2d9f3;line-height:1.7;"></div>
+    <div id="float-coach-auto-feedback" style="display:none;padding:12px 14px;background:linear-gradient(135deg,#0f0f1f,#1a0d2e);border-bottom:1px solid #8b5cf633;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:14px;">📊</span>
+          <span style="font-size:10px;color:#a78bfa;font-family:var(--mono);font-weight:700;letter-spacing:0.05em;">AI 자동 피드백</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span id="float-feedback-date" style="font-size:9px;color:#4a3f6b;font-family:var(--mono);"></span>
+          <button onclick="document.getElementById('float-coach-auto-feedback').style.display='none'" style="background:none;border:none;color:#4a3f6b;font-size:12px;cursor:pointer;padding:0;line-height:1;">✕</button>
+        </div>
+      </div>
+      <div id="float-auto-content" style="font-size:12px;color:#e2d9f3;line-height:1.8;background:#ffffff08;border-radius:8px;padding:10px 12px;border-left:3px solid #8b5cf6;"></div>
+      <div id="float-feedback-progress" style="margin-top:8px;display:flex;align-items:center;gap:6px;">
+        <div style="flex:1;height:3px;background:#ffffff10;border-radius:2px;">
+          <div id="float-feedback-bar" style="height:100%;background:linear-gradient(90deg,#8b5cf6,#a78bfa);border-radius:2px;width:0%;transition:width 0.5s;"></div>
+        </div>
+        <span id="float-feedback-next" style="font-size:9px;color:#4a3f6b;font-family:var(--mono);white-space:nowrap;"></span>
+      </div>
     </div>
     <div class="ai-coach-suggestions" style="padding:10px 14px 0;gap:5px;" id="float-coach-chips">
       <button class="ai-coach-chip" onclick="sendFloatChip('오늘 운동 루틴 추천해줘')">오늘 루틴</button>
@@ -4733,6 +4748,8 @@ function initSettingsTab(){
   renderORMGrid();
   renderAdjPanel();
   renderPostureList();
+  // 설정 탭 열릴 때 관리자 패널 자동 표시
+  loadCoachApiKey();
 }
 
 function copyLink(){
@@ -5229,6 +5246,7 @@ let _cachedApiKey = null;
 function isAdmin(){
   return currentUser && currentUser.email === ADMIN_EMAIL;
 }
+window.isAdmin = isAdmin; // 콘솔 접근 허용
 
 // API Key를 Firebase에 저장 (관리자 전용)
 async function saveCoachApiKey(){
@@ -5566,7 +5584,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
   setTimeout(()=>{ loadCoachApiKey(); }, 800);
 });
 window.addEventListener('firebase-login', ()=>{
-  setTimeout(()=>{ loadCoachApiKey(); initAutoFeedback(); }, 1500);
+  setTimeout(()=>{ loadCoachApiKey(); initAutoFeedback(); }, 2000);
 });
 
 // ══════════════════════════════
@@ -5710,11 +5728,15 @@ async function initAutoFeedback(){
       },
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
-        max_tokens: 200,
-        system: `당신은 핏로그 앱의 AI 코치입니다. 한국어로만 답변합니다.
-사용자 데이터를 분석해 오늘의 짧은 피드백을 작성하세요.
-형식: 이모지 + 핵심 분석 1줄 + 오늘 추천 1줄. 총 2문장 이내.`,
-        messages:[{ role:'user', content: `아래 데이터를 분석해 오늘의 피드백을 주세요:\n${context}` }]
+        max_tokens: 350,
+        system: `당신은 핏로그 앱의 전문 AI 운동 코치입니다. 한국어로만 답변합니다.
+사용자의 최근 운동 기록, 체중 변화, 목표를 분석해 개인화된 피드백을 작성하세요.
+형식:
+1줄: 이모지 + 운동 패턴 분석 (잘한 점 또는 개선점)
+2줄: 이모지 + 체중/체력 변화 코멘트
+3줄: 💡 이번 주 핵심 추천 1가지 (구체적으로)
+총 3문장, 각 문장은 명확하고 실용적으로.`,
+        messages:[{ role:'user', content: `아래 최근 20개 운동 데이터를 분석해 피드백을 주세요:\n${context}` }]
       })
     });
 
@@ -5723,6 +5745,7 @@ async function initAutoFeedback(){
     if(text){
       localStorage.setItem('fitlog-last-feedback-count', String(totalRecords));
       localStorage.setItem('fitlog-last-feedback-text', text);
+      localStorage.setItem('fitlog-last-feedback-date', new Date().toLocaleDateString('ko-KR',{month:'short',day:'numeric'}));
       showAutoFeedback(text);
       // FAB 알림 점 표시
       document.getElementById('ai-fab-dot').classList.add('show');
@@ -5734,10 +5757,30 @@ function showAutoFeedback(text){
   const wrap = document.getElementById('float-coach-auto-feedback');
   const content = document.getElementById('float-auto-content');
   if(!wrap || !content) return;
+  // 텍스트 포맷: 줄바꿈 → br, 문장 강조
   content.innerHTML = text.replace(/\n/g,'<br>');
+  // 날짜 표시
+  const dateEl = document.getElementById('float-feedback-date');
+  if(dateEl){
+    const saved = localStorage.getItem('fitlog-last-feedback-date') || new Date().toLocaleDateString('ko-KR',{month:'short',day:'numeric'});
+    dateEl.textContent = saved;
+  }
+  // 다음 피드백까지 진행 바
+  const totalRecords = records.length;
+  const lastCount = parseInt(localStorage.getItem('fitlog-last-feedback-count') || '0');
+  const progress = Math.min(totalRecords - lastCount, 20);
+  const pct = Math.round((progress / 20) * 100);
+  const barEl = document.getElementById('float-feedback-bar');
+  const nextEl = document.getElementById('float-feedback-next');
+  if(barEl) barEl.style.width = pct + '%';
+  if(nextEl){
+    const remaining = Math.max(0, 20 - progress);
+    nextEl.textContent = remaining > 0 ? `다음까지 ${remaining}개` : '분석 준비됨';
+  }
   wrap.style.display = 'block';
   // FAB 알림 점
-  document.getElementById('ai-fab-dot').classList.add('show');
+  const dot = document.getElementById('ai-fab-dot');
+  if(dot) dot.classList.add('show');
 }
 
 // 사용자 컨텍스트 종합 수집
