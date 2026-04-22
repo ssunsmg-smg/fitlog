@@ -1556,6 +1556,78 @@ const EX_INFO={
 };
 
 // ══════════════════════════════
+// 기구 사진 매핑 (./img/ 폴더 내 파일)
+// 매칭되는 운동에만 이미지 표시. 파일명 공백은 URL 인코딩 필요
+// ══════════════════════════════
+const EX_IMG={
+  // 등
+  '랫 풀다운':'lar pull down.png',
+  '백 랫 풀다운':'lar pull down.png',
+  '와이드그립 랫 풀다운':'wide pull down.png',
+  '언더핸드 랫 풀다운':'one arm lat pull down.png',
+  '시티드 케이블 로우':'seated low machine.png',
+  '시티드 케이블 로우 (머신)':'seated low machine.png',
+  '로잉머신':'rowing machine.png',
+  '티 바 로우':'t bar low machine.png',
+  '하이 케이블 로우':'high low machine.png',
+  '체스트 서포트 로우':'one arm high row machine.png',
+  '원암 덤벨 로우':'one arm seate low.png',
+  // 가슴
+  '시티드 체스트 프레스':'bench press machine.png',
+  '체스트 프레스 머신':'bench press machine.png',
+  '벤치프레스':'bench press machine.png',
+  '인클라인 벤치프레스':'incline bench press machine.png',
+  '디클라인 벤치프레스':'decline bench press machine.png',
+  '케이블 체스트 플라이':'pec deck fly.png',
+  '펙덱 플라이':'pec deck fly.png',
+  '리버스 펙덱 플라이':'bent over lateral raise machine.png',
+  // 어깨
+  '시티드 숄더 프레스':'shoulder press machine.png',
+  '숄더 프레스 머신':'shoulder press machine.png',
+  '레터럴 레이즈 머신':'lateral raise machine.png',
+  '사이드 레터럴 레이즈':'lateral raise machine.png',
+  '벤트 오버 레터럴 레이즈':'bent over lateral raise machine.png',
+  '시티드 리어 델트 플라이':'bent over lateral raise machine.png',
+  // 이두
+  '프리처 컬':'preacher curl machine.png',
+  // 삼두
+  '오버헤드 트라이셉 익스텐션':'overhead triceps extension machine.png',
+  '덤벨 오버헤드 익스텐션':'overhead triceps extension machine.png',
+  '딥스':'dips machine.png',
+  '딥스 (의자)':'assist dips.png',
+  // 하체
+  '시티드 레그 컬':'lying leg curl machine.png',
+  '레그 컬':'lying leg curl machine.png',
+  '카프 레이즈':'calf raise machine.png',
+  '씨티드 카프 레이즈':'seated calf raise.png',
+  // 둔근/힙
+  '힙 어브덕션 (기계)':'hip abduction machine.png',
+  '힙 어덕션 (기계)':'hip adduction machine.png',
+  '힙 쓰러스트':'hip thrust machine.png',
+  '바벨 힙 쓰러스트':'hip thrust machine.png',
+  // 복부/허리
+  '크런치':'crunch machine.png',
+  '케이블 크런치':'lying crunch machine.png',
+  '백 익스텐션':'back extension machine.png',
+  // 유산소
+  '런닝머신':'treadmill running machine.png',
+  '일립티컬':'elliptical machine.png',
+  '스텝퍼':'step machine.png',
+  '계단 오르기':'step machine.png',
+  // 풀업
+  '풀업':'assist pull up.png',
+  // 스미스 머신
+  '스미스 머신 벤치프레스':'smith machine bench press.png',
+  '스미스 머신 스쿼트':'smith machine squart.png',
+  '스미스 머신 오버헤드 프레스':'smith machine overhead press.png'
+};
+function _getExImg(exName){
+  const f=EX_IMG[exName];
+  if(!f)return '';
+  return './img/'+encodeURIComponent(f);
+}
+
+// ══════════════════════════════
 // AI 사전 생성 운동 가이드
 // ══════════════════════════════
 const EX_GUIDE={
