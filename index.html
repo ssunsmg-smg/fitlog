@@ -738,6 +738,33 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 /* ── 운동 사진 ── */
 .ex-photo{width:100%;border-radius:10px;margin-bottom:12px;border:1px solid var(--border);background:var(--surface2);display:block;}
 .ex-photo-credit{font-size:9px;color:var(--muted);text-align:center;margin-top:-8px;margin-bottom:12px;}
+/* 운동 DB 라이브러리 (free-exercise-db) */
+.exdb-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;display:none;align-items:center;justify-content:center;padding:8px;}
+.exdb-modal-bg.open{display:flex;}
+.exdb-modal{background:var(--surface);width:100%;max-width:720px;border-radius:14px;max-height:94vh;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border);}
+.exdb-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border);}
+.exdb-search{width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:var(--font);box-sizing:border-box;}
+.exdb-filters{display:flex;gap:5px;padding:8px 12px;overflow-x:auto;border-bottom:1px solid var(--border);white-space:nowrap;-webkit-overflow-scrolling:touch;}
+.exdb-filters::-webkit-scrollbar{height:4px;}
+.exdb-chip{padding:4px 10px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);font-size:11px;color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:var(--font);}
+.exdb-chip.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.exdb-body{flex:1;overflow-y:auto;padding:10px;}
+.exdb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;}
+.exdb-card{background:var(--surface2);border-radius:9px;padding:6px;cursor:pointer;border:1px solid var(--border);transition:border-color .12s;}
+.exdb-card:hover{border-color:var(--accent);}
+.exdb-card-img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:5px;background:#0005;display:block;}
+.exdb-card-name{font-size:10.5px;font-weight:600;margin-top:5px;line-height:1.3;color:var(--text);}
+.exdb-card-meta{font-size:9.5px;color:var(--muted);margin-top:2px;line-height:1.3;}
+.exdb-empty{text-align:center;padding:40px 20px;color:var(--muted);font-size:13px;}
+.exdb-detail{padding:14px;}
+.exdb-detail-img{width:100%;border-radius:10px;margin-bottom:10px;border:1px solid var(--border);}
+.exdb-detail-name{font-size:17px;font-weight:800;margin-bottom:4px;color:var(--text);}
+.exdb-detail-meta{font-size:11.5px;color:var(--muted);margin-bottom:12px;line-height:1.7;padding:8px 10px;background:var(--surface2);border-radius:8px;}
+.exdb-detail-steps{font-size:12px;line-height:1.8;color:var(--text);padding-left:18px;}
+.exdb-detail-steps li{margin-bottom:5px;}
+.exdb-count{font-size:10.5px;color:var(--muted);padding:5px 14px 2px;font-family:var(--mono);}
+.exdb-open-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;border-radius:10px;border:1px dashed #8b5cf655;background:#8b5cf608;color:#8b5cf6;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);margin-bottom:10px;}
+.exdb-open-btn:hover{background:#8b5cf618;}
 
 @media(max-width:480px){
   .nav{padding:10px 14px;}
@@ -928,6 +955,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div id="makeup-banner" style="display:none;background:#4a9eff0d;border:1px solid #4a9eff55;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--blue);font-weight:500;"></div>
     <div class="today-title" id="today-title">오늘의 루틴</div>
     <div class="today-type" id="today-type"></div>
+    <button class="exdb-open-btn" onclick="openExLibrary()">📚 운동 DB 라이브러리 (800+ 운동 · 사진 포함)</button>
     <div class="day-sel" id="day-sel"></div>
     <div class="prog-wrap">
       <div class="prog-info"><span id="prog-txt">0 / 0 완료</span><button style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;" onclick="resetAll()">초기화</button></div>
@@ -1345,6 +1373,37 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
       <div class="ai-guide-content" id="ai-guide-content"></div>
     </div>
+  </div>
+</div>
+
+<!-- 운동 라이브러리 모달 -->
+<!-- 운동 DB 라이브러리 모달 (free-exercise-db) -->
+<div class="exdb-modal-bg" id="exdb-modal">
+  <div class="exdb-modal">
+    <div class="exdb-hdr">
+      <div>
+        <div style="font-size:9.5px;color:var(--muted);font-family:var(--mono);letter-spacing:0.05em;">EXERCISE DB · 800+ EXERCISES</div>
+        <div style="font-size:15px;font-weight:900;">📚 운동 DB 라이브러리</div>
+      </div>
+      <button onclick="closeExLibrary()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:2px 8px;line-height:1;">×</button>
+    </div>
+    <div style="padding:10px 12px;border-bottom:1px solid var(--border);">
+      <input class="exdb-search" id="exdb-search" placeholder="🔍 검색 (영어명·근육·기구)" oninput="filterExLib()"/>
+    </div>
+    <div class="exdb-filters" id="exdb-filters"></div>
+    <div class="exdb-count" id="exdb-count"></div>
+    <div class="exdb-body" id="exdb-body"><div class="exdb-empty">운동 데이터 불러오는 중...</div></div>
+  </div>
+</div>
+
+<!-- 운동 DB 상세 모달 -->
+<div class="exdb-modal-bg" id="exdb-detail-modal" style="z-index:101;">
+  <div class="exdb-modal" style="max-width:520px;">
+    <div class="exdb-hdr">
+      <div style="font-size:13px;font-weight:700;" id="exdb-detail-title">운동 상세</div>
+      <button onclick="closeExDetail()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:2px 8px;line-height:1;">×</button>
+    </div>
+    <div class="exdb-body" id="exdb-detail-body"></div>
   </div>
 </div>
 
@@ -5415,6 +5474,131 @@ function aiMd(text){
 function closeAiGuide(){
   document.getElementById('ai-guide-modal').classList.remove('open');
 }
+
+// ══════════════════════════════
+// 운동 DB 라이브러리 (yuhonas/free-exercise-db · 퍼블릭 도메인)
+// ══════════════════════════════
+const _EXDB_JSON_URL='https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/dist/exercises.json';
+const _EXDB_IMG_BASE='https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/';
+const _EXDB_CACHE_KEY='fitlog_exdb_v1';
+const _EXDB_CACHE_TTL=7*86400000; // 7일
+let _exdbData=null;
+let _exdbFilter={cat:'all',muscle:'all',q:''};
+
+async function loadExDB(){
+  if(_exdbData)return _exdbData;
+  // localStorage 캐시 확인
+  try{
+    const c=localStorage.getItem(_EXDB_CACHE_KEY);
+    if(c){
+      const p=JSON.parse(c);
+      if(Date.now()-p.t<_EXDB_CACHE_TTL && Array.isArray(p.d)){
+        _exdbData=p.d;
+        return _exdbData;
+      }
+    }
+  }catch(e){}
+  const r=await fetch(_EXDB_JSON_URL);
+  if(!r.ok)throw new Error('DB 로딩 실패: '+r.status);
+  _exdbData=await r.json();
+  try{localStorage.setItem(_EXDB_CACHE_KEY,JSON.stringify({t:Date.now(),d:_exdbData}));}catch(e){}
+  return _exdbData;
+}
+
+async function openExLibrary(){
+  document.getElementById('exdb-modal').classList.add('open');
+  const body=document.getElementById('exdb-body');
+  body.innerHTML='<div class="exdb-empty">운동 데이터 불러오는 중...<br><small>(첫 실행 시 ~700KB 다운로드)</small></div>';
+  try{
+    await loadExDB();
+    buildExLibFilters();
+    filterExLib();
+  }catch(e){
+    body.innerHTML='<div class="exdb-empty">❌ 로딩 실패<br><small>'+(e.message||'')+'<br>인터넷 연결을 확인해주세요</small></div>';
+  }
+}
+function closeExLibrary(){document.getElementById('exdb-modal').classList.remove('open');}
+
+function buildExLibFilters(){
+  const cats=[...new Set(_exdbData.map(e=>e.category).filter(Boolean))].sort();
+  const muscles=[...new Set(_exdbData.flatMap(e=>e.primaryMuscles||[]))].sort();
+  const c=document.getElementById('exdb-filters');
+  const catChips=`<span class="exdb-chip active" data-ftype="cat" data-fval="all" onclick="setExLibFilter('cat','all',this)">전체</span>`
+    + cats.map(v=>`<span class="exdb-chip" data-ftype="cat" data-fval="${v}" onclick="setExLibFilter('cat','${v}',this)">${v}</span>`).join('');
+  const muscleChips=`<span class="exdb-chip active" data-ftype="muscle" data-fval="all" onclick="setExLibFilter('muscle','all',this)">근육 전체</span>`
+    + muscles.map(v=>`<span class="exdb-chip" data-ftype="muscle" data-fval="${v}" onclick="setExLibFilter('muscle','${v}',this)">${v}</span>`).join('');
+  c.innerHTML=catChips+'<span style="width:1px;background:var(--border);align-self:stretch;margin:0 2px;"></span>'+muscleChips;
+}
+
+function setExLibFilter(type,val,el){
+  _exdbFilter[type]=val;
+  document.querySelectorAll('.exdb-chip[data-ftype="'+type+'"]').forEach(c=>c.classList.remove('active'));
+  if(el)el.classList.add('active');
+  filterExLib();
+}
+
+function filterExLib(){
+  const q=(document.getElementById('exdb-search').value||'').toLowerCase().trim();
+  _exdbFilter.q=q;
+  const f=_exdbFilter;
+  const list=_exdbData.filter(e=>{
+    if(f.cat!=='all' && e.category!==f.cat)return false;
+    if(f.muscle!=='all' && !(e.primaryMuscles||[]).includes(f.muscle))return false;
+    if(q){
+      const hay=((e.name||'')+' '+(e.primaryMuscles||[]).join(' ')+' '+(e.secondaryMuscles||[]).join(' ')+' '+(e.equipment||'')+' '+(e.category||'')+' '+(e.level||'')).toLowerCase();
+      if(!hay.includes(q))return false;
+    }
+    return true;
+  });
+  renderExLibList(list);
+}
+
+function renderExLibList(list){
+  document.getElementById('exdb-count').textContent=list.length+'개 운동';
+  const body=document.getElementById('exdb-body');
+  if(list.length===0){body.innerHTML='<div class="exdb-empty">검색 결과가 없습니다</div>';return;}
+  const cap=Math.min(list.length,150);
+  const cards=[];
+  for(let i=0;i<cap;i++){
+    const e=list[i];
+    const imgRel=(e.images&&e.images[0])||'';
+    const imgUrl=imgRel?(_EXDB_IMG_BASE+imgRel):'';
+    const safeName=(e.name||'').replace(/"/g,'&quot;');
+    cards.push('<div class="exdb-card" onclick="openExDetail(\''+e.id+'\')">'
+      +(imgUrl?'<img class="exdb-card-img" src="'+imgUrl+'" loading="lazy" alt="'+safeName+'" onerror="this.style.visibility=\'hidden\'">':'<div class="exdb-card-img"></div>')
+      +'<div class="exdb-card-name">'+safeName+'</div>'
+      +'<div class="exdb-card-meta">'+((e.primaryMuscles||[]).join(', ')||'—')+'</div>'
+      +'</div>');
+  }
+  let html='<div class="exdb-grid">'+cards.join('')+'</div>';
+  if(list.length>cap)html+='<div class="exdb-empty" style="padding:14px;">+'+(list.length-cap)+'개 더 있음 — 검색/필터로 좁혀주세요</div>';
+  body.innerHTML=html;
+}
+
+function openExDetail(id){
+  const e=(_exdbData||[]).find(x=>x.id===id);
+  if(!e)return;
+  document.getElementById('exdb-detail-modal').classList.add('open');
+  document.getElementById('exdb-detail-title').textContent=e.name||id;
+  const imgs=(e.images||[]).map(p=>'<img class="exdb-detail-img" src="'+_EXDB_IMG_BASE+p+'" loading="lazy" alt="'+(e.name||'').replace(/"/g,'&quot;')+'" onerror="this.style.display=\'none\'">').join('');
+  const steps=(e.instructions||[]).map((s,i)=>'<li>'+s+'</li>').join('');
+  const body=document.getElementById('exdb-detail-body');
+  body.innerHTML='<div class="exdb-detail">'
+    +imgs
+    +'<div class="exdb-detail-name">'+(e.name||'')+'</div>'
+    +'<div class="exdb-detail-meta">'
+      +'<b>category:</b> '+(e.category||'—')+' · <b>level:</b> '+(e.level||'—')+' · <b>equipment:</b> '+(e.equipment||'—')+'<br>'
+      +'<b>primary:</b> '+((e.primaryMuscles||[]).join(', ')||'—')
+      +((e.secondaryMuscles||[]).length?'<br><b>secondary:</b> '+e.secondaryMuscles.join(', '):'')
+      +((e.force||e.mechanic)?'<br><b>force/mechanic:</b> '+(e.force||'—')+' / '+(e.mechanic||'—'):'')
+    +'</div>'
+    +'<div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-family:var(--mono);">INSTRUCTIONS (영문)</div>'
+    +'<ol class="exdb-detail-steps">'+steps+'</ol>'
+    +'<div class="ex-photo-credit" style="margin-top:16px;">출처: free-exercise-db · 퍼블릭 도메인</div>'
+    +'</div>';
+  body.scrollTop=0;
+}
+function closeExDetail(){document.getElementById('exdb-detail-modal').classList.remove('open');}
 
 // ══════════════════════════════
 // 타이머 시스템
