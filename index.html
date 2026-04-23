@@ -1628,6 +1628,86 @@ function _getExImg(exName){
 }
 
 // ══════════════════════════════
+// yuhonas/free-exercise-db (퍼블릭 도메인) 한국어 매핑
+// 검증된 ID만 포함. GitHub raw CDN에서 직접 로드 (안정적, 무료)
+// 추가 매핑은 https://github.com/yuhonas/free-exercise-db/tree/main/exercises 참고
+// ══════════════════════════════
+const EX_DB={
+  // 등 (Back)
+  '랫 풀다운':'Wide-Grip_Lat_Pulldown',
+  '와이드그립 랫 풀다운':'Wide-Grip_Lat_Pulldown',
+  '백 랫 풀다운':'Wide-Grip_Lat_Pulldown',
+  '시티드 케이블 로우':'Seated_Cable_Rows',
+  '시티드 케이블 로우 (머신)':'Seated_Cable_Rows',
+  '풀업':'Pullups',
+  // 가슴 (Chest)
+  '벤치프레스':'Barbell_Bench_Press_-_Medium_Grip',
+  '덤벨 벤치프레스':'Dumbbell_Bench_Press',
+  '펙덱 플라이':'Butterfly',
+  '케이블 체스트 플라이':'Butterfly',
+  '리버스 펙덱 플라이':'Butterfly',
+  // 어깨 (Shoulders)
+  '아놀드 프레스':'Arnold_Dumbbell_Press',
+  '사이드 레터럴 레이즈':'Side_Lateral_Raise',
+  '케이블 사이드 레터럴':'Side_Lateral_Raise',
+  '레터럴 레이즈 머신':'Side_Lateral_Raise',
+  '프론트 레이즈':'Front_Two-Dumbbell_Raise',
+  '플레이트 프론트 레이즈':'Front_Two-Dumbbell_Raise',
+  '바벨 프론트 레이즈':'Front_Two-Dumbbell_Raise',
+  // 팔 (Arms)
+  '바벨 컬':'Barbell_Curl',
+  '프리처 컬':'Preacher_Curl',
+  '딥스 (의자)':'Bench_Dips',
+  // 하체 (Legs)
+  '바벨 스쿼트':'Barbell_Squat',
+  '스쿼트':'Barbell_Squat',
+  '바벨 데드리프트':'Barbell_Deadlift',
+  '데드리프트':'Barbell_Deadlift',
+  '루마니안 데드리프트':'Romanian_Deadlift',
+  '스티프레그 데드리프트':'Romanian_Deadlift',
+  '레그 프레스':'Leg_Press',
+  '시티드 레그 프레스(초경량)':'Leg_Press',
+  '레그 익스텐션':'Leg_Extensions',
+  '레그 컬':'Lying_Leg_Curls',
+  '시티드 레그 컬':'Lying_Leg_Curls',
+  '카프 레이즈':'Standing_Calf_Raises',
+  '씨티드 카프 레이즈':'Seated_Calf_Raise',
+  // 둔근/힙
+  '힙 쓰러스트':'Barbell_Hip_Thrust',
+  '바벨 힙 쓰러스트':'Barbell_Hip_Thrust',
+  '누워서 브릿지':'Hip_Lift_with_Band',
+  // 복부 (Abs)
+  '크런치':'Crunch_-_Hands_Overhead',
+  '리버스 크런치':'Reverse_Crunch',
+  '케이블 크런치':'Cable_Crunch',
+  '행잉 니 레이즈':'Hanging_Leg_Raise',
+  '행잉 레그 레이즈':'Hanging_Leg_Raise',
+  '플랭크':'Plank',
+  '사이드 플랭크':'Side_Bridge',
+  // 밴드 (Band)
+  '밴드 풀어파트':'Band_Pull_Apart',
+  // 스미스 머신 (Smith Machine)
+  '스미스 머신 스쿼트':'Smith_Machine_Squat',
+  '스미스 머신 벤치프레스':'Smith_Machine_Bench_Press'
+};
+
+// 미디어 가져오기 (우선순위: 로컬 img → yuhonas DB → 없음)
+function _getExMedia(exName){
+  // 1순위: 로컬 ./img/ 폴더 (가장 빠름)
+  const localFile=EX_IMG[exName];
+  if(localFile)return{type:'local',url:'./img/'+encodeURIComponent(localFile),credit:'기구 예시 이미지'};
+  // 2순위: yuhonas free-exercise-db GitHub raw (퍼블릭 도메인)
+  const dbId=EX_DB[exName];
+  if(dbId)return{
+    type:'db',
+    url:`https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/${dbId}/0.jpg`,
+    url2:`https://raw.githubusercontent.com/yuhonas/free-exercise-db/main/exercises/${dbId}/1.jpg`,
+    credit:'free-exercise-db (퍼블릭 도메인)'
+  };
+  return null;
+}
+
+// ══════════════════════════════
 // AI 사전 생성 운동 가이드
 // ══════════════════════════════
 const EX_GUIDE={
@@ -5270,9 +5350,9 @@ function buildGuideHtml(exName, g){
     ▶ 유튜브에서 동작 영상 보기
   </a>`;
 
-  // 기구 사진 (./img/ 폴더 매칭되는 경우만)
-  const imgUrl=_getExImg(exName);
-  const imgBlock=imgUrl?`<img class="ex-photo" src="${imgUrl}" alt="${exName} 기구 사진" loading="lazy" onerror="this.parentNode.querySelector('.ex-photo-credit')?.remove();this.remove();"><div class="ex-photo-credit">* 기구 예시 이미지 (실제 기구와 다를 수 있음)</div>`:'';
+  // 기구/동작 사진 (1순위 로컬 img/, 2순위 free-exercise-db)
+  const media=_getExMedia(exName);
+  const imgBlock=media?`<img class="ex-photo" src="${media.url}" alt="${exName}" loading="lazy" onerror="this.parentNode.querySelector('.ex-photo-credit')?.remove();this.remove();"><div class="ex-photo-credit">* ${media.credit} — 실제 기구와 다를 수 있음</div>`:'';
 
   return `
     ${imgBlock}
@@ -5295,9 +5375,9 @@ function buildOfflineGuide(exName, info){
   const stepsHtml=steps.map((s,i)=>`<li><strong>${i+1}.</strong> ${s.trim()}.</li>`).join('');
   const ytQuery=info?.yt||exName+' 운동 방법';
   const ytUrl='https://www.youtube.com/results?search_query='+encodeURIComponent(ytQuery);
-  // 기구 사진 (./img/ 폴더 매칭되는 경우만)
-  const imgUrl=_getExImg(exName);
-  const imgBlock=imgUrl?`<img class="ex-photo" src="${imgUrl}" alt="${exName} 기구 사진" loading="lazy" onerror="this.parentNode.querySelector('.ex-photo-credit')?.remove();this.remove();"><div class="ex-photo-credit">* 기구 예시 이미지 (실제 기구와 다를 수 있음)</div>`:'';
+  // 기구/동작 사진 (1순위 로컬 img/, 2순위 free-exercise-db)
+  const media=_getExMedia(exName);
+  const imgBlock=media?`<img class="ex-photo" src="${media.url}" alt="${exName}" loading="lazy" onerror="this.parentNode.querySelector('.ex-photo-credit')?.remove();this.remove();"><div class="ex-photo-credit">* ${media.credit} — 실제 기구와 다를 수 있음</div>`:'';
   return `
     ${imgBlock}
     <a href="${ytUrl}" target="_blank" rel="noopener"
