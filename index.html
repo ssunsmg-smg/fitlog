@@ -744,10 +744,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .exdb-modal{background:var(--surface);width:100%;max-width:720px;border-radius:14px;max-height:94vh;display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--border);}
 .exdb-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--border);}
 .exdb-search{width:100%;padding:9px 11px;border-radius:8px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:13px;font-family:var(--font);box-sizing:border-box;}
-.exdb-filters{display:flex;gap:5px;padding:8px 12px;overflow-x:auto;border-bottom:1px solid var(--border);white-space:nowrap;-webkit-overflow-scrolling:touch;}
+.exdb-filters{display:flex;align-items:center;gap:5px;padding:7px 12px;overflow-x:auto;border-bottom:1px solid var(--border);white-space:nowrap;-webkit-overflow-scrolling:touch;}
 .exdb-filters::-webkit-scrollbar{height:4px;}
+.exdb-flabel{font-size:9.5px;font-family:var(--mono);color:var(--muted);letter-spacing:0.05em;padding-right:4px;flex-shrink:0;min-width:34px;}
 .exdb-chip{padding:4px 10px;border-radius:12px;background:var(--surface2);border:1px solid var(--border);font-size:11px;color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:var(--font);}
 .exdb-chip.active{background:var(--accent);border-color:var(--accent);color:#fff;}
+.exdb-add-btn{display:block;width:100%;padding:11px;margin-top:14px;border-radius:10px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.exdb-add-btn:hover{filter:brightness(1.08);}
+.exdb-routine-group{margin-bottom:12px;padding:10px 12px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);}
+.exdb-routine-label{font-size:11.5px;font-weight:700;color:var(--text);margin-bottom:7px;}
+.exdb-routine-sub{font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;}
+.exdb-sec-grid{display:flex;flex-wrap:wrap;gap:5px;}
+.exdb-sec-btn{padding:6px 11px;border-radius:7px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-size:11px;cursor:pointer;font-family:var(--font);}
+.exdb-sec-btn:hover{border-color:var(--green);color:var(--green);}
 .exdb-body{flex:1;overflow-y:auto;padding:10px;}
 .exdb-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;}
 .exdb-card{background:var(--surface2);border-radius:9px;padding:6px;cursor:pointer;border:1px solid var(--border);transition:border-color .12s;}
@@ -1391,6 +1400,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <input class="exdb-search" id="exdb-search" placeholder="🔍 검색 (영어명·근육·기구)" oninput="filterExLib()"/>
     </div>
     <div class="exdb-filters" id="exdb-filters"></div>
+    <div class="exdb-filters" id="exdb-filters-level"></div>
+    <div class="exdb-filters" id="exdb-filters-muscle"></div>
+    <div class="exdb-filters" id="exdb-filters-eq"></div>
     <div class="exdb-count" id="exdb-count"></div>
     <div class="exdb-body" id="exdb-body"><div class="exdb-empty">운동 데이터 불러오는 중...</div></div>
   </div>
@@ -1404,6 +1416,21 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <button onclick="closeExDetail()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:2px 8px;line-height:1;">×</button>
     </div>
     <div class="exdb-body" id="exdb-detail-body"></div>
+  </div>
+</div>
+
+<!-- 운동 DB → 내 루틴 추가 피커 모달 -->
+<div class="exdb-modal-bg" id="exdb-picker-modal" style="z-index:102;">
+  <div class="exdb-modal" style="max-width:480px;">
+    <div class="exdb-hdr">
+      <div>
+        <div style="font-size:9.5px;color:var(--muted);font-family:var(--mono);letter-spacing:0.05em;">ADD TO MY ROUTINE</div>
+        <div style="font-size:14px;font-weight:800;" id="exdb-picker-title">내 루틴에 추가</div>
+      </div>
+      <button onclick="closeAddToRoutinePicker()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:2px 8px;line-height:1;">×</button>
+    </div>
+    <div style="padding:10px 14px;border-bottom:1px solid var(--border);font-size:11px;color:var(--muted);">추가할 루틴과 섹션을 선택하세요</div>
+    <div class="exdb-body" id="exdb-picker-body"></div>
   </div>
 </div>
 
@@ -5483,7 +5510,8 @@ const _EXDB_IMG_BASE='https://raw.githubusercontent.com/yuhonas/free-exercise-db
 const _EXDB_CACHE_KEY='fitlog_exdb_v1';
 const _EXDB_CACHE_TTL=7*86400000; // 7일
 let _exdbData=null;
-let _exdbFilter={cat:'all',muscle:'all',q:''};
+let _exdbFilter={cat:'all',muscle:'all',level:'all',eq:'all',q:''};
+let _pendingAddEx=null;
 
 async function loadExDB(){
   if(_exdbData)return _exdbData;
@@ -5522,12 +5550,28 @@ function closeExLibrary(){document.getElementById('exdb-modal').classList.remove
 function buildExLibFilters(){
   const cats=[...new Set(_exdbData.map(e=>e.category).filter(Boolean))].sort();
   const muscles=[...new Set(_exdbData.flatMap(e=>e.primaryMuscles||[]))].sort();
-  const c=document.getElementById('exdb-filters');
-  const catChips=`<span class="exdb-chip active" data-ftype="cat" data-fval="all" onclick="setExLibFilter('cat','all',this)">전체</span>`
+  const levels=[...new Set(_exdbData.map(e=>e.level).filter(Boolean))];
+  // 난이도 정렬 (beginner→intermediate→expert)
+  const _lvlOrd={beginner:0,intermediate:1,expert:2};
+  levels.sort((a,b)=>(_lvlOrd[a]??9)-(_lvlOrd[b]??9));
+  const equips=[...new Set(_exdbData.map(e=>e.equipment).filter(Boolean))].sort();
+  const _lvlLbl={beginner:'초급',intermediate:'중급',expert:'고급'};
+  const row1=document.getElementById('exdb-filters');         // 카테고리
+  const row2=document.getElementById('exdb-filters-level');   // 난이도
+  const row3=document.getElementById('exdb-filters-muscle');  // 근육
+  const row4=document.getElementById('exdb-filters-eq');      // 기구
+  row1.innerHTML=`<span class="exdb-flabel">분류</span>`
+    + `<span class="exdb-chip active" data-ftype="cat" data-fval="all" onclick="setExLibFilter('cat','all',this)">전체</span>`
     + cats.map(v=>`<span class="exdb-chip" data-ftype="cat" data-fval="${v}" onclick="setExLibFilter('cat','${v}',this)">${v}</span>`).join('');
-  const muscleChips=`<span class="exdb-chip active" data-ftype="muscle" data-fval="all" onclick="setExLibFilter('muscle','all',this)">근육 전체</span>`
+  row2.innerHTML=`<span class="exdb-flabel">난이도</span>`
+    + `<span class="exdb-chip active" data-ftype="level" data-fval="all" onclick="setExLibFilter('level','all',this)">전체</span>`
+    + levels.map(v=>`<span class="exdb-chip" data-ftype="level" data-fval="${v}" onclick="setExLibFilter('level','${v}',this)">${_lvlLbl[v]||v}</span>`).join('');
+  row3.innerHTML=`<span class="exdb-flabel">근육</span>`
+    + `<span class="exdb-chip active" data-ftype="muscle" data-fval="all" onclick="setExLibFilter('muscle','all',this)">전체</span>`
     + muscles.map(v=>`<span class="exdb-chip" data-ftype="muscle" data-fval="${v}" onclick="setExLibFilter('muscle','${v}',this)">${v}</span>`).join('');
-  c.innerHTML=catChips+'<span style="width:1px;background:var(--border);align-self:stretch;margin:0 2px;"></span>'+muscleChips;
+  row4.innerHTML=`<span class="exdb-flabel">기구</span>`
+    + `<span class="exdb-chip active" data-ftype="eq" data-fval="all" onclick="setExLibFilter('eq','all',this)">전체</span>`
+    + equips.map(v=>`<span class="exdb-chip" data-ftype="eq" data-fval="${v}" onclick="setExLibFilter('eq','${v}',this)">${v}</span>`).join('');
 }
 
 function setExLibFilter(type,val,el){
@@ -5544,6 +5588,8 @@ function filterExLib(){
   const list=_exdbData.filter(e=>{
     if(f.cat!=='all' && e.category!==f.cat)return false;
     if(f.muscle!=='all' && !(e.primaryMuscles||[]).includes(f.muscle))return false;
+    if(f.level!=='all' && e.level!==f.level)return false;
+    if(f.eq!=='all' && e.equipment!==f.eq)return false;
     if(q){
       const hay=((e.name||'')+' '+(e.primaryMuscles||[]).join(' ')+' '+(e.secondaryMuscles||[]).join(' ')+' '+(e.equipment||'')+' '+(e.category||'')+' '+(e.level||'')).toLowerCase();
       if(!hay.includes(q))return false;
@@ -5582,6 +5628,7 @@ function openExDetail(id){
   document.getElementById('exdb-detail-title').textContent=e.name||id;
   const imgs=(e.images||[]).map(p=>'<img class="exdb-detail-img" src="'+_EXDB_IMG_BASE+p+'" loading="lazy" alt="'+(e.name||'').replace(/"/g,'&quot;')+'" onerror="this.style.display=\'none\'">').join('');
   const steps=(e.instructions||[]).map((s,i)=>'<li>'+s+'</li>').join('');
+  const safeId=(e.id||'').replace(/'/g,"\\'");
   const body=document.getElementById('exdb-detail-body');
   body.innerHTML='<div class="exdb-detail">'
     +imgs
@@ -5592,13 +5639,66 @@ function openExDetail(id){
       +((e.secondaryMuscles||[]).length?'<br><b>secondary:</b> '+e.secondaryMuscles.join(', '):'')
       +((e.force||e.mechanic)?'<br><b>force/mechanic:</b> '+(e.force||'—')+' / '+(e.mechanic||'—'):'')
     +'</div>'
-    +'<div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-family:var(--mono);">INSTRUCTIONS (영문)</div>'
+    +'<button class="exdb-add-btn" onclick="openAddToRoutine(\''+safeId+'\')">➕ 내 루틴에 추가</button>'
+    +'<div style="font-size:11px;color:var(--muted);margin:14px 0 6px;font-family:var(--mono);">INSTRUCTIONS (영문)</div>'
     +'<ol class="exdb-detail-steps">'+steps+'</ol>'
     +'<div class="ex-photo-credit" style="margin-top:16px;">출처: free-exercise-db · 퍼블릭 도메인</div>'
     +'</div>';
   body.scrollTop=0;
 }
 function closeExDetail(){document.getElementById('exdb-detail-modal').classList.remove('open');}
+
+// ── 내 루틴에 추가 피커 ──
+function openAddToRoutine(id){
+  const e=(_exdbData||[]).find(x=>x.id===id);
+  if(!e){if(typeof showToast==='function')showToast('운동을 찾을 수 없습니다','error');return;}
+  _pendingAddEx=e;
+  document.getElementById('exdb-picker-title').textContent='"'+(e.name||id)+'" 추가';
+  const body=document.getElementById('exdb-picker-body');
+  if(typeof RT==='undefined'||!RT||!Object.keys(RT).length){
+    body.innerHTML='<div class="exdb-empty">루틴이 없습니다.<br><small>먼저 루틴을 만들어주세요.</small></div>';
+  }else{
+    const html=Object.keys(RT).map(tk=>{
+      const rt=RT[tk];if(!rt)return'';
+      const secs=(rt.sections||[]).map((sec,si)=>{
+        const secName=(sec.n||'섹션 '+(si+1)).replace(/"/g,'&quot;');
+        return '<button class="exdb-sec-btn" onclick="addToRoutine(\''+tk+'\','+si+')">'+secName+'</button>';
+      }).join('');
+      const label=(rt.label||tk).replace(/</g,'&lt;');
+      const title=(rt.title||'').replace(/</g,'&lt;');
+      return '<div class="exdb-routine-group">'
+        +'<div class="exdb-routine-label">'+label+'</div>'
+        +(title?'<div class="exdb-routine-sub">'+title+'</div>':'')
+        +'<div class="exdb-sec-grid">'+(secs||'<span style="font-size:10px;color:var(--muted);">섹션 없음</span>')+'</div>'
+        +'</div>';
+    }).join('');
+    body.innerHTML=html||'<div class="exdb-empty">루틴이 비어 있습니다</div>';
+  }
+  document.getElementById('exdb-picker-modal').classList.add('open');
+}
+function closeAddToRoutinePicker(){
+  document.getElementById('exdb-picker-modal').classList.remove('open');
+  _pendingAddEx=null;
+}
+async function addToRoutine(tk,si){
+  const e=_pendingAddEx;
+  if(!e){if(typeof showToast==='function')showToast('운동 정보가 없습니다','error');return;}
+  if(typeof RT==='undefined'||!RT[tk]||!RT[tk].sections||!RT[tk].sections[si]){
+    if(typeof showToast==='function')showToast('루틴/섹션을 찾을 수 없습니다','error');
+    return;
+  }
+  const name=e.name||e.id;
+  const tags=(e.primaryMuscles||[]).slice(0,2);
+  RT[tk].sections[si].exs.push({n:name,d:'3세트 × 12회',tags:tags,w:[],sets:3});
+  try{
+    if(typeof window.saveRoutine==='function')await window.saveRoutine(RT);
+  }catch(err){console.warn('saveRoutine 실패',err);}
+  closeAddToRoutinePicker();
+  closeExDetail();
+  if(typeof initSetData==='function')initSetData(tk);
+  if(typeof renderWorkout==='function')renderWorkout();
+  if(typeof showToast==='function')showToast('✅ "'+name+'" 추가됨','success');
+}
 
 // ══════════════════════════════
 // 타이머 시스템
