@@ -2126,11 +2126,9 @@ function showApp(){
 // 세트 관리
 // ══════════════════════════════
 function exKey(si,ei){return`${selDay}-${si}-${ei}`;}
-// 맨몸/밴드 운동인데 sets:0이고 "N세트 × M회" 포맷이면 자동으로 N세트 활성화
+// sets:0이고 "N세트 × M회" 포맷이면 자동으로 N세트 활성화 (모든 운동 적용)
 function autoEnableBodyweightSets(ex){
   if(!ex || ex.sets>0) return;
-  const isNoWt = ex.noWt || NO_WEIGHT_EX.has(ex.n);
-  if(!isNoWt) return;
   // "초/분" 시간형은 제외 (기존 타이머 흐름 유지)
   if(/초|분/.test(ex.d||'')) return;
   const m = (ex.d||'').match(/(\d+)\s*세트\s*[×x\*]\s*\d+\s*회/);
@@ -5272,7 +5270,12 @@ function buildGuideHtml(exName, g){
     ▶ 유튜브에서 동작 영상 보기
   </a>`;
 
+  // 기구 사진 (./img/ 폴더 매칭되는 경우만)
+  const imgUrl=_getExImg(exName);
+  const imgBlock=imgUrl?`<img class="ex-photo" src="${imgUrl}" alt="${exName} 기구 사진" loading="lazy" onerror="this.parentNode.querySelector('.ex-photo-credit')?.remove();this.remove();"><div class="ex-photo-credit">* 기구 예시 이미지 (실제 기구와 다를 수 있음)</div>`:'';
+
   return `
+    ${imgBlock}
     ${ytBtn}
     <h3>🎯 운동 목적</h3>
     <p>${g.purpose}</p>
@@ -5292,7 +5295,11 @@ function buildOfflineGuide(exName, info){
   const stepsHtml=steps.map((s,i)=>`<li><strong>${i+1}.</strong> ${s.trim()}.</li>`).join('');
   const ytQuery=info?.yt||exName+' 운동 방법';
   const ytUrl='https://www.youtube.com/results?search_query='+encodeURIComponent(ytQuery);
+  // 기구 사진 (./img/ 폴더 매칭되는 경우만)
+  const imgUrl=_getExImg(exName);
+  const imgBlock=imgUrl?`<img class="ex-photo" src="${imgUrl}" alt="${exName} 기구 사진" loading="lazy" onerror="this.parentNode.querySelector('.ex-photo-credit')?.remove();this.remove();"><div class="ex-photo-credit">* 기구 예시 이미지 (실제 기구와 다를 수 있음)</div>`:'';
   return `
+    ${imgBlock}
     <a href="${ytUrl}" target="_blank" rel="noopener"
       style="display:flex;align-items:center;justify-content:center;gap:8px;
       width:100%;padding:11px;border-radius:10px;border:1px solid #ff444433;
