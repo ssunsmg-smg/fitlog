@@ -793,6 +793,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .bodymap-open-btn:hover{background:#4caf7d18;}
 .partboost-open-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;border-radius:10px;border:1px dashed #4a9eff55;background:#4a9eff08;color:#4a9eff;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);margin-bottom:10px;}
 .partboost-open-btn:hover{background:#4a9eff18;}
+.autogen-open-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:10px;border-radius:10px;border:1px dashed #e8533a55;background:#e8533a08;color:#e8533a;font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font);margin-bottom:10px;}
+.autogen-open-btn:hover{background:#e8533a18;}
+.ag-section{padding:10px 14px;border-bottom:1px solid var(--border);}
+.ag-section-label{font-size:9.5px;font-family:var(--mono);color:var(--muted);letter-spacing:0.05em;margin-bottom:6px;}
+.ag-chips{display:flex;flex-wrap:wrap;gap:5px;}
+.ag-chip{padding:5px 11px;border-radius:14px;background:var(--surface2);border:1px solid var(--border);font-size:11.5px;color:var(--muted);cursor:pointer;font-family:var(--font);font-weight:600;}
+.ag-chip.on{background:var(--accent);border-color:var(--accent);color:#fff;}
+.ag-actions{display:flex;gap:8px;padding:12px 14px;border-bottom:1px solid var(--border);background:var(--surface2);}
+.ag-btn-regen{flex:1;padding:10px;border-radius:8px;border:1px solid var(--accent2);background:var(--surface);color:var(--accent2);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.ag-btn-apply{flex:1;padding:10px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);}
+.ag-day-card{margin-bottom:10px;padding:11px 13px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;}
+.ag-day-name{font-size:13px;font-weight:800;margin-bottom:6px;color:var(--text);}
+.ag-ex-row{font-size:11.5px;padding:5px 0;display:flex;justify-content:space-between;border-bottom:1px solid var(--border);}
+.ag-ex-row:last-child{border-bottom:none;}
+.ag-ex-name{flex:1;color:var(--text);}
+.ag-ex-meta{color:var(--muted);font-size:10px;font-family:var(--mono);margin-left:8px;flex-shrink:0;}
 .pb-chips{display:flex;gap:5px;padding:9px 12px;overflow-x:auto;border-bottom:1px solid var(--border);white-space:nowrap;-webkit-overflow-scrolling:touch;}
 .pb-chip{padding:5px 11px;border-radius:14px;background:var(--surface2);border:1px solid var(--border);font-size:11.5px;color:var(--muted);cursor:pointer;white-space:nowrap;flex-shrink:0;font-family:var(--font);font-weight:600;}
 .pb-chip.on{background:var(--blue);border-color:var(--blue);color:#fff;}
@@ -1043,6 +1059,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <button class="preset-open-btn" onclick="openPresetModal()">📋 루틴 템플릿 (PPL · 상/하체 분할 · 전신)</button>
     <button class="bodymap-open-btn" onclick="openBodyMap()">🗿 인체 해부도 · 근육별 운동 찾기 + 회복 상태</button>
     <button class="partboost-open-btn" onclick="openPartBoost()">🎯 오늘 부위 보강 (이력 + 무게 자동 적용)</button>
+    <button class="autogen-open-btn" onclick="openAutoGen()">🎲 새 루틴 자동 생성 (DB 800+ · 매번 다른 운동)</button>
     <div class="day-sel" id="day-sel"></div>
     <div class="prog-wrap">
       <div class="prog-info"><span id="prog-txt">0 / 0 완료</span><button style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;" onclick="resetAll()">초기화</button></div>
@@ -1522,6 +1539,40 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="bm-tooltip" id="bm-tooltip"><span class="bm-tooltip-empty">근육을 탭하면 자세한 정보가 여기 표시됩니다</span></div>
       <div class="bm-recovery-list" id="bm-recovery-list" style="display:none;"></div>
     </div>
+  </div>
+</div>
+
+<!-- 자동 루틴 생성 모달 (yuhonas DB 기반 동적 생성) -->
+<div class="exdb-modal-bg" id="autogen-modal">
+  <div class="exdb-modal" style="max-width:560px;">
+    <div class="exdb-hdr">
+      <div>
+        <div style="font-size:9.5px;color:var(--muted);font-family:var(--mono);letter-spacing:0.05em;">AUTO ROUTINE GENERATOR</div>
+        <div style="font-size:15px;font-weight:900;">🎲 새 루틴 자동 생성</div>
+      </div>
+      <button onclick="closeAutoGen()" style="background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:2px 8px;line-height:1;">×</button>
+    </div>
+    <div class="ag-section">
+      <div class="ag-section-label">분할 방식</div>
+      <div class="ag-chips" id="ag-split-chips"></div>
+    </div>
+    <div class="ag-section">
+      <div class="ag-section-label">난이도</div>
+      <div class="ag-chips" id="ag-level-chips"></div>
+    </div>
+    <div class="ag-section">
+      <div class="ag-section-label">사용 가능 기구 (선택 안 하면 모두 사용)</div>
+      <div class="ag-chips" id="ag-eq-chips"></div>
+    </div>
+    <div class="ag-section">
+      <div class="ag-section-label">적용할 루틴 슬롯 (이 슬롯의 기존 운동 덮어쓰기)</div>
+      <div class="ag-chips" id="ag-slot-chips"></div>
+    </div>
+    <div class="ag-actions">
+      <button class="ag-btn-regen" onclick="generateAutoRoutine()">🎲 다시 생성</button>
+      <button class="ag-btn-apply" onclick="applyAutoRoutine()">✅ 이 루틴 적용</button>
+    </div>
+    <div class="exdb-body" id="autogen-preview"><div class="pb-empty">옵션을 선택하면 자동으로 루틴이 생성됩니다</div></div>
   </div>
 </div>
 
@@ -2418,10 +2469,12 @@ function showApp(){
 
   // 마지막에 보던 탭 복원 (앱 복귀 / 새로고침 시 홈으로 빠지는 문제 방지)
   try{_restoreLastPage();}catch(e){console.warn('탭 복원 실패',e);}
-  // 초기 history 상태 등록 → 첫 뒤로가기 시 popstate 발동
+  // 초기 history: replaceState로 현재 상태 표시 + dummy trap 추가 → 첫 뒤로가기에 popstate 발동
   try{
     const cur=(history.state&&history.state.page)||(localStorage.getItem('fitlog_lastPage')||'home');
     if(!history.state)history.replaceState({page:cur},'','#'+cur);
+    // 모달이나 탭과 무관한 dummy trap을 항상 stack 위에 둠
+    if(typeof _ensureBackTrap==='function')_ensureBackTrap();
   }catch(e){}
 
   // 1분마다 날짜 체크
@@ -5347,9 +5400,22 @@ function _restoreLastPage(){
   }
 }
 
-// ── 뒤로가기 시 모달 닫기 우선 → 없으면 홈으로 이동 (앱 종료 방지 1차 방어) ──
+// ══════════════════════════════
+// 뒤로가기 동작 — 단계적 (모달 → 탭 → 홈 → 더블탭 종료)
+// ══════════════════════════════
+// dummy state를 항상 stack 위에 둠 → 모든 back 누름이 popstate 발동
+// 안 그러면 처음 시작 페이지에서 back 한 번에 바로 앱 종료됨 (Android PWA 특성)
+let _backExitConfirm=0;
+
+function _ensureBackTrap(){
+  try{
+    const cur=(history.state&&history.state.page)||localStorage.getItem('fitlog_lastPage')||'home';
+    history.pushState({page:cur,_trap:true}, '', '#'+cur);
+  }catch(e){}
+}
+
 window.addEventListener('popstate',(e)=>{
-  // 열린 모달이 있으면 먼저 닫기
+  // 1) 열린 모달이 있으면 먼저 닫기
   const openables=[
     ['exdb-picker-modal','closeAddToRoutinePicker'],
     ['exdb-detail-modal','closeExDetail'],
@@ -5357,6 +5423,7 @@ window.addEventListener('popstate',(e)=>{
     ['preset-modal','closePresetModal'],
     ['bodymap-modal','closeBodyMap'],
     ['partboost-modal','closePartBoost'],
+    ['autogen-modal','closeAutoGen'],
     ['ai-guide-modal','closeAiGuide'],
     ['lib-modal','closeLib'],
     ['diet-modal','closeDietModal'],
@@ -5365,25 +5432,40 @@ window.addEventListener('popstate',(e)=>{
   ];
   for(const [id,fn] of openables){
     const el=document.getElementById(id);
-    if(el&&el.classList.contains('open')||el&&el.classList.contains('show')){
-      try{if(window[fn])window[fn]();else if(el)el.classList.remove('open','show');}catch(err){}
-      // 히스토리 상태 다시 push → 다음 뒤로가기가 또 탭 내부에서 동작
-      try{history.pushState({page:(history.state&&history.state.page)||'home'},'','#'+((history.state&&history.state.page)||'home'));}catch(err){}
+    if(el && (el.classList.contains('open')||el.classList.contains('show'))){
+      try{if(window[fn])window[fn]();else el.classList.remove('open','show');}catch(err){}
+      _ensureBackTrap();
       return;
     }
   }
-  // 타이머 오버레이 열려있으면 타이머만 닫기
+  // 2) 타이머 오버레이 열려있으면 닫기
   const tOv=document.getElementById('timer-overlay');
-  if(tOv&&tOv.classList.contains('show')){
+  if(tOv && tOv.classList.contains('show')){
     try{closeTimerOverlay();}catch(err){}
-    try{history.pushState({page:(history.state&&history.state.page)||'home'},'','#'+((history.state&&history.state.page)||'home'));}catch(err){}
+    _ensureBackTrap();
     return;
   }
-  // 모달 없으면 저장된 페이지로 복원 (홈이 아니었다면)
-  const st=e.state;
-  if(st&&st.page&&document.getElementById('page-'+st.page)){
-    showPage(st.page,{noPush:true});
+  // 3) 현재 탭이 홈이 아니면 홈으로 이동
+  let cur='home';
+  try{cur=localStorage.getItem('fitlog_lastPage')||'home';}catch(e){}
+  if(cur!=='home' && document.getElementById('page-home')){
+    if(typeof showPage==='function')showPage('home',{noPush:true});
+    _backExitConfirm=0;
+    _ensureBackTrap();
+    return;
   }
+  // 4) 홈에서 처음 누름 → 토스트, 2초 안에 다시 누르면 종료 허용
+  const now=Date.now();
+  if(_backExitConfirm && (now-_backExitConfirm)<2000){
+    // 종료 허용 — trap 안 만들면 다음 back에서 exit
+    // 즉시 exit하려면 history.back() 한번 더 호출 (이미 popstate 발동된 상태)
+    // 하지만 안전하게 그냥 두면 stack 비어 다음 액션에서 exit
+    _backExitConfirm=0;
+    return;
+  }
+  _backExitConfirm=now;
+  if(typeof showToast==='function')showToast('한 번 더 누르면 앱이 종료됩니다','info');
+  _ensureBackTrap();
 });
 let tTimer=null;
 function showToast(msg,type='info'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;if(tTimer)clearTimeout(tTimer);tTimer=setTimeout(()=>t.classList.remove('show'),3500);}
@@ -5757,6 +5839,7 @@ async function loadExDB(){
 
 async function openExLibrary(){
   document.getElementById('exdb-modal').classList.add('open');
+  if(typeof _ensureBackTrap==='function')_ensureBackTrap();
   const body=document.getElementById('exdb-body');
   body.innerHTML='<div class="exdb-empty">운동 데이터 불러오는 중...<br><small>(첫 실행 시 ~700KB 다운로드)</small></div>';
   try{
@@ -5847,6 +5930,7 @@ function openExDetail(id){
   const e=(_exdbData||[]).find(x=>x.id===id);
   if(!e)return;
   document.getElementById('exdb-detail-modal').classList.add('open');
+  if(typeof _ensureBackTrap==='function')_ensureBackTrap();
   document.getElementById('exdb-detail-title').textContent=e.name||id;
   const imgs=(e.images||[]).map(p=>'<img class="exdb-detail-img" src="'+_EXDB_IMG_BASE+p+'" loading="lazy" alt="'+(e.name||'').replace(/"/g,'&quot;')+'" onerror="this.style.display=\'none\'">').join('');
   const steps=(e.instructions||[]).map((s,i)=>'<li>'+s+'</li>').join('');
@@ -6021,6 +6105,7 @@ const ROUTINE_PRESETS=[
 let _pendingPreset=null;
 
 function openPresetModal(){
+  if(typeof _ensureBackTrap==='function')_ensureBackTrap();
   const body=document.getElementById('preset-body');
   body.innerHTML=ROUTINE_PRESETS.map((p,i)=>{
     const tags=(p.tags||[]).map(t=>'<span class="preset-tag">'+t+'</span>').join('');
@@ -6258,6 +6343,7 @@ function buildBodyMapSvg(){
 function openBodyMap(){
   document.getElementById('bodymap-modal').classList.add('open');
   setBmMode(_bmMode||'filter');
+  if(typeof _ensureBackTrap==='function')_ensureBackTrap();
 }
 function closeBodyMap(){document.getElementById('bodymap-modal').classList.remove('open');}
 function setBmMode(mode){
@@ -6402,6 +6488,7 @@ function buildHistoryChart(recent){
 
 function openPartBoost(muscle){
   document.getElementById('partboost-modal').classList.add('open');
+  if(typeof _ensureBackTrap==='function')_ensureBackTrap();
   // 부위 칩 빌드 — 모든 근육
   const muscles=Object.keys(_MUSCLE_KO);
   const chipsHtml=muscles.map(m=>{
@@ -6471,6 +6558,202 @@ async function setPbMuscle(muscle){
     body.innerHTML='<div class="pb-empty">❌ 로딩 실패<br><small>'+(err.message||'')+'</small></div>';
   }
 }
+
+// ══════════════════════════════
+// 자동 루틴 생성 (yuhonas DB 800+ 동적 선택)
+// 사용자 레벨·기구·분할방식에 따라 매번 다른 운동 조합
+// ══════════════════════════════
+const SPLIT_TEMPLATES={
+  ppl_push:{name:'Push (가슴·어깨·삼두)',muscles:['chest','shoulders','triceps'],koTitle:'Push 데이'},
+  ppl_pull:{name:'Pull (등·이두)',muscles:['lats','middle back','biceps','traps'],koTitle:'Pull 데이'},
+  ppl_legs:{name:'Legs (하체·둔근)',muscles:['quadriceps','hamstrings','glutes','calves'],koTitle:'Legs 데이'},
+  upper:{name:'Upper (상체)',muscles:['chest','lats','shoulders','biceps','triceps','middle back'],koTitle:'상체 데이'},
+  lower:{name:'Lower (하체)',muscles:['quadriceps','hamstrings','glutes','calves'],koTitle:'하체 데이'},
+  full:{name:'Full Body (전신)',muscles:['chest','lats','quadriceps','hamstrings','shoulders','glutes'],koTitle:'전신'},
+  bro_chest:{name:'가슴 집중',muscles:['chest'],koTitle:'가슴 집중'},
+  bro_back:{name:'등 집중',muscles:['lats','middle back','traps'],koTitle:'등 집중'},
+  bro_legs:{name:'다리 집중',muscles:['quadriceps','hamstrings','glutes','calves'],koTitle:'다리 집중'},
+  bro_shoulders:{name:'어깨 집중',muscles:['shoulders','traps'],koTitle:'어깨 집중'},
+  bro_arms:{name:'팔 집중',muscles:['biceps','triceps','forearms'],koTitle:'팔 집중'}
+};
+const _LEVEL_FILTER={
+  1:['beginner'],
+  2:['beginner','intermediate'],
+  3:['intermediate'],
+  4:['intermediate','expert']
+};
+const _SET_REPS_BY_LEVEL={
+  1:{sets:3,reps:12,detail:'3세트 × 12회'},
+  2:{sets:3,reps:10,detail:'3세트 × 10회'},
+  3:{sets:4,reps:10,detail:'4세트 × 10회'},
+  4:{sets:5,reps:6, detail:'5세트 × 6회'}
+};
+const _LEVEL_LABEL={1:'초보',2:'초급',3:'중급',4:'고급'};
+const _EQ_LABEL={
+  'body only':'맨몸','machine':'머신','cable':'케이블','dumbbell':'덤벨','barbell':'바벨',
+  'kettlebells':'케틀벨','bands':'밴드','foam roll':'폼롤러','exercise ball':'짐볼',
+  'medicine ball':'메디신볼','e-z curl bar':'이지바','other':'기타'
+};
+
+let _agState={split:'ppl_push',level:2,equipment:[],slot:'A'};
+let _agGenerated=null;
+
+function _agShuffle(arr){const a=[...arr];for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+
+function pickExercisesForDay(tpl, level, equipment, count){
+  if(!_exdbData)return[];
+  const allowedLevels=_LEVEL_FILTER[level]||['intermediate'];
+  const result=[];
+  const used=new Set();
+  // 각 타겟 근육별로 1~2개씩 뽑아서 부위 균형
+  for(const muscle of tpl.muscles){
+    let candidates=_exdbData.filter(e=>{
+      if(used.has(e.id))return false;
+      if(!(e.primaryMuscles||[]).includes(muscle))return false;
+      if(!allowedLevels.includes(e.level))return false;
+      if(equipment && equipment.length && !equipment.includes(e.equipment))return false;
+      return true;
+    });
+    // 기구 필터로 0개면 풀어서 다시
+    if(!candidates.length){
+      candidates=_exdbData.filter(e=>{
+        if(used.has(e.id))return false;
+        if(!(e.primaryMuscles||[]).includes(muscle))return false;
+        if(!allowedLevels.includes(e.level))return false;
+        return true;
+      });
+    }
+    // 레벨 필터로도 0개면 더 풀기
+    if(!candidates.length){
+      candidates=_exdbData.filter(e=>!used.has(e.id) && (e.primaryMuscles||[]).includes(muscle));
+    }
+    if(!candidates.length)continue;
+    // 컴파운드 우선 → 상위 8개에서 랜덤
+    candidates.sort((a,b)=>{
+      const ac=a.mechanic==='compound'?0:1;
+      const bc=b.mechanic==='compound'?0:1;
+      return ac-bc;
+    });
+    const top=candidates.slice(0,Math.min(8,candidates.length));
+    const picked=_agShuffle(top)[0];
+    if(picked){result.push(picked);used.add(picked.id);}
+    if(result.length>=count)break;
+  }
+  return result;
+}
+
+function renderAutoGenChips(){
+  // 분할 방식
+  const splits=Object.entries(SPLIT_TEMPLATES);
+  document.getElementById('ag-split-chips').innerHTML=splits.map(([k,v])=>
+    '<span class="ag-chip'+(_agState.split===k?' on':'')+'" onclick="setAgState(\'split\',\''+k+'\')">'+v.name+'</span>'
+  ).join('');
+  // 난이도
+  document.getElementById('ag-level-chips').innerHTML=[1,2,3,4].map(lv=>
+    '<span class="ag-chip'+(_agState.level===lv?' on':'')+'" onclick="setAgState(\'level\','+lv+')">'+_LEVEL_LABEL[lv]+'</span>'
+  ).join('');
+  // 기구 (DB에서 추출 + 한글 매핑)
+  const eqsRaw=_exdbData?[...new Set(_exdbData.map(e=>e.equipment).filter(Boolean))].sort():Object.keys(_EQ_LABEL);
+  document.getElementById('ag-eq-chips').innerHTML=eqsRaw.map(eq=>{
+    const on=_agState.equipment.includes(eq);
+    return '<span class="ag-chip'+(on?' on':'')+'" onclick="toggleAgEq(\''+eq+'\')">'+(_EQ_LABEL[eq]||eq)+'</span>';
+  }).join('');
+  // 슬롯
+  const slots=typeof RT!=='undefined'?Object.keys(RT):['A','B','C','D','E','F'];
+  document.getElementById('ag-slot-chips').innerHTML=slots.map(s=>{
+    const lbl=(RT&&RT[s])?(RT[s].label||s):s;
+    return '<span class="ag-chip'+(_agState.slot===s?' on':'')+'" onclick="setAgState(\'slot\',\''+s+'\')">'+lbl+'</span>';
+  }).join('');
+}
+
+function setAgState(key, val){
+  _agState[key]=val;
+  renderAutoGenChips();
+  if(key==='split'||key==='level'||key==='equipment')generateAutoRoutine();
+}
+function toggleAgEq(eq){
+  const i=_agState.equipment.indexOf(eq);
+  if(i>=0)_agState.equipment.splice(i,1);
+  else _agState.equipment.push(eq);
+  renderAutoGenChips();
+  generateAutoRoutine();
+}
+
+async function openAutoGen(){
+  document.getElementById('autogen-modal').classList.add('open');
+  if(typeof _ensureBackTrap==='function')_ensureBackTrap();
+  // 사용자 레벨 자동 감지
+  const userLv=(typeof userProfile!=='undefined'&&userProfile&&parseInt(userProfile.level))||(typeof curLevel!=='undefined'?curLevel:2);
+  _agState={split:'ppl_push',level:Math.max(1,Math.min(4,userLv)),equipment:[],slot:'A'};
+  document.getElementById('autogen-preview').innerHTML='<div class="pb-empty">DB 로딩 중...<br><small>(첫 사용 시 ~700KB)</small></div>';
+  try{
+    await loadExDB();
+    renderAutoGenChips();
+    generateAutoRoutine();
+  }catch(e){
+    document.getElementById('autogen-preview').innerHTML='<div class="pb-empty">❌ DB 로딩 실패: '+(e.message||'')+'</div>';
+  }
+}
+
+function generateAutoRoutine(){
+  if(!_exdbData){
+    document.getElementById('autogen-preview').innerHTML='<div class="pb-empty">DB가 아직 로드되지 않았습니다</div>';
+    return;
+  }
+  const tpl=SPLIT_TEMPLATES[_agState.split];
+  if(!tpl){document.getElementById('autogen-preview').innerHTML='<div class="pb-empty">분할 방식을 선택해주세요</div>';return;}
+  const exs=pickExercisesForDay(tpl,_agState.level,_agState.equipment,Math.min(6,Math.max(4,tpl.muscles.length)));
+  _agGenerated={tpl,exercises:exs,level:_agState.level};
+  if(!exs.length){
+    document.getElementById('autogen-preview').innerHTML='<div class="pb-empty">조건에 맞는 운동이 없습니다.<br><small>난이도나 기구를 다시 선택해주세요</small></div>';
+    return;
+  }
+  const rep=_SET_REPS_BY_LEVEL[_agState.level]||_SET_REPS_BY_LEVEL[2];
+  const rows=exs.map(e=>
+    '<div class="ag-ex-row">'
+    +'<span class="ag-ex-name">• '+(e.name||'')+'</span>'
+    +'<span class="ag-ex-meta">'+(_EQ_LABEL[e.equipment]||e.equipment||'—')+' · '+(e.level||'—')+(e.mechanic==='compound'?' · 복합':'')+'</span>'
+    +'</div>'
+  ).join('');
+  document.getElementById('autogen-preview').innerHTML=
+    '<div class="ag-day-card">'
+    +'<div class="ag-day-name">📅 '+tpl.koTitle+' ('+exs.length+'개 운동)</div>'
+    +'<div style="font-size:10.5px;color:var(--muted);margin-bottom:8px;font-family:var(--mono);">난이도: '+_LEVEL_LABEL[_agState.level]+' · 세트/회수: '+rep.detail+'</div>'
+    +rows
+    +'</div>'
+    +'<div style="font-size:11px;color:var(--muted);text-align:center;padding:8px;">🎲 다시 생성을 누르면 다른 운동 조합으로 갱신됩니다</div>';
+}
+
+async function applyAutoRoutine(){
+  if(!_agGenerated||!_agGenerated.exercises.length){
+    if(typeof showToast==='function')showToast('먼저 운동을 생성해주세요','error');
+    return;
+  }
+  const tk=_agState.slot;
+  if(!RT[tk]){if(typeof showToast==='function')showToast('루틴 슬롯을 찾을 수 없습니다','error');return;}
+  if(!confirm('"'+(RT[tk].label||tk)+'" 슬롯에 자동 생성된 "'+_agGenerated.tpl.koTitle+'" 루틴을 적용할까요?\n\n기존 운동은 모두 덮어쓰기됩니다 (취소 불가).'))return;
+  const rep=_SET_REPS_BY_LEVEL[_agGenerated.level]||_SET_REPS_BY_LEVEL[2];
+  RT[tk].title=_agGenerated.tpl.koTitle+' (자동 생성)';
+  RT[tk].muscles=[...new Set(_agGenerated.exercises.flatMap(e=>(e.primaryMuscles||[]).map(m=>_MUSCLE_KO[m]||m).filter(Boolean)))].slice(0,4);
+  RT[tk].sections=[
+    {n:'워밍업 (5분)', exs:[{n:'업라이트 바이크', d:'5분 · 저강도', tags:['심폐'], w:[], sets:0}]},
+    {n:'주 운동', exs:_agGenerated.exercises.map(e=>({
+      n:e.name||e.id,
+      d:rep.detail,
+      tags:(e.primaryMuscles||[]).slice(0,2).map(m=>_MUSCLE_KO[m]||m),
+      w:[],
+      sets:rep.sets
+    }))},
+    {n:'마무리', exs:[{n:'마무리 스트레칭', d:'5분', tags:['회복'], w:[], sets:0}]}
+  ];
+  try{if(typeof window.saveRoutine==='function')await window.saveRoutine(RT);}catch(err){console.warn('saveRoutine 실패',err);}
+  closeAutoGen();
+  if(typeof initSetData==='function')initSetData(tk);
+  if(typeof renderWorkout==='function')renderWorkout();
+  if(typeof showToast==='function')showToast('✅ "'+_agGenerated.tpl.koTitle+'" 적용됨 → '+(RT[tk].label||tk),'success');
+}
+
+function closeAutoGen(){document.getElementById('autogen-modal').classList.remove('open');_agGenerated=null;}
 
 async function addPartBoost(exId){
   const e=(_exdbData||[]).find(x=>x.id===exId);
