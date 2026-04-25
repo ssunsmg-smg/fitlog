@@ -737,6 +737,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 /* ── 운동 사진 ── */
 .ex-photo{width:100%;border-radius:10px;margin-bottom:12px;border:1px solid var(--border);background:var(--surface2);display:block;}
+.ex-video-wrap{position:relative;width:100%;padding-bottom:56.25%;margin-bottom:6px;border-radius:10px;overflow:hidden;background:#000;border:1px solid var(--border);}
+.ex-video-wrap iframe{position:absolute;top:0;left:0;width:100%;height:100%;border:none;}
+.ex-video-wrap .vid-thumb{position:absolute;inset:0;background-size:cover;background-position:center;cursor:pointer;display:flex;align-items:center;justify-content:center;}
+.ex-video-wrap .vid-play{width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,0.7);display:flex;align-items:center;justify-content:center;transition:transform .2s;}
+.ex-video-wrap .vid-thumb:hover .vid-play{transform:scale(1.1);background:rgba(255,68,68,0.9);}
+.ex-video-credit{font-size:10px;color:var(--muted);text-align:center;margin-bottom:12px;font-family:var(--mono);}
 .ex-photo-credit{font-size:9px;color:var(--muted);text-align:center;margin-top:-8px;margin-bottom:12px;}
 /* 운동 DB 라이브러리 (free-exercise-db) */
 .exdb-modal-bg{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:100;display:none;align-items:center;justify-content:center;padding:8px;}
@@ -1964,6 +1970,36 @@ const EX_DB={
   '스미스 머신 스쿼트':'Smith_Machine_Squat',
   '스미스 머신 벤치프레스':'Smith_Machine_Bench_Press'
 };
+
+// ══════════════════════════════
+// 운동별 YouTube 영상 매핑
+// 형식: 한글 운동명 → {id: 유튜브 ID, title: 영상 제목, channel: 채널명}
+// 추가: EX_VIDEO['새운동명'] = {id:'YouTubeID', title:'...', channel:'...'};
+// ══════════════════════════════
+const EX_VIDEO={
+  // ── 벤치프레스 (가슴) ──
+  '벤치프레스':{id:'TN5bhAnLE5E', title:'근비대를 위한 진짜 벤치프레스', channel:'YouTube'},
+  '바벨 벤치프레스':{id:'TN5bhAnLE5E', title:'근비대를 위한 진짜 벤치프레스', channel:'YouTube'},
+  '인클라인 바벨 벤치프레스':{id:'TN5bhAnLE5E', title:'근비대를 위한 진짜 벤치프레스', channel:'YouTube'},
+  '시티드 체스트 프레스':{id:'TN5bhAnLE5E', title:'벤치프레스 자세 응용', channel:'YouTube'},
+  '스미스 머신 벤치프레스':{id:'TN5bhAnLE5E', title:'벤치프레스 자세 응용', channel:'YouTube'},
+  // ── 킥백 (삼두 / 둔근) ──
+  '킥백':{id:'rexxGdruJeM', title:'트라이셉스 덤벨 킥백 3분 레슨', channel:'스포츠지도사 보디빌딩'},
+  '트라이셉 킥백':{id:'rexxGdruJeM', title:'트라이셉스 덤벨 킥백 3분 레슨', channel:'스포츠지도사 보디빌딩'},
+  '덤벨 킥백':{id:'rexxGdruJeM', title:'트라이셉스 덤벨 킥백 3분 레슨', channel:'스포츠지도사 보디빌딩'},
+  '케이블 킥백':{id:'rexxGdruJeM', title:'킥백 — 자세 참고용', channel:'YouTube'}  // 케이블 킥백(둔근)도 동일 자세 원리 적용
+};
+
+// 영상 가져오기 (정확 매치 + 부분 매치)
+function _getExVideo(exName){
+  if(!exName)return null;
+  if(EX_VIDEO[exName])return EX_VIDEO[exName];
+  // 부분 매치: "인클라인 벤치프레스" → "벤치프레스"
+  for(const k of Object.keys(EX_VIDEO)){
+    if(exName.includes(k))return EX_VIDEO[k];
+  }
+  return null;
+}
 
 // 미디어 가져오기 (우선순위: 로컬 img → yuhonas DB → 없음)
 function _getExMedia(exName){
@@ -5743,8 +5779,12 @@ function buildGuideHtml(exName, g){
   // 기구/동작 사진 (1순위 로컬 img/, 2순위 free-exercise-db)
   const media=_getExMedia(exName);
   const imgBlock=media?`<img class="ex-photo" src="${media.url}" alt="${exName}" loading="lazy" onerror="this.parentNode.querySelector('.ex-photo-credit')?.remove();this.remove();"><div class="ex-photo-credit">* ${media.credit} — 실제 기구와 다를 수 있음</div>`:'';
+  // YouTube 영상 임베드 (있는 경우만 — 클릭해야 iframe 로드 → 데이터 절약)
+  const vid=_getExVideo(exName);
+  const vidBlock=vid?`<div class="ex-video-wrap" id="vidwrap-${vid.id}"><div class="vid-thumb" style="background-image:url('https://img.youtube.com/vi/${vid.id}/hqdefault.jpg')" onclick="this.parentNode.innerHTML='<iframe src=\\'https://www.youtube.com/embed/${vid.id}?autoplay=1&rel=0\\' allowfullscreen allow=\\'autoplay; encrypted-media\\'></iframe>'"><div class="vid-play"><svg width="28" height="28" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div></div></div><div class="ex-video-credit">▶ 탭해서 재생 · ${vid.title} (${vid.channel})</div>`:'';
 
   return `
+    ${vidBlock}
     ${imgBlock}
     ${ytBtn}
     <h3>🎯 운동 목적</h3>
@@ -5768,7 +5808,11 @@ function buildOfflineGuide(exName, info){
   // 기구/동작 사진 (1순위 로컬 img/, 2순위 free-exercise-db)
   const media=_getExMedia(exName);
   const imgBlock=media?`<img class="ex-photo" src="${media.url}" alt="${exName}" loading="lazy" onerror="this.parentNode.querySelector('.ex-photo-credit')?.remove();this.remove();"><div class="ex-photo-credit">* ${media.credit} — 실제 기구와 다를 수 있음</div>`:'';
+  // YouTube 영상 임베드
+  const vid=_getExVideo(exName);
+  const vidBlock=vid?`<div class="ex-video-wrap" id="vidwrap-${vid.id}-off"><div class="vid-thumb" style="background-image:url('https://img.youtube.com/vi/${vid.id}/hqdefault.jpg')" onclick="this.parentNode.innerHTML='<iframe src=\\'https://www.youtube.com/embed/${vid.id}?autoplay=1&rel=0\\' allowfullscreen allow=\\'autoplay; encrypted-media\\'></iframe>'"><div class="vid-play"><svg width="28" height="28" viewBox="0 0 24 24" fill="#fff"><path d="M8 5v14l11-7z"/></svg></div></div></div><div class="ex-video-credit">▶ 탭해서 재생 · ${vid.title} (${vid.channel})</div>`:'';
   return `
+    ${vidBlock}
     ${imgBlock}
     <a href="${ytUrl}" target="_blank" rel="noopener"
       style="display:flex;align-items:center;justify-content:center;gap:8px;
