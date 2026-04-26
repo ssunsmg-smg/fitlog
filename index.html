@@ -1195,6 +1195,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div style="font-size:21px;font-weight:900;">⚙️ 나의 운동 설정</div>
     </div>
 
+    <!-- 운동 시간 설정 -->
+    <div class="level-card" id="workout-time-card" style="margin-bottom:14px;">
+      <div class="level-card-title">
+        <span>⏱️ 1회 운동 시간</span>
+        <span id="wt-current" style="font-size:11px;color:var(--muted);font-family:var(--mono);">—</span>
+      </div>
+      <div style="font-size:11.5px;color:var(--muted);margin-bottom:10px;line-height:1.6;">자동 루틴 생성 · 시간 부족 모드 등에 사용됩니다. 언제든 변경 가능해요.</div>
+      <div id="wt-presets" style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;"></div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:11px;color:var(--muted);font-family:var(--mono);">직접:</span>
+        <input id="wt-custom-input" type="number" min="10" max="240" placeholder="분"
+          style="flex:1;max-width:110px;padding:7px 10px;border-radius:7px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:var(--mono);font-size:13px;text-align:center;">
+        <span style="font-size:11px;color:var(--muted);font-family:var(--mono);">분</span>
+        <button onclick="saveWorkoutTime()" style="padding:7px 14px;border-radius:7px;border:none;background:var(--green);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);">저장</button>
+      </div>
+    </div>
+
     <!-- 신체 정보 설정 -->
     <div class="level-card" id="body-info-card">
       <div class="level-card-title">
@@ -2297,8 +2314,18 @@ const OB=[
     <div style="margin-top:10px;padding:10px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--muted);">💡 권장: 주 3~5일 운동, 2일 이상 휴식</div>`,
     save:()=>{},
     validate:()=>{if(obData.days.length<2){showToast('2일 이상 선택해주세요','error');return false;}return true;}},
-  {title:'운동 시간 ⏱️',sub:'1회 운동에 투자할 시간을 선택해주세요.',prog:83,
-    render:()=>`<div style="display:grid;gap:8px;">${[{v:'30',l:'30분',d:'짧고 집중적으로'},{v:'45',l:'45분',d:'효율적인 운동량'},{v:'60',l:'60분',d:'표준 운동 시간 (권장)'},{v:'90',l:'90분',d:'충분한 운동량'},{v:'120',l:'2시간+',d:'고강도 훈련'}].map(t=>`<div onclick="selTime('${t.v}',this)" class="ob-time-item" style="padding:12px 16px;border-radius:10px;border:1px solid ${obData.time===t.v?'var(--accent)':'var(--border)'};background:${obData.time===t.v?'#e8533a15':'var(--surface2)'};cursor:pointer;display:flex;justify-content:space-between;align-items:center;"><div style="font-size:14px;font-weight:700;color:${obData.time===t.v?'var(--accent)':'var(--text)'};">${t.l}</div><div style="font-size:12px;color:var(--muted);">${t.d}</div></div>`).join('')}</div>`,
+  {title:'운동 시간 ⏱️',sub:'1회 운동에 투자할 시간을 선택하거나 직접 입력해주세요.',prog:83,
+    render:()=>{
+      const presets=[{v:'30',l:'30분',d:'짧고 집중적'},{v:'40',l:'40분',d:'바쁜 날 추천'},{v:'45',l:'45분',d:'효율적'},{v:'60',l:'60분',d:'표준 (권장)'},{v:'75',l:'75분',d:'여유있게'},{v:'90',l:'90분',d:'충분한 운동량'},{v:'120',l:'2시간',d:'고강도 훈련'}];
+      const isCustom=obData.time && !presets.find(p=>p.v===obData.time);
+      const list=presets.map(t=>`<div onclick="selTime('${t.v}',this)" class="ob-time-item" style="padding:11px 14px;border-radius:10px;border:1px solid ${obData.time===t.v?'var(--accent)':'var(--border)'};background:${obData.time===t.v?'#e8533a15':'var(--surface2)'};cursor:pointer;display:flex;justify-content:space-between;align-items:center;"><div style="font-size:14px;font-weight:700;color:${obData.time===t.v?'var(--accent)':'var(--text)'};">${t.l}</div><div style="font-size:11px;color:var(--muted);">${t.d}</div></div>`).join('');
+      const customBlock=`<div style="padding:12px 14px;border-radius:10px;border:1px solid ${isCustom?'var(--accent)':'var(--border)'};background:${isCustom?'#e8533a15':'var(--surface2)'};display:flex;align-items:center;gap:8px;">
+        <div style="font-size:13px;font-weight:700;color:${isCustom?'var(--accent)':'var(--text)'};flex:1;">⚙️ 직접 입력</div>
+        <input type="number" min="10" max="240" id="ob-custom-time" value="${isCustom?obData.time:''}" placeholder="분" style="width:90px;padding:6px 9px;border-radius:6px;border:1px solid var(--border);background:var(--surface);color:var(--text);font-family:var(--mono);font-size:13px;text-align:center;" oninput="selCustomTime(this.value)"/>
+        <span style="font-size:11px;color:var(--muted);font-family:var(--mono);">분 (10~240)</span>
+      </div>`;
+      return `<div style="display:grid;gap:7px;">${list}${customBlock}</div>`;
+    },
     save:()=>{}},
   {title:'운동 레벨 💪',sub:'현재 운동 수준을 선택해주세요.',prog:100,
     render:()=>`<div style="display:grid;gap:8px;">${[{v:'1',l:'🌱 초보자',d:'운동을 거의 안 했어요',dt:'기초 체력부터 천천히'},{v:'2',l:'⚡ 중급자',d:'가끔 운동 (6개월~1년)',dt:'강도를 높여볼게요'},{v:'3',l:'🔥 고급자',d:'꾸준히 운동 (1~3년)',dt:'분할 훈련 시작'},{v:'4',l:'👑 마스터',d:'3년 이상 꾸준히',dt:'고강도 훈련'}].map(lv=>`<div onclick="selLevel('${lv.v}',this)" class="ob-lv-item" style="padding:12px 16px;border-radius:10px;border:1px solid ${obData.level===lv.v?'var(--accent)':'var(--border)'};background:${obData.level===lv.v?'#e8533a15':'var(--surface2)'};cursor:pointer;"><div style="font-size:14px;font-weight:700;color:${obData.level===lv.v?'var(--accent)':'var(--text)'};">${lv.l}</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">${lv.d}</div><div style="font-size:11px;color:${obData.level===lv.v?'var(--accent)':'var(--muted)'};margin-top:1px;font-family:var(--mono);">${lv.dt}</div></div>`).join('')}</div>`,
@@ -2307,7 +2334,20 @@ const OB=[
 function togGoal(g,el){if(obData.goals.includes(g)){obData.goals=obData.goals.filter(x=>x!==g);el.classList.remove('sel');}else{obData.goals.push(g);el.classList.add('sel');}}
 function togInjury(i,el){if(i==='없음'){obData.injuries=['없음'];document.querySelectorAll('#ob-content .ob-opt').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}else{obData.injuries=obData.injuries.filter(x=>x!=='없음');if(obData.injuries.includes(i)){obData.injuries=obData.injuries.filter(x=>x!==i);el.classList.remove('sel');}else{obData.injuries.push(i);el.classList.add('sel');}}}
 function togDay(d,el){if(obData.days.includes(d)){obData.days=obData.days.filter(x=>x!==d);el.classList.remove('sel');}else{obData.days.push(d);el.classList.add('sel');}const dc=document.getElementById('day-count');if(dc)dc.textContent=obData.days.length+'일 / 주';}
-function selTime(v,el){obData.time=v;document.querySelectorAll('.ob-time-item').forEach(d=>{d.style.borderColor='var(--border)';d.style.background='var(--surface2)';d.querySelector('div').style.color='var(--text)';});el.style.borderColor='var(--accent)';el.style.background='#e8533a15';el.querySelector('div').style.color='var(--accent)';}
+function selTime(v,el){
+  obData.time=v;
+  document.querySelectorAll('.ob-time-item').forEach(d=>{d.style.borderColor='var(--border)';d.style.background='var(--surface2)';d.querySelector('div').style.color='var(--text)';});
+  el.style.borderColor='var(--accent)';el.style.background='#e8533a15';el.querySelector('div').style.color='var(--accent)';
+  // 직접 입력 input 비우기
+  const ci=document.getElementById('ob-custom-time');if(ci)ci.value='';
+}
+function selCustomTime(v){
+  const n=parseInt(v);
+  if(!n||n<10||n>240)return;
+  obData.time=String(n);
+  // preset 선택 시각 효과 제거
+  document.querySelectorAll('.ob-time-item').forEach(d=>{d.style.borderColor='var(--border)';d.style.background='var(--surface2)';d.querySelector('div').style.color='var(--text)';});
+}
 function selLevel(v,el){obData.level=v;document.querySelectorAll('.ob-lv-item').forEach(d=>{d.style.borderColor='var(--border)';d.style.background='var(--surface2)';d.querySelector('div').style.color='var(--text)';});el.style.borderColor='var(--accent)';el.style.background='#e8533a15';el.querySelector('div').style.color='var(--accent)';}
 function renderOb(){
   const s=OB[obStep-1];
@@ -3432,6 +3472,7 @@ function openLib(tk,si){
   document.getElementById('lc-detail').value='';
   renderLibCats(); renderLibList();
   document.getElementById('lib-modal').classList.add('open');
+  if(typeof _ensureBackTrap==='function')_ensureBackTrap();
 }
 function closeLib(){ document.getElementById('lib-modal').classList.remove('open'); libTarget=null; }
 function renderLibCats(){
@@ -3731,6 +3772,7 @@ function openDietModal(meal){
   ['dc-kcal','dc-carb','dc-prot','dc-fat'].forEach(id=>{document.getElementById(id).value='';});
   renderDietCats();filterDietDB();
   document.getElementById('diet-modal').classList.add('open');
+  if(typeof _ensureBackTrap==='function')_ensureBackTrap();
 }
 function closeDietModal(){document.getElementById('diet-modal').classList.remove('open');dietModalTarget=null;}
 function renderDietCats(){
@@ -5367,6 +5409,7 @@ function togglePosture(i){
 function initSettingsTab(){
   initBodyInfo();
   initClassSettings();
+  initWorkoutTime();
   // 레벨 버튼 상태 복원
   document.querySelectorAll('.level-step').forEach((b,i)=>{
     b.classList.toggle('active',i+1===curLevel);
@@ -5376,6 +5419,58 @@ function initSettingsTab(){
   renderORMGrid();
   renderAdjPanel();
   renderPostureList();
+}
+
+// ── 운동 시간 설정 (설정 탭) ──
+function initWorkoutTime(){
+  const cur=(userProfile&&userProfile.time)||localStorage.getItem('fitlog_workout_time')||'60';
+  const presets=['30','40','45','60','75','90','120'];
+  const wrap=document.getElementById('wt-presets');
+  if(wrap){
+    wrap.innerHTML=presets.map(v=>{
+      const on=(v===String(cur));
+      return '<button onclick="selWorkoutTime(\''+v+'\')" id="wt-p-'+v+'" '
+        +'style="padding:7px 12px;border-radius:14px;border:1px solid '+(on?'var(--accent)':'var(--border)')
+        +';background:'+(on?'#e8533a15':'var(--surface2)')+';color:'+(on?'var(--accent)':'var(--muted)')
+        +';font-size:11.5px;font-weight:700;cursor:pointer;font-family:var(--font);">'+v+'분</button>';
+    }).join('');
+  }
+  const ci=document.getElementById('wt-custom-input');
+  if(ci && !presets.includes(String(cur))){ci.value=cur;}
+  else if(ci){ci.value='';}
+  const cur_lbl=document.getElementById('wt-current');
+  if(cur_lbl)cur_lbl.textContent='현재: '+cur+'분';
+}
+function selWorkoutTime(v){
+  // preset 시각 갱신
+  document.querySelectorAll('#wt-presets button').forEach(b=>{
+    b.style.borderColor='var(--border)';b.style.background='var(--surface2)';b.style.color='var(--muted)';
+  });
+  const btn=document.getElementById('wt-p-'+v);
+  if(btn){btn.style.borderColor='var(--accent)';btn.style.background='#e8533a15';btn.style.color='var(--accent)';}
+  const ci=document.getElementById('wt-custom-input');if(ci)ci.value='';
+  // 즉시 저장
+  _saveWorkoutTimeValue(v);
+}
+function saveWorkoutTime(){
+  const ci=document.getElementById('wt-custom-input');
+  const v=ci?parseInt(ci.value):0;
+  if(!v||v<10||v>240){
+    if(typeof showToast==='function')showToast('10~240분 사이로 입력해주세요','error');
+    return;
+  }
+  _saveWorkoutTimeValue(String(v));
+  initWorkoutTime();
+}
+async function _saveWorkoutTimeValue(v){
+  try{localStorage.setItem('fitlog_workout_time',v);}catch(e){}
+  if(typeof userProfile!=='undefined'&&userProfile){
+    userProfile.time=v;
+    try{if(typeof window.saveUserProfile==='function')await window.saveUserProfile(userProfile);}catch(e){}
+  }
+  const cur_lbl=document.getElementById('wt-current');
+  if(cur_lbl)cur_lbl.textContent='현재: '+v+'분';
+  if(typeof showToast==='function')showToast('✅ 운동 시간 '+v+'분으로 저장됨','success');
 }
 
 function copyLink(){
@@ -5451,7 +5546,7 @@ function _ensureBackTrap(){
 }
 
 window.addEventListener('popstate',(e)=>{
-  // 1) 열린 모달이 있으면 먼저 닫기
+  // 1) 열린 모달이 있으면 먼저 닫기 (어떤 탭에 있든 모달 우선)
   const openables=[
     ['exdb-picker-modal','closeAddToRoutinePicker'],
     ['exdb-detail-modal','closeExDetail'],
@@ -5466,11 +5561,13 @@ window.addEventListener('popstate',(e)=>{
     ['diet-qty-modal','closeQtyModal'],
     ['food-info-modal','closeFoodInfo']
   ];
+  // 가장 위에 있을 가능성 높은 detail/picker 류 먼저 검사
   for(const [id,fn] of openables){
     const el=document.getElementById(id);
     if(el && (el.classList.contains('open')||el.classList.contains('show'))){
       try{if(window[fn])window[fn]();else el.classList.remove('open','show');}catch(err){}
       _ensureBackTrap();
+      _backExitConfirm=0;
       return;
     }
   }
@@ -5479,23 +5576,14 @@ window.addEventListener('popstate',(e)=>{
   if(tOv && tOv.classList.contains('show')){
     try{closeTimerOverlay();}catch(err){}
     _ensureBackTrap();
-    return;
-  }
-  // 3) 현재 탭이 홈이 아니면 홈으로 이동
-  let cur='home';
-  try{cur=localStorage.getItem('fitlog_lastPage')||'home';}catch(e){}
-  if(cur!=='home' && document.getElementById('page-home')){
-    if(typeof showPage==='function')showPage('home',{noPush:true});
     _backExitConfirm=0;
-    _ensureBackTrap();
     return;
   }
-  // 4) 홈에서 처음 누름 → 토스트, 2초 안에 다시 누르면 종료 허용
+  // 3) 모달/오버레이 없음 — 어느 탭에 있든 더블탭 종료 패턴 (탭 자동 이동 없음)
+  // 사용자가 원치 않게 홈으로 끌려가는 문제 방지 — 현재 탭에 그대로 머무름
   const now=Date.now();
   if(_backExitConfirm && (now-_backExitConfirm)<2000){
-    // 종료 허용 — trap 안 만들면 다음 back에서 exit
-    // 즉시 exit하려면 history.back() 한번 더 호출 (이미 popstate 발동된 상태)
-    // 하지만 안전하게 그냥 두면 stack 비어 다음 액션에서 exit
+    // 2초 안에 또 누름 → trap 만들지 않고 빠져나감 (다음 popstate에서 stack 비어 exit)
     _backExitConfirm=0;
     return;
   }
@@ -5682,6 +5770,7 @@ function openAiGuide(exName,tags,warn){
   try{warn=decodeURIComponent(warn);}catch(e){}
 
   document.getElementById('ai-guide-modal').classList.add('open');
+  if(typeof _ensureBackTrap==='function')_ensureBackTrap();
   document.getElementById('ai-guide-title').textContent=exName;
   document.getElementById('ai-guide-content').innerHTML='';
 
@@ -6855,9 +6944,12 @@ async function addToRoutine(tk,si){
 // wakeLock: 모바일에서 화면 꺼짐 방지.
 // finishTimeout: 절대 종료 시각에 예약된 setTimeout (백그라운드에서도 비교적 정확)
 // audioCtx: 첫 사용자 제스처에서 생성·resume → 백그라운드 진입 후에도 재사용 (모바일에서 새로 생성하면 차단됨)
-let _timerState={name:'',total:45,current:45,running:false,interval:null,exSiEi:null,endTime:0,completed:false,wakeLock:null,finishTimeout:null};
+// scheduledOsc: Web Audio API로 미리 스케줄된 알람 oscillator 배열 (취소용)
+// silentLoop: AudioContext가 suspend되지 않게 유지하는 무음 루프
+let _timerState={name:'',total:45,current:45,running:false,interval:null,exSiEi:null,endTime:0,completed:false,wakeLock:null,finishTimeout:null,scheduledOsc:[]};
 let _audioCtx=null;
 let _notifPermAsked=false;
+let _silentLoopInt=null;
 
 // 사용자 제스처 시점에 호출 — AudioContext 언락 + 알림 권한 요청
 function _initSoundOnGesture(){
@@ -6871,6 +6963,64 @@ function _initSoundOnGesture(){
       try{Notification.requestPermission().catch(()=>{});}catch(e){}
     }
   }
+}
+
+// ── 무음 루프 — AudioContext 백그라운드에서 죽지 않게 유지 ──
+// 모바일 브라우저는 음원 재생 중인 페이지를 백그라운드에서도 살려둠 (음악 앱 원리)
+// 따라서 매우 작은 음량으로 계속 출력하면 audio context가 활성 상태 유지
+function _startSilentLoop(){
+  if(_silentLoopInt||!_audioCtx)return;
+  const playPing=()=>{
+    if(!_audioCtx)return;
+    try{
+      const osc=_audioCtx.createOscillator();
+      const gain=_audioCtx.createGain();
+      osc.connect(gain);gain.connect(_audioCtx.destination);
+      osc.frequency.value=10; // 사실상 안 들리는 저주파
+      gain.gain.value=0.0001;
+      osc.start();
+      osc.stop(_audioCtx.currentTime+1.0);
+    }catch(e){}
+  };
+  playPing();
+  _silentLoopInt=setInterval(playPing,3000);
+}
+function _stopSilentLoop(){
+  if(_silentLoopInt){clearInterval(_silentLoopInt);_silentLoopInt=null;}
+}
+
+// ── Web Audio 시간 기준으로 알람 미리 스케줄 (백그라운드에서도 정확하게 발화) ──
+// JS의 setTimeout은 mobile에서 백그라운드 시 throttle돼서 1분/5분/무한 지연될 수 있음
+// 반면 audioCtx.currentTime 기준 스케줄은 audio worker 스레드가 처리 → throttle 영향 없음
+function _scheduleAlarmAt(secondsFromNow){
+  if(!_audioCtx)return;
+  try{
+    if(_audioCtx.state==='suspended')_audioCtx.resume().catch(()=>{});
+    const baseTime=_audioCtx.currentTime+Math.max(0,secondsFromNow);
+    const beeps=[
+      {freq:880,start:0,dur:0.15},
+      {freq:880,start:0.2,dur:0.15},
+      {freq:1320,start:0.4,dur:0.5}
+    ];
+    beeps.forEach(b=>{
+      const osc=_audioCtx.createOscillator();
+      const gain=_audioCtx.createGain();
+      osc.connect(gain);gain.connect(_audioCtx.destination);
+      osc.type='sine';
+      osc.frequency.value=b.freq;
+      gain.gain.setValueAtTime(0,baseTime+b.start);
+      gain.gain.linearRampToValueAtTime(0.6,baseTime+b.start+0.02);
+      gain.gain.linearRampToValueAtTime(0,baseTime+b.start+b.dur);
+      osc.start(baseTime+b.start);
+      osc.stop(baseTime+b.start+b.dur+0.05);
+      _timerState.scheduledOsc.push(osc);
+    });
+  }catch(e){console.warn('알람 스케줄 실패',e);}
+}
+function _cancelScheduledAlarms(){
+  if(!_timerState.scheduledOsc)return;
+  _timerState.scheduledOsc.forEach(osc=>{try{osc.stop(0);osc.disconnect();}catch(e){}});
+  _timerState.scheduledOsc=[];
 }
 
 function parseTimerSec(detailStr){
@@ -6895,15 +7045,20 @@ function _releaseWakeLock(){
 
 function openTimerOverlay(name,sec,si,ei){
   clearInterval(_timerState.interval);
+  _cancelScheduledAlarms();
+  _stopSilentLoop();
   _releaseWakeLock();
-  _timerState={name,total:sec,current:sec,running:false,interval:null,exSiEi:si+'-'+ei,endTime:0,completed:false,wakeLock:null};
+  _timerState={name,total:sec,current:sec,running:false,interval:null,exSiEi:si+'-'+ei,endTime:0,completed:false,wakeLock:null,finishTimeout:null,scheduledOsc:[]};
   document.getElementById('timer-ov-name').textContent=name;
   document.getElementById('timer-overlay').classList.add('show');
+  if(typeof _ensureBackTrap==='function')_ensureBackTrap();
   ovUpdateDisplay();
 }
 function closeTimerOverlay(){
   clearInterval(_timerState.interval);
   if(_timerState.finishTimeout){clearTimeout(_timerState.finishTimeout);_timerState.finishTimeout=null;}
+  _cancelScheduledAlarms();
+  _stopSilentLoop();
   _timerState.running=false;_timerState.endTime=0;
   _releaseWakeLock();
   document.getElementById('timer-overlay').classList.remove('show');
@@ -6918,13 +7073,15 @@ function ovUpdateDisplay(){
   document.getElementById('ov-start-btn').textContent=_timerState.running?'⏸ 일시정지':'▶ 시작';
   document.getElementById('ov-start-btn').className=_timerState.running?'stop':'';
 }
-// 타이머 완료 처리 (한 번만 실행)
+// 타이머 완료 처리 (한 번만 실행) — 보통 사용자가 화면 보고 있을 때만 호출됨
+// 백그라운드에서는 미리 스케줄된 Web Audio 알람이 자동으로 울림 (_scheduleAlarmAt)
 function _timerFinish(){
   if(_timerState.completed)return;
   _timerState.completed=true;
   clearInterval(_timerState.interval);
   if(_timerState.finishTimeout){clearTimeout(_timerState.finishTimeout);_timerState.finishTimeout=null;}
   _timerState.running=false;_timerState.current=0;_timerState.endTime=0;
+  _stopSilentLoop();
   _releaseWakeLock();
   // 타이머 완료 → 운동 체크 자동
   if(_timerState.exSiEi){
@@ -6936,10 +7093,15 @@ function _timerFinish(){
       if(typeof _maybeLogMuscleFor==='function')_maybeLogMuscleFor(si,ei);
     }
   }
-  // 진동 + 알림음 (Web Audio API + OS Notification)
+  // 진동 + 알림음 + OS Notification
+  // (포그라운드 복귀 후 호출된 경우엔 이 라인이 알람 재생을 담당.
+  //  백그라운드에서 실제 종료 시각엔 _scheduleAlarmAt이 미리 스케줄한 사운드가 audio worker 스레드에서 재생됨)
   try{if(navigator.vibrate)navigator.vibrate([300,100,300,100,300]);}catch(e){}
-  playTimerAlarm();
+  // 백그라운드에서 이미 사운드 울렸을 수 있으니 — 페이지 보일 때만 다시 재생
+  if(!document.hidden)playTimerAlarm();
   _showTimerNotif();
+  // scheduledOsc는 이미 발화됐을 가능성 — 안전하게 정리
+  _cancelScheduledAlarms();
   const timeEl=document.getElementById('timer-ov-time');
   if(timeEl){
     timeEl.textContent='완료! 🎉';
@@ -6980,6 +7142,8 @@ function ovToggle(){
     // 일시정지: 남은 시간 저장 + Wake Lock 해제 + 예약된 종료 취소
     clearInterval(_timerState.interval);
     if(_timerState.finishTimeout){clearTimeout(_timerState.finishTimeout);_timerState.finishTimeout=null;}
+    _cancelScheduledAlarms();
+    _stopSilentLoop();
     const remainMs=Math.max(0,_timerState.endTime-Date.now());
     _timerState.current=Math.ceil(remainMs/1000);
     _timerState.running=false;_timerState.endTime=0;
@@ -6987,15 +7151,21 @@ function ovToggle(){
     ovUpdateDisplay();return;
   }
   if(_timerState.current<=0){ovReset();return;}
-  // 시작/재개: 절대 종료 시각 기록 + Wake Lock 획득
+  // 시작/재개
   _timerState.endTime=Date.now()+_timerState.current*1000;
   _timerState.running=true;_timerState.completed=false;
   _acquireWakeLock();
-  _timerState.interval=setInterval(_timerTick,250);
-  // ── 백그라운드에서도 알람 트리거 ──
-  // setTimeout 은 setInterval 보다 백그라운드 throttling이 약함. 추가로 OS 알림으로 보강.
+  // ── 백그라운드에서도 정확히 발화하는 3중 알람 시스템 ──
+  // (1) Web Audio 시간 기준 스케줄 (백그라운드 throttle 영향 없음 — 가장 신뢰)
+  _cancelScheduledAlarms();
+  _scheduleAlarmAt(_timerState.current);
+  // (2) 무음 루프 — audio context를 살려서 (1)의 스케줄된 사운드가 백그라운드에서도 출력되도록
+  _startSilentLoop();
+  // (3) setTimeout fallback (포그라운드일 때 _timerFinish 호출하기 위해)
   if(_timerState.finishTimeout)clearTimeout(_timerState.finishTimeout);
   _timerState.finishTimeout=setTimeout(()=>{ _timerState.finishTimeout=null; _timerFinish(); }, _timerState.current*1000);
+  // 화면 갱신 interval (포그라운드에서만 작동, 백그라운드에선 throttle돼도 무방)
+  _timerState.interval=setInterval(_timerTick,250);
   _timerTick();
 }
 // 앱/탭 포커스 복귀 시 즉시 재계산 + Wake Lock 재획득 (다른 앱 위에 있다가 돌아왔을 때 보정)
@@ -7060,6 +7230,8 @@ function _renderAlarmBeeps(ctx){
 function ovReset(){
   clearInterval(_timerState.interval);
   if(_timerState.finishTimeout){clearTimeout(_timerState.finishTimeout);_timerState.finishTimeout=null;}
+  _cancelScheduledAlarms();
+  _stopSilentLoop();
   _timerState.running=false;_timerState.endTime=0;_timerState.completed=false;_timerState.current=_timerState.total;
   _releaseWakeLock();
   ovUpdateDisplay();
@@ -7067,8 +7239,14 @@ function ovReset(){
 function ovAdjTime(delta){
   _timerState.current=Math.max(5,_timerState.current+delta);
   if(!_timerState.running)_timerState.total=_timerState.current;
-  // 동작 중이면 종료 시각도 같이 보정
-  if(_timerState.running)_timerState.endTime=Date.now()+_timerState.current*1000;
+  // 동작 중이면 종료 시각 + 알람 + setTimeout 모두 재스케줄
+  if(_timerState.running){
+    _timerState.endTime=Date.now()+_timerState.current*1000;
+    _cancelScheduledAlarms();
+    _scheduleAlarmAt(_timerState.current);
+    if(_timerState.finishTimeout)clearTimeout(_timerState.finishTimeout);
+    _timerState.finishTimeout=setTimeout(()=>{_timerState.finishTimeout=null;_timerFinish();},_timerState.current*1000);
+  }
   ovUpdateDisplay();
 }</script>
 </body>
