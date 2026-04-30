@@ -918,6 +918,29 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="today-meta" id="today-meta"></div>
     <div id="missed-banner" style="display:none;background:#f0a5000d;border:1px solid #f0a50033;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;line-height:1.8;"></div>
     <div id="makeup-banner" style="display:none;background:#4a9eff0d;border:1px solid #4a9eff55;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--blue);font-weight:500;"></div>
+    <!-- 스마트 루틴 생성기 상단 -->
+    <div style="margin-bottom:12px;">
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
+        <div style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:8px;">
+          <span style="font-size:12px;color:var(--muted);white-space:nowrap;">⏱ 운동 시간</span>
+          <select id="workout-time-sel" onchange="updateTimeLabel()"
+            style="flex:1;background:none;border:none;color:var(--text);font-size:14px;font-weight:700;font-family:var(--mono);cursor:pointer;outline:none;">
+            <option value="20">20분</option>
+            <option value="30">30분</option>
+            <option value="40">40분</option>
+            <option value="45">45분</option>
+            <option value="60" selected>60분</option>
+            <option value="75">75분</option>
+            <option value="90">90분</option>
+            <option value="120">120분</option>
+          </select>
+        </div>
+        <button class="smart-btn" style="flex:2;margin-bottom:0;padding:10px 14px;" onclick="openSmartModal()">
+          🎯 스마트 루틴 생성기
+        </button>
+      </div>
+      <div id="time-plan-bar" style="font-size:11px;color:var(--muted);padding:5px 10px;background:var(--surface2);border-radius:6px;display:none;"></div>
+    </div>
     <div class="today-title" id="today-title">오늘의 루틴</div>
     <div class="today-type" id="today-type"></div>
     <div class="day-sel" id="day-sel"></div>
@@ -926,13 +949,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
     </div>
     <div id="routine-content"></div>
-    <!-- 스마트 루틴 생성 버튼 -->
-    <div id="smart-btn-wrap" style="padding:0 0 10px;">
-      <button class="smart-btn" onclick="openSmartModal()">
-        🎯 스마트 루틴 생성기
-        <span style="font-size:11px;opacity:.8;">· 운동검색 · 자동추천 · 이전기록 적용</span>
-      </button>
-    </div>
     <div class="bottom-bar" id="bottom-bar" style="display:none;">
       <div class="cond-row">
         <span class="cond-lbl">컨디션</span>
@@ -1101,6 +1117,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
       <!-- 계산 결과 -->
       <div id="body-calc-result" style="background:var(--surface2);border-radius:10px;padding:12px;font-size:12px;line-height:2;"></div>
+    </div>
+    <!-- 요일별 루틴 비교 + 추천 -->
+    <div class="level-card">
+      <div class="level-card-title">
+        <span>📅 요일별 루틴 비교 · 추천</span>
+        <button onclick="renderRoutineCompare()" style="padding:4px 10px;border-radius:6px;border:none;background:var(--surface2);color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font);">🔄 새로고침</button>
+      </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">각 요일 루틴의 특징과 현재 목표 대비 추천도를 보여드려요</div>
+      <div id="routine-compare-panel"></div>
     </div>
     <!-- 운동 분류 + 목적 선택 -->
     <div class="level-card">
@@ -2198,6 +2223,35 @@ const MUSCLE_EMOJI = {
 };
 const CAT_ORDER = ['가슴','등','어깨','팔','하체','둔근','복근','유산소','재활','스트레칭'];
 
+
+// ── 운동 시간 선택 ──
+function updateTimeLabel(){
+  const min = parseInt(document.getElementById('workout-time-sel')?.value || 60);
+  const bar = document.getElementById('time-plan-bar');
+  if(!bar) return;
+
+  // 시간별 구성 가이드
+  let plan = '';
+  if(min <= 20){
+    plan = '⚡ 초단시간 · 워밍업 3분 + 핵심운동 2~3가지 + 스트레칭 2분';
+  } else if(min <= 30){
+    plan = '🏃 빠른 운동 · 워밍업 5분 + 메인 3~4가지 + 스트레칭 5분';
+  } else if(min <= 45){
+    plan = '💪 표준 · 워밍업 5분 + 메인 5~6가지 + 유산소 10분 + 스트레칭 5분';
+  } else if(min <= 60){
+    plan = '🔥 풀세션 · 워밍업 10분 + 메인 6~8가지 + 유산소 15분 + 스트레칭 10분';
+  } else if(min <= 90){
+    plan = '💯 강화훈련 · 워밍업 10분 + 메인 8~10가지 + 유산소 20분 + 스트레칭 15분';
+  } else {
+    plan = '👑 마스터급 · 워밍업 15분 + 메인 10~12가지 + 유산소 30분 + 스트레칭 20분';
+  }
+  bar.textContent = plan;
+  bar.style.display = 'block';
+}
+
+function getWorkoutMinutes(){
+  return parseInt(document.getElementById('workout-time-sel')?.value || 60);
+}
 function openSmartModal(){
   smartSelected = [];
   smartTab = 'auto';
@@ -2261,7 +2315,9 @@ function renderSmartAuto(){
     const notRecent = exsInCat.filter(e=>!recentExNames.has(e.n));
     const pool = notRecent.length>=2 ? notRecent : exsInCat;
     const shuffled = [...pool].sort(()=>Math.random()-.5);
-    const count = muscleWeights[cat]>=3 ? 3 : muscleWeights[cat]>=2 ? 2 : 1;
+    const min = getWorkoutMinutes();
+    const maxPerCat = min<=20 ? 1 : min<=40 ? 2 : min<=60 ? 3 : 4;
+    const count = Math.min(maxPerCat, muscleWeights[cat]>=3 ? 3 : muscleWeights[cat]>=2 ? 2 : 1);
 
     shuffled.slice(0, count).forEach(ex=>{
       const sets = Math.max(2, Math.round((ex.sets||3) * (lv.setMult||1.0)));
@@ -2281,14 +2337,14 @@ function renderSmartAuto(){
   // 결과 렌더
   const mainGoal = goals[0] || '균형 운동';
   const totalSets = todayExs.reduce((s,e)=>s+(e.sets||0),0);
+  const planMin = getWorkoutMinutes();
 
   let html = `
   <div style="background:linear-gradient(135deg,#6366f110,#8b5cf610);border:1px solid #6366f130;border-radius:10px;padding:12px;margin-bottom:14px;">
     <div style="font-size:12px;font-weight:700;color:#8b5cf6;margin-bottom:4px;">🤖 AI 추천 루틴</div>
     <div style="font-size:11px;color:var(--muted);line-height:1.8;">
-      목표: <strong style="color:var(--text);">${mainGoal}</strong> · 
-      레벨: <strong style="color:var(--text);">${LEVEL_INFO?.[level]?.label||'중급'}</strong> · 
-      총 ${totalSets}세트<br>
+      목표: <strong style="color:var(--text);">${mainGoal}</strong> · 레벨: <strong style="color:var(--text);">${LEVEL_INFO?.[level]?.label||'중급'}</strong><br>
+      ⏱ ${planMin}분 플랜 · 총 ${todayExs.length}가지 운동 · ${totalSets}세트<br>
       ${recentExNames.size>0?'최근 한 운동은 제외하고 새로운 운동 위주로 구성했어요':''}
     </div>
   </div>`;
@@ -4864,6 +4920,125 @@ const CARDIO_PROGRAMS = [
 
 let selectedCardioKey = localStorage.getItem('fitlog-cardio') || 'walk_easy';
 
+
+// ── 요일별 루틴 비교 + 추천 ──
+function renderRoutineCompare(){
+  const panel = document.getElementById('routine-compare-panel');
+  if(!panel) return;
+
+  const goals   = userProfile?.goals || [];
+  const level   = curLevel || 3;
+  const gender  = userProfile?.gender || 'male';
+  const age     = parseInt(userProfile?.age || 40);
+  const DAY_NAMES = ['일','월','화','수','목','금','토'];
+
+  // 목표별 추천 근육그룹
+  const goalMuscles = [];
+  if(goals.some(g=>g.includes('감량')||g.includes('다이어트'))) goalMuscles.push('심폐','유산소');
+  if(goals.some(g=>g.includes('근력')||g.includes('근육'))) goalMuscles.push('대흉근','광배근','대퇴사두근');
+  if(goals.some(g=>g.includes('하체')||g.includes('둔근'))) goalMuscles.push('대둔근','중둔근','대퇴사두근');
+  if(goals.some(g=>g.includes('복근'))) goalMuscles.push('복직근','복사근');
+  if(gender==='female') goalMuscles.push('대둔근','중둔근');
+  if(age>=50) goalMuscles.push('심폐','균형');
+
+  // 이번 주 운동 기록
+  const weekRecords = {};
+  for(let i=0;i<7;i++){
+    const date = getDateForDow(i);
+    const rec  = (records||[]).find(r=>r.date===date);
+    weekRecords[i] = rec ? true : false;
+  }
+
+  // 각 루틴 분석
+  const routineInfos = [];
+  for(let dow=0;dow<7;dow++){
+    const tk = DAY_SCHED[dow];
+    if(tk==='REST'){ routineInfos.push({dow, tk:'REST', label:DAY_NAMES[dow], title:'휴식', muscles:[], score:0, done:false}); continue; }
+    const rt = RT[tk];
+    if(!rt){ routineInfos.push({dow, tk, label:DAY_NAMES[dow], title:'?', muscles:[], score:0, done:false}); continue; }
+
+    // 루틴이 목표와 얼마나 맞는지 점수
+    const rtMuscles = rt.muscles || [];
+    let score = 0;
+    goalMuscles.forEach(gm=>{ if(rtMuscles.some(m=>m.includes(gm)||gm.includes(m))) score++; });
+
+    // 운동 수, 세트 수
+    const totalExs  = rt.sections.reduce((s,sec)=>s+sec.exs.length, 0);
+    const totalSets = rt.sections.reduce((s,sec)=>s+sec.exs.reduce((ss,ex)=>ss+(ex.sets||0),0), 0);
+
+    routineInfos.push({
+      dow, tk, label:DAY_NAMES[dow], title:rt.title,
+      muscles:rtMuscles, score,
+      totalExs, totalSets,
+      done: weekRecords[dow],
+      sections: rt.sections.map(s=>s.n),
+      isToday: dow === new Date().getDay(),
+    });
+  }
+
+  // 점수 최고 루틴 찾기
+  const maxScore = Math.max(...routineInfos.map(r=>r.score));
+  const COLORS = {A:'#e8533a',B:'#4a9eff',C:'#9b7fe8',D:'#4caf50',E:'#f0a500',F:'#06b6d4'};
+
+  panel.innerHTML = routineInfos.map(info=>{
+    if(info.tk==='REST'){
+      return `<div style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:10px;background:var(--surface2);border:1px solid var(--border);margin-bottom:8px;opacity:.6;">
+        <div style="width:36px;height:36px;border-radius:50%;background:var(--border);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;">😴</div>
+        <div style="flex:1;"><div style="font-size:13px;font-weight:700;">${info.label}요일 · 휴식일</div></div>
+        <div style="font-size:11px;color:var(--muted);">회복의 날</div>
+      </div>`;
+    }
+
+    const isRecommended = info.score === maxScore && maxScore > 0;
+    const color = COLORS[info.tk] || 'var(--green)';
+    const pct = maxScore>0 ? Math.round(info.score/maxScore*100) : 50;
+
+    return `<div style="padding:12px;border-radius:12px;border:2px solid ${isRecommended?color:'var(--border)'};background:${isRecommended?color+'10':'var(--surface2)'};margin-bottom:8px;${info.isToday?'box-shadow:0 0 0 1px var(--accent);':''}">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+        <div style="width:36px;height:36px;border-radius:50%;background:${color};display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:900;flex-shrink:0;">${info.tk}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap;">
+            <span style="font-size:13px;font-weight:700;">${info.label}요일</span>
+            ${info.isToday?'<span style="font-size:10px;padding:1px 7px;border-radius:10px;background:var(--accent);color:#fff;">오늘</span>':''}
+            ${info.done?'<span style="font-size:10px;padding:1px 7px;border-radius:10px;background:#4caf7d20;color:var(--green);border:1px solid #4caf7d44;">✅ 완료</span>':''}
+            ${isRecommended?'<span style="font-size:10px;padding:1px 7px;border-radius:10px;background:'+color+'20;color:'+color+';border:1px solid '+color+'44;">⭐ 목표 추천</span>':''}
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${info.title}</div>
+        </div>
+        <div style="text-align:right;flex-shrink:0;">
+          <div style="font-size:14px;font-weight:900;color:${color};font-family:var(--mono);">${pct}%</div>
+          <div style="font-size:9px;color:var(--muted);">목표 일치</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+        ${info.muscles.map(m=>`<span style="font-size:10px;padding:2px 7px;border-radius:5px;background:${color}15;border:1px solid ${color}30;color:${color};">${m}</span>`).join('')}
+      </div>
+      <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:6px;">
+        ${(info.sections||[]).map(s=>`<span style="font-size:10px;padding:1px 6px;border-radius:4px;background:var(--surface);border:1px solid var(--border);color:var(--muted);">${s}</span>`).join('')}
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:var(--mono);">
+        <span>운동 ${info.totalExs||0}가지</span>
+        <span>총 ${info.totalSets||0}세트</span>
+        <button onclick="jumpToDay(${info.dow})" style="padding:3px 10px;border-radius:5px;border:1px solid ${color}44;background:${color}10;color:${color};font-size:10px;cursor:pointer;font-family:var(--font);">이 루틴 보기 →</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function jumpToDay(dow){
+  selDay = dow;
+  initSetData(DAY_SCHED[dow]);
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-workout').classList.add('active');
+  // 운동 탭 버튼 찾아 active
+  document.querySelectorAll('.nav-tab').forEach(b=>{
+    if(b.getAttribute('onclick')?.includes("'workout'")) b.classList.add('active');
+  });
+  renderWorkout();
+  showToast(`📅 ${['일','월','화','수','목','금','토'][dow]}요일 루틴으로 이동했어요`,'info');
+}
+
 function initCardioSettings(){
   renderCardioProgramList();
   renderCardioDetail();
@@ -5154,6 +5329,7 @@ function initSettingsTab(){
   initBodyInfo();
   initClassSettings();
   initCardioSettings();
+  renderRoutineCompare();
   // 레벨 버튼 상태 복원
   document.querySelectorAll('.level-step').forEach((b,i)=>{
     b.classList.toggle('active',i+1===curLevel);
