@@ -2282,146 +2282,244 @@ function switchSmartTab(tab, btn){
 // ── 탭 1: 자동 생성 ──
 function renderSmartAuto(){
   const body = document.getElementById('smart-modal-body');
-  const level  = curLevel || 1;
-  const goals  = userProfile?.goals || [];
-  const gender = userProfile?.gender || 'male';
-  const age    = parseInt(userProfile?.age || 40);
-  const lv = LEVEL_INFO?.[level] || {setMult:1.0};
+  const planMin   = getWorkoutMinutes();
+  const level     = curLevel || 3;
+  const goals     = userProfile?.goals || [];
+  const gender    = userProfile?.gender || 'male';
+  const age       = parseInt(userProfile?.age || 40);
+  const lv        = LEVEL_INFO?.[level] || {setMult:1.0, label:'중급'};
 
-  // 목표 기반 부위 가중치
-  let muscleWeights = {가슴:2,등:2,어깨:1,팔:1,하체:2,둔근:2,복근:1,유산소:1};
-  if(goals.some(g=>g.includes('하체')||g.includes('둔근'))){ muscleWeights.하체=4; muscleWeights.둔근=4; }
-  if(goals.some(g=>g.includes('근력')||g.includes('근육'))){ muscleWeights.가슴=3; muscleWeights.등=3; }
-  if(goals.some(g=>g.includes('감량')||g.includes('다이어트'))){ muscleWeights.유산소=4; }
-  if(goals.some(g=>g.includes('복근'))){ muscleWeights.복근=4; }
-  if(gender==='female'){ muscleWeights.둔근+=2; muscleWeights.하체+=1; }
-  if(age>=50){ muscleWeights.재활=2; muscleWeights.유산소+=2; }
+  // ── 1. 시간별 플랜 파라미터 ──
+  let maxExs, setsPerEx, warmSec, coolSec, cardioSec;
+  if(planMin<=20){      maxExs=4;  setsPerEx=2; warmSec=3;  coolSec=2;  cardioSec=0;  }
+  else if(planMin<=30){ maxExs=6;  setsPerEx=2; warmSec=5;  coolSec=3;  cardioSec=0;  }
+  else if(planMin<=45){ maxExs=8;  setsPerEx=3; warmSec=5;  coolSec=5;  cardioSec=5;  }
+  else if(planMin<=60){ maxExs=10; setsPerEx=3; warmSec=8;  coolSec=7;  cardioSec=10; }
+  else if(planMin<=90){ maxExs=13; setsPerEx=4; warmSec=10; coolSec=8;  cardioSec=15; }
+  else{                 maxExs=16; setsPerEx=5; warmSec=12; coolSec=10; cardioSec=20; }
 
-  // 이전 기록에서 사용한 운동 파악 (최근 3회)
-  const recentExNames = new Set(
-    (records||[]).slice(0,3).flatMap(r=>
-      (r.sections||[]).flatMap(s=>s.exs||[]).map(e=>e.n)
-    )
-  );
-
-  // 시간별 총 운동 수 + 구성 계획
-  const planMin = getWorkoutMinutes();
-
-  // 시간별 최대 운동 수 & 세트 수 제한
-  let maxTotalExs, maxSetsPerEx, warmupMin, cooldownMin, cardioMin;
-  if(planMin <= 20){
-    maxTotalExs=4;  maxSetsPerEx=2; warmupMin=3;  cooldownMin=2;  cardioMin=0;
-  } else if(planMin <= 30){
-    maxTotalExs=6;  maxSetsPerEx=3; warmupMin=5;  cooldownMin=3;  cardioMin=0;
-  } else if(planMin <= 45){
-    maxTotalExs=8;  maxSetsPerEx=3; warmupMin=5;  cooldownMin=5;  cardioMin=5;
-  } else if(planMin <= 60){
-    maxTotalExs=10; maxSetsPerEx=4; warmupMin=10; cooldownMin=5;  cardioMin=10;
-  } else if(planMin <= 90){
-    maxTotalExs=14; maxSetsPerEx=4; warmupMin=10; cooldownMin=10; cardioMin=15;
-  } else {
-    maxTotalExs=18; maxSetsPerEx=5; warmupMin=15; cooldownMin=10; cardioMin=20;
-  }
-
-  // 운동별 평균 소요 시간 (분): 세트당 2분 + 운동간 이동 0.5분
-  const availMin = planMin - warmupMin - cooldownMin - cardioMin;
-
-  // 부위별 운동 선택
-  const todayExs = [];
-  const sortedMuscles = Object.entries(muscleWeights)
-    .sort((a,b)=>b[1]-a[1])
-    .map(e=>e[0]);
-
-  sortedMuscles.forEach(cat=>{
-    if(cat==='재활'||cat==='스트레칭') return;
-    if(todayExs.length >= maxTotalExs - 1) return; // 마무리 위해 1자리 남김
-
-    const exsInCat = EX_LIB.filter(e=>e.cat===cat);
-    if(!exsInCat.length) return;
-
-    const notRecent = exsInCat.filter(e=>!recentExNames.has(e.n));
-    const pool = notRecent.length>=2 ? notRecent : exsInCat;
-    const shuffled = [...pool].sort(()=>Math.random()-.5);
-
-    // 남은 슬롯에 맞게 count 계산
-    const remaining = maxTotalExs - 1 - todayExs.length;
-    const preferred = muscleWeights[cat]>=3 ? 3 : muscleWeights[cat]>=2 ? 2 : 1;
-    const count = Math.min(remaining, preferred);
-    if(count <= 0) return;
-
-    shuffled.slice(0, count).forEach(ex=>{
-      // 운동 예상 시간 체크
-      const estSets = Math.min(maxSetsPerEx, Math.max(2, Math.round((ex.sets||3)*(lv.setMult||1.0))));
-      const sets = estSets;
-      todayExs.push({
-        ex, cat, sets,
-        isRecent: recentExNames.has(ex.n),
-        prevWeight: getPrevWeight(ex.n)
+  // ── 2. 근육 피로도 계산 (Fitbod 핵심) ──
+  // 최근 7일 기록에서 각 근육의 마지막 운동일 파악
+  const muscleLastDay = {}; // {근육명: 경과일}
+  const today = new Date();
+  (records||[]).slice(0,14).forEach(rec=>{
+    const daysAgo = Math.round((today - new Date(rec.date)) / 86400000);
+    (rec.sets||[]).forEach(s=>{
+      // 운동명으로 근육 태그 역추적
+      const ex = EX_LIB.find(e=>e.n===s.ex);
+      if(!ex) return;
+      (ex.tags||[]).forEach(tag=>{
+        if(!muscleLastDay[tag] || muscleLastDay[tag] > daysAgo){
+          muscleLastDay[tag] = daysAgo;
+        }
       });
     });
   });
 
-  // 마무리 스트레칭 1개 항상 추가
-  const stretch = EX_LIB.filter(e=>e.cat==='스트레칭').sort(()=>Math.random()-.5)[0];
-  if(stretch) todayExs.push({ex:stretch, cat:'스트레칭', sets:0});
+  // 근육별 회복도 0~100% (48시간 완전회복 기준)
+  function getMuscleRecovery(tags){
+    let minDays = Infinity;
+    (tags||[]).forEach(tag=>{
+      if(muscleLastDay[tag] !== undefined){
+        minDays = Math.min(minDays, muscleLastDay[tag]);
+      }
+    });
+    if(minDays === Infinity) return 100; // 기록 없음 = 완전 회복
+    if(minDays === 0) return 10;         // 오늘 함 = 거의 못 함
+    if(minDays === 1) return 50;         // 어제 = 절반 회복
+    if(minDays === 2) return 80;         // 이틀 전 = 거의 회복
+    return 100;                          // 3일+ = 완전 회복
+  }
 
-  // 예상 소요 시간 계산
-  const estTime = warmupMin + cooldownMin + cardioMin +
-    todayExs.reduce((s,e)=>s+(e.sets||0)*2.5+0.5, 0);
+  // ── 3. 목표·성별·나이별 근육 우선순위 ──
+  const priority = {
+    가슴:50, 등:50, 어깨:40, 팔:30, 하체:50,
+    둔근:50, 복근:30, 유산소:20, 재활:10, 스트레칭:5
+  };
 
-  // 결과 렌더
-  const mainGoal = goals[0] || '균형 운동';
-  const totalSets = todayExs.reduce((s,e)=>s+(e.sets||0),0);
+  // 목표 반영
+  if(goals.some(g=>g.includes('감량')||g.includes('다이어트'))){
+    priority.유산소+=40; priority.하체+=20; priority.복근+=10;
+  }
+  if(goals.some(g=>g.includes('근력')||g.includes('근육'))){
+    priority.가슴+=30; priority.등+=30; priority.하체+=20;
+  }
+  if(goals.some(g=>g.includes('하체')||g.includes('둔근'))){
+    priority.하체+=40; priority.둔근+=40;
+  }
+  if(goals.some(g=>g.includes('복근'))){ priority.복근+=40; }
+  if(goals.some(g=>g.includes('재활')||g.includes('회복'))){ priority.재활+=30; }
 
+  // 성별 반영
+  if(gender==='female'){ priority.둔근+=25; priority.하체+=15; priority.가슴-=10; }
+
+  // 나이 반영
+  if(age>=50){ priority.재활+=20; priority.유산소+=15; priority.하체+=10; }
+  if(age>=60){ priority.스트레칭+=20; priority.재활+=20; }
+
+  // ── 4. 부위별 운동 선택 (피로도 × 우선순위) ──
+  const CAT_LIST = Object.keys(priority).sort((a,b)=>priority[b]-priority[a]);
+  const selected = [];
+  const usedNames = new Set();
+
+  CAT_LIST.forEach(cat=>{
+    if(selected.length >= maxExs-1) return; // 마무리용 1자리 남김
+    if(cat==='스트레칭') return; // 마무리로 별도 추가
+
+    const pool = EX_LIB.filter(e=>e.cat===cat && !usedNames.has(e.n));
+    if(!pool.length) return;
+
+    // 각 운동별 점수: 회복도 × 우선순위 + 다양성 보너스
+    const scored = pool.map(ex=>{
+      const recovery = getMuscleRecovery(ex.tags||[]);
+      const isNew = !(records||[]).slice(0,5).some(r=>
+        (r.sets||[]).some(s=>s.ex===ex.n)
+      );
+      const newBonus = isNew ? 15 : 0;
+      return { ex, score: recovery * (priority[cat]/100) + newBonus + Math.random()*10 };
+    }).sort((a,b)=>b.score-a.score);
+
+    // 카테고리별 할당 수
+    const maxPerCat = priority[cat]>=80?3 : priority[cat]>=60?2 : 1;
+    const remaining = maxExs-1-selected.length;
+    const take = Math.min(maxPerCat, remaining);
+
+    scored.slice(0, take).forEach(({ex, score})=>{
+      const baseSets = ex.sets||3;
+      const adjSets  = Math.min(setsPerEx, Math.max(2, Math.round(baseSets*(lv.setMult||1.0))));
+      const recovery = getMuscleRecovery(ex.tags||[]);
+      const prevW    = getPrevWeight(ex.n);
+
+      // 이전 기록 기반 자동 증량 계산
+      let suggestWeight = '';
+      if(prevW){
+        const match = prevW.match(/([\d.]+)kg/);
+        if(match){
+          const prev = parseFloat(match[1]);
+          const inc  = prev<20?0.5:prev<40?1:prev<60?2.5:5;
+          suggestWeight = `${(prev+inc).toFixed(1)}kg (+${inc}kg 증량 제안)`;
+        }
+      }
+
+      selected.push({
+        ex, cat, sets:adjSets,
+        recovery: Math.round(recovery),
+        prevWeight: prevW,
+        suggestWeight,
+        isNew: !records?.slice(0,5).some(r=>(r.sets||[]).some(s=>s.ex===ex.n))
+      });
+      usedNames.add(ex.n);
+    });
+  });
+
+  // 마무리 스트레칭
+  const stretch = EX_LIB.filter(e=>e.cat==='스트레칭'&&!usedNames.has(e.n))
+    .sort(()=>Math.random()-.5)[0];
+  if(stretch) selected.push({ex:stretch, cat:'스트레칭', sets:0, recovery:100, isNew:true});
+
+  // ── 5. 예상 시간 계산 ──
+  const mainSec = selected.reduce((s,e)=>{
+    if(e.sets===0) return s + 3; // 스트레칭 3분
+    return s + e.sets * 2.5 + 1; // 세트당 2.5분 + 이동 1분
+  }, 0);
+  const totalMin = warmSec + mainSec + coolSec + (cardioSec>0?cardioSec:0);
+
+  // ── 6. 렌더링 ──
+  const mainGoal = goals[0]||'균형 운동';
+  const totalSets = selected.reduce((s,e)=>s+(e.sets||0),0);
+  const hasCardio = cardioSec>0 && goals.some(g=>g.includes('감량')||g.includes('유산소')||g.includes('다이어트'));
+
+  // 요약 카드
   let html = `
-  <div style="background:linear-gradient(135deg,#6366f110,#8b5cf610);border:1px solid #6366f130;border-radius:10px;padding:12px;margin-bottom:14px;">
-    <div style="font-size:12px;font-weight:700;color:#8b5cf6;margin-bottom:4px;">🤖 AI 추천 루틴</div>
-    <div style="font-size:11px;color:var(--muted);line-height:1.8;">
-      목표: <strong style="color:var(--text);">${mainGoal}</strong> · 레벨: <strong style="color:var(--text);">${LEVEL_INFO?.[level]?.label||'중급'}</strong><br>
-      ⏱ ${planMin}분 플랜 · 총 ${todayExs.length}가지 운동 · ${totalSets}세트 · 예상 ${Math.round(estTime)}분<br>
-      ${recentExNames.size>0?'최근 한 운동은 제외하고 새로운 운동 위주로 구성했어요':''}
+  <div style="background:linear-gradient(135deg,#6366f115,#06b6d415);border:1px solid #6366f130;border-radius:12px;padding:14px;margin-bottom:16px;">
+    <div style="font-size:12px;font-weight:700;color:#8b5cf6;margin-bottom:8px;">🤖 AI 맞춤 루틴 분석</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
+      <div style="background:rgba(255,255,255,.05);border-radius:8px;padding:8px;text-align:center;">
+        <div style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--green);">${selected.length}</div>
+        <div style="font-size:9px;color:var(--muted);">운동 수</div>
+      </div>
+      <div style="background:rgba(255,255,255,.05);border-radius:8px;padding:8px;text-align:center;">
+        <div style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--accent2);">${totalSets}</div>
+        <div style="font-size:9px;color:var(--muted);">총 세트</div>
+      </div>
+      <div style="background:rgba(255,255,255,.05);border-radius:8px;padding:8px;text-align:center;">
+        <div style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--accent);">~${Math.round(totalMin)}</div>
+        <div style="font-size:9px;color:var(--muted);">예상 분</div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);line-height:1.9;">
+      🎯 <strong style="color:var(--text);">${mainGoal}</strong> · 
+      ${lv.label||'중급'} · ${gender==='female'?'여성':'남성'} ${age}세<br>
+      💪 근육 회복도 기반 최적 배분 · 이전 기록 자동 반영
+      ${hasCardio?'<br>🏃 유산소 '+cardioSec+'분 포함':''}
     </div>
   </div>`;
 
-  // 부위별 그룹핑
+  // 근육 피로도 표시
+  const activeMuscles = [...new Set(selected.flatMap(s=>s.ex.tags||[]).slice(0,8))];
+  if(Object.keys(muscleLastDay).length>0){
+    html += `<div style="background:var(--surface2);border-radius:10px;padding:10px 12px;margin-bottom:12px;">
+      <div style="font-size:10px;color:var(--muted);margin-bottom:7px;">💪 주요 근육 회복 상태</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap;">`;
+    activeMuscles.forEach(muscle=>{
+      const days = muscleLastDay[muscle];
+      const recov = days===undefined?100:days===0?10:days===1?50:days===2?80:100;
+      const col = recov>=80?'var(--green)':recov>=50?'var(--accent2)':'var(--accent)';
+      const label = recov>=80?'회복됨':recov>=50?'회복중':'피로';
+      html += `<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${col}18;border:1px solid ${col}33;color:${col};">${muscle} ${recov}%</span>`;
+    });
+    html += `</div></div>`;
+  }
+
+  // 운동 목록
   const grouped = {};
-  todayExs.forEach(item=>{
+  selected.forEach(item=>{
     if(!grouped[item.cat]) grouped[item.cat]=[];
     grouped[item.cat].push(item);
   });
 
-  CAT_ORDER.forEach(cat=>{
-    if(!grouped[cat]) return;
-    html += `<div class="smart-section-lbl">${MUSCLE_EMOJI[cat]||''} ${cat}</div>`;
-    grouped[cat].forEach((item,i)=>{
-      const {ex, sets, isRecent, prevWeight} = item;
+  const CAT_EMOJI = {가슴:'💪',등:'🔙',어깨:'🏋️',팔:'💪',하체:'🦵',둔근:'🍑',복근:'🎯',유산소:'🏃',재활:'🏥',스트레칭:'🧘'};
+
+  Object.entries(grouped).forEach(([cat,items])=>{
+    html += `<div style="font-size:10px;font-family:var(--mono);color:var(--muted);letter-spacing:.08em;margin:10px 0 6px;padding-top:6px;border-top:1px solid var(--border);">${CAT_EMOJI[cat]||'💪'} ${cat.toUpperCase()}</div>`;
+    items.forEach((item,i)=>{
+      const {ex,sets,recovery,prevWeight,suggestWeight,isNew} = item;
       const isSelected = smartSelected.some(s=>s.ex.n===ex.n);
-      const warnHtml = (ex.w||[]).map(w=>`<span class="smart-ex-warn">⚠️${w}</span>`).join('');
-      html += `
-      <div class="smart-ex-item${isSelected?' selected':''}" onclick="toggleSmartEx(${JSON.stringify(JSON.stringify(item))})">
-        <div class="smart-ex-icon">${MUSCLE_EMOJI[cat]||'💪'}</div>
-        <div class="smart-ex-info">
-          <div class="smart-ex-name">${ex.n}${isRecent?'':' <span style="font-size:9px;color:var(--green);background:#4caf7d15;padding:1px 5px;border-radius:4px;">NEW</span>'}</div>
-          <div class="smart-ex-detail">${ex.d}</div>
-          <div class="smart-ex-tags">
-            ${(ex.tags||[]).map(t=>`<span class="smart-ex-tag">${t}</span>`).join('')}
+      const recovCol = recovery>=80?'var(--green)':recovery>=50?'var(--accent2)':'var(--accent)';
+      const warnHtml = (ex.w||[]).map(w=>`<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:#e8533a10;border:1px solid #e8533a30;color:var(--accent);">⚠️${w}</span>`).join('');
+
+      html += `<div class="smart-ex-item${isSelected?' selected':''}" 
+        onclick="toggleSmartSearch(${JSON.stringify(JSON.stringify({ex,cat,sets}))})"
+        style="position:relative;overflow:hidden;">
+        <div style="position:absolute;top:0;left:0;width:3px;height:100%;background:${recovCol};border-radius:3px 0 0 3px;"></div>
+        <div style="padding-left:8px;flex:1;min-width:0;">
+          <div style="display:flex;align-items:center;gap:6px;margin-bottom:3px;flex-wrap:wrap;">
+            <span style="font-size:13px;font-weight:700;">${ex.n}</span>
+            ${isNew?'<span style="font-size:9px;padding:1px 6px;border-radius:10px;background:#4caf7d20;border:1px solid #4caf7d44;color:var(--green);">✨NEW</span>':''}
+            <span style="font-size:9px;padding:1px 6px;border-radius:10px;background:${recovCol}15;border:1px solid ${recovCol}33;color:${recovCol};">회복 ${recovery}%</span>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">${ex.d}</div>
+          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+            ${(ex.tags||[]).map(t=>`<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:var(--surface);border:1px solid var(--border);color:var(--muted);">${t}</span>`).join('')}
             ${warnHtml}
           </div>
-          ${prevWeight?`<div style="font-size:10px;color:var(--blue);margin-top:3px;">📊 이전 기록: ${prevWeight}</div>`:''}
+          ${prevWeight?`<div style="font-size:10px;color:var(--blue);margin-top:4px;">📊 이전: ${prevWeight}</div>`:''}
+          ${suggestWeight?`<div style="font-size:10px;color:var(--green);margin-top:2px;">📈 권장: ${suggestWeight}</div>`:''}
         </div>
-        <div class="smart-ex-right">
-          <div class="smart-ex-sets">${sets>0?sets+'세트':'-'}</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px;">${isSelected?'✅ 선택됨':'탭하여 선택'}</div>
+        <div style="flex-shrink:0;text-align:right;padding-left:8px;">
+          <div style="font-size:14px;font-weight:900;color:${isSelected?'var(--green)':'var(--muted)'};font-family:var(--mono);">${sets>0?sets+'세트':'—'}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:2px;">${isSelected?'✅':''}</div>
         </div>
       </div>`;
     });
   });
 
-  // 자동으로 전체 선택
-  smartSelected = todayExs.map(item=>({...item}));
+  // 전체 자동 선택
+  smartSelected = selected.map(item=>({...item}));
   body.innerHTML = html;
   updateSmartSelCount();
 }
+
 
 function getPrevWeight(exName){
   for(const rec of (records||[]).slice(0,5)){
@@ -2667,7 +2765,12 @@ async function doSaveRecord(){
   const exDone=document.querySelectorAll('.ex-chk.done').length;
   const exTotal=document.querySelectorAll('.ex-chk').length;
   const memo=document.getElementById('memo-inp').value;
-  const rec={id:Date.now(),date:ds,type:tk,exDone,exTotal,sets:allSets,cond:selCond,memo,phase:'phase2'};
+  // 운동한 근육 태그 추출 (피로도 추적)
+  const musclesDone = [...new Set(allSets.flatMap(s=>{
+    const ex=EX_LIB.find(e=>e.n===s.ex);
+    return ex?(ex.tags||[]):[];
+  }))];
+  const rec={id:Date.now(),date:ds,type:tk,exDone,exTotal,sets:allSets,muscles:musclesDone,cond:selCond,memo,phase:'phase2'};
 
   const btn=document.getElementById('save-btn');btn.disabled=true;btn.textContent='저장 중...';
   document.getElementById('sync-dot').classList.add('syncing');
