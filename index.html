@@ -1327,7 +1327,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="smart-modal-hdr">
       <div class="smart-modal-title">
         <span>🎯 스마트 루틴 생성기</span>
-        <button class="modal-close" onclick="closeSmartModal()">✕</button>
+        <div style="display:flex;align-items:center;gap:8px;">
+          <span id="smart-time-display" style="font-size:11px;color:var(--green);font-family:var(--mono);font-weight:700;"></span>
+          <button class="modal-close" onclick="closeSmartModal()">✕</button>
+        </div>
       </div>
       <div class="smart-tab-row">
         <button class="smart-tab on" onclick="switchSmartTab('auto',this)">🤖 자동 생성</button>
@@ -2255,6 +2258,10 @@ function getWorkoutMinutes(){
 function openSmartModal(){
   smartSelected = [];
   smartTab = 'auto';
+  // 시간 표시 업데이트
+  const min = getWorkoutMinutes();
+  const el = document.getElementById('smart-time-display');
+  if(el) el.textContent = '⏱ '+min+'분';
   document.getElementById('smart-routine-modal').classList.add('open');
   renderSmartAuto();
 }
@@ -2297,33 +2304,57 @@ function renderSmartAuto(){
     )
   );
 
+  // 시간별 총 운동 수 + 구성 계획
+  const planMin = getWorkoutMinutes();
+
+  // 시간별 최대 운동 수 & 세트 수 제한
+  let maxTotalExs, maxSetsPerEx, warmupMin, cooldownMin, cardioMin;
+  if(planMin <= 20){
+    maxTotalExs=4;  maxSetsPerEx=2; warmupMin=3;  cooldownMin=2;  cardioMin=0;
+  } else if(planMin <= 30){
+    maxTotalExs=6;  maxSetsPerEx=3; warmupMin=5;  cooldownMin=3;  cardioMin=0;
+  } else if(planMin <= 45){
+    maxTotalExs=8;  maxSetsPerEx=3; warmupMin=5;  cooldownMin=5;  cardioMin=5;
+  } else if(planMin <= 60){
+    maxTotalExs=10; maxSetsPerEx=4; warmupMin=10; cooldownMin=5;  cardioMin=10;
+  } else if(planMin <= 90){
+    maxTotalExs=14; maxSetsPerEx=4; warmupMin=10; cooldownMin=10; cardioMin=15;
+  } else {
+    maxTotalExs=18; maxSetsPerEx=5; warmupMin=15; cooldownMin=10; cardioMin=20;
+  }
+
+  // 운동별 평균 소요 시간 (분): 세트당 2분 + 운동간 이동 0.5분
+  const availMin = planMin - warmupMin - cooldownMin - cardioMin;
+
   // 부위별 운동 선택
   const todayExs = [];
-  const usedCats = new Set();
-
-  // 가중치 순으로 부위 정렬
   const sortedMuscles = Object.entries(muscleWeights)
     .sort((a,b)=>b[1]-a[1])
     .map(e=>e[0]);
 
   sortedMuscles.forEach(cat=>{
-    if(cat==='재활'||cat==='스트레칭') return; // 별도 처리
-    const exsInCat = EX_LIB.filter(e=>e.cat===cat && !e.w?.includes('무릎주의') || age<50);
+    if(cat==='재활'||cat==='스트레칭') return;
+    if(todayExs.length >= maxTotalExs - 1) return; // 마무리 위해 1자리 남김
+
+    const exsInCat = EX_LIB.filter(e=>e.cat===cat);
     if(!exsInCat.length) return;
 
-    // 최근에 안 한 운동 우선, 그 다음 랜덤
     const notRecent = exsInCat.filter(e=>!recentExNames.has(e.n));
     const pool = notRecent.length>=2 ? notRecent : exsInCat;
     const shuffled = [...pool].sort(()=>Math.random()-.5);
-    const min = getWorkoutMinutes();
-    const maxPerCat = min<=20 ? 1 : min<=40 ? 2 : min<=60 ? 3 : 4;
-    const count = Math.min(maxPerCat, muscleWeights[cat]>=3 ? 3 : muscleWeights[cat]>=2 ? 2 : 1);
+
+    // 남은 슬롯에 맞게 count 계산
+    const remaining = maxTotalExs - 1 - todayExs.length;
+    const preferred = muscleWeights[cat]>=3 ? 3 : muscleWeights[cat]>=2 ? 2 : 1;
+    const count = Math.min(remaining, preferred);
+    if(count <= 0) return;
 
     shuffled.slice(0, count).forEach(ex=>{
-      const sets = Math.max(2, Math.round((ex.sets||3) * (lv.setMult||1.0)));
+      // 운동 예상 시간 체크
+      const estSets = Math.min(maxSetsPerEx, Math.max(2, Math.round((ex.sets||3)*(lv.setMult||1.0))));
+      const sets = estSets;
       todayExs.push({
-        ex, cat,
-        sets,
+        ex, cat, sets,
         isRecent: recentExNames.has(ex.n),
         prevWeight: getPrevWeight(ex.n)
       });
@@ -2334,17 +2365,20 @@ function renderSmartAuto(){
   const stretch = EX_LIB.filter(e=>e.cat==='스트레칭').sort(()=>Math.random()-.5)[0];
   if(stretch) todayExs.push({ex:stretch, cat:'스트레칭', sets:0});
 
+  // 예상 소요 시간 계산
+  const estTime = warmupMin + cooldownMin + cardioMin +
+    todayExs.reduce((s,e)=>s+(e.sets||0)*2.5+0.5, 0);
+
   // 결과 렌더
   const mainGoal = goals[0] || '균형 운동';
   const totalSets = todayExs.reduce((s,e)=>s+(e.sets||0),0);
-  const planMin = getWorkoutMinutes();
 
   let html = `
   <div style="background:linear-gradient(135deg,#6366f110,#8b5cf610);border:1px solid #6366f130;border-radius:10px;padding:12px;margin-bottom:14px;">
     <div style="font-size:12px;font-weight:700;color:#8b5cf6;margin-bottom:4px;">🤖 AI 추천 루틴</div>
     <div style="font-size:11px;color:var(--muted);line-height:1.8;">
       목표: <strong style="color:var(--text);">${mainGoal}</strong> · 레벨: <strong style="color:var(--text);">${LEVEL_INFO?.[level]?.label||'중급'}</strong><br>
-      ⏱ ${planMin}분 플랜 · 총 ${todayExs.length}가지 운동 · ${totalSets}세트<br>
+      ⏱ ${planMin}분 플랜 · 총 ${todayExs.length}가지 운동 · ${totalSets}세트 · 예상 ${Math.round(estTime)}분<br>
       ${recentExNames.size>0?'최근 한 운동은 제외하고 새로운 운동 위주로 구성했어요':''}
     </div>
   </div>`;
@@ -2555,7 +2589,8 @@ function applySmartRoutine(){
 
   closeSmartModal();
   renderWorkout();
-  showToast(`✅ ${smartSelected.length}개 운동으로 오늘 루틴 구성 완료!`,'success');
+  renderHome();  // 홈화면 루틴 카드도 갱신
+  showToast(`✅ ${smartSelected.length}개 운동으로 오늘 루틴 구성 완료!\n홈화면에도 반영됐어요`,'success');
 }
 
 function toggleSection(tk, si){
