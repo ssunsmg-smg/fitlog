@@ -930,7 +930,25 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <button class="tc-btn" onclick="goWorkout()">운동 시작하기 →</button>
     </div>
     <div class="week-row" id="week-row"></div>
-    <div class="stat-row">
+
+    <!-- 주말 완주 보상 배너 (월~금 모두 완료 시 표시) -->
+    <div id="weekend-cardio-banner" style="display:none;margin-bottom:14px;">
+      <div style="background:linear-gradient(135deg,#4caf7d18,#4a9eff18);border:1.5px solid var(--green);border-radius:14px;padding:14px 16px;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <div style="font-size:28px;">🏅</div>
+          <div>
+            <div style="font-size:14px;font-weight:900;color:var(--green);">주중 완주 달성!</div>
+            <div style="font-size:11px;color:var(--muted);margin-top:2px;">월~금 운동을 모두 완료했어요. 오늘은 유산소로 마무리해보세요!</div>
+          </div>
+        </div>
+        <button onclick="openCardioModal()"
+          style="width:100%;padding:12px;border-radius:10px;border:none;
+          background:var(--green);color:#fff;font-size:14px;font-weight:700;
+          cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:8px;">
+          🏃 오늘의 유산소 선택하기 (10가지)
+        </button>
+      </div>
+    </div>
       <div class="stat-box"><div class="stat-num" id="h-total">0</div><div class="stat-lbl">총 운동일</div></div>
       <div class="stat-box"><div class="stat-num" id="h-month">0</div><div class="stat-lbl">이번 달</div></div>
       <div class="stat-box"><div class="stat-num" id="h-streak">0</div><div class="stat-lbl">연속 출석</div></div>
@@ -1268,6 +1286,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <div class="toast" id="toast"></div>
 
+<!-- 주말 유산소 선택 모달 -->
+<div class="modal-bg" id="cardio-modal">
+  <div class="modal" style="max-height:85vh;overflow-y:auto;">
+    <div class="modal-title">
+      <div>
+        <div style="font-size:10px;color:var(--green);font-family:var(--mono);font-weight:700;margin-bottom:3px;">🏅 주중 완주 보상</div>
+        <span>🏃 주말 유산소 선택</span>
+      </div>
+      <button class="modal-close" onclick="closeCardioModal()">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);padding:0 0 14px;line-height:1.7;">
+      월~금 운동을 모두 완료했습니다! 💪<br>오늘 할 유산소를 선택하세요.
+    </div>
+    <div id="cardio-modal-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+  </div>
+</div>
+
 <!-- AI 가이드 모달 -->
 <div class="modal-bg" id="ai-guide-modal">
   <div class="ai-guide-modal">
@@ -1279,6 +1314,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <button class="modal-close" onclick="closeAiGuide()">✕</button>
     </div>
     <div class="ai-guide-body" id="ai-guide-body">
+      <!-- 운동 이미지 영역 -->
+      <div id="ai-guide-img-wrap" style="display:none;margin-bottom:14px;border-radius:12px;overflow:hidden;background:var(--surface2);position:relative;">
+        <img id="ai-guide-img" src="" alt="" style="width:100%;max-height:200px;object-fit:cover;display:block;"
+          onerror="document.getElementById('ai-guide-img-wrap').style.display='none'"/>
+        <div id="ai-guide-img-caption" style="font-size:10px;color:var(--muted);padding:6px 10px;background:var(--surface2);"></div>
+      </div>
       <div class="ai-loading" id="ai-loading">
         <div class="ai-loading-dots"><span></span><span></span><span></span></div>
         <div class="ai-loading-txt">AI가 가이드를 생성 중입니다...</div>
@@ -2111,13 +2152,24 @@ function renderHome(){
 
   const tk=DAY_SCHED[now.getDay()],rt=RT[tk];
   document.getElementById('tc-label').textContent=tk==='REST'?'오늘은 휴식일':'오늘의 루틴 · Type '+tk;
-  document.getElementById('tc-title').textContent=rt.title;
-  document.getElementById('tc-sub').textContent=rt.muscles.join(' · ');
+  document.getElementById('tc-title').textContent=rt?.title||'';
+  document.getElementById('tc-sub').textContent=(rt?.muscles||[]).join(' · ');
 
-  const todayDow=now.getDay(),ts=toStr(now);
+  // ── 주말 완주 보상 배너 ──
+  const todayDow = now.getDay();
+  const weekendBanner = document.getElementById('weekend-cardio-banner');
+  if(weekendBanner){
+    if((todayDow===0||todayDow===6) && isWeekdaysComplete()){
+      weekendBanner.style.display='block';
+    } else {
+      weekendBanner.style.display='none';
+    }
+  }
+
+  const todayDow2=now.getDay(),ts=toStr(now);
   let wHtml='';
   DAY_KR.forEach((n,i)=>{
-    const d=new Date(now);d.setDate(now.getDate()-todayDow+i);
+    const d=new Date(now);d.setDate(now.getDate()-todayDow2+i);
     const ds=toStr(d),isToday=ds===ts,rec=records.find(r=>r.date===ds),itk=DAY_SCHED[i];
     const tC={A:'var(--blue)',B:'var(--green)',C:'var(--purple)',D:'var(--accent2)',E:'var(--accent)',F:'var(--purple)'}[itk]||'var(--muted)';
     wHtml+=`<div class="week-cell ${isToday?'today':''} ${rec?'has-rec':''}">
@@ -6002,7 +6054,6 @@ const _CACHE_VER='v3';
 const _aiCache={};  // 운동명 → 생성된 가이드 캐시
 
 function openAiGuide(exName,tags,warn){
-  // 혹시 인코딩된 경우 디코딩
   try{exName=decodeURIComponent(exName);}catch(e){}
   try{tags=decodeURIComponent(tags);}catch(e){}
   try{warn=decodeURIComponent(warn);}catch(e){}
@@ -6011,7 +6062,9 @@ function openAiGuide(exName,tags,warn){
   document.getElementById('ai-guide-title').textContent=exName;
   document.getElementById('ai-guide-content').innerHTML='';
 
-  // 캐시 확인 (버전이 같을 때만)
+  // 운동 이미지 표시
+  showGuideImage(exName);
+
   const cacheKey=_CACHE_VER+':'+exName;
   if(_aiCache[cacheKey]){
     document.getElementById('ai-loading').style.display='none';
@@ -6054,6 +6107,43 @@ ${existingDesc}
   fetchAiGuide(prompt, exName);
 }
 
+// 운동별 이미지 데이터 (Wikimedia Commons 공개 도메인)
+const EXERCISE_IMAGES = {
+  '벤치프레스':        {url:'https://upload.wikimedia.org/wikipedia/commons/thumb/8/8e/Bench_press.jpg/320px-Bench_press.jpg', caption:'벤치프레스 기본 자세'},
+  '스쿼트':            {url:'https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/SquatLeg.jpg/320px-SquatLeg.jpg', caption:'바벨 스쿼트'},
+  '데드리프트':        {url:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/Kreuzheben_-_Deadlift_2.jpg/320px-Kreuzheben_-_Deadlift_2.jpg', caption:'데드리프트 자세'},
+  '플랭크':            {url:'https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Plank_pose.jpg/320px-Plank_pose.jpg', caption:'플랭크 자세'},
+  '푸시업':            {url:'https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Push_up.jpg/320px-Push_up.jpg', caption:'푸시업 자세'},
+  '풀업':              {url:'https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Pull_up_1.jpg/320px-Pull_up_1.jpg', caption:'풀업 자세'},
+  '힙 쓰러스트':       {url:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Hip_thrust_exercise.jpg/320px-Hip_thrust_exercise.jpg', caption:'힙 쓰러스트'},
+  '런지':              {url:'https://upload.wikimedia.org/wikipedia/commons/thumb/9/9d/Lunge.jpg/320px-Lunge.jpg', caption:'런지 자세'},
+  '업라이트 바이크':   {url:'https://upload.wikimedia.org/wikipedia/commons/thumb/5/56/Upright_bike.jpg/320px-Upright_bike.jpg', caption:'업라이트 바이크'},
+  '크런치':            {url:'https://upload.wikimedia.org/wikipedia/commons/thumb/6/64/Crunch_ab_exercise.jpg/320px-Crunch_ab_exercise.jpg', caption:'크런치 복근 운동'},
+};
+
+function showGuideImage(exName){
+  const wrap = document.getElementById('ai-guide-img-wrap');
+  const img  = document.getElementById('ai-guide-img');
+  const cap  = document.getElementById('ai-guide-img-caption');
+  if(!wrap||!img) return;
+
+  // 정확히 일치하거나 부분 일치하는 이미지 찾기
+  let imgData = EXERCISE_IMAGES[exName];
+  if(!imgData){
+    const key = Object.keys(EXERCISE_IMAGES).find(k=>exName.includes(k)||k.includes(exName));
+    if(key) imgData = EXERCISE_IMAGES[key];
+  }
+
+  if(imgData){
+    img.src = imgData.url;
+    img.alt = imgData.caption;
+    if(cap) cap.textContent = '📸 ' + imgData.caption;
+    wrap.style.display = 'block';
+  } else {
+    wrap.style.display = 'none';
+  }
+}
+
 async function fetchAiGuide(prompt, exName){
   const contentEl=document.getElementById('ai-guide-content');
   const loadingEl=document.getElementById('ai-loading');
@@ -6089,18 +6179,37 @@ function buildGuideHtml(exName, g){
   // 이미지: 자체 SVG 애니메이션 우선, 없으면 정적 SVG
   // 유튜브 검색어 (EX_INFO에서 가져오기)
   const info=EX_INFO[exName];
-  const ytQuery=info?.yt||exName+' 운동 방법';
-  const ytUrl='https://www.youtube.com/results?search_query='+encodeURIComponent(ytQuery);
+  const ytQuery1=info?.yt||exName+' 운동 방법';
+  const ytQuery2=exName+' 올바른 자세';
+  const ytQuery3=exName+' how to';
+  const ytUrl1='https://www.youtube.com/results?search_query='+encodeURIComponent(ytQuery1);
+  const ytUrl2='https://www.youtube.com/results?search_query='+encodeURIComponent(ytQuery2);
 
-  // 유튜브 버튼
-  const ytBtn=`<a href="${ytUrl}" target="_blank" rel="noopener"
-    style="display:flex;align-items:center;justify-content:center;gap:8px;
-    width:100%;padding:11px;border-radius:10px;border:1px solid #ff444433;
-    background:#ff444408;color:#ff4444;font-size:13px;font-weight:700;
-    text-decoration:none;margin-bottom:14px;box-sizing:border-box;">
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="#ff4444"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>
-    ▶ 유튜브에서 동작 영상 보기
-  </a>`;
+  // 유튜브 버튼 (2가지 검색어)
+  const ytBtn=`
+  <div style="margin-bottom:14px;">
+    <div style="font-size:10px;color:var(--muted);margin-bottom:6px;font-family:var(--mono);">
+      ⚠️ 유튜브는 가르치는 방법이 다를 수 있어요. 여러 영상을 비교해보세요.
+    </div>
+    <div style="display:flex;gap:8px;">
+      <a href="${ytUrl1}" target="_blank" rel="noopener"
+        style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+        padding:10px 8px;border-radius:10px;border:1px solid #ff444433;
+        background:#ff444408;color:#ff4444;font-size:12px;font-weight:700;
+        text-decoration:none;box-sizing:border-box;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#ff4444"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>
+        운동 방법
+      </a>
+      <a href="${ytUrl2}" target="_blank" rel="noopener"
+        style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;
+        padding:10px 8px;border-radius:10px;border:1px solid #ff444433;
+        background:#ff444408;color:#ff4444;font-size:12px;font-weight:700;
+        text-decoration:none;box-sizing:border-box;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="#ff4444"><path d="M23.5 6.2a3 3 0 0 0-2.1-2.1C19.5 3.5 12 3.5 12 3.5s-7.5 0-9.4.6A3 3 0 0 0 .5 6.2C0 8.1 0 12 0 12s0 3.9.5 5.8a3 3 0 0 0 2.1 2.1c1.9.6 9.4.6 9.4.6s7.5 0 9.4-.6a3 3 0 0 0 2.1-2.1C24 15.9 24 12 24 12s0-3.9-.5-5.8zM9.7 15.5V8.5l6.3 3.5-6.3 3.5z"/></svg>
+        올바른 자세
+      </a>
+    </div>
+  </div>`;
 
   return `
     ${ytBtn}
@@ -6158,6 +6267,125 @@ function aiMd(text){
 function closeAiGuide(){
   document.getElementById('ai-guide-modal').classList.remove('open');
 }
+
+// ══════════════════════════════
+// 주말 유산소 선택
+// ══════════════════════════════
+
+// 유산소 10가지 메인 목록
+const WEEKEND_CARDIO = [
+  {n:'업라이트 바이크',    d:'20분 · 저강도', icon:'🚴', kcal:150, tip:'무릎 관절 부담 최소',      type:'gym'},
+  {n:'런닝머신',          d:'20분 · 중강도', icon:'🏃', kcal:200, tip:'페이스 유지가 핵심',        type:'gym'},
+  {n:'인클라인 트레드밀', d:'20분 · 경사 8도',icon:'⛰️', kcal:220, tip:'둔근·종아리 집중 자극',   type:'gym'},
+  {n:'일립티컬',          d:'20분',          icon:'🔄', kcal:180, tip:'전신 저충격 유산소',         type:'gym'},
+  {n:'로잉머신',          d:'15분',          icon:'🚣', kcal:200, tip:'상체+하체 동시 자극',        type:'gym'},
+  {n:'스텝퍼',            d:'15분',          icon:'🪜', kcal:170, tip:'둔근·심폐 동시 강화',        type:'gym'},
+  {n:'실내 사이클',       d:'30분 · 중강도', icon:'🚴', kcal:250, tip:'무릎 친화적 유산소',         type:'gym'},
+  {n:'버피',              d:'3세트 × 10회',  icon:'💥', kcal:180, tip:'전신 고강도 — 무릎 주의',   type:'home'},
+  {n:'수영',              d:'30분',          icon:'🏊', kcal:250, tip:'관절 무부하 전신운동',       type:'home'},
+  {n:'걷기 (실외)',       d:'40~60분',       icon:'🚶', kcal:160, tip:'경보 속도 유지, 팔 흔들기',  type:'both'},
+];
+
+// 이번 주 월~금 모두 완료했는지 확인
+function isWeekdaysComplete(){
+  const now = new Date();
+  const todayDow = now.getDay(); // 0=일, 6=토
+  if(todayDow !== 0 && todayDow !== 6) return false; // 주말만 체크
+
+  // 이번 주 월(1)~금(5) 날짜 구하기
+  const weekdaysDone = [];
+  for(let dow = 1; dow <= 5; dow++){
+    const d = new Date(now);
+    const diff = dow - todayDow;
+    d.setDate(now.getDate() + diff);
+    const ds = toStr(d);
+    const rt = RT[DAY_SCHED[dow]];
+    // REST 요일이면 건너뜀
+    if(DAY_SCHED[dow] === 'REST'){ weekdaysDone.push(true); continue; }
+    const rec = records.find(r => r.date === ds);
+    weekdaysDone.push(!!rec);
+  }
+  return weekdaysDone.every(v => v);
+}
+
+function openCardioModal(){
+  const modal = document.getElementById('cardio-modal');
+  if(!modal) return;
+  const list = document.getElementById('cardio-modal-list');
+  const typeFilter = classType === '홈트' ? ['home','both'] : ['gym','both','home'];
+
+  list.innerHTML = WEEKEND_CARDIO
+    .filter(c => typeFilter.includes(c.type))
+    .map((c,i) => `
+      <div onclick="selectWeekendCardio(${i})" style="display:flex;align-items:center;gap:12px;
+        padding:13px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);
+        cursor:pointer;transition:all .15s;" 
+        onmouseover="this.style.borderColor='var(--green)';this.style.background='#4caf7d12'"
+        onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--surface2)'">
+        <div style="font-size:28px;flex-shrink:0;">${c.icon}</div>
+        <div style="flex:1;min-width:0;">
+          <div style="font-size:14px;font-weight:700;">${c.n}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">${c.d} · 약 ${c.kcal}kcal</div>
+          <div style="font-size:10px;color:var(--green);margin-top:3px;">💡 ${c.tip}</div>
+        </div>
+        <div style="font-size:11px;color:var(--accent);font-weight:700;flex-shrink:0;">선택 →</div>
+      </div>
+    `).join('');
+
+  modal.classList.add('open');
+}
+
+function closeCardioModal(){
+  document.getElementById('cardio-modal')?.classList.remove('open');
+}
+
+function selectWeekendCardio(idx){
+  const c = WEEKEND_CARDIO[idx];
+  if(!c) return;
+  closeCardioModal();
+
+  // 선택한 유산소를 오늘 루틴에 임시 추가
+  const todayDow = new Date().getDay();
+  const tk = DAY_SCHED[todayDow];
+  if(tk === 'REST'){
+    // REST 요일이면 임시 유산소 루틴 생성
+    const cardioSection = {
+      n:'유산소',
+      exs:[{n:c.n, d:c.d, tags:['심폐'], w:c.n.includes('무릎')?['무릎주의']:[], sets:0}]
+    };
+    RT['CARDIO_TODAY'] = {
+      label:'오늘 · 유산소',
+      title:c.icon+' '+c.n,
+      color:'rh-d',
+      muscles:['심폐'],
+      sections:[cardioSection]
+    };
+    DAY_SCHED[todayDow] = 'CARDIO_TODAY';
+    initSetData('CARDIO_TODAY');
+  } else {
+    // 기존 루틴에 유산소 섹션 추가
+    const exists = RT[tk].sections.find(s=>s.n==='유산소(추가)');
+    if(!exists){
+      RT[tk].sections.push({
+        n:'유산소(추가)',
+        exs:[{n:c.n, d:c.d, tags:['심폐'], w:[], sets:0}]
+      });
+    } else {
+      exists.exs = [{n:c.n, d:c.d, tags:['심폐'], w:[], sets:0}];
+    }
+    initSetData(tk);
+  }
+
+  selDay = todayDow;
+  renderWorkout();
+  // 운동 탭으로 이동
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-workout').classList.add('active');
+  document.querySelectorAll('.nav-tab')[1].classList.add('active');
+  showToast(`✅ ${c.icon} ${c.n} 추가됨! 오늘도 파이팅!`, 'success');
+}
+
 
 // ══════════════════════════════
 // 타이머 시스템
