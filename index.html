@@ -931,9 +931,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
     <div class="week-row" id="week-row"></div>
 
-    <!-- 주말 완주 보상 배너 (월~금 모두 완료 시 표시) -->
+    <!-- 주말 유산소 선택 배너 (토·일 항상 표시) -->
     <div id="weekend-cardio-banner" style="display:none;margin-bottom:14px;">
-      <div style="background:linear-gradient(135deg,#4caf7d18,#4a9eff18);border:1.5px solid var(--green);border-radius:14px;padding:14px 16px;">
+      <!-- 완주 달성 버전 -->
+      <div id="weekend-banner-complete" style="display:none;background:linear-gradient(135deg,#4caf7d18,#4a9eff18);border:1.5px solid var(--green);border-radius:14px;padding:14px 16px;">
         <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
           <div style="font-size:28px;">🏅</div>
           <div>
@@ -946,6 +947,24 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           background:var(--green);color:#fff;font-size:14px;font-weight:700;
           cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:8px;">
           🏃 오늘의 유산소 선택하기 (10가지)
+        </button>
+      </div>
+      <!-- 미완료 버전 -->
+      <div id="weekend-banner-partial" style="display:none;background:var(--surface2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;">
+          <div style="display:flex;align-items:center;gap:10px;">
+            <div style="font-size:24px;">🏃</div>
+            <div>
+              <div style="font-size:13px;font-weight:700;">주말 유산소</div>
+              <div id="weekend-partial-msg" style="font-size:11px;color:var(--muted);margin-top:2px;"></div>
+            </div>
+          </div>
+        </div>
+        <button onclick="openCardioModal()"
+          style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);
+          background:none;color:var(--text);font-size:13px;font-weight:700;
+          cursor:pointer;font-family:var(--font);">
+          🏃 유산소 선택하기 (10가지)
         </button>
       </div>
     </div>
@@ -1291,13 +1310,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="modal" style="max-height:85vh;overflow-y:auto;">
     <div class="modal-title">
       <div>
-        <div style="font-size:10px;color:var(--green);font-family:var(--mono);font-weight:700;margin-bottom:3px;">🏅 주중 완주 보상</div>
-        <span>🏃 주말 유산소 선택</span>
+        <div id="cardio-modal-badge" style="font-size:10px;color:var(--green);font-family:var(--mono);font-weight:700;margin-bottom:3px;">🏃 주말 유산소</div>
+        <span>유산소 선택 (10가지)</span>
       </div>
       <button class="modal-close" onclick="closeCardioModal()">✕</button>
     </div>
-    <div style="font-size:12px;color:var(--muted);padding:0 0 14px;line-height:1.7;">
-      월~금 운동을 모두 완료했습니다! 💪<br>오늘 할 유산소를 선택하세요.
+    <div id="cardio-modal-desc" style="font-size:12px;color:var(--muted);padding:0 0 14px;line-height:1.7;">
+      오늘 할 유산소를 선택하세요.
     </div>
     <div id="cardio-modal-list" style="display:flex;flex-direction:column;gap:8px;"></div>
   </div>
@@ -2155,14 +2174,34 @@ function renderHome(){
   document.getElementById('tc-title').textContent=rt?.title||'';
   document.getElementById('tc-sub').textContent=(rt?.muscles||[]).join(' · ');
 
-  // ── 주말 완주 보상 배너 ──
+  // ── 주말 유산소 배너: 토·일이면 항상 표시 ──
   const todayDow = now.getDay();
-  const weekendBanner = document.getElementById('weekend-cardio-banner');
+  const weekendBanner    = document.getElementById('weekend-cardio-banner');
+  const bannerComplete   = document.getElementById('weekend-banner-complete');
+  const bannerPartial    = document.getElementById('weekend-banner-partial');
+  const partialMsg       = document.getElementById('weekend-partial-msg');
+
   if(weekendBanner){
-    if((todayDow===0||todayDow===6) && isWeekdaysComplete()){
-      weekendBanner.style.display='block';
+    if(todayDow === 0 || todayDow === 6){
+      weekendBanner.style.display = 'block';
+      const complete = isWeekdaysComplete();
+      if(complete){
+        if(bannerComplete) bannerComplete.style.display = 'block';
+        if(bannerPartial)  bannerPartial.style.display  = 'none';
+      } else {
+        if(bannerComplete) bannerComplete.style.display = 'none';
+        if(bannerPartial)  bannerPartial.style.display  = 'block';
+        // 이번 주 완료된 요일 수 계산
+        let doneCnt = 0;
+        for(let dow=1; dow<=5; dow++){
+          if(DAY_SCHED[dow]==='REST'){ doneCnt++; continue; }
+          const d2=new Date(now); d2.setDate(now.getDate()-(todayDow-dow));
+          if(records.find(r=>r.date===toStr(d2))) doneCnt++;
+        }
+        if(partialMsg) partialMsg.textContent = `이번 주 ${doneCnt}일 완료 · 오늘도 유산소로 마무리해요!`;
+      }
     } else {
-      weekendBanner.style.display='none';
+      weekendBanner.style.display = 'none';
     }
   }
 
@@ -6311,6 +6350,17 @@ function isWeekdaysComplete(){
 function openCardioModal(){
   const modal = document.getElementById('cardio-modal');
   if(!modal) return;
+
+  // 완주 여부에 따라 배지/설명 변경
+  const complete = isWeekdaysComplete();
+  const badge = document.getElementById('cardio-modal-badge');
+  const desc  = document.getElementById('cardio-modal-desc');
+  if(badge) badge.textContent = complete ? '🏅 주중 완주 보상' : '🏃 주말 유산소';
+  if(badge) badge.style.color = complete ? 'var(--green)' : 'var(--blue)';
+  if(desc)  desc.innerHTML = complete
+    ? '월~금 운동을 모두 완료했어요! 💪<br>오늘 유산소로 마무리해보세요.'
+    : '오늘 할 유산소를 선택하세요.<br><span style="color:var(--muted);">주중 완주하면 🏅 배지가 생겨요!</span>';
+
   const list = document.getElementById('cardio-modal-list');
   const typeFilter = classType === '홈트' ? ['home','both'] : ['gym','both','home'];
 
