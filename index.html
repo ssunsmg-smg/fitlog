@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- fitlog v2.5 build:20260502-1 -->
+<!-- fitlog v2.6 build:20260502-1 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -1097,8 +1097,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div style="font-size:21px;font-weight:900;">⚙️ 나의 운동 설정</div>
     </div>
 
-    <!-- 신체 정보 설정 -->
-    <div class="level-card" id="body-info-card">
+    <!-- 스텝 인디케이터 -->
+    <div style="display:flex;gap:0;margin-bottom:20px;border-radius:10px;overflow:hidden;border:1px solid var(--border);">
+      <button class="sett-step-btn active" id="sstep-1" onclick="goSettStep(1)" style="flex:1;padding:11px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:700;background:var(--accent);color:#fff;font-family:var(--font);border:none;">①<br>신체정보</button>
+      <button class="sett-step-btn" id="sstep-2" onclick="goSettStep(2)" style="flex:1;padding:11px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:500;background:none;color:var(--muted);font-family:var(--font);border:none;border-left:1px solid var(--border);">②<br>운동환경</button>
+      <button class="sett-step-btn" id="sstep-3" onclick="goSettStep(3)" style="flex:1;padding:11px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:500;background:none;color:var(--muted);font-family:var(--font);border:none;border-left:1px solid var(--border);">③<br>성장단계</button>
+      <button class="sett-step-btn" id="sstep-4" onclick="goSettStep(4)" style="flex:1;padding:11px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:500;background:none;color:var(--muted);font-family:var(--font);border:none;border-left:1px solid var(--border);">④<br>기준중량</button>
+    </div>
+
+    <!-- STEP 1: 신체 정보 -->
+    <div id="sett-panel-1" class="sett-panel">
+      <div class="level-card" id="body-info-card">
       <div class="level-card-title">
         <span>👤 신체 정보</span>
         <button onclick="saveBodyInfo()" style="padding:5px 14px;border-radius:6px;border:none;background:var(--green);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);">저장 · 재계산</button>
@@ -1143,18 +1152,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <!-- 계산 결과 -->
       <div id="body-calc-result" style="background:var(--surface2);border-radius:10px;padding:12px;font-size:12px;line-height:2;"></div>
     </div>
-
-    <!-- ① 요일별 루틴 비교 + 추천 (맨 위) -->
-    <div class="level-card">
-      <div class="level-card-title">
-        <span>📅 요일별 루틴 현황 · 추천</span>
-        <button onclick="renderRoutineCompare()" style="padding:4px 10px;border-radius:6px;border:none;background:var(--surface2);color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font);">🔄 새로고침</button>
-      </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">이번 주 완료 기록과 목표 일치도를 한눈에 확인하세요</div>
-      <div id="routine-compare-panel"></div>
+      <button onclick="goSettStep(2)" style="width:100%;padding:11px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:12px;">다음 → 운동환경 설정</button>
     </div>
 
-    <!-- ② 운동 분류 + 목적 선택 -->
+    <!-- STEP 2: 운동 분류 + 요일배정 + 목적 -->
+    <div id="sett-panel-2" class="sett-panel" style="display:none;">
+      <!-- ② 운동 분류 + 목적 선택 -->
     <div class="level-card">
       <div class="level-card-title">
         <span>🏷️ 운동 분류 · 목적 설정</span>
@@ -1171,13 +1174,33 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
       <div class="level-card-title" style="margin-top:4px;">
         <span>🎯 운동 목적 <span style="font-size:10px;color:var(--muted);font-weight:400;">(복수 선택)</span></span>
-        <button onclick="applyClassification()" style="padding:5px 12px;border-radius:6px;border:none;background:var(--accent);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);">✅ 적용</button>
+        <button onclick="updateClassPreview()" style="padding:5px 12px;border-radius:6px;border:none;background:var(--surface2);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);">미리보기</button>
       </div>
       <div id="purpose-btns" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;"></div>
       <div id="class-preview" style="font-size:11px;color:var(--muted);padding:10px;background:var(--surface2);border-radius:8px;line-height:1.8;"></div>
     </div>
+      <!-- 요일 배정 -->
+      <div class="level-card" style="margin-top:0;">
+        <div class="level-card-title"><span>📅 운동 요일 설정</span><span id="day-assign-count" style="font-size:10px;padding:2px 10px;border-radius:10px;background:var(--surface2);color:var(--muted);font-family:var(--mono);">0일/주</span></div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">운동할 요일을 선택하세요. 쉬는 날은 자동으로 휴식일이 됩니다.</div>
+        <div style="display:flex;gap:8px;justify-content:center;margin-bottom:14px;" id="day-assign-btns">
+          <button class="day-assign-btn" onclick="toggleDayAssign('월',this)" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">월</button>
+          <button class="day-assign-btn" onclick="toggleDayAssign('화',this)" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">화</button>
+          <button class="day-assign-btn" onclick="toggleDayAssign('수',this)" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">수</button>
+          <button class="day-assign-btn" onclick="toggleDayAssign('목',this)" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">목</button>
+          <button class="day-assign-btn" onclick="toggleDayAssign('금',this)" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">금</button>
+          <button class="day-assign-btn" onclick="toggleDayAssign('토',this)" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">토</button>
+          <button class="day-assign-btn" onclick="toggleDayAssign('일',this)" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">일</button>
+        </div>
+        <div id="day-assign-preview" style="font-size:11px;color:var(--muted);padding:10px;background:var(--surface2);border-radius:8px;line-height:1.8;"></div>
+      </div>
+      <button onclick="applyClassificationWithDays()" style="width:100%;padding:11px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:10px;">✅ 운동환경·목적·요일 모두 적용</button>
+      <button onclick="goSettStep(3)" style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);">다음 → 성장단계 설정</button>
+    </div>
 
-    <!-- ③ 성장 단계 -->
+    <!-- STEP 3: 성장 단계 -->
+    <div id="sett-panel-3" class="sett-panel" style="display:none;">
+      <!-- ③ 성장 단계 -->
     <div class="level-card">
       <div class="level-card-title">
         <span>🏆 나의 성장 단계</span>
@@ -1194,8 +1217,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="level-desc-box" id="level-desc"></div>
       <button class="level-apply-btn" onclick="applyLevel()">✅ 이 단계로 루틴 적용</button>
     </div>
+      <button onclick="goSettStep(4)" style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);margin-top:10px;">다음 → 기준중량 설정</button>
+    </div>
 
-    <!-- ④ 기준 중량 (1RM) - 운동 기록에서 자동 갱신 -->
+    <!-- STEP 4: 기준 중량 + 피드백 -->
+    <div id="sett-panel-4" class="sett-panel" style="display:none;">
+      <!-- ④ 기준 중량 (1RM) - 운동 기록에서 자동 갱신 -->
     <div class="level-card">
       <div class="level-card-title">
         <span>⚖️ 나의 기준 중량 (1RM)</span>
@@ -1209,46 +1236,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
     </div>
 
-    <!-- ⑤ 운동별 세부 조정 (요일 선택 후 미세조정) -->
-    <div class="level-card">
-      <div class="level-card-title">
-        <span>🎛️ 요일별 세부 조정</span>
-        <select id="adj-day-sel" onchange="renderAdjPanel()" style="font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:var(--font);">
-          <option value="A">월(A) 가슴·어깨</option>
-          <option value="B">화(B) 등·이두</option>
-          <option value="C">수(C) 하체·재활</option>
-          <option value="D">목(D) 유산소·척추</option>
-          <option value="E">금(E) 복근·전신</option>
-          <option value="F">토(F) 하체경량</option>
-        </select>
+      <!-- 누적 피드백 카드 -->
+      <div class="level-card" style="margin-top:0;">
+        <div class="level-card-title">
+          <span>📊 누적 운동 피드백</span>
+          <span id="feedback-count-badge" style="font-size:10px;padding:2px 10px;border-radius:10px;background:var(--surface2);color:var(--muted);font-family:var(--mono);">0회</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">20회마다 운동 패턴을 분석해 루틴 조정을 제안합니다.</div>
+        <div id="feedback-panel"></div>
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">성장단계 적용 후 특정 종목의 세트·횟수를 <strong>개인에 맞게 미세 조정</strong>할 때 사용하세요.</div>
-      <div id="adj-panel"></div>
-      <button class="adj-save-btn" onclick="saveAdjustments()">💾 저장</button>
-      <button class="adj-reset-btn" onclick="resetAdjustments()">↺ 기본값으로 초기화</button>
     </div>
 
-    <!-- 유산소 루틴 선택 -->
-    <div class="level-card">
-      <div class="level-card-title">
-        <span>🏃 유산소 루틴 선택</span>
-        <span id="cardio-selected-badge" style="font-size:10px;padding:2px 10px;border-radius:10px;background:var(--green);color:#fff;font-family:var(--mono);">걷기</span>
-      </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">내 수준에 맞는 유산소 프로그램을 선택하세요</div>
-      <div id="cardio-program-list"></div>
-      <div id="cardio-detail"></div>
-      <button onclick="startCardioSession()" style="width:100%;padding:11px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:10px;">
-        🏃 선택한 루틴으로 운동 시작
-      </button>
-    </div>
-
-    <!-- 자세 가이드 -->
-    <div class="level-card">
-      <div class="level-card-title"><span>📋 주요 운동 자세 가이드</span></div>
-      <input type="text" id="posture-search" placeholder="운동 검색..." oninput="renderPostureList()"
-        style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:13px;color:var(--text);font-family:var(--font);margin-bottom:10px;">
-      <div id="posture-list"></div>
-    </div>
   </div>
 </div>
 
@@ -2001,6 +1999,18 @@ function showApp(){
   // 저장된 재활 단계 복원
   curLevel = parseInt(localStorage.getItem('fitlog-level')||'1');
   orm1RM = JSON.parse(localStorage.getItem('fitlog-1rm')||'{}');
+
+  // 저장된 요일 배정 복원 → DAY_SCHED 재적용
+  const savedDays = JSON.parse(localStorage.getItem('fitlog-assigned-days')||'null');
+  if(savedDays && savedDays.length > 0){
+    assignedDays = savedDays;
+    const dayOrder2 = ['월','화','수','목','금','토','일'];
+    const routineKeys2 = ['A','B','C','D','E','F'];
+    const sorted2 = [...assignedDays].sort((a,b)=>dayOrder2.indexOf(a)-dayOrder2.indexOf(b));
+    dayOrder2.forEach(d=>{ DAY_SCHED[DAY_NUM_MAP[d]] = 'REST'; });
+    sorted2.forEach((d,i)=>{ DAY_SCHED[DAY_NUM_MAP[d]] = routineKeys2[i % routineKeys2.length]; });
+  }
+
   showToast(`환영합니다, ${userProfile?.name||''}님! 💪`,'success');
 }
 
@@ -5549,18 +5559,240 @@ function togglePosture(i){
 function initSettingsTab(){
   initBodyInfo();
   initClassSettings();
-  initCardioSettings();
-  renderRoutineCompare();
-  // 레벨 버튼 상태 복원
+  initDayAssignBtns();   // 요일배정 버튼 상태 복원
+  renderRoutineCompare && renderRoutineCompare(); // 존재하면 호출
   document.querySelectorAll('.level-step').forEach((b,i)=>{
     b.classList.toggle('active',i+1===curLevel);
     b.classList.toggle('done',i+1<curLevel);
   });
   renderLevelDesc();
   renderORMGrid();
-  renderAdjPanel();
-  renderPostureList();
+  renderFeedbackPanel();
 }
+
+// ── 설정 스텝 이동 ──
+function goSettStep(n){
+  for(let i=1;i<=4;i++){
+    const panel = document.getElementById('sett-panel-'+i);
+    const btn   = document.getElementById('sstep-'+i);
+    if(panel) panel.style.display = i===n ? '' : 'none';
+    if(btn){
+      if(i===n){
+        btn.style.background='var(--accent)'; btn.style.color='#fff'; btn.style.fontWeight='700';
+      } else if(i<n){
+        btn.style.background='#4caf7d22'; btn.style.color='var(--green)'; btn.style.fontWeight='700';
+      } else {
+        btn.style.background='none'; btn.style.color='var(--muted)'; btn.style.fontWeight='500';
+      }
+    }
+  }
+  // 스텝별 추가 초기화
+  if(n===2){ initDayAssignBtns(); initClassSettings(); }
+  if(n===4){ renderORMGrid(); renderFeedbackPanel(); }
+}
+
+// ── 요일 배정 버튼 ──
+let assignedDays = JSON.parse(localStorage.getItem('fitlog-assigned-days')||'["월","화","수","목","금"]');
+const DAY_NUM_MAP = {월:1,화:2,수:3,목:4,금:5,토:6,일:0};
+
+function initDayAssignBtns(){
+  document.querySelectorAll('.day-assign-btn').forEach(btn=>{
+    const d = btn.textContent.trim();
+    const on = assignedDays.includes(d);
+    applyDayBtnStyle(btn, on);
+  });
+  updateDayAssignPreview();
+}
+
+function applyDayBtnStyle(btn, on){
+  btn.style.background = on ? 'var(--accent)' : 'none';
+  btn.style.color      = on ? '#fff' : 'var(--muted)';
+  btn.style.border     = on ? '2px solid var(--accent)' : '1px solid var(--border)';
+  btn.style.fontWeight = on ? '700' : '500';
+}
+
+function toggleDayAssign(day, btn){
+  if(assignedDays.includes(day)){
+    assignedDays = assignedDays.filter(d=>d!==day);
+    applyDayBtnStyle(btn, false);
+  } else {
+    assignedDays.push(day);
+    applyDayBtnStyle(btn, true);
+  }
+  updateDayAssignPreview();
+}
+
+function updateDayAssignPreview(){
+  const badge = document.getElementById('day-assign-count');
+  if(badge) badge.textContent = assignedDays.length + '일/주';
+  const preview = document.getElementById('day-assign-preview');
+  if(!preview) return;
+  const dayOrder = ['월','화','수','목','금','토','일'];
+  const sorted = [...assignedDays].sort((a,b)=>dayOrder.indexOf(a)-dayOrder.indexOf(b));
+  const routineKeys = ['A','B','C','D','E','F'];
+  const lines = dayOrder.map((d,i)=>{
+    const dow = DAY_NUM_MAP[d];
+    if(sorted.includes(d)){
+      const idx = sorted.indexOf(d);
+      const tk = routineKeys[idx % routineKeys.length];
+      const rt = RT[tk];
+      return `<span style="color:var(--text);font-weight:700;">${d}</span> → ${rt ? rt.title : tk+'루틴'}`;
+    }
+    return `<span style="color:var(--muted);">${d} → 휴식</span>`;
+  });
+  preview.innerHTML = lines.join('　·　');
+}
+
+// applyClassification 을 요일배정과 통합
+async function applyClassificationWithDays(){
+  if(assignedDays.length < 1){ showToast('운동 요일을 하나 이상 선택해주세요','error'); return; }
+  if(!classPurposes.length){ showToast('목적을 하나 이상 선택해주세요','error'); return; }
+  if(!confirm(`${classType} · ${classPurposes.join('+')} 루틴으로 적용할까요?\n선택 요일: ${assignedDays.join(', ')}\n현재 루틴이 변경됩니다.`)) return;
+
+  // 요일 배정 적용
+  const dayOrder = ['월','화','수','목','금','토','일'];
+  const routineKeys = ['A','B','C','D','E','F'];
+  const sorted = [...assignedDays].sort((a,b)=>dayOrder.indexOf(a)-dayOrder.indexOf(b));
+  dayOrder.forEach(d=>{ DAY_SCHED[DAY_NUM_MAP[d]] = 'REST'; });
+  sorted.forEach((d,i)=>{ DAY_SCHED[DAY_NUM_MAP[d]] = routineKeys[i % routineKeys.length]; });
+  localStorage.setItem('fitlog-assigned-days', JSON.stringify(assignedDays));
+
+  // 루틴 분류 적용 (기구/홈트 + 목적)
+  const baseRT = classType==='홈트'
+    ? JSON.parse(JSON.stringify(HOME_ROUTINES))
+    : JSON.parse(JSON.stringify(RT_BASE));
+
+  let totalSetMult = 1.0, cardioBoost = false, lowImpact = false;
+  classPurposes.forEach(p=>{
+    const pr = PURPOSE_PRESETS[p];
+    if(!pr) return;
+    totalSetMult += (pr.setMult||1.0) - 1.0;
+    if(pr.cardioBoost) cardioBoost = true;
+    if(pr.lowImpact) lowImpact = true;
+  });
+  totalSetMult = Math.max(0.4, Math.min(1.6, totalSetMult));
+
+  Object.keys(baseRT).forEach(tk=>{
+    if(tk==='REST') return;
+    baseRT[tk].sections.forEach(sec=>{
+      sec.exs.forEach(ex=>{
+        if(ex.sets>0) ex.sets=Math.max(1,Math.round(ex.sets*totalSetMult));
+        if(lowImpact && ex.d?.includes('분')){
+          const m=ex.d.match(/(\d+)분/);
+          if(m) ex.d=ex.d.replace(/\d+분/, Math.max(5,Math.round(parseInt(m[1])*0.6))+'분');
+        }
+      });
+      if(cardioBoost && sec.n.includes('유산소')){
+        sec.exs.forEach(ex=>{
+          if(ex.d?.includes('분')){
+            const m=ex.d.match(/(\d+)분/);
+            if(m) ex.d=ex.d.replace(/\d+분/, Math.min(60,Math.round(parseInt(m[1])*1.4))+'분');
+          }
+        });
+      }
+    });
+  });
+
+  Object.keys(baseRT).forEach(tk=>{ RT[tk]=baseRT[tk]; });
+  localStorage.setItem('fitlog-classtype', classType);
+  localStorage.setItem('fitlog-purposes', JSON.stringify(classPurposes));
+  await window.saveRoutine(RT);
+
+  updateDayAssignPreview();
+  showToast(`✅ ${classType}·${classPurposes.join('+')} 루틴 + 요일 배정 완료!\n오늘(${['일','월','화','수','목','금','토'][new Date().getDay()]}): ${RT[DAY_SCHED[new Date().getDay()]]?.title||'휴식'}`, 'success');
+  initSetData(DAY_SCHED[selDay]);
+  renderWorkout && renderWorkout();
+  renderHome && renderHome();
+}
+
+
+// ── 누적 피드백 ──
+function renderFeedbackPanel(){
+  const panel = document.getElementById('feedback-panel');
+  const badge = document.getElementById('feedback-count-badge');
+  if(!panel) return;
+  const total = records.length;
+  if(badge) badge.textContent = total + '회';
+
+  if(total === 0){
+    panel.innerHTML = `<div style="text-align:center;padding:24px;color:var(--muted);font-size:13px;">아직 운동 기록이 없어요.<br>첫 운동 후 저장하면 분석이 시작됩니다! 💪</div>`;
+    return;
+  }
+
+  // 다음 피드백까지 남은 횟수
+  const nextMile = Math.ceil(total/20)*20;
+  const remain = nextMile - total;
+  const progress = ((total % 20) / 20 * 100) || (total>0 ? 100 : 0);
+
+  // 완료된 마일스톤
+  const milestones = [];
+  for(let m=20; m<=total; m+=20) milestones.push(m);
+
+  // 최근 20회 분석
+  const recent = records.slice(0, Math.min(20, total));
+  const avgCond = recent.length ? (recent.reduce((s,r)=>s+(r.cond||3),0)/recent.length).toFixed(1) : '-';
+  const doneRate = recent.length ? Math.round(recent.filter(r=>(r.exDone||0)>=(r.exTotal||1)*0.8).length/recent.length*100) : 0;
+
+  // 피드백 메시지 생성
+  let feedbackMsg = '';
+  let feedbackColor = 'var(--green)';
+  if(total >= 20){
+    if(parseFloat(avgCond) >= 4){
+      feedbackMsg = '컨디션이 꾸준히 좋습니다! 다음 단계 또는 중량 증가를 고려해보세요.';
+      feedbackColor = 'var(--green)';
+    } else if(parseFloat(avgCond) <= 2.5){
+      feedbackMsg = '피로 누적 신호가 있습니다. 휴식일을 늘리거나 세트수를 10% 줄여보세요.';
+      feedbackColor = 'var(--accent)';
+    } else {
+      feedbackMsg = '안정적으로 운동하고 있습니다. 현재 루틴을 유지하거나 목적을 재설정해보세요.';
+      feedbackColor = 'var(--blue)';
+    }
+    if(doneRate < 60){
+      feedbackMsg += ' 완료율이 낮아요 — 세트수를 줄이거나 운동 종목을 단순화해보세요.';
+    }
+  }
+
+  panel.innerHTML = `
+    <!-- 진행 바 -->
+    <div style="margin-bottom:14px;">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px;">
+        <span>현재 <strong style="color:var(--text);">${total}회</strong> 완료</span>
+        <span>${remain > 0 ? remain+'회 후 다음 피드백' : '피드백 시점!'}</span>
+      </div>
+      <div style="background:var(--surface2);border-radius:10px;height:10px;overflow:hidden;">
+        <div style="width:${Math.min(100,progress)}%;height:100%;background:var(--accent);border-radius:10px;transition:width .5s;"></div>
+      </div>
+    </div>
+
+    <!-- 최근 20회 분석 -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px;">
+      <div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:22px;font-weight:900;color:var(--accent2);font-family:var(--mono);">${avgCond}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">평균 컨디션 / 5</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:center;">
+        <div style="font-size:22px;font-weight:900;color:var(--green);font-family:var(--mono);">${doneRate}%</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px;">80%이상 완료율</div>
+      </div>
+    </div>
+
+    ${total >= 20 ? `
+    <!-- 피드백 메시지 -->
+    <div style="padding:12px;background:${feedbackColor}15;border-left:3px solid ${feedbackColor};border-radius:0 8px 8px 0;margin-bottom:12px;">
+      <div style="font-size:10px;font-weight:700;color:${feedbackColor};margin-bottom:4px;">📋 ${milestones[milestones.length-1]}회 달성 피드백</div>
+      <div style="font-size:12px;color:var(--text);line-height:1.7;">${feedbackMsg}</div>
+    </div>
+    ` : `
+    <div style="padding:10px;background:var(--surface2);border-radius:8px;font-size:11px;color:var(--muted);text-align:center;">
+      ${20-total}회 더 기록하면 첫 번째 피드백이 생성됩니다
+    </div>
+    `}
+
+    <!-- 마일스톤 -->
+    ${milestones.length ? `<div style="display:flex;gap:6px;flex-wrap:wrap;">${milestones.map(m=>`<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:#f0a50020;color:var(--accent2);border:1px solid #f0a50040;">🏅 ${m}회 달성</span>`).join('')}</div>` : ''}
+  `;
+}
+
 
 function copyLink(){
   const url=window.location.href.split('?')[0];
