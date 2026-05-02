@@ -29,16 +29,14 @@
     window.saveDietRecord = window.deleteDietRecord =
     window.getCurrentUser = function(){ return null; };
     window.loadRecords     = async function(){ return []; };
+    window.loadRecords     = async function(){ return []; };
     window.loadDietRecords = async function(){ return []; };
-    // DOMContentLoaded 후 firebase-logout 이벤트 → 로딩화면 해제
     document.addEventListener('DOMContentLoaded', function(){
-      var banner = document.getElementById('firebase-error-banner');
-      if(banner) banner.style.display = 'block';
       setTimeout(function(){
         window.dispatchEvent(new CustomEvent('firebase-logout'));
-      }, 300);
+      }, 100);
     });
-    return;
+    return;    
   }
   const firebaseConfig = {
     apiKey: "AIzaSyAsT3dKVusnbmh1lrOrM6jwcPiiBCm0W7Y",
