@@ -20,19 +20,24 @@
   // Firebase SDK 로드 실패 방어: firebase 객체가 없으면 안전하게 중단
   if(typeof firebase === 'undefined'){
     console.warn('[FitLog] Firebase SDK 로드 실패 - 네트워크를 확인해주세요');
-    document.addEventListener('DOMContentLoaded', function(){
-      var banner = document.getElementById('firebase-error-banner');
-      if(banner) banner.style.display = 'block';
-    });
     // 빈 stub 함수들로 대체 (앱이 완전히 멈추지 않도록)
     window.firebaseLogin = window.firebaseLogout = window.firebaseSignUp =
     window.firebaseEmailLogin = window.firebaseSendReset = 
     window.saveUserProfile = window.loadUserProfile =
-    window.saveRecord = window.loadRecords = window.deleteRecord =
+    window.saveRecord = window.deleteRecord =
     window.saveRoutine = window.loadRoutine =
-    window.saveDietRecord = window.loadDietRecords = window.deleteDietRecord =
+    window.saveDietRecord = window.deleteDietRecord =
     window.getCurrentUser = function(){ return null; };
-    window.loadRecords = async function(){ return []; };
+    window.loadRecords     = async function(){ return []; };
+    window.loadDietRecords = async function(){ return []; };
+    // DOMContentLoaded 후 firebase-logout 이벤트 → 로딩화면 해제
+    document.addEventListener('DOMContentLoaded', function(){
+      var banner = document.getElementById('firebase-error-banner');
+      if(banner) banner.style.display = 'block';
+      setTimeout(function(){
+        window.dispatchEvent(new CustomEvent('firebase-logout'));
+      }, 300);
+    });
     return;
   }
   const firebaseConfig = {
@@ -1952,16 +1957,30 @@ async function doLogout(){
 // ══════════════════════════════
 async function initApp(user){
   isLoggedIn=true;
+
+  // ── 전체 initApp 타임아웃 안전장치: 10초 안에 완료 안되면 강제로 앱 표시 ──
+  const initTimeout = setTimeout(()=>{
+    console.warn('[FitLog] initApp 타임아웃 - 강제 앱 진입');
+    showApp();
+  }, 10000);
+
+  try{
   // 유저 아바타
   if(user.photoURL){
     const av=document.getElementById('user-avatar');
-    av.src=user.photoURL; av.style.display='block';
+    if(av){ av.src=user.photoURL; av.style.display='block'; }
   }
-  document.getElementById('user-name').textContent=user.displayName?.split(' ')[0]||'';
+  const userNameEl = document.getElementById('user-name');
+  if(userNameEl) userNameEl.textContent=user.displayName?.split(' ')[0]||'';
 
   showToast('데이터 불러오는 중...','info');
+
+  // Firebase 호출에 개별 타임아웃 (3초)
+  const withTimeout = (promise, ms=3000, fallback=null) =>
+    Promise.race([promise, new Promise(r=>setTimeout(()=>r(fallback),ms))]);
+
   // 프로필 불러오기
-  userProfile=await window.loadUserProfile();
+  userProfile = await withTimeout(window.loadUserProfile(), 3000, null);
 
   if(!userProfile||!userProfile.name){
     // 온보딩
@@ -1972,14 +1991,19 @@ async function initApp(user){
   }
 
   // 루틴 불러오기
-  const savedRT=await window.loadRoutine();
+  const savedRT = await withTimeout(window.loadRoutine(), 3000, null);
   RT=savedRT||JSON.parse(JSON.stringify(RT_BASE));
 
   // 기록 불러오기
-  records=await window.loadRecords();
+  records = await withTimeout(window.loadRecords(), 3000, []);
 
   await loadDietData();
 
+  clearTimeout(initTimeout);
+  }catch(e){
+    console.error('[FitLog] initApp 오류:', e);
+    clearTimeout(initTimeout);
+  }
   showApp();
 }
 
@@ -5866,7 +5890,7 @@ setTimeout(()=>{
   } else {
     document.getElementById('login-screen')?.style?.display='flex';
   }
-}, 8000);
+}, 3000);
 
 // 인앱 브라우저 즉시 감지 → Chrome 자동 실행 시도
 setTimeout(()=>{
@@ -5975,7 +5999,7 @@ setTimeout(()=>{
       document.getElementById('login-screen')?.style?.display='flex';
     }
   }
-}, 5000);
+}, 2500);
 
 // 페이지 로드 즉시 인앱 감지 (5초 안 기다리고 바로)
 (function(){
