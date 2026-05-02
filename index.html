@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- fitlog v2.5 build:20260501-1 -->
+<!-- fitlog v2.5 build:20260502-1 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -1118,21 +1118,24 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <!-- 계산 결과 -->
       <div id="body-calc-result" style="background:var(--surface2);border-radius:10px;padding:12px;font-size:12px;line-height:2;"></div>
     </div>
-    <!-- 요일별 루틴 비교 + 추천 -->
+
+    <!-- ① 요일별 루틴 비교 + 추천 (맨 위) -->
     <div class="level-card">
       <div class="level-card-title">
-        <span>📅 요일별 루틴 비교 · 추천</span>
+        <span>📅 요일별 루틴 현황 · 추천</span>
         <button onclick="renderRoutineCompare()" style="padding:4px 10px;border-radius:6px;border:none;background:var(--surface2);color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font);">🔄 새로고침</button>
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">각 요일 루틴의 특징과 현재 목표 대비 추천도를 보여드려요</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">이번 주 완료 기록과 목표 일치도를 한눈에 확인하세요</div>
       <div id="routine-compare-panel"></div>
     </div>
-    <!-- 운동 분류 + 목적 선택 -->
+
+    <!-- ② 운동 분류 + 목적 선택 -->
     <div class="level-card">
       <div class="level-card-title">
-        <span>🏷️ 운동 분류 선택</span>
+        <span>🏷️ 운동 분류 · 목적 설정</span>
         <span id="class-badge" style="font-size:10px;padding:2px 10px;border-radius:10px;background:var(--blue);color:#fff;font-family:var(--mono);">기구운동</span>
       </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">운동 환경과 목적을 선택하면 <strong style="color:var(--accent);">루틴 전체</strong>가 자동으로 재구성됩니다.</div>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;" id="class-type-btns">
         <button class="class-type-btn active" onclick="selectClassType('기구운동',this)" style="padding:14px;border-radius:10px;border:2px solid var(--blue);background:#4a9eff15;color:var(--blue);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">
           🏋️ 기구운동<br><span style="font-size:10px;font-weight:400;color:var(--muted);">헬스장·기구 사용</span>
@@ -1149,12 +1152,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div id="class-preview" style="font-size:11px;color:var(--muted);padding:10px;background:var(--surface2);border-radius:8px;line-height:1.8;"></div>
     </div>
 
-    <!-- 성장 단계 -->
+    <!-- ③ 성장 단계 -->
     <div class="level-card">
       <div class="level-card-title">
         <span>🏆 나의 성장 단계</span>
         <span id="cur-level-badge" style="font-size:10px;padding:2px 10px;border-radius:10px;background:var(--accent);color:#fff;font-family:var(--mono);">입문</span>
       </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">단계를 선택하면 <strong style="color:var(--accent);">세트수·횟수</strong>가 자동 조정됩니다. 운동 종목은 유지되고 볼륨만 바뀝니다.</div>
       <div class="level-steps">
         <button class="level-step" onclick="selectLevel(1,this)">🌱<br>입문</button>
         <button class="level-step" onclick="selectLevel(2,this)">⚡<br>초급</button>
@@ -1166,13 +1170,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <button class="level-apply-btn" onclick="applyLevel()">✅ 이 단계로 루틴 적용</button>
     </div>
 
-    <!-- 기준 중량 (1RM) -->
+    <!-- ④ 기준 중량 (1RM) - 운동 기록에서 자동 갱신 -->
     <div class="level-card">
       <div class="level-card-title">
         <span>⚖️ 나의 기준 중량 (1RM)</span>
         <button onclick="save1RM()" style="padding:4px 12px;border-radius:6px;border:none;background:var(--green);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);">저장</button>
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">1회 최대 중량을 입력하면 적정 운동 중량(%)을 계산해드려요.</div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">직접 입력하거나, 운동 탭에서 세트를 기록하면 <strong style="color:var(--green);">자동으로 추정·갱신</strong>됩니다.</div>
       <div class="orm-grid" id="orm-grid"></div>
       <div style="font-size:10px;color:var(--muted);padding:8px;background:var(--surface2);border-radius:6px;line-height:1.7;">
         💡 <strong>목적별 권장 중량</strong><br>
@@ -1180,10 +1184,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
     </div>
 
-    <!-- 운동별 세트·횟수·시간 조정 -->
+    <!-- ⑤ 운동별 세부 조정 (요일 선택 후 미세조정) -->
     <div class="level-card">
       <div class="level-card-title">
-        <span>🎛️ 운동별 세부 조정</span>
+        <span>🎛️ 요일별 세부 조정</span>
         <select id="adj-day-sel" onchange="renderAdjPanel()" style="font-size:11px;padding:4px 8px;border-radius:6px;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-family:var(--font);">
           <option value="A">월(A) 가슴·어깨</option>
           <option value="B">화(B) 등·이두</option>
@@ -1193,6 +1197,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           <option value="F">토(F) 하체경량</option>
         </select>
       </div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">성장단계 적용 후 특정 종목의 세트·횟수를 <strong>개인에 맞게 미세 조정</strong>할 때 사용하세요.</div>
       <div id="adj-panel"></div>
       <button class="adj-save-btn" onclick="saveAdjustments()">💾 저장</button>
       <button class="adj-reset-btn" onclick="resetAdjustments()">↺ 기본값으로 초기화</button>
@@ -2772,6 +2777,31 @@ async function doSaveRecord(){
   }))];
   const rec={id:Date.now(),date:ds,type:tk,exDone,exTotal,sets:allSets,muscles:musclesDone,cond:selCond,memo,phase:'phase2'};
 
+  // ── 1RM 자동 갱신: 주요 운동 감지 후 추정값 업데이트 ──
+  const ORM_NAME_MAP = {
+    '벤치프레스':'bench','시티드 체스트 프레스':'bench','덤벨 벤치프레스':'bench',
+    '바벨 스쿼트':'squat','스미스 머신 스쿼트':'squat','레그 프레스':'squat',
+    '데드리프트':'dead','루마니안 데드리프트':'dead','덤벨 데드리프트':'dead',
+    '오버헤드 프레스':'ohp','덤벨 숄더 프레스':'ohp','시티드 숄더 프레스':'ohp',
+    '바벨 로우':'row','시티드 케이블 로우':'row','원암 덤벨 로우':'row',
+    '풀업':'pullup','친업':'pullup','랫 풀다운':'pullup',
+    '딥스':'dip',
+    '바벨 컬':'curl','덤벨 컬':'curl','케이블 컬':'curl',
+  };
+  let ormUpdated = false;
+  allSets.forEach(s=>{
+    const key = ORM_NAME_MAP[s.ex];
+    if(!key || !s.weight || !s.reps) return;
+    const estimated = calc1RM(parseFloat(s.weight), parseInt(s.reps));
+    if(estimated > 0 && estimated > (orm1RM[key]||0)){
+      orm1RM[key] = Math.round(estimated * 10) / 10;
+      ormUpdated = true;
+    }
+  });
+  if(ormUpdated){
+    localStorage.setItem('fitlog-1rm', JSON.stringify(orm1RM));
+  }
+
   const btn=document.getElementById('save-btn');btn.disabled=true;btn.textContent='저장 중...';
   document.getElementById('sync-dot').classList.add('syncing');
 
@@ -2780,7 +2810,8 @@ async function doSaveRecord(){
   if(ok){
     records=records.filter(r=>r.date!==ds);records.unshift(rec);
     try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}
-    showToast('✅ 클라우드에 저장 완료!','success');
+    const ormMsg = ormUpdated ? '\n📊 1RM 추정값이 자동 갱신됐어요!' : '';
+    showToast('✅ 클라우드에 저장 완료!' + ormMsg,'success');
   } else {
     showToast('⚠️ 저장 실패. 다시 시도해주세요.','error');
   }
@@ -2997,9 +3028,9 @@ function renderStats(){
 // ══════════════════════════════
 const EX_LIB=[
   // ── 가슴 ──
-  {n:'벤치프레스',d:'4세트 × 10회',tags:['대흉근(주)'],w:[],sets:4,cat:'가슴',type:'gym'},
-  {n:'인클라인 벤치프레스',d:'3세트 × 12회',tags:['대흉근상부(주)'],w:[],sets:3,cat:'가슴',type:'gym'},
-  {n:'디클라인 벤치프레스',d:'3세트 × 12회',tags:['대흉근하부(주)'],w:[],sets:3,cat:'가슴',type:'gym'},
+  {n:'벤치프레스',d:'4세트 × 10회',tags:['대흉근(주)'],w:[],sets:4,cat:'가슴',type:'both'},
+  {n:'인클라인 벤치프레스',d:'3세트 × 12회',tags:['대흉근상부(주)'],w:[],sets:3,cat:'가슴',type:'both'},
+  {n:'디클라인 벤치프레스',d:'3세트 × 12회',tags:['대흉근하부(주)'],w:[],sets:3,cat:'가슴',type:'both'},
   {n:'덤벨 벤치프레스',d:'4세트 × 12회',tags:['대흉근(주)'],w:[],sets:4,cat:'가슴',type:'both'},
   {n:'인클라인 덤벨 벤치프레스',d:'3세트 × 12회',tags:['대흉근상부(주)'],w:[],sets:3,cat:'가슴',type:'both'},
   {n:'디클라인 덤벨 벤치프레스',d:'3세트 × 12회',tags:['대흉근하부(주)'],w:[],sets:3,cat:'가슴',type:'both'},
@@ -3018,8 +3049,8 @@ const EX_LIB=[
   {n:'케이블 벤치프레스',d:'3세트 × 12회',tags:['대흉근(주)'],w:[],sets:3,cat:'가슴',type:'gym'},
   {n:'밴드 체스트 프레스',d:'3세트 × 15회',tags:['대흉근(주)'],w:[],sets:0,cat:'가슴',type:'home'},
   // ── 등 ──
-  {n:'풀업',d:'3세트 × 최대',tags:['광배근(주)'],w:['어깨주의'],sets:0,cat:'등',type:'both'},
-  {n:'친업',d:'3세트 × 최대',tags:['광배근(주)','이두근'],w:['어깨주의'],sets:0,cat:'등',type:'both'},
+  {n:'풀업',d:'3세트 × 최대',tags:['광배근(주)'],w:['어깨주의'],sets:0,cat:'등',type:'home'},
+  {n:'친업',d:'3세트 × 최대',tags:['광배근(주)','이두근'],w:['어깨주의'],sets:0,cat:'등',type:'home'},
   {n:'랫 풀다운',d:'4세트 × 12회',tags:['광배근(주)'],w:['어깨주의'],sets:4,cat:'등',type:'gym'},
   {n:'언더핸드 랫 풀다운',d:'3세트 × 12회',tags:['광배근(주)','이두근'],w:['어깨주의'],sets:3,cat:'등',type:'gym'},
   {n:'와이드그립 랫 풀다운',d:'3세트 × 12회',tags:['광배근(주)'],w:['어깨주의'],sets:3,cat:'등',type:'gym'},
@@ -3090,7 +3121,7 @@ const EX_LIB=[
   {n:'스미스 머신 스쿼트',d:'4세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:4,cat:'하체',type:'gym'},
   {n:'레그 프레스',d:'4세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:4,cat:'하체',type:'gym'},
   {n:'시티드 레그 프레스(초경량)',d:'3세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3,cat:'하체',type:'gym'},
-  {n:'런지',d:'3세트 × 12회(각)',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:0,cat:'하체',type:'home'},
+  {n:'런지',d:'3세트 × 12회(각)',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:0,cat:'하체',type:'both'},
   {n:'워킹 런지',d:'3세트 × 20걸음',tags:['대퇴사두근(주)','둔근'],w:['무릎주의'],sets:0,cat:'하체',type:'home'},
   {n:'리버스 런지',d:'3세트 × 12회(각)',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:0,cat:'하체',type:'home'},
   {n:'사이드 런지',d:'3세트 × 12회(각)',tags:['대퇴사두근(주)','내전근'],w:['무릎주의'],sets:0,cat:'하체',type:'home'},
@@ -3173,8 +3204,8 @@ const EX_LIB=[
   {n:'제자리 달리기',d:'3세트 × 1분',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
   {n:'댄스 유산소',d:'30분 줌바 등',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'home'},
   {n:'인클라인 워크',d:'20분 · 경사 10도 · 시속 5km',tags:['심폐','둔근'],w:['무릎주의'],sets:0,cat:'유산소',type:'both'},
-  {n:'저강도 유산소 LISS',d:'40분 · 최대심박의 60~65%',tags:['심폐','지방연소'],w:[],sets:0,cat:'유산소',type:'home'},
-  {n:'고강도 인터벌 HIIT',d:'20분 · 20초 전력+10초 휴식',tags:['심폐','전신'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
+  {n:'저강도 유산소 LISS',d:'40분 · 최대심박의 60~65%',tags:['심폐','지방연소'],w:[],sets:0,cat:'유산소',type:'both'},
+  {n:'고강도 인터벌 HIIT',d:'20분 · 20초 전력+10초 휴식',tags:['심폐','전신'],w:['무릎주의'],sets:0,cat:'유산소',type:'both'},
   {n:'아쿠아로빅',d:'30분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'home'},
   // ── 유산소 추가 2차 ──
   {n:'노르딕 워킹',d:'30분 · 폴 사용 전신 걷기',tags:['심폐','상체'],w:[],sets:0,cat:'유산소',type:'home'},
@@ -5290,7 +5321,7 @@ function renderLevelDesc(){
 
 function applyLevel(){
   const lv = LEVEL_INFO[curLevel];
-  if(!confirm(`${lv.label} 단계로 루틴을 조정할까요?`)) return;
+  if(!confirm(`${lv.label} 단계로 루틴을 조정할까요?\n\n✅ 운동 종목은 그대로 유지됩니다.\n📊 세트수·횟수만 조정됩니다.\n   세트: 기본 × ${Math.round(lv.setMult*100)}%\n   횟수: 기본 × ${Math.round(lv.repMult*100)}%`)) return;
   const snap = JSON.parse(JSON.stringify(RT_BASE));
   Object.keys(RT).forEach(tk=>{
     if(tk==='REST') return;
@@ -5318,9 +5349,27 @@ function applyLevel(){
 function renderORMGrid(){
   const grid = document.getElementById('orm-grid');
   if(!grid) return;
+  // 최근 기록에서 해당 운동의 최신 날짜 찾기
+  const ORM_NAME_MAP_REV = {
+    bench:['벤치프레스','시티드 체스트 프레스','덤벨 벤치프레스'],
+    squat:['바벨 스쿼트','스미스 머신 스쿼트','레그 프레스'],
+    dead:['데드리프트','루마니안 데드리프트','덤벨 데드리프트'],
+    ohp:['오버헤드 프레스','덤벨 숄더 프레스','시티드 숄더 프레스'],
+    row:['바벨 로우','시티드 케이블 로우','원암 덤벨 로우'],
+    pullup:['풀업','친업','랫 풀다운'],
+    dip:['딥스'],
+    curl:['바벨 컬','덤벨 컬','케이블 컬'],
+  };
   grid.innerHTML = ORM_EXERCISES.map(ex=>{
     const val = orm1RM[ex.key]||'';
-    const pct = val ? `<div class="orm-1rm">67%: ${Math.round(val*0.67)}kg · 75%: ${Math.round(val*0.75)}kg · 85%: ${Math.round(val*0.85)}kg</div>` : '';
+    const pct = val ? `<div class="orm-1rm">근지구력: ${Math.round(val*0.6)}kg · 근비대: ${Math.round(val*0.75)}kg · 근력: ${Math.round(val*0.87)}kg</div>` : '';
+    // 최근 기록에서 해당 운동 날짜 찾기
+    let lastDate = '';
+    const names = ORM_NAME_MAP_REV[ex.key] || [];
+    for(const rec of (records||[])){
+      if(rec.sets && rec.sets.some(s=>names.includes(s.ex))){lastDate=rec.date;break;}
+    }
+    const autoTag = lastDate ? `<div style="font-size:9px;color:var(--green);font-family:var(--mono);margin-top:2px;">📊 자동갱신 ${lastDate}</div>` : '';
     return `<div class="orm-item">
       <div class="orm-name">${ex.icon} ${ex.name}</div>
       <div class="orm-row">
@@ -5329,6 +5378,7 @@ function renderORMGrid(){
         <span class="orm-unit">kg</span>
       </div>
       <div id="orm-calc-${ex.key}">${pct}</div>
+      ${autoTag}
     </div>`;
   }).join('');
 }
