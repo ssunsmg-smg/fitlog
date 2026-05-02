@@ -11,10 +11,30 @@
 <meta name="description" content="무릎·허리·어깨 재활부터 체중감량, 근력강화까지. 내 몸에 맞는 운동 루틴을 만들어보세요.">
 
 <!-- Firebase SDK (compat - 모바일 완전 호환) -->
-<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"
+  onerror="document.getElementById('firebase-error-banner').style.display='block'"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script>
+(function(){
+  // Firebase SDK 로드 실패 방어: firebase 객체가 없으면 안전하게 중단
+  if(typeof firebase === 'undefined'){
+    console.warn('[FitLog] Firebase SDK 로드 실패 - 네트워크를 확인해주세요');
+    document.addEventListener('DOMContentLoaded', function(){
+      var banner = document.getElementById('firebase-error-banner');
+      if(banner) banner.style.display = 'block';
+    });
+    // 빈 stub 함수들로 대체 (앱이 완전히 멈추지 않도록)
+    window.firebaseLogin = window.firebaseLogout = window.firebaseSignUp =
+    window.firebaseEmailLogin = window.firebaseSendReset = 
+    window.saveUserProfile = window.loadUserProfile =
+    window.saveRecord = window.loadRecords = window.deleteRecord =
+    window.saveRoutine = window.loadRoutine =
+    window.saveDietRecord = window.loadDietRecords = window.deleteDietRecord =
+    window.getCurrentUser = function(){ return null; };
+    window.loadRecords = async function(){ return []; };
+    return;
+  }
   const firebaseConfig = {
     apiKey: "AIzaSyAsT3dKVusnbmh1lrOrM6jwcPiiBCm0W7Y",
     authDomain: "fitlog-d94cc.firebaseapp.com",
@@ -155,6 +175,7 @@
       window.dispatchEvent(new CustomEvent('firebase-logout'));
     }
   });
+})(); // Firebase 초기화 IIFE 종료
 </script>
 
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -753,6 +774,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 </style>
 </head>
 <body>
+<!-- Firebase 로드 실패 시 표시되는 배너 -->
+<div id="firebase-error-banner" style="display:none;position:fixed;top:0;left:0;right:0;z-index:9999;background:#e8533a;color:#fff;padding:12px 16px;text-align:center;font-size:13px;font-weight:700;font-family:sans-serif;">
+  ⚠️ 네트워크 연결 오류 — Firebase를 불러오지 못했습니다. 인터넷 연결을 확인하고 <a href="javascript:location.reload()" style="color:#fff;text-decoration:underline;">새로고침</a>해주세요.
+</div>
 
 <!-- 로딩 -->
 <div class="loading" id="loading">
