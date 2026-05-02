@@ -12,7 +12,7 @@
 
 <!-- Firebase SDK (compat - 모바일 완전 호환) -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"
-  onerror="document.getElementById('firebase-error-banner').style.display='block'"></script>
+  onerror="document.getElementById('firebase-error-banner')?.style?.display='block'"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script>
@@ -1804,9 +1804,9 @@ function renderOb(){
   document.getElementById('ob-step').textContent=obStep+' / '+OB_TOTAL+' 단계';
   document.getElementById('ob-title').textContent=s.title;
   document.getElementById('ob-sub').textContent=s.sub;
-  document.getElementById('ob-prog').style.width=s.prog+'%';
+  document.getElementById('ob-prog')?.style?.width=s.prog+'%';
   document.getElementById('ob-content').innerHTML=s.render();
-  document.getElementById('ob-back').style.display=obStep>1?'block':'none';
+  document.getElementById('ob-back')?.style?.display=obStep>1?'block':'none';
   document.getElementById('ob-next').textContent=obStep===OB_TOTAL?'맞춤 루틴 만들기 🚀':'다음 →';
   document.getElementById('ob-next').onclick=obNext;
 }
@@ -1867,7 +1867,7 @@ async function finishOb(){
   </div>`;
   document.getElementById('ob-next').textContent='운동 시작하기 →';
   document.getElementById('ob-next').onclick=()=>showApp();
-  document.getElementById('ob-back').style.display='none';
+  document.getElementById('ob-back')?.style?.display='none';
 }
 // ══════════════════════════════
 // 로그인/로그아웃
@@ -1878,16 +1878,16 @@ let emailMode = 'login';
 function switchLoginTab(tab, btn){
   document.querySelectorAll('#login-screen .login-tabs:first-of-type .login-tab').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  document.getElementById('login-social').style.display = tab==='social'?'block':'none';
-  document.getElementById('login-email').style.display  = tab==='email' ?'block':'none';
+  document.getElementById('login-social')?.style?.display = tab==='social'?'block':'none';
+  document.getElementById('login-email')?.style?.display  = tab==='email' ?'block':'none';
   clearEmailErr();
 }
 function switchEmailMode(mode, btn){
   emailMode = mode;
   document.getElementById('et-login').classList.toggle('active', mode==='login');
   document.getElementById('et-signup').classList.toggle('active', mode==='signup');
-  document.getElementById('signup-name').style.display    = mode==='signup'?'block':'none';
-  document.getElementById('pw-confirm-inp').style.display = mode==='signup'?'block':'none';
+  document.getElementById('signup-name')?.style?.display    = mode==='signup'?'block':'none';
+  document.getElementById('pw-confirm-inp')?.style?.display = mode==='signup'?'block':'none';
   document.getElementById('email-submit-btn').textContent = mode==='signup'?'회원가입':'로그인';
   document.getElementById('email-switch').innerHTML = mode==='signup'
     ? '이미 계정이 있으신가요? <a onclick="switchEmailMode(\'login\',document.getElementById(\'et-login\'))">로그인</a>'
@@ -1965,8 +1965,8 @@ async function initApp(user){
 
   if(!userProfile||!userProfile.name){
     // 온보딩
-    document.getElementById('loading').style.display='none';
-    document.getElementById('onboarding').style.display='flex';
+    document.getElementById('loading')?.style?.display='none';
+    document.getElementById('onboarding')?.style?.display='flex';
     obStep=1; renderOb();
     return;
   }
@@ -1984,9 +1984,9 @@ async function initApp(user){
 }
 
 function showApp(){
-  document.getElementById('loading').style.display='none';
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('onboarding').style.display='none';
+  document.getElementById('loading')?.style?.display='none';
+  document.getElementById('login-screen')?.style?.display='none';
+  document.getElementById('onboarding')?.style?.display='none';
   document.getElementById('main-app').classList.add('active');
 
   selDay=new Date().getDay();
@@ -2178,7 +2178,7 @@ function renderWorkout(){
   if(tk==='REST' && !makeupActive){
     content.innerHTML='<div class="rest-card"><div style="font-size:34px;margin-bottom:10px;">😴</div><div style="font-size:17px;font-weight:700;margin-bottom:7px;">오늘은 휴식일!</div><div style="font-size:13px;color:var(--muted);line-height:1.9;">근육은 쉴 때 성장합니다<br>가벼운 산책 20분 OK<br>단백질 식사 꼭 챙기기</div></div>'
       + buildMakeupCard(selDay);
-    bottom.style.display='none';document.getElementById('prog-txt').textContent='휴식일';document.getElementById('prog-fill').style.width='0%';return;
+    bottom.style.display='none';document.getElementById('prog-txt').textContent='휴식일';document.getElementById('prog-fill')?.style?.width='0%';return;
   }
   bottom.style.display='block';
   let html='<div class="rh '+rt.color+'"><div class="rh-lbl">'+rt.label+'</div><div class="rh-title">'+rt.title+'</div><div class="rh-muscles">'+rt.muscles.map(m=>'<span class="mtag">'+m+'</span>').join('')+'</div></div>';
@@ -2777,7 +2777,7 @@ function toggleExChk(si,ei){
 function updateProg(){
   const all=document.querySelectorAll('.ex-chk').length,done=document.querySelectorAll('.ex-chk.done').length;
   document.getElementById('prog-txt').textContent=`${done} / ${all} 완료`;
-  document.getElementById('prog-fill').style.width=(all?Math.round(done/all*100):0)+'%';
+  document.getElementById('prog-fill')?.style?.width=(all?Math.round(done/all*100):0)+'%';
 }
 function resetAll(){
   document.querySelectorAll('.ex-chk').forEach(e=>e.classList.remove('done'));
@@ -5833,26 +5833,26 @@ let _appStarted = false;
 window.addEventListener('firebase-login', async(e)=>{
   if(_appStarted) return;
   _appStarted = true;
-  document.getElementById('loading').style.display='flex';
-  document.getElementById('login-screen').style.display='none';
-  document.getElementById('inapp-screen').style.display='none';
+  document.getElementById('loading')?.style?.display='flex';
+  document.getElementById('login-screen')?.style?.display='none';
+  document.getElementById('inapp-screen')?.style?.display='none';
   await initApp(e.detail);
 });
 
 window.addEventListener('firebase-logout', ()=>{
   if(_appStarted){
     _appStarted = false;
-    document.getElementById('loading').style.display='none';
-    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('loading')?.style?.display='none';
+    document.getElementById('login-screen')?.style?.display='flex';
     document.getElementById('main-app').classList.remove('active');
     return;
   }
   // 초기 로딩 중 logout → 로그인 화면 표시
-  document.getElementById('loading').style.display='none';
+  document.getElementById('loading')?.style?.display='none';
   if(detectInApp()){
-    document.getElementById('inapp-screen').style.display='flex';
+    document.getElementById('inapp-screen')?.style?.display='flex';
   } else {
-    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('login-screen')?.style?.display='flex';
   }
 });
 
@@ -5860,11 +5860,11 @@ window.addEventListener('firebase-logout', ()=>{
 // 안전장치: 8초 후에도 앱 미실행 시 로그인 화면 표시
 setTimeout(()=>{
   if(_appStarted) return;
-  document.getElementById('loading').style.display='none';
+  document.getElementById('loading')?.style?.display='none';
   if(detectInApp()){
-    document.getElementById('inapp-screen').style.display='flex';
+    document.getElementById('inapp-screen')?.style?.display='flex';
   } else {
-    document.getElementById('login-screen').style.display='flex';
+    document.getElementById('login-screen')?.style?.display='flex';
   }
 }, 8000);
 
@@ -5883,21 +5883,21 @@ setTimeout(()=>{
       setTimeout(()=>{
         // Chrome 실행 안 되면 안내 화면
         if(!_appStarted){
-          document.getElementById('loading').style.display='none';
-          document.getElementById('inapp-screen').style.display='flex';
+          document.getElementById('loading')?.style?.display='none';
+          document.getElementById('inapp-screen')?.style?.display='flex';
         }
       }, 2500);
     } else if(isIOS){
       window.location.href = 'googlechrome://'+url.replace('https://','');
       setTimeout(()=>{
         if(!_appStarted){
-          document.getElementById('loading').style.display='none';
-          document.getElementById('inapp-screen').style.display='flex';
+          document.getElementById('loading')?.style?.display='none';
+          document.getElementById('inapp-screen')?.style?.display='flex';
         }
       }, 2000);
     } else {
-      document.getElementById('loading').style.display='none';
-      document.getElementById('inapp-screen').style.display='flex';
+      document.getElementById('loading')?.style?.display='none';
+      document.getElementById('inapp-screen')?.style?.display='flex';
     }
   }
 }, 800);
@@ -5958,8 +5958,8 @@ function showInAppToast(msg){
   setTimeout(()=>{ t.style.display='none'; }, 3500);
 }
 function tryAnyway(){
-  document.getElementById('inapp-screen').style.display='none';
-  document.getElementById('login-screen').style.display='flex';
+  document.getElementById('inapp-screen')?.style?.display='none';
+  document.getElementById('login-screen')?.style?.display='flex';
 }
 
 // 초기 로딩 — Firebase 응답이 늦을 경우 대비 (5초 후 강제 로그인 화면 표시)
@@ -5967,12 +5967,12 @@ setTimeout(()=>{
   if(_appStarted) return;
   const user = window.getCurrentUser ? window.getCurrentUser() : null;
   if(!user){
-    document.getElementById('loading').style.display='none';
+    document.getElementById('loading')?.style?.display='none';
     if(detectInApp()){
       // 인앱 브라우저 → 전용 안내 화면
-      document.getElementById('inapp-screen').style.display='flex';
+      document.getElementById('inapp-screen')?.style?.display='flex';
     } else {
-      document.getElementById('login-screen').style.display='flex';
+      document.getElementById('login-screen')?.style?.display='flex';
     }
   }
 }, 5000);
@@ -5982,8 +5982,8 @@ setTimeout(()=>{
   if(detectInApp()){
     setTimeout(()=>{
       if(!_appStarted){
-        document.getElementById('loading').style.display='none';
-        document.getElementById('inapp-screen').style.display='flex';
+        document.getElementById('loading')?.style?.display='none';
+        document.getElementById('inapp-screen')?.style?.display='flex';
       }
     }, 800);
   }
@@ -6007,11 +6007,11 @@ function openAiGuide(exName,tags,warn){
   // 캐시 확인 (버전이 같을 때만)
   const cacheKey=_CACHE_VER+':'+exName;
   if(_aiCache[cacheKey]){
-    document.getElementById('ai-loading').style.display='none';
+    document.getElementById('ai-loading')?.style?.display='none';
     document.getElementById('ai-guide-content').innerHTML=_aiCache[cacheKey];
     return;
   }
-  document.getElementById('ai-loading').style.display='flex';
+  document.getElementById('ai-loading')?.style?.display='flex';
 
   const info=EX_INFO[exName];
   const existingDesc=info?`기존 설명: ${info.desc} / 주의: ${info.tip}`:'';
@@ -6181,7 +6181,7 @@ function ovUpdateDisplay(){
   t.textContent=ovFmtTime(_timerState.current);
   t.className=_timerState.running?'running':'';
   const pct=Math.max(0,_timerState.current/_timerState.total*100);
-  document.getElementById('timer-ov-bar').style.width=pct+'%';
+  document.getElementById('timer-ov-bar')?.style?.width=pct+'%';
   document.getElementById('ov-start-btn').textContent=_timerState.running?'⏸ 일시정지':'▶ 시작';
   document.getElementById('ov-start-btn').className=_timerState.running?'stop':'';
 }
@@ -6206,8 +6206,8 @@ function ovToggle(){
       try{if(navigator.vibrate)navigator.vibrate([300,100,300,100,300]);}catch(e){}
       playTimerAlarm();
       document.getElementById('timer-ov-time').textContent='완료! 🎉';
-      document.getElementById('timer-ov-time').style.color='var(--green)';
-      setTimeout(()=>{ovUpdateDisplay();document.getElementById('timer-ov-time').style.color='';},2000);
+      document.getElementById('timer-ov-time')?.style?.color='var(--green)';
+      setTimeout(()=>{ovUpdateDisplay();document.getElementById('timer-ov-time')?.style?.color='';},2000);
     }
   },1000);
 }
