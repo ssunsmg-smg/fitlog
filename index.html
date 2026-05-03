@@ -1004,6 +1004,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           🎯 스마트 루틴 생성기
         </button>
       </div>
+      <!-- 유산소 추가 버튼 (평일·주말 항상 표시) -->
+      <button onclick="openCardioModal()" style="width:100%;padding:9px;border-radius:10px;
+        border:1px solid #4caf7d55;background:#4caf7d0d;color:var(--green);
+        font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);
+        display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;">
+        🏃 유산소 추가 · 10가지 중 복수 선택
+      </button>
       <div id="time-plan-bar" style="font-size:11px;color:var(--muted);padding:5px 10px;background:var(--surface2);border-radius:6px;display:none;"></div>
     </div>
     <div class="today-title" id="today-title">오늘의 루틴</div>
@@ -1305,20 +1312,32 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <div class="toast" id="toast"></div>
 
-<!-- 주말 유산소 선택 모달 -->
+<!-- 유산소 선택 모달 (다중 선택) -->
 <div class="modal-bg" id="cardio-modal">
-  <div class="modal" style="max-height:85vh;overflow-y:auto;">
+  <div class="modal" style="max-height:88vh;overflow-y:auto;display:flex;flex-direction:column;">
     <div class="modal-title">
       <div>
-        <div id="cardio-modal-badge" style="font-size:10px;color:var(--green);font-family:var(--mono);font-weight:700;margin-bottom:3px;">🏃 주말 유산소</div>
-        <span>유산소 선택 (10가지)</span>
+        <div id="cardio-modal-badge" style="font-size:10px;color:var(--green);font-family:var(--mono);font-weight:700;margin-bottom:3px;">🏃 유산소 추가</div>
+        <span>유산소 선택 (복수 가능)</span>
       </div>
       <button class="modal-close" onclick="closeCardioModal()">✕</button>
     </div>
-    <div id="cardio-modal-desc" style="font-size:12px;color:var(--muted);padding:0 0 14px;line-height:1.7;">
-      오늘 할 유산소를 선택하세요.
+    <div id="cardio-modal-desc" style="font-size:12px;color:var(--muted);padding:0 0 10px;line-height:1.7;">
+      원하는 유산소를 <strong style="color:var(--text);">여러 개</strong> 선택 후 추가하세요.
     </div>
-    <div id="cardio-modal-list" style="display:flex;flex-direction:column;gap:8px;"></div>
+    <!-- 선택 개수 표시 -->
+    <div id="cardio-selected-bar" style="display:none;background:#4caf7d15;border:1px solid #4caf7d44;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--green);font-weight:700;"></div>
+    <!-- 목록 -->
+    <div id="cardio-modal-list" style="display:flex;flex-direction:column;gap:8px;flex:1;overflow-y:auto;"></div>
+    <!-- 하단 확인 버튼 -->
+    <div style="padding-top:12px;border-top:1px solid var(--border);margin-top:12px;">
+      <button id="cardio-confirm-btn" onclick="confirmCardioSelection()"
+        style="width:100%;padding:13px;border-radius:10px;border:none;
+        background:var(--green);color:#fff;font-size:14px;font-weight:700;
+        cursor:pointer;font-family:var(--font);opacity:0.4;pointer-events:none;">
+        ✅ 선택한 유산소 루틴에 추가
+      </button>
+    </div>
   </div>
 </div>
 
@@ -2174,7 +2193,7 @@ function renderHome(){
   document.getElementById('tc-title').textContent=rt?.title||'';
   document.getElementById('tc-sub').textContent=(rt?.muscles||[]).join(' · ');
 
-  // ── 주말 유산소 배너: 토·일이면 항상 표시 ──
+  // ── 유산소 배너: 매일 표시 (완주 여부로 스타일 분기) ──
   const todayDow = now.getDay();
   const weekendBanner    = document.getElementById('weekend-cardio-banner');
   const bannerComplete   = document.getElementById('weekend-banner-complete');
@@ -2182,26 +2201,25 @@ function renderHome(){
   const partialMsg       = document.getElementById('weekend-partial-msg');
 
   if(weekendBanner){
-    if(todayDow === 0 || todayDow === 6){
-      weekendBanner.style.display = 'block';
-      const complete = isWeekdaysComplete();
-      if(complete){
-        if(bannerComplete) bannerComplete.style.display = 'block';
-        if(bannerPartial)  bannerPartial.style.display  = 'none';
-      } else {
-        if(bannerComplete) bannerComplete.style.display = 'none';
-        if(bannerPartial)  bannerPartial.style.display  = 'block';
-        // 이번 주 완료된 요일 수 계산
-        let doneCnt = 0;
-        for(let dow=1; dow<=5; dow++){
-          if(DAY_SCHED[dow]==='REST'){ doneCnt++; continue; }
-          const d2=new Date(now); d2.setDate(now.getDate()-(todayDow-dow));
-          if(records.find(r=>r.date===toStr(d2))) doneCnt++;
-        }
-        if(partialMsg) partialMsg.textContent = `이번 주 ${doneCnt}일 완료 · 오늘도 유산소로 마무리해요!`;
-      }
+    weekendBanner.style.display = 'block';
+    const complete = isWeekdaysComplete();
+    if(complete){
+      if(bannerComplete) bannerComplete.style.display = 'block';
+      if(bannerPartial)  bannerPartial.style.display  = 'none';
     } else {
-      weekendBanner.style.display = 'none';
+      if(bannerComplete) bannerComplete.style.display = 'none';
+      if(bannerPartial)  bannerPartial.style.display  = 'block';
+      // 이번 주 완료된 요일 수 계산
+      let doneCnt = 0;
+      for(let dow=1; dow<=5; dow++){
+        if(DAY_SCHED[dow]==='REST'){ doneCnt++; continue; }
+        const d2=new Date(now); d2.setDate(now.getDate()-(todayDow-dow));
+        if(records.find(r=>r.date===toStr(d2))) doneCnt++;
+      }
+      const isWeekend = (todayDow===0||todayDow===6);
+      if(partialMsg) partialMsg.textContent = isWeekend
+        ? `이번 주 ${doneCnt}일 완료 · 오늘도 유산소로 마무리해요!`
+        : `유산소를 루틴에 추가할 수 있어요!`;
     }
   }
 
@@ -6310,39 +6328,35 @@ function closeAiGuide(){
 // ══════════════════════════════
 // 주말 유산소 선택
 // ══════════════════════════════
+// 유산소 추가 (평일·주말 / 다중 선택)
+// ══════════════════════════════
 
-// 유산소 10가지 메인 목록
 const WEEKEND_CARDIO = [
-  {n:'업라이트 바이크',    d:'20분 · 저강도', icon:'🚴', kcal:150, tip:'무릎 관절 부담 최소',      type:'gym'},
-  {n:'런닝머신',          d:'20분 · 중강도', icon:'🏃', kcal:200, tip:'페이스 유지가 핵심',        type:'gym'},
-  {n:'인클라인 트레드밀', d:'20분 · 경사 8도',icon:'⛰️', kcal:220, tip:'둔근·종아리 집중 자극',   type:'gym'},
-  {n:'일립티컬',          d:'20분',          icon:'🔄', kcal:180, tip:'전신 저충격 유산소',         type:'gym'},
-  {n:'로잉머신',          d:'15분',          icon:'🚣', kcal:200, tip:'상체+하체 동시 자극',        type:'gym'},
-  {n:'스텝퍼',            d:'15분',          icon:'🪜', kcal:170, tip:'둔근·심폐 동시 강화',        type:'gym'},
-  {n:'실내 사이클',       d:'30분 · 중강도', icon:'🚴', kcal:250, tip:'무릎 친화적 유산소',         type:'gym'},
-  {n:'버피',              d:'3세트 × 10회',  icon:'💥', kcal:180, tip:'전신 고강도 — 무릎 주의',   type:'home'},
-  {n:'수영',              d:'30분',          icon:'🏊', kcal:250, tip:'관절 무부하 전신운동',       type:'home'},
-  {n:'걷기 (실외)',       d:'40~60분',       icon:'🚶', kcal:160, tip:'경보 속도 유지, 팔 흔들기',  type:'both'},
+  {n:'업라이트 바이크',    d:'20분 · 저강도',   icon:'🚴', kcal:150, tip:'무릎 관절 부담 최소',      type:'gym'},
+  {n:'런닝머신',           d:'20분 · 중강도',   icon:'🏃', kcal:200, tip:'페이스 유지가 핵심',        type:'gym'},
+  {n:'인클라인 트레드밀',  d:'20분 · 경사 8도', icon:'⛰️', kcal:220, tip:'둔근·종아리 집중 자극',    type:'gym'},
+  {n:'일립티컬',           d:'20분',            icon:'🔄', kcal:180, tip:'전신 저충격 유산소',         type:'gym'},
+  {n:'로잉머신',           d:'15분',            icon:'🚣', kcal:200, tip:'상체+하체 동시 자극',        type:'gym'},
+  {n:'스텝퍼',             d:'15분',            icon:'🪜', kcal:170, tip:'둔근·심폐 동시 강화',        type:'gym'},
+  {n:'실내 사이클',        d:'30분 · 중강도',   icon:'🚴', kcal:250, tip:'무릎 친화적 유산소',         type:'gym'},
+  {n:'버피',               d:'3세트 × 10회',    icon:'💥', kcal:180, tip:'전신 고강도 — 무릎 주의',   type:'home'},
+  {n:'수영',               d:'30분',            icon:'🏊', kcal:250, tip:'관절 무부하 전신운동',       type:'home'},
+  {n:'걷기 (실외)',        d:'40~60분',         icon:'🚶', kcal:160, tip:'경보 속도 유지, 팔 흔들기',  type:'both'},
 ];
 
-// 이번 주 월~금 모두 완료했는지 확인
+// 현재 선택된 인덱스 Set
+let _cardioSelected = new Set();
+
 function isWeekdaysComplete(){
   const now = new Date();
-  const todayDow = now.getDay(); // 0=일, 6=토
-  if(todayDow !== 0 && todayDow !== 6) return false; // 주말만 체크
-
-  // 이번 주 월(1)~금(5) 날짜 구하기
+  const todayDow = now.getDay();
   const weekdaysDone = [];
   for(let dow = 1; dow <= 5; dow++){
-    const d = new Date(now);
-    const diff = dow - todayDow;
-    d.setDate(now.getDate() + diff);
-    const ds = toStr(d);
-    const rt = RT[DAY_SCHED[dow]];
-    // REST 요일이면 건너뜀
     if(DAY_SCHED[dow] === 'REST'){ weekdaysDone.push(true); continue; }
-    const rec = records.find(r => r.date === ds);
-    weekdaysDone.push(!!rec);
+    const d = new Date(now);
+    d.setDate(now.getDate() - (todayDow - dow));
+    if(dow > todayDow){ weekdaysDone.push(false); continue; }
+    weekdaysDone.push(!!records.find(r => r.date === toStr(d)));
   }
   return weekdaysDone.every(v => v);
 }
@@ -6350,78 +6364,121 @@ function isWeekdaysComplete(){
 function openCardioModal(){
   const modal = document.getElementById('cardio-modal');
   if(!modal) return;
+  _cardioSelected = new Set(); // 선택 초기화
 
-  // 완주 여부에 따라 배지/설명 변경
   const complete = isWeekdaysComplete();
   const badge = document.getElementById('cardio-modal-badge');
   const desc  = document.getElementById('cardio-modal-desc');
-  if(badge) badge.textContent = complete ? '🏅 주중 완주 보상' : '🏃 주말 유산소';
-  if(badge) badge.style.color = complete ? 'var(--green)' : 'var(--blue)';
-  if(desc)  desc.innerHTML = complete
-    ? '월~금 운동을 모두 완료했어요! 💪<br>오늘 유산소로 마무리해보세요.'
-    : '오늘 할 유산소를 선택하세요.<br><span style="color:var(--muted);">주중 완주하면 🏅 배지가 생겨요!</span>';
+  if(badge){
+    badge.textContent = complete ? '🏅 주중 완주 보상' : '🏃 유산소 추가';
+    badge.style.color = complete ? 'var(--green)' : 'var(--blue)';
+  }
+  if(desc) desc.innerHTML = complete
+    ? '월~금 모두 완료! 💪 유산소를 <strong style="color:var(--text);">여러 개</strong> 선택 후 추가하세요.'
+    : '원하는 유산소를 <strong style="color:var(--text);">여러 개</strong> 선택 후 추가하세요.';
 
+  _renderCardioList();
+  _updateCardioConfirmBtn();
+  modal.classList.add('open');
+}
+
+function _renderCardioList(){
   const list = document.getElementById('cardio-modal-list');
+  if(!list) return;
   const typeFilter = classType === '홈트' ? ['home','both'] : ['gym','both','home'];
 
   list.innerHTML = WEEKEND_CARDIO
-    .filter(c => typeFilter.includes(c.type))
-    .map((c,i) => `
-      <div onclick="selectWeekendCardio(${i})" style="display:flex;align-items:center;gap:12px;
-        padding:13px 14px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);
-        cursor:pointer;transition:all .15s;" 
-        onmouseover="this.style.borderColor='var(--green)';this.style.background='#4caf7d12'"
-        onmouseout="this.style.borderColor='var(--border)';this.style.background='var(--surface2)'">
-        <div style="font-size:28px;flex-shrink:0;">${c.icon}</div>
+    .filter((c,i) => typeFilter.includes(c.type))
+    .map((c, i) => {
+      const sel = _cardioSelected.has(i);
+      return `<div id="cardio-item-${i}" onclick="toggleCardioItem(${i})"
+        style="display:flex;align-items:center;gap:12px;
+        padding:13px 14px;border-radius:12px;cursor:pointer;transition:all .15s;
+        border:${sel?'2px solid var(--green)':'1px solid var(--border)'};
+        background:${sel?'#4caf7d15':'var(--surface2)'};">
+        <div style="font-size:26px;flex-shrink:0;">${c.icon}</div>
         <div style="flex:1;min-width:0;">
           <div style="font-size:14px;font-weight:700;">${c.n}</div>
           <div style="font-size:11px;color:var(--muted);margin-top:2px;">${c.d} · 약 ${c.kcal}kcal</div>
           <div style="font-size:10px;color:var(--green);margin-top:3px;">💡 ${c.tip}</div>
         </div>
-        <div style="font-size:11px;color:var(--accent);font-weight:700;flex-shrink:0;">선택 →</div>
-      </div>
-    `).join('');
+        <div style="width:22px;height:22px;border-radius:50%;border:2px solid ${sel?'var(--green)':'var(--border)'};
+          background:${sel?'var(--green)':'none'};display:flex;align-items:center;justify-content:center;
+          flex-shrink:0;font-size:13px;">${sel?'✓':''}</div>
+      </div>`;
+    }).join('');
+}
 
-  modal.classList.add('open');
+function toggleCardioItem(i){
+  if(_cardioSelected.has(i)) _cardioSelected.delete(i);
+  else _cardioSelected.add(i);
+  _renderCardioList();
+  _updateCardioConfirmBtn();
+}
+
+function _updateCardioConfirmBtn(){
+  const btn = document.getElementById('cardio-confirm-btn');
+  const bar = document.getElementById('cardio-selected-bar');
+  const cnt = _cardioSelected.size;
+  if(btn){
+    if(cnt > 0){
+      btn.style.opacity = '1';
+      btn.style.pointerEvents = 'auto';
+      const totalKcal = [..._cardioSelected].reduce((s,i)=>s+(WEEKEND_CARDIO[i]?.kcal||0),0);
+      btn.textContent = `✅ ${cnt}가지 유산소 추가 (약 ${totalKcal}kcal)`;
+    } else {
+      btn.style.opacity = '0.4';
+      btn.style.pointerEvents = 'none';
+      btn.textContent = '✅ 선택한 유산소 루틴에 추가';
+    }
+  }
+  if(bar){
+    if(cnt > 0){
+      const names = [..._cardioSelected].map(i=>WEEKEND_CARDIO[i].icon+' '+WEEKEND_CARDIO[i].n).join('  ·  ');
+      bar.style.display = 'block';
+      bar.textContent = `선택: ${names}`;
+    } else {
+      bar.style.display = 'none';
+    }
+  }
 }
 
 function closeCardioModal(){
   document.getElementById('cardio-modal')?.classList.remove('open');
 }
 
-function selectWeekendCardio(idx){
-  const c = WEEKEND_CARDIO[idx];
-  if(!c) return;
+function confirmCardioSelection(){
+  if(_cardioSelected.size === 0) return;
   closeCardioModal();
 
-  // 선택한 유산소를 오늘 루틴에 임시 추가
-  const todayDow = new Date().getDay();
+  const todayDow = selDay ?? new Date().getDay();
   const tk = DAY_SCHED[todayDow];
-  if(tk === 'REST'){
-    // REST 요일이면 임시 유산소 루틴 생성
-    const cardioSection = {
-      n:'유산소',
-      exs:[{n:c.n, d:c.d, tags:['심폐'], w:c.n.includes('무릎')?['무릎주의']:[], sets:0}]
-    };
+  const selectedItems = [..._cardioSelected].map(i => WEEKEND_CARDIO[i]);
+
+  if(tk === 'REST' || !RT[tk]){
+    // 휴식일: 유산소 전용 임시 루틴 생성
     RT['CARDIO_TODAY'] = {
       label:'오늘 · 유산소',
-      title:c.icon+' '+c.n,
+      title:'🏃 유산소 루틴',
       color:'rh-d',
       muscles:['심폐'],
-      sections:[cardioSection]
+      sections:[{
+        n:'유산소',
+        exs: selectedItems.map(c=>({n:c.n, d:c.d, tags:['심폐'], w:[], sets:0}))
+      }]
     };
     DAY_SCHED[todayDow] = 'CARDIO_TODAY';
     initSetData('CARDIO_TODAY');
   } else {
-    // 기존 루틴에 유산소 섹션 추가
-    const exists = RT[tk].sections.find(s=>s.n==='유산소(추가)');
-    if(!exists){
+    // 기존 루틴: 유산소 섹션 교체/추가
+    const sec = RT[tk].sections.find(s=>s.n==='유산소(추가)');
+    if(sec){
+      sec.exs = selectedItems.map(c=>({n:c.n, d:c.d, tags:['심폐'], w:[], sets:0}));
+    } else {
       RT[tk].sections.push({
         n:'유산소(추가)',
-        exs:[{n:c.n, d:c.d, tags:['심폐'], w:[], sets:0}]
+        exs: selectedItems.map(c=>({n:c.n, d:c.d, tags:['심폐'], w:[], sets:0}))
       });
-    } else {
-      exists.exs = [{n:c.n, d:c.d, tags:['심폐'], w:[], sets:0}];
     }
     initSetData(tk);
   }
@@ -6433,8 +6490,13 @@ function selectWeekendCardio(idx){
   document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
   document.getElementById('page-workout').classList.add('active');
   document.querySelectorAll('.nav-tab')[1].classList.add('active');
-  showToast(`✅ ${c.icon} ${c.n} 추가됨! 오늘도 파이팅!`, 'success');
+
+  const names = selectedItems.map(c=>c.icon+' '+c.n).join(', ');
+  showToast(`✅ ${names} 추가됨!`, 'success');
 }
+
+// 하위 호환성 유지 (구버전 단일선택 함수)
+function selectWeekendCardio(idx){ toggleCardioItem(idx); }
 
 
 // ══════════════════════════════
