@@ -2149,6 +2149,21 @@ function showApp(){
   document.getElementById('onboarding').style.display='none';
   document.getElementById('main-app').classList.add('active');
 
+  // ── 뒤로가기 방지 ──
+  history.pushState({fitlog:true}, '', location.href);
+  window.addEventListener('popstate', function(){
+    if(document.getElementById('main-app').classList.contains('active')){
+      history.pushState({fitlog:true}, '', location.href);
+    }
+  });
+
+  // ── WakeLock 화면 복귀 시 재획득 ──
+  document.addEventListener('visibilitychange', ()=>{
+    if(!document.hidden && _wakeLock===null && _timerState.running){
+      _requestWakeLock();
+    }
+  }, {once:false});
+
   selDay=new Date().getDay();
   initSetData(DAY_SCHED[selDay]);
   renderHome(); renderWorkout(); renderCalendar(); renderLog(); renderStats();
@@ -2172,6 +2187,9 @@ function showApp(){
   }
 
   showToast(`환영합니다, ${userProfile?.name||''}님! 💪`,'success');
+
+  // ── 주차별 운동 변동 적용 ──
+  applyWeeklyVariation();
 }
 
 // ══════════════════════════════
@@ -2189,28 +2207,60 @@ function calc1RM(weight,reps){
 function renderSets(key,cId){
   const sets=setData[key];if(!sets)return;
   const c=document.getElementById(cId);if(!c)return;
-  // 1RM 계산 (입력된 세트 중 최고값)
+
+  // 이전 기록 가져오기 (최근 완료된 날짜의 같은 운동)
+  const exName = key.split('-').slice(2).join('-') || '';
+  let prevRec = null;
+  for(const r of (records||[])){
+    if(r.sets){
+      const match = r.sets.find(s=>s.ex===exName);
+      if(match){prevRec=r;break;}
+    }
+  }
+  const prevSets = prevRec?.sets?.filter(s=>s.ex===exName)||[];
+
+  // 1RM 계산
   let best1RM=0;
   sets.forEach(s=>{if(s.weight&&s.reps){const v=calc1RM(s.weight,s.reps);if(v>best1RM)best1RM=v;}});
-  const rmHtml=best1RM>0?`<div class="rm-badge">추정 1RM <strong>${best1RM}kg</strong> · 다음 목표 <strong>${Math.round(best1RM*0.75*10)/10}kg × 10회</strong></div>`:'';
-  c.innerHTML=`<div class="sets-hdr"><div>세트</div><div>중량 kg</div><div>✓</div></div>
-    ${sets.map((s,i)=>`<div class="set-row" id="sr-${key}-${i}">
-      <div class="set-num">${i+1}</div>
-      <input class="set-inp ${s.weight?'filled':''}" type="number" value="${s.weight}" placeholder="0" min="0" step="0.5" oninput="updSet('${key}',${i},'weight',this.value);refreshRM('${key}','${cId}')"/>
-      <button class="set-ok ${s.done?'done':''}" onclick="toggleSetDone('${key}',${i})">✓</button>
-    </div>`).join('')}
+  const rmHtml=best1RM>0?`<div class="rm-badge">추정 1RM <strong>${best1RM}kg</strong> · 목표 <strong>${Math.round(best1RM*0.75*10)/10}kg×10회</strong></div>`:'';
+
+  // 이전 기록 요약
+  const prevHtml = prevSets.length>0
+    ? `<div style="font-size:10px;color:var(--muted);padding:4px 2px 6px;font-family:var(--mono);">
+        📅 이전(${prevRec.date}) · ${prevSets.map((s,i)=>`${i+1}세트: ${s.weight||'-'}kg×${s.reps||'-'}회`).join(' · ')}
+       </div>`
+    : '';
+
+  c.innerHTML=`
+    ${prevHtml}
+    <div class="sets-hdr" style="grid-template-columns:28px 1fr 80px 36px;">
+      <div>세트</div><div>중량 kg</div><div>횟수</div><div>✓</div>
+    </div>
+    ${sets.map((s,i)=>{
+      const pw = prevSets[i]?.weight||'';
+      const pr = prevSets[i]?.reps||'';
+      return `<div class="set-row" id="sr-${key}-${i}" style="grid-template-columns:28px 1fr 80px 36px;">
+        <div class="set-num">${i+1}</div>
+        <input class="set-inp ${s.weight?'filled':''}" type="number" value="${s.weight}"
+          placeholder="${pw?pw+'kg':'0'}" min="0" step="0.5" style="${pw&&!s.weight?'border-color:#f0a50055;':''}"
+          oninput="updSet('${key}',${i},'weight',this.value);refreshRM('${key}','${cId}')"/>
+        <input class="set-inp ${s.reps?'filled':''}" type="number" value="${s.reps}"
+          placeholder="${pr?pr+'회':'회'}" min="0" step="1" style="font-size:13px;${pr&&!s.reps?'border-color:#f0a50055;':''}"
+          oninput="updSet('${key}',${i},'reps',this.value);refreshRM('${key}','${cId}')"/>
+        <button class="set-ok ${s.done?'done':''}" onclick="toggleSetDone('${key}',${i})">✓</button>
+      </div>`;
+    }).join('')}
     ${rmHtml}
     <button class="add-set" onclick="addSet('${key}','${cId}')">+ 세트 추가</button>`;
 }
 function refreshRM(key,cId){
-  // weight 입력시 1RM 배지만 실시간 갱신
   const c=document.getElementById(cId);if(!c)return;
   const sets=setData[key];if(!sets)return;
   let best=0;sets.forEach(s=>{if(s.weight&&s.reps){const v=calc1RM(s.weight,s.reps);if(v>best)best=v;}});
   let badge=c.querySelector('.rm-badge');
   if(best>0){
     if(!badge){badge=document.createElement('div');badge.className='rm-badge';c.insertBefore(badge,c.lastElementChild);}
-    badge.innerHTML=`추정 1RM <strong>${best}kg</strong> · 다음 목표 <strong>${Math.round(best*0.75*10)/10}kg × 10회</strong>`;
+    badge.innerHTML=`추정 1RM <strong>${best}kg</strong> · 목표 <strong>${Math.round(best*0.75*10)/10}kg×10회</strong>`;
   } else if(badge){badge.remove();}
 }
 function saveSetDataLocal(){try{localStorage.setItem('fitlog_setData',JSON.stringify({day:selDay,data:setData}));}catch(e){}}
@@ -6598,12 +6648,86 @@ function confirmCardioSelection(){
   showToast(`✅ ${selectedItems.map(c=>c.icon+c.n+' '+c.min+'분').join(' · ')}\n🔥 합산 ${totalKcal}kcal · 체지방 ${fatG}g↓`,'success');
 }
 
-// 구버전 호환
+// ── 구버전 호환 ──
 function selectWeekendCardio(idx){ toggleCardioItem(idx); }
 function adjustCardioItemTime(i,d){}
 function setCardioItemTime(i,m){}
 function adjustCardioTime(d){}
 function setCardioTime(m){}
+
+// ══════════════════════════════
+// 주차별 운동 변동 시스템
+// - 같은 근육군을 다른 각도로 자극
+// - 4주 사이클로 순환
+// ══════════════════════════════
+const EXERCISE_VARIATIONS = {
+  // 가슴
+  '시티드 체스트 프레스':   ['덤벨 벤치프레스','인클라인 덤벨 벤치프레스','케이블 체스트 플라이','푸시업'],
+  '케이블 체스트 플라이':   ['덤벨 플라이','펙덱 플라이','케이블 크로스오버','인클라인 덤벨 플라이'],
+  '체스트 프레스 머신':     ['덤벨 벤치프레스','스미스 머신 벤치프레스','인클라인 체스트 프레스','딥스'],
+  // 등
+  '시티드 케이블 로우':     ['원암 덤벨 로우','바벨 로우','인클라인 덤벨 로우','T바 로우'],
+  '랫 풀다운':              ['풀업','친업','케이블 풀다운','어시스트 풀업'],
+  '리버스 펙덱 플라이':     ['벤트오버 레터럴 레이즈','케이블 페이스 풀','덤벨 리어 델트 플라이','밴드 풀어파트'],
+  // 어깨
+  '시티드 숄더 프레스':     ['덤벨 숄더 프레스','아놀드 프레스','스미스 머신 숄더프레스','바벨 오버헤드프레스'],
+  '케이블 사이드 레터럴':   ['덤벨 사이드 레터럴 레이즈','머신 레터럴 레이즈','케이블 업라이트 로우','밴드 레터럴 레이즈'],
+  // 하체
+  '레그 프레스':            ['바벨 스쿼트','핵 스쿼트','스미스 머신 스쿼트','덤벨 스쿼트'],
+  '레그 컬':                ['루마니안 데드리프트','스티프레그 데드리프트','굿모닝','노르딕 햄컬'],
+  '레그 익스텐션':          ['불가리안 스플릿 스쿼트','런지','스텝업','싱글레그 프레스'],
+  // 복근
+  '케이블 크런치':          ['행잉 레그레이즈','AB 롤아웃','바이시클 크런치','러시안 트위스트'],
+  '레그 레이즈':            ['행잉 니레이즈','리버스 크런치','드래곤 플래그','V업'],
+  '플랭크':                 ['사이드 플랭크','TRX 플랭크','짐볼 플랭크','RKC 플랭크'],
+};
+
+function applyWeeklyVariation(){
+  // 이번 주차 계산 (연 기준 몇 번째 주)
+  const now = new Date();
+  const startOfYear = new Date(now.getFullYear(), 0, 1);
+  const weekNum = Math.floor((now - startOfYear) / (7*24*60*60*1000));
+  const cycle = weekNum % 4; // 0~3 사이클
+
+  if(cycle === 0) return; // 1주차는 기본 루틴 유지
+
+  // 마지막 변동 적용 주차와 다를 때만 적용
+  const lastCycle = parseInt(localStorage.getItem('fitlog-variation-week')||'-1');
+  if(lastCycle === weekNum) return; // 이미 이번 주 적용됨
+
+  let changed = 0;
+  Object.keys(RT).forEach(tk=>{
+    if(tk==='REST') return;
+    const rt = RT[tk];
+    if(!rt?.sections) return;
+    rt.sections.forEach(sec=>{
+      sec.exs.forEach(ex=>{
+        const vars = EXERCISE_VARIATIONS[ex.n];
+        if(vars && vars.length>0){
+          const newName = vars[(cycle-1) % vars.length];
+          // EX_LIB에서 새 운동 정보 찾기
+          const libEx = EX_LIB.find(e=>e.n===newName);
+          if(libEx){
+            ex.n = newName;
+            if(libEx.tags) ex.tags = libEx.tags;
+            if(libEx.w) ex.w = libEx.w;
+            changed++;
+          }
+        }
+      });
+    });
+  });
+
+  if(changed > 0){
+    localStorage.setItem('fitlog-variation-week', weekNum.toString());
+    window.saveRoutine && window.saveRoutine(RT);
+    // 현재 운동 화면 갱신
+    initSetData(DAY_SCHED[selDay]);
+    renderWorkout();
+    const cycleNames = ['','B안 (각도 변경)','C안 (고립 강화)','D안 (복합 강화)'];
+    showToast(`🔄 이번 주 운동 변동 적용! ${cycleNames[cycle]}\n${changed}개 종목이 같은 근육의 다른 운동으로 교체됐어요.`, 'info');
+  }
+}
 
 
 // ── 유산소 기록 히스토리 렌더 ──
@@ -6705,24 +6829,64 @@ function ovUpdateDisplay(){
   document.getElementById('ov-start-btn').textContent=_timerState.running?'⏸ 일시정지':'▶ 시작';
   document.getElementById('ov-start-btn').className=_timerState.running?'stop':'';
 }
+// ── WakeLock (화면 꺼짐 방지) ──
+let _wakeLock = null;
+async function _requestWakeLock(){
+  try{
+    if('wakeLock' in navigator){
+      _wakeLock = await navigator.wakeLock.request('screen');
+    }
+  }catch(e){}
+}
+function _releaseWakeLock(){
+  try{if(_wakeLock){_wakeLock.release();_wakeLock=null;}}catch(e){}
+}
+
+// ── 백그라운드 타이머 보정 (visibilitychange) ──
+let _timerHiddenAt = null;
+document.addEventListener('visibilitychange', ()=>{
+  if(!_timerState.running) return;
+  if(document.hidden){
+    // 화면이 꺼질 때 시각 기록
+    _timerHiddenAt = Date.now();
+  } else {
+    // 화면 복귀 시 경과 시간만큼 보정
+    if(_timerHiddenAt){
+      const elapsed = Math.floor((Date.now()-_timerHiddenAt)/1000);
+      _timerState.current = Math.max(0, _timerState.current - elapsed);
+      _timerHiddenAt = null;
+      ovUpdateDisplay();
+      if(_timerState.current<=0){
+        clearInterval(_timerState.interval);
+        _timerState.running=false;
+        try{if(navigator.vibrate)navigator.vibrate([300,100,300,100,300]);}catch(e){}
+        playTimerAlarm();
+        document.getElementById('timer-ov-time').textContent='완료! 🎉';
+      }
+    }
+  }
+});
+
 function ovToggle(){
   if(_timerState.running){
-    clearInterval(_timerState.interval);_timerState.running=false;ovUpdateDisplay();return;
+    clearInterval(_timerState.interval);_timerState.running=false;
+    _releaseWakeLock();
+    ovUpdateDisplay();return;
   }
   if(_timerState.current<=0){ovReset();return;}
   _timerState.running=true;
+  _requestWakeLock(); // 화면 켜짐 유지
   _timerState.interval=setInterval(()=>{
     _timerState.current--;ovUpdateDisplay();
     if(_timerState.current<=0){
       clearInterval(_timerState.interval);_timerState.running=false;
-      // 타이머 완료 → 운동 체크 자동
+      _releaseWakeLock();
       if(_timerState.exSiEi){
         const [si,ei]=_timerState.exSiEi.split('-');
         const chk=document.getElementById('echk-'+si+'-'+ei);
         const card=document.getElementById('ec-'+si+'-'+ei);
         if(chk&&!chk.classList.contains('done')){chk.classList.add('done');if(card)card.classList.add('done');saveChkLocal();updateProg();}
       }
-      // 진동 + 알림음 (Web Audio API)
       try{if(navigator.vibrate)navigator.vibrate([300,100,300,100,300]);}catch(e){}
       playTimerAlarm();
       document.getElementById('timer-ov-time').textContent='완료! 🎉';
