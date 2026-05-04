@@ -2208,51 +2208,82 @@ function renderSets(key,cId){
   const sets=setData[key];if(!sets)return;
   const c=document.getElementById(cId);if(!c)return;
 
-  // 이전 기록 가져오기 (최근 완료된 날짜의 같은 운동)
-  const exName = key.split('-').slice(2).join('-') || '';
-  let prevRec = null;
+  // 이전 기록 (최근 완료 날짜의 같은 운동)
+  const exName=key.split('-').slice(2).join('-')||'';
+  let prevRec=null;
   for(const r of (records||[])){
-    if(r.sets){
-      const match = r.sets.find(s=>s.ex===exName);
-      if(match){prevRec=r;break;}
-    }
+    if(r.sets){const m=r.sets.find(s=>s.ex===exName);if(m){prevRec=r;break;}}
   }
-  const prevSets = prevRec?.sets?.filter(s=>s.ex===exName)||[];
+  const prevSets=prevRec?.sets?.filter(s=>s.ex===exName)||[];
+  const prevDate=prevRec?prevRec.date:'';
 
   // 1RM 계산
   let best1RM=0;
   sets.forEach(s=>{if(s.weight&&s.reps){const v=calc1RM(s.weight,s.reps);if(v>best1RM)best1RM=v;}});
-  const rmHtml=best1RM>0?`<div class="rm-badge">추정 1RM <strong>${best1RM}kg</strong> · 목표 <strong>${Math.round(best1RM*0.75*10)/10}kg×10회</strong></div>`:'';
+  const rmHtml=best1RM>0
+    ?`<div class="rm-badge">추정 1RM <strong>${best1RM}kg</strong> · 목표 <strong>${Math.round(best1RM*0.75*10)/10}kg×10회</strong></div>`:'';
 
-  // 이전 기록 요약
-  const prevHtml = prevSets.length>0
-    ? `<div style="font-size:10px;color:var(--muted);padding:4px 2px 6px;font-family:var(--mono);">
-        📅 이전(${prevRec.date}) · ${prevSets.map((s,i)=>`${i+1}세트: ${s.weight||'-'}kg×${s.reps||'-'}회`).join(' · ')}
-       </div>`
-    : '';
+  // 그리드: 회(30) | pre kg/ea(90) | today kg(1fr) | 횟수(64) | 체크(36)
+  const COL='30px 90px 1fr 64px 36px';
 
   c.innerHTML=`
-    ${prevHtml}
-    <div class="sets-hdr" style="grid-template-columns:28px 1fr 80px 36px;">
-      <div>세트</div><div>중량 kg</div><div>횟수</div><div>✓</div>
+    <div style="display:grid;grid-template-columns:${COL};gap:4px;
+      padding:7px 4px 5px;font-size:10px;color:var(--muted);font-family:var(--mono);
+      text-align:center;border-bottom:1px solid var(--border);margin-bottom:5px;">
+      <div>회</div>
+      <div style="color:#f0a500;">pre kg/ea${prevDate?'<br><span style="font-size:9px;">'+prevDate+'</span>':''}</div>
+      <div>today kg</div>
+      <div>횟수</div>
+      <div>체크</div>
     </div>
     ${sets.map((s,i)=>{
-      const pw = prevSets[i]?.weight||'';
-      const pr = prevSets[i]?.reps||'';
-      return `<div class="set-row" id="sr-${key}-${i}" style="grid-template-columns:28px 1fr 80px 36px;">
-        <div class="set-num">${i+1}</div>
-        <input class="set-inp ${s.weight?'filled':''}" type="number" value="${s.weight}"
-          placeholder="${pw?pw+'kg':'0'}" min="0" step="0.5" style="${pw&&!s.weight?'border-color:#f0a50055;':''}"
-          oninput="updSet('${key}',${i},'weight',this.value);refreshRM('${key}','${cId}')"/>
-        <input class="set-inp ${s.reps?'filled':''}" type="number" value="${s.reps}"
-          placeholder="${pr?pr+'회':'회'}" min="0" step="1" style="font-size:13px;${pr&&!s.reps?'border-color:#f0a50055;':''}"
+      const pw=prevSets[i]?.weight||'';
+      const pr=prevSets[i]?.reps||'';
+      const preLabel=pw||pr ? `${pw||'-'}/${pr||'-'}` : '-';
+      const hasUp = s.weight && pw && parseFloat(s.weight)>parseFloat(pw);
+      const hasDn = s.weight && pw && parseFloat(s.weight)<parseFloat(pw);
+      return `<div id="sr-${key}-${i}" style="display:grid;grid-template-columns:${COL};
+        gap:4px;align-items:center;margin-bottom:4px;
+        background:${s.done?'#4caf7d10':'transparent'};border-radius:6px;padding:2px 2px;">
+        <!-- 회 -->
+        <div style="text-align:center;font-size:13px;font-weight:700;
+          color:${s.done?'var(--green)':'var(--muted)'};">${i+1}</div>
+        <!-- pre kg/ea -->
+        <div style="text-align:center;font-size:12px;font-family:var(--mono);
+          color:${pw?'#f0a500':'var(--border)'};font-weight:${pw?'700':'400'};
+          padding:6px 2px;background:var(--surface2);border-radius:6px;">
+          ${preLabel}
+          ${hasUp?'<span style="color:var(--green);font-size:9px;"> ▲</span>':''}
+          ${hasDn?'<span style="color:#e55;font-size:9px;"> ▼</span>':''}
+        </div>
+        <!-- today kg -->
+        <input class="set-inp ${s.weight?'filled':''}" type="number"
+          value="${s.weight}" placeholder="${pw?pw:'0'}" min="0" step="0.5"
+          style="text-align:center;font-size:14px;font-weight:700;"
+          oninput="updSet('${key}',${i},'weight',this.value);refreshRM('${key}','${cId}');refreshRowBg('${key}',${i})"/>
+        <!-- 횟수 -->
+        <input class="set-inp ${s.reps?'filled':''}" type="number"
+          value="${s.reps}" placeholder="${pr?pr:'회'}" min="0" step="1"
+          style="text-align:center;font-size:13px;"
           oninput="updSet('${key}',${i},'reps',this.value);refreshRM('${key}','${cId}')"/>
-        <button class="set-ok ${s.done?'done':''}" onclick="toggleSetDone('${key}',${i})">✓</button>
+        <!-- 체크 -->
+        <button class="set-ok ${s.done?'done':''}"
+          onclick="toggleSetDone('${key}',${i})">✓</button>
       </div>`;
     }).join('')}
     ${rmHtml}
     <button class="add-set" onclick="addSet('${key}','${cId}')">+ 세트 추가</button>`;
 }
+
+// 중량 입력 시 이전 대비 색상 실시간 갱신
+function refreshRowBg(key,i){
+  const row=document.getElementById(`sr-${key}-${i}`);
+  if(!row) return;
+  const s=setData[key]?.[i];
+  if(!s) return;
+  row.style.background=s.done?'#4caf7d10':'transparent';
+}
+
 function refreshRM(key,cId){
   const c=document.getElementById(cId);if(!c)return;
   const sets=setData[key];if(!sets)return;
