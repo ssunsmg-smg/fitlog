@@ -930,6 +930,26 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <button class="tc-btn" onclick="goWorkout()">운동 시작하기 →</button>
     </div>
     <div class="week-row" id="week-row"></div>
+    <!-- 휴식일 운동 선택 (휴식일에만 표시) -->
+    <div id="rest-day-options" style="display:none;margin-bottom:14px;">
+      <div style="background:var(--surface2);border-radius:12px;padding:12px 14px;">
+        <div style="font-size:12px;font-weight:700;margin-bottom:10px;">🏖️ 오늘은 휴식일 — 선택해서 운동할 수 있어요</div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button onclick="openCardioModal()"
+            style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--green);
+            background:#4caf7d12;color:var(--green);font-size:12px;font-weight:700;
+            cursor:pointer;font-family:var(--font);">🏃 유산소 선택</button>
+          <button onclick="openMissedDayPicker()"
+            style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--blue);
+            background:#4a9eff12;color:var(--blue);font-size:12px;font-weight:700;
+            cursor:pointer;font-family:var(--font);">💪 못했던 루틴 하기</button>
+          <button onclick="openBodyPartPicker()"
+            style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--purple,#7c6aff);
+            background:#7c6aff12;color:#7c6aff;font-size:12px;font-weight:700;
+            cursor:pointer;font-family:var(--font);">🎯 부위별 선택</button>
+        </div>
+      </div>
+    </div>
 
     <!-- 주말 유산소 선택 배너 (토·일 항상 표시) -->
     <div id="weekend-cardio-banner" style="display:none;margin-bottom:14px;">
@@ -1131,6 +1151,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div id="muscle-chart-wrap" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;"></div>
     <div style="margin:0 0 10px;font-size:13px;font-weight:700;">💪 중량 성장 추이</div>
     <div id="weight-history"></div>
+
+    <!-- 근육 부위별 시각화 -->
+    <div class="level-card" style="margin-top:16px;">
+      <div class="level-card-title"><span>🏋️ 근육 부위별 자극 강도</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">운동 기록에 따라 각 부위의 누적 자극이 색상으로 표시됩니다.</div>
+      <div id="muscle-body-panel"></div>
+    </div>
   </div>
 
   <!-- 설정 -->
@@ -1195,7 +1222,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <!-- 계산 결과 -->
       <div id="body-calc-result" style="background:var(--surface2);border-radius:10px;padding:12px;font-size:12px;line-height:2;"></div>
     </div>
-      <button onclick="goSettStep(2)" style="width:100%;padding:11px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:12px;">다음 → 운동환경 설정</button>
+      <!-- 부상/아픈곳 체크 -->
+      <div class="level-card" style="margin-top:0;">
+        <div class="level-card-title">
+          <span>🩺 부상·불편한 부위</span>
+          <span style="font-size:10px;color:var(--muted);">없으면 넘어가세요</span>
+        </div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">해당 부위가 있으면 체크하세요. 루틴에 주의사항이 반영됩니다.</div>
+        <div id="injury-btns" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px;"></div>
+        <div id="injury-note" style="font-size:11px;color:var(--accent);display:none;padding:8px;background:#e8533a10;border-radius:8px;"></div>
+      </div>
+      <button onclick="saveBodyInfoAndNext()" style="width:100%;padding:11px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:12px;">다음 → 운동환경 설정</button>
     </div>
 
     <!-- STEP 2: 운동 분류 + 요일배정 + 목적 -->
@@ -1235,7 +1272,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           <button class="day-assign-btn" onclick="toggleDayAssign('토',this)" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">토</button>
           <button class="day-assign-btn" onclick="toggleDayAssign('일',this)" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">일</button>
         </div>
-        <div id="day-assign-preview" style="font-size:11px;color:var(--muted);padding:10px;background:var(--surface2);border-radius:8px;line-height:1.8;"></div>
+        <div id="day-assign-preview" style="font-size:11px;color:var(--muted);padding:10px;background:var(--surface2);border-radius:8px;line-height:2;"></div>
+        <div id="day-routine-detail" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"></div>
       </div>
       <button onclick="applyClassificationWithDays()" style="width:100%;padding:11px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:10px;">✅ 운동환경·목적·요일 모두 적용</button>
       <button onclick="goSettStep(3)" style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);">다음 → 성장단계 설정</button>
@@ -1417,6 +1455,18 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </div>
 
+
+<!-- 부위별 운동 선택 모달 -->
+<div class="modal-bg" id="body-part-modal">
+  <div class="modal" style="max-height:85vh;overflow-y:auto;">
+    <div class="modal-title">
+      <span>🎯 오늘 운동할 부위 선택</span>
+      <button class="modal-close" onclick="closeBodyPartPicker()">✕</button>
+    </div>
+    <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">원하는 부위를 선택하면 해당 루틴으로 이동합니다.</div>
+    <div id="body-part-list" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;"></div>
+  </div>
+</div>
 <!-- AI 가이드 모달 -->
 <div class="modal-bg" id="ai-guide-modal">
   <div class="ai-guide-modal">
@@ -2336,6 +2386,86 @@ function toggleTimerSetDone(si,ei,setIdx,total){
 // ══════════════════════════════
 // 홈
 // ══════════════════════════════
+
+// ── 부위별 선택 + 못했던 루틴 선택 ──
+const BODY_PARTS = [
+  {label:'💪 가슴·어깨',  tk:'A', muscles:['대흉근','삼각근']},
+  {label:'🔙 등·이두',    tk:'B', muscles:['광배근','이두근']},
+  {label:'🦵 하체·둔근',  tk:'C', muscles:['대둔근','대퇴사두근']},
+  {label:'🏃 유산소',     tk:'cardio', muscles:['심폐']},
+  {label:'🎯 전신·복근',  tk:'E', muscles:['복직근','복사근']},
+  {label:'🧘 스트레칭',   tk:'D', muscles:['유연성','회복']},
+];
+
+function openBodyPartPicker(){
+  const modal = document.getElementById('body-part-modal');
+  const list  = document.getElementById('body-part-list');
+  if(!modal||!list) return;
+  list.innerHTML = BODY_PARTS.map((p,i)=>`
+    <div onclick="selectBodyPart(${i})"
+      style="padding:14px;border-radius:12px;border:1px solid var(--border);
+      background:var(--surface2);cursor:pointer;text-align:center;">
+      <div style="font-size:16px;font-weight:800;margin-bottom:4px;">${p.label}</div>
+      <div style="font-size:10px;color:var(--muted);">${p.muscles.join(' · ')}</div>
+    </div>`).join('');
+  modal.classList.add('open');
+}
+
+function closeBodyPartPicker(){
+  document.getElementById('body-part-modal')?.classList.remove('open');
+}
+
+function selectBodyPart(idx){
+  closeBodyPartPicker();
+  const p = BODY_PARTS[idx];
+  if(!p) return;
+  if(p.tk === 'cardio'){ openCardioModal(); return; }
+  // 해당 루틴으로 임시 오늘 루틴 설정
+  const todayDow = new Date().getDay();
+  DAY_SCHED[todayDow] = p.tk;
+  selDay = todayDow;
+  initSetData(p.tk);
+  renderWorkout();
+  // 운동탭으로 이동
+  document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-workout').classList.add('active');
+  document.querySelectorAll('.nav-tab')[1].classList.add('active');
+  showToast('✅ '+p.label+' 루틴으로 설정됐어요!','success');
+}
+
+function openMissedDayPicker(){
+  // 이번 주 못한 루틴 찾기
+  const now = new Date();
+  const todayDow = now.getDay();
+  const missed = [];
+  for(let dow=1; dow<=5; dow++){
+    if(dow === todayDow) continue;
+    if(DAY_SCHED[dow]==='REST') continue;
+    const d = new Date(now);
+    d.setDate(now.getDate()-(todayDow-dow));
+    const ds = d.toISOString().slice(0,10);
+    const done = records.find(r=>r.date===ds);
+    if(!done){
+      const rt = RT[DAY_SCHED[dow]];
+      missed.push({dow, ds, tk:DAY_SCHED[dow], title:rt?.title||DAY_SCHED[dow]+'루틴'});
+    }
+  }
+  if(missed.length===0){ showToast('이번 주 모든 루틴을 완료했어요! 🎉','success'); return; }
+  // 첫 번째 미완료 루틴으로 이동
+  const m = missed[0];
+  const todayDow2 = new Date().getDay();
+  DAY_SCHED[todayDow2] = m.tk;
+  selDay = todayDow2;
+  initSetData(m.tk);
+  renderWorkout();
+  document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-workout').classList.add('active');
+  document.querySelectorAll('.nav-tab')[1].classList.add('active');
+  showToast('💪 '+m.title+' 보충 시작!','success');
+}
+
 function renderHome(){
   const now=new Date(),h=now.getHours();
   const greet=h<12?'좋은 아침이에요':h<18?'좋은 오후예요':'좋은 저녁이에요';
@@ -2344,7 +2474,10 @@ function renderHome(){
   document.getElementById('home-goal').textContent=(userProfile?.goals||[]).slice(0,3).join(' · ');
 
   const tk=DAY_SCHED[now.getDay()],rt=RT[tk];
-  document.getElementById('tc-label').textContent=tk==='REST'?'오늘은 휴식일':'오늘의 루틴 · Type '+tk;
+  document.getElementById('tc-label').textContent=tk==='REST'?'오늘은 휴식일 · 선택 운동 가능':'오늘의 루틴 · Type '+tk;
+  // 휴식일 선택 버튼 표시
+  const restButtons = document.getElementById('rest-day-options');
+  if(restButtons) restButtons.style.display = (tk==='REST'||tk==='CARDIO_TODAY')?'block':'none';
   document.getElementById('tc-title').textContent=rt?.title||'';
   document.getElementById('tc-sub').textContent=(rt?.muscles||[]).join(' · ');
 
@@ -3268,6 +3401,120 @@ async function delRec(date){
 // ══════════════════════════════
 // 통계
 // ══════════════════════════════
+
+// ── 근육 부위 시각화 SVG ──
+function renderMuscleBodySvg(muscleMap, muscTotal){
+  const panel = document.getElementById('muscle-body-panel');
+  if(!panel) return;
+
+  // 부위별 강도 (0~1)
+  const intensity = (key) => {
+    const keys = {
+      '가슴'   : ['가슴','대흉근'],
+      '등'     : ['등','광배근','척추기립근'],
+      '어깨'   : ['어깨','삼각근'],
+      '팔'     : ['팔','이두근','삼두근'],
+      '하체'   : ['하체','대퇴사두근','햄스트링'],
+      '둔근'   : ['둔근','대둔근','중둔근'],
+      '복근'   : ['복근','코어','복직근','복사근'],
+      '심폐'   : ['심폐','유산소'],
+    };
+    const parts = keys[key] || [key];
+    let total = 0;
+    parts.forEach(p=>{ total += muscleMap[p]||0; });
+    return Math.min(1, total / Math.max(1, muscTotal) * 3);
+  };
+
+  const col = (key, base='#4a9eff') => {
+    const v = intensity(key);
+    if(v <= 0) return '#2a2a3a';
+    const alpha = Math.round(v * 200 + 55);
+    // 강도에 따라 색상: 파랑→초록→주황→빨강
+    if(v < 0.33) return '#4a9eff';
+    if(v < 0.66) return '#4caf7d';
+    return '#e8533a';
+  };
+
+  const w = panel.offsetWidth || 300;
+
+  panel.innerHTML = `
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-align:center;">
+      🔵 낮음 → 🟢 보통 → 🔴 높음 (누적 자극 강도)
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;align-items:flex-start;">
+      <!-- 앞면 -->
+      <div style="text-align:center;">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">앞면</div>
+        <svg width="120" height="200" viewBox="0 0 120 200">
+          <!-- 머리 -->
+          <ellipse cx="60" cy="18" rx="16" ry="18" fill="#3a3a4a" stroke="var(--border)" stroke-width="0.5"/>
+          <!-- 목 -->
+          <rect x="53" y="34" width="14" height="12" rx="3" fill="#3a3a4a"/>
+          <!-- 어깨/상체 -->
+          <path d="M25 46 Q40 42 60 42 Q80 42 95 46 L98 80 Q80 85 60 84 Q40 85 22 80 Z" fill="${col('어깨','#4a9eff')}"/>
+          <!-- 가슴 -->
+          <ellipse cx="47" cy="68" rx="14" ry="16" fill="${col('가슴')}"/>
+          <ellipse cx="73" cy="68" rx="14" ry="16" fill="${col('가슴')}"/>
+          <!-- 복근 -->
+          <rect x="48" y="84" width="24" height="8" rx="3" fill="${col('복근')}"/>
+          <rect x="48" y="94" width="11" height="8" rx="2" fill="${col('복근')}"/>
+          <rect x="61" y="94" width="11" height="8" rx="2" fill="${col('복근')}"/>
+          <rect x="48" y="104" width="11" height="8" rx="2" fill="${col('복근')}"/>
+          <rect x="61" y="104" width="11" height="8" rx="2" fill="${col('복근')}"/>
+          <!-- 팔 (위) -->
+          <rect x="16" y="48" width="14" height="34" rx="6" fill="${col('팔')}"/>
+          <rect x="90" y="48" width="14" height="34" rx="6" fill="${col('팔')}"/>
+          <!-- 팔 (아래) -->
+          <rect x="14" y="84" width="12" height="28" rx="5" fill="${col('팔')}"/>
+          <rect x="94" y="84" width="12" height="28" rx="5" fill="${col('팔')}"/>
+          <!-- 허리 -->
+          <rect x="44" y="114" width="32" height="14" rx="4" fill="${col('복근')}"/>
+          <!-- 대퇴 (앞) -->
+          <rect x="36" y="130" width="22" height="44" rx="8" fill="${col('하체')}"/>
+          <rect x="62" y="130" width="22" height="44" rx="8" fill="${col('하체')}"/>
+          <!-- 종아리 -->
+          <rect x="38" y="176" width="16" height="22" rx="6" fill="${col('하체')}"/>
+          <rect x="66" y="176" width="16" height="22" rx="6" fill="${col('하체')}"/>
+        </svg>
+      </div>
+      <!-- 뒷면 -->
+      <div style="text-align:center;">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">뒷면</div>
+        <svg width="120" height="200" viewBox="0 0 120 200">
+          <!-- 머리 -->
+          <ellipse cx="60" cy="18" rx="16" ry="18" fill="#3a3a4a" stroke="var(--border)" stroke-width="0.5"/>
+          <!-- 목 -->
+          <rect x="53" y="34" width="14" height="12" rx="3" fill="#3a3a4a"/>
+          <!-- 등/어깨 -->
+          <path d="M25 46 Q40 42 60 42 Q80 42 95 46 L98 80 Q80 85 60 84 Q40 85 22 80 Z" fill="${col('등')}"/>
+          <!-- 팔 (위) -->
+          <rect x="16" y="48" width="14" height="34" rx="6" fill="${col('팔')}"/>
+          <rect x="90" y="48" width="14" height="34" rx="6" fill="${col('팔')}"/>
+          <!-- 팔 (아래) -->
+          <rect x="14" y="84" width="12" height="28" rx="5" fill="${col('팔')}"/>
+          <rect x="94" y="84" width="12" height="28" rx="5" fill="${col('팔')}"/>
+          <!-- 허리 -->
+          <rect x="44" y="84" width="32" height="32" rx="4" fill="${col('등')}"/>
+          <!-- 둔근 -->
+          <ellipse cx="48" cy="128" rx="16" ry="14" fill="${col('둔근')}"/>
+          <ellipse cx="72" cy="128" rx="16" ry="14" fill="${col('둔근')}"/>
+          <!-- 햄스트링 -->
+          <rect x="36" y="140" width="22" height="36" rx="8" fill="${col('하체')}"/>
+          <rect x="62" y="140" width="22" height="36" rx="8" fill="${col('하체')}"/>
+          <!-- 종아리 -->
+          <rect x="38" y="178" width="16" height="20" rx="6" fill="${col('하체')}"/>
+          <rect x="66" y="178" width="16" height="20" rx="6" fill="${col('하체')}"/>
+        </svg>
+      </div>
+    </div>
+    <!-- 범례 -->
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap;">
+      ${Object.entries(muscleMap).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,6)
+        .map(([m,v])=>`<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${col(m)}22;border:1px solid ${col(m)}66;color:${col(m)};">${m} ${v}회</span>`)
+        .join('')}
+    </div>`;
+}
+
 function renderStats(){
   const total=records.length,ym=new Date().toISOString().slice(0,7),thisMonth=records.filter(r=>r.date.startsWith(ym)).length;
   let streak=0;const today=new Date();
@@ -3316,6 +3563,9 @@ function renderStats(){
   const typeToMuscle={A:['가슴','어깨'],B:['등','팔'],C:['하체','둔근'],D:['유산소'],E:['코어'],F:['하체','둔근']};
   records.forEach(r=>{const ms=typeToMuscle[r.type]||[];ms.forEach(m=>{if(muscleMap[m]!==undefined)muscleMap[m]+=(r.exDone||1);});});
   const muscTotal=Object.values(muscleMap).reduce((a,b)=>a+b,0)||1;
+
+  // ── 신체 SVG 시각화 ──
+  renderMuscleBodySvg(muscleMap, muscTotal);
   const mColors={가슴:'var(--blue)',등:'var(--green)',어깨:'var(--accent2)',팔:'var(--purple)',하체:'var(--accent)',둔근:'#e91e8c',코어:'#3ecf8e',유산소:'#ff9800'};
   const muscEntries=Object.entries(muscleMap).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]);
   if(!muscEntries.length){muscleWrap.innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px;text-align:center;">운동을 기록하면 부위별 분포가 표시됩니다</div>';}
@@ -5174,6 +5424,8 @@ const PURPOSE_PRESETS = {
   '유연성·스트레칭':{stretch:true, note:'스트레칭·유연성 중심'},
   '복근 만들기': {core:true, setMult:1.2, note:'복근 운동 세트수 증가'},
   '재활·회복':   {setMult:0.5, lowImpact:true, note:'통증 없는 범위·초경량'},
+  '근지구력 향상':{setMult:1.0, repRange:'15~20회', note:'가벼운 중량·고반복'},
+  '상체 키우기':  {setMult:1.2, upperFocus:true, note:'가슴·등·어깨 세트수 증가'},
 };
 
 function initClassSettings(){
@@ -5843,8 +6095,68 @@ function togglePosture(i){
 }
 
 // 설정 탭 초기화
+// ── 부상/아픈곳 목록 ──
+const INJURY_LIST = [
+  {key:'knee',   label:'🦵 무릎',   note:'레그 프레스·스쿼트 초경량 / 자전거 추천'},
+  {key:'back',   label:'🔙 허리',   note:'데드리프트·굿모닝 제외 / 코어 강화 우선'},
+  {key:'shoulder',label:'💪 어깨',  note:'오버헤드 동작 제한 / 회전근개 주의'},
+  {key:'neck',   label:'🧠 경추',   note:'경추 강화 운동 포함 / 급격한 굴곡 금지'},
+  {key:'hip',    label:'🦴 고관절', note:'충격 없는 범위 / 브릿지·클램쉘 추천'},
+  {key:'wrist',  label:'✋ 손목',   note:'바벨 대신 덤벨/케이블 권장'},
+];
+let selectedInjuries = JSON.parse(localStorage.getItem('fitlog-injuries')||'[]');
+
+function initInjuryBtns(){
+  const wrap = document.getElementById('injury-btns');
+  if(!wrap) return;
+  wrap.innerHTML = INJURY_LIST.map(inj=>{
+    const on = selectedInjuries.includes(inj.key);
+    return `<button onclick="toggleInjury('${inj.key}',this)"
+      style="padding:7px 12px;border-radius:20px;cursor:pointer;font-size:12px;
+      font-family:var(--font);border:${on?'2px solid var(--accent)':'1px solid var(--border)'};
+      background:${on?'#e8533a15':'none'};color:${on?'var(--accent)':'var(--muted)'};">
+      ${inj.label}
+    </button>`;
+  }).join('');
+  updateInjuryNote();
+}
+
+function toggleInjury(key, btn){
+  if(selectedInjuries.includes(key)){
+    selectedInjuries = selectedInjuries.filter(k=>k!==key);
+    btn.style.border = '1px solid var(--border)';
+    btn.style.background = 'none';
+    btn.style.color = 'var(--muted)';
+  } else {
+    selectedInjuries.push(key);
+    btn.style.border = '2px solid var(--accent)';
+    btn.style.background = '#e8533a15';
+    btn.style.color = 'var(--accent)';
+  }
+  localStorage.setItem('fitlog-injuries', JSON.stringify(selectedInjuries));
+  updateInjuryNote();
+}
+
+function updateInjuryNote(){
+  const note = document.getElementById('injury-note');
+  if(!note) return;
+  if(selectedInjuries.length === 0){ note.style.display='none'; return; }
+  const notes = selectedInjuries.map(k=>{
+    const inj = INJURY_LIST.find(i=>i.key===k);
+    return inj ? `⚠️ ${inj.label}: ${inj.note}` : '';
+  }).filter(Boolean).join('<br>');
+  note.innerHTML = notes;
+  note.style.display = 'block';
+}
+
+function saveBodyInfoAndNext(){
+  saveBodyInfo();
+  goSettStep(2);
+}
+
 function initSettingsTab(){
   initBodyInfo();
+  initInjuryBtns();
   initClassSettings();
   initDayAssignBtns();
   document.querySelectorAll('.level-step').forEach((b,i)=>{
@@ -5928,6 +6240,22 @@ function updateDayAssignPreview(){
     return `<span style="color:var(--muted);">${d} → 휴식</span>`;
   });
   preview.innerHTML = lines.join('　·　');
+
+  // 요일별 루틴 상세 설명
+  const detail = document.getElementById('day-routine-detail');
+  if(!detail) return;
+  const sorted2 = [...assignedDays].sort((a,b)=>dayOrder.indexOf(a)-dayOrder.indexOf(b));
+  const routineKeys2 = ['A','B','C','D','E','F'];
+  detail.innerHTML = sorted2.map((day,idx)=>{
+    const rk = routineKeys2[idx % routineKeys2.length];
+    const rt = RT_BASE && RT_BASE[rk];
+    if(!rt) return '';
+    const muscles = (rt.muscles||[]).map(m=>`<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:var(--surface);border:1px solid var(--border);">${m}</span>`).join(' ');
+    return `<div style="padding:8px 10px;background:var(--surface2);border-radius:8px;border-left:3px solid var(--accent);">
+      <div style="font-size:12px;font-weight:700;margin-bottom:4px;">${day}요일 — ${rt.title||rk+'루틴'}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;">${muscles}</div>
+    </div>`;
+  }).join('');
 }
 
 // applyClassification 을 요일배정과 통합
