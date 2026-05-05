@@ -1,49 +1,5 @@
-<!--
-╔══════════════════════════════════════════════════════════════════════════╗
-║  FITLOG v2.6 - 운동 기록 & 실천 앱                                      ║
-║  URL: ssunsmg-smg.github.io/fitlog                                      ║
-╠══════════════════════════════════════════════════════════════════════════╣
-║  [전체 아키텍처]                                                         ║
-║  · Firebase Auth + Firestore : 로그인 & 클라우드 저장                   ║
-║  · localStorage              : 오늘 세트 기록 임시 저장                 ║
-║  · 단일 HTML 파일            : CSS + JS 전부 인라인                     ║
-║                                                                          ║
-║  [탭 구성]  홈 → 운동 → 식단 → 캘린더 → 기록 → 통계 → 설정            ║
-║                                                                          ║
-║  [데이터 흐름]                                                           ║
-║  로그인 → initApp() → loadUserProfile() → showApp()                     ║
-║                    ↘ loadRoutine()  → RT{} (오늘 루틴)                  ║
-║                    ↘ loadRecords()  → records[] (기록 배열)             ║
-║                    ↘ loadDietData() → 식단 기록                         ║
-║                                                                          ║
-║  [핵심 전역변수]                                                         ║
-║  records[]   : 운동 완료 기록 (Firestore 동기)                          ║
-║  RT{}        : 현재 루틴 {A:'월루틴', B:'화루틴', ...}                  ║
-║  setData{}   : 오늘 세트 입력값 (localStorage 임시저장)                 ║
-║  selDay      : 선택 요일 0=일,1=월,...,6=토                             ║
-║  classType   : '기구운동' or '홈트'                                      ║
-║  DAY_SCHED{} : 요일→루틴키 매핑 {0:'REST',1:'A',...,6:'F'}             ║
-║  userProfile : 사용자 프로필 (이름/목표/신체정보)                       ║
-║                                                                          ║
-║  [localStorage 키 목록]                                                  ║
-║  fitlog-classtype       : '기구운동' or '홈트'                           ║
-║  fitlog-purposes        : 선택된 목적 배열 JSON                         ║
-║  fitlog-level           : 성장단계 1~5                                  ║
-║  fitlog-1rm             : 1RM 기록 객체 JSON                            ║
-║  fitlog-assigned-days   : 운동 요일 배열 JSON                           ║
-║  fitlog-variation-week  : 마지막 변동 적용 주차 번호                    ║
-║  fitlog-weight          : 사용자 체중 (kg)                              ║
-║  fitlog-cardio-history  : 유산소 기록 배열 JSON                         ║
-║  fitlog_setData         : 오늘 세트 입력값 임시 저장                    ║
-║  fitlog_chkData         : 오늘 체크 상태 임시 저장                      ║
-║  fitlog-body-*          : 신체정보 (성별/나이/키/몸무게)                 ║
-║  fitlog-diet-goal       : 식단 목표 칼로리/영양소                       ║
-║  fitlog-weight-history  : 체중 기록 배열 JSON                           ║
-║  _ai_cache_*            : AI 가이드 캐시 (버전별)                       ║
-╚══════════════════════════════════════════════════════════════════════════╝
--->
 <!DOCTYPE html>
-<!-- fitlog v2.6 build:20260502-1 -->
+<!-- fitlog v2.6 build:20260525-1 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -61,15 +17,6 @@
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script>
 (function(){
-
-  /*
-   * [Firebase stub 방어 코드]
-   * firebase SDK가 네트워크 오류로 로드 실패 시:
-   * 1. 모든 window.firebase* 함수를 빈 stub으로 대체
-   * 2. 100ms 후 'firebase-logout' 이벤트 dispatch
-   *    → 로그인 화면으로 이동 (무한 로딩 방지)
-   * ※ 절대 삭제하지 말 것 — 로딩 무한 대기 버그 원인
-   */
   // Firebase SDK 로드 실패 방어: firebase 객체가 없으면 안전하게 중단
   if(typeof firebase === 'undefined'){
     console.warn('[FitLog] Firebase SDK 로드 실패');
@@ -1025,11 +972,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="stat-box"><div class="stat-num" id="h-month">0</div><div class="stat-lbl">이번 달</div></div>
       <div class="stat-box"><div class="stat-num" id="h-streak">0</div><div class="stat-lbl">연속 출석</div></div>
     </div>
-    <div class="share-card">
-      <div class="share-info"><strong>친구에게 공유하기 🔗</strong>이 앱을 친구에게 알려주세요!</div>
-      <button class="share-copy" onclick="copyLink()">링크 복사</button>
-    </div>
-  </div>
+    
 
   <!-- 운동 -->
   <div class="page" id="page-workout">
@@ -1344,6 +1287,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         </div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">20회마다 운동 패턴을 분석해 루틴 조정을 제안합니다.</div>
         <div id="feedback-panel"></div>
+        <button onclick="runAiCoachAnalysis()" style="width:100%;padding:11px;border-radius:8px;border:none;
+          background:linear-gradient(135deg,#7c6aff,var(--accent));color:#fff;font-size:13px;font-weight:700;
+          cursor:pointer;font-family:var(--font);margin-top:10px;">
+          🤖 AI 코치 분석 · 루틴 조언 받기
+        </button>
+        <div id="ai-coach-result" style="margin-top:8px;"></div>
       </div>
 
       <!-- 유산소 기록 히스토리 카드 -->
@@ -1421,11 +1370,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
             <button onclick="setGlobalCardioTime(15)" id="gtime-btn-15"
               style="padding:5px 8px;border-radius:8px;cursor:pointer;font-size:11px;font-family:var(--font);border:1px solid var(--border);background:var(--surface);color:var(--muted);">15분</button>
             <button onclick="setGlobalCardioTime(20)" id="gtime-btn-20"
-              style="padding:5px 8px;border-radius:8px;cursor:pointer;font-size:11px;font-family:var(--font);border:1.5px solid var(--green);background:#4caf7d22;color:var(--green);font-weight:700;">20분</button>
+              style="padding:5px 8px;border-radius:8px;cursor:pointer;font-size:11px;font-family:var(--font);border:1px solid var(--border);background:var(--surface);color:var(--muted);">20분</button>
             <button onclick="setGlobalCardioTime(30)" id="gtime-btn-30"
               style="padding:5px 8px;border-radius:8px;cursor:pointer;font-size:11px;font-family:var(--font);border:1px solid var(--border);background:var(--surface);color:var(--muted);">30분</button>
             <button onclick="setGlobalCardioTime(45)" id="gtime-btn-45"
-              style="padding:5px 8px;border-radius:8px;cursor:pointer;font-size:11px;font-family:var(--font);border:1px solid var(--border);background:var(--surface);color:var(--muted);">45분</button>
+              style="padding:5px 8px;border-radius:8px;cursor:pointer;font-size:11px;font-family:var(--font);border:1.5px solid var(--green);background:#4caf7d22;color:var(--green);font-weight:700;">45분</button>
             <button onclick="setGlobalCardioTime(60)" id="gtime-btn-60"
               style="padding:5px 8px;border-radius:8px;cursor:pointer;font-size:11px;font-family:var(--font);border:1px solid var(--border);background:var(--surface);color:var(--muted);">60분</button>
           </div>
@@ -1649,25 +1598,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 // ══════════════════════════════
 // 상태
 // ══════════════════════════════
-
-/*
- * ══════════════════════════════════════════════════════
- * [전역 상태 변수]
- * records[]    : Firestore 운동 완료 기록 배열
- *                각 요소: {id, date, type, exDone, exTotal,
- *                          sets[], muscles[], cond, memo}
- * setData{}    : 오늘 세트 입력값 (localStorage 임시저장)
- *                key="set-{섹션idx}-{운동idx}"
- *                value=[{weight, reps, done}, ...]
- * selDay       : 현재 선택 요일 (0=일 ~ 6=토)
- * selCond      : 오늘 컨디션 1~5
- * RT{}         : 현재 루틴 객체 (Firestore 저장/로드)
- * userProfile  : Firestore users/{uid}/profile 문서
- * isLoggedIn   : Firebase auth 상태
- * makeupActive : 보충운동 진행 상태
- * editTarget   : 수정 모달 대상 {tk, si, ei}
- * ══════════════════════════════════════════════════════
- */
 let records=[], setData={}, selDay=new Date().getDay(), selCond=3;
 let makeupActive=null; // {restDay, missedDay, missedTk, missedName} — 보충 운동 진행 중 상태
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
@@ -1676,16 +1606,6 @@ let editTarget=null, RT={}, userProfile=null, isLoggedIn=false;
 // ══════════════════════════════
 // 운동 설명
 // ══════════════════════════════
-
-/*
- * [EX_INFO - 운동 상세 정보 DB]
- * 운동명 → {desc, tip, yt, pf} 매핑
- * desc : AI 가이드 기본 설명
- * tip  : 주의사항 (재활/부상)
- * yt   : 유튜브 검색어
- * pf   : 이미지 키 (EXERCISE_IMAGES 매핑)
- * → openAiGuide() 에서 읽어 사용
- */
 const EX_INFO={
   '업라이트 바이크':{desc:'안장 높이는 페달이 가장 아래일 때 무릎이 약간 구부러질 정도로 조정. 허리를 곧게 세우고 핸들 가볍게 잡기.',tip:'무릎 수술 후 — 처음엔 저항 최소화',yt:'업라이트 바이크 자세',pf:'upright-bike'},
   '시티드 체스트 프레스':{desc:'등받이에 등을 완전히 밀착. 핸들을 가슴 높이에서 앞으로 밀기. 날개뼈를 모아서 시작.',tip:'어깨 통증 시 팔꿈치가 어깨보다 위로 올라가지 않게',yt:'시티드 체스트 프레스 머신 자세',pf:'seated-chest-press-machine'},
@@ -1936,18 +1856,6 @@ const EX_GUIDE={
 };
 
 
-/*
- * ══════════════════════════════════════════════════════
- * [RT_BASE - 기구 헬스장 기본 루틴]
- * A:월 가슴·어깨·삼두+복근  B:화 등·이두·후면어깨+코어
- * C:수 하체·둔근 재활       D:목 유산소·척추 회복
- * E:금 전신복합+복근        F:토 하체경량
- *
- * sets=0 → 타이머 운동 / sets>0 → 세트×횟수 운동
- * applyClassification()에서 이 베이스를 복사해
- * 목적/단계 조정 → RT{} 할당 → Firestore 저장
- * ══════════════════════════════════════════════════════
- */
 const RT_BASE={
   A:{label:'월요일 · TypeA',title:'가슴 · 어깨 · 삼두 + 복근',color:'rh-a',muscles:['대흉근','삼각근','삼두근','복직근'],
     sections:[
@@ -2005,14 +1913,6 @@ const RT_BASE={
   REST:{label:'일요일',title:'완전 휴식',color:'rh-rest',muscles:['전신회복'],sections:[]}
 };
 
-
-/*
- * [DAY_SCHED - 요일별 루틴 배정]
- * {0:'REST', 1:'A', 2:'B', 3:'C', 4:'D', 5:'E', 6:'F'}
- * getDay() 기준: 0=일, 1=월 ... 6=토
- * toggleDayAssign() 으로 변경 가능
- * localStorage 'fitlog-assigned-days' 에 영구 저장
- */
 const DAY_SCHED={0:'REST',1:'A',2:'B',3:'C',4:'D',5:'E',6:'F'};
 const DAY_KR=['일','월','화','수','목','금','토'];
 
@@ -2208,19 +2108,6 @@ async function doLogout(){
 // ══════════════════════════════
 // 앱 초기화
 // ══════════════════════════════
-/*
- * ══════════════════════════════════════════════════════
- * [initApp - 앱 메인 초기화]  Firebase 로그인 후 호출
- * 1. 10초 타임아웃 안전장치 (_t)
- * 2. _wt() : 3초 타임아웃 래퍼 (Promise.race)
- * 3. loadUserProfile() → 없으면 온보딩
- * 4. loadRoutine() → RT{}
- * 5. loadRecords() → records[]
- * 6. loadDietData() → 식단
- * 7. showApp() → 메인 표시
- * 8. applyWeeklyVariation() → 주차별 변동
- * ══════════════════════════════════════════════════════
- */
 async function initApp(user){
   isLoggedIn=true;
   // 10초 안전장치
@@ -2319,32 +2206,23 @@ function calc1RM(weight,reps){
   if(!weight||!reps||reps<=0)return 0;
   return Math.round(parseFloat(weight)*(1+parseInt(reps)/30)*10)/10;
 }
+// 중량 없는 맨몸/정적 운동 목록
+const NO_WEIGHT_EXNAMES = new Set([
+  '플랭크','사이드 플랭크','바이시클 크런치','크런치','리버스 크런치','레그 레이즈',
+  '행잉 레그레이즈','행잉 니레이즈','마운틴 클라이머','버피','점핑잭','하이니즈',
+  '푸시업','와이드 푸시업','다이아몬드 푸시업','파이크 푸시업','딥스','풀업','친업',
+  '인버티드 로우','글루트 브릿지','힙 브릿지','사이드 라잉 레그레이즈','클램쉘',
+  '파이어 하이드런트','도너키 킥','AB 롤아웃','V업','러시안 트위스트','데드버그',
+  '버드독','월 싯','슈퍼맨','브이업','씨저스','힐 터치','토 터치','플러터 킥',
+]);
 
-/*
- * [renderSets - 세트 입력 UI (엑셀 형식)]
- * key : "set-{섹션idx}-{운동idx}"  cId : DOM container id
- *
- * 컬럼: 회 | pre kg/ea (이전기록) | today kg | 횟수 | 체크
- *
- * 이전 기록: records[]에서 같은 운동명 검색
- * → prevSets[i].weight/reps 표시 (주황색)
- * → 오늘 > 이전: ▲초록 / 오늘 < 이전: ▼빨강
- *
- * 1RM 추정: Epley 공식 = weight × (1 + reps/30)
- * → rm-badge 로 표시
- *
- * 연동:
- * updSet()        → 값 갱신 + localStorage 저장
- * toggleSetDone() → 완료 체크
- * refreshRM()     → 1RM 배지 실시간 갱신
- * addSet()        → 세트 추가
- */
-/*
- * [renderSets - 세트 입력 UI (엑셀 형식)]
- * 컬럼: 회 | pre kg/ea | today kg | 횟수 | 체크
- * 이전기록: records[]에서 같은 운동명 검색
- * 1RM: Epley 공식 = weight × (1 + reps/30)
- */
+function isNoWeightEx(exName) {
+  if(NO_WEIGHT_EXNAMES.has(exName)) return true;
+  // EX_LIB에서 해당 운동의 tags 확인
+  const ex = EX_LIB && EX_LIB.find(e=>e.n===exName);
+  return false;
+}
+
 function renderSets(key,cId){
   const sets=setData[key];if(!sets)return;
   const c=document.getElementById(cId);if(!c)return;
@@ -2358,56 +2236,62 @@ function renderSets(key,cId){
   const prevSets=prevRec?.sets?.filter(s=>s.ex===exName)||[];
   const prevDate=prevRec?prevRec.date:'';
 
-  // 1RM 계산
+  // 중량 없는 종목 여부
+  const noWeight = isNoWeightEx(exName);
+
+  // 1RM 계산 (중량 있는 종목만)
   let best1RM=0;
-  sets.forEach(s=>{if(s.weight&&s.reps){const v=calc1RM(s.weight,s.reps);if(v>best1RM)best1RM=v;}});
+  if(!noWeight) sets.forEach(s=>{if(s.weight&&s.reps){const v=calc1RM(s.weight,s.reps);if(v>best1RM)best1RM=v;}});
   const rmHtml=best1RM>0
     ?`<div class="rm-badge">추정 1RM <strong>${best1RM}kg</strong> · 목표 <strong>${Math.round(best1RM*0.75*10)/10}kg×10회</strong></div>`:'';
 
-  // 그리드: 회(30) | pre kg/ea(90) | today kg(1fr) | 횟수(64) | 체크(36)
-  const COL='30px 90px 1fr 64px 36px';
+  // 그리드: 중량있음 → 회|pre|kg|횟수|체크 / 중량없음 → 회|이전횟수|횟수|체크
+  const COL = noWeight ? '30px 90px 1fr 36px' : '30px 90px 1fr 64px 36px';
+  const hdrKg   = noWeight ? '' : '<div>today kg</div>';
+  const hdrPre  = noWeight
+    ? `<div style="color:#f0a500;">이전 횟수${prevDate?'<br><span style="font-size:9px;">'+prevDate+'</span>':''}</div>`
+    : `<div style="color:#f0a500;">pre kg/ea${prevDate?'<br><span style="font-size:9px;">'+prevDate+'</span>':''}</div>`;
 
   c.innerHTML=`
     <div style="display:grid;grid-template-columns:${COL};gap:4px;
       padding:7px 4px 5px;font-size:10px;color:var(--muted);font-family:var(--mono);
       text-align:center;border-bottom:1px solid var(--border);margin-bottom:5px;">
       <div>회</div>
-      <div style="color:#f0a500;">pre kg/ea${prevDate?'<br><span style="font-size:9px;">'+prevDate+'</span>':''}</div>
-      <div>today kg</div>
+      ${hdrPre}
+      ${hdrKg}
       <div>횟수</div>
       <div>체크</div>
     </div>
     ${sets.map((s,i)=>{
       const pw=prevSets[i]?.weight||'';
       const pr=prevSets[i]?.reps||'';
-      const preLabel=pw||pr ? `${pw||'-'}/${pr||'-'}` : '-';
-      const hasUp = s.weight && pw && parseFloat(s.weight)>parseFloat(pw);
-      const hasDn = s.weight && pw && parseFloat(s.weight)<parseFloat(pw);
+      const preLabel = noWeight
+        ? (pr ? `${pr}회` : '-')
+        : (pw||pr ? `${pw||'-'}/${pr||'-'}` : '-');
+      const hasUp = !noWeight && s.weight && pw && parseFloat(s.weight)>parseFloat(pw);
+      const hasDn = !noWeight && s.weight && pw && parseFloat(s.weight)<parseFloat(pw);
+      const repsUp = noWeight && s.reps && pr && parseInt(s.reps)>parseInt(pr);
       return `<div id="sr-${key}-${i}" style="display:grid;grid-template-columns:${COL};
         gap:4px;align-items:center;margin-bottom:4px;
         background:${s.done?'#4caf7d10':'transparent'};border-radius:6px;padding:2px 2px;">
-        <!-- 회 -->
         <div style="text-align:center;font-size:13px;font-weight:700;
           color:${s.done?'var(--green)':'var(--muted)'};">${i+1}</div>
-        <!-- pre kg/ea -->
         <div style="text-align:center;font-size:12px;font-family:var(--mono);
-          color:${pw?'#f0a500':'var(--border)'};font-weight:${pw?'700':'400'};
+          color:${(pw||pr)?'#f0a500':'var(--border)'};font-weight:${(pw||pr)?'700':'400'};
           padding:6px 2px;background:var(--surface2);border-radius:6px;">
           ${preLabel}
           ${hasUp?'<span style="color:var(--green);font-size:9px;"> ▲</span>':''}
           ${hasDn?'<span style="color:#e55;font-size:9px;"> ▼</span>':''}
+          ${repsUp?'<span style="color:var(--green);font-size:9px;"> ▲</span>':''}
         </div>
-        <!-- today kg -->
-        <input class="set-inp ${s.weight?'filled':''}" type="number"
+        ${noWeight ? '' : `<input class="set-inp ${s.weight?'filled':''}" type="number"
           value="${s.weight}" placeholder="${pw?pw:'0'}" min="0" step="0.5"
           style="text-align:center;font-size:14px;font-weight:700;"
-          oninput="updSet('${key}',${i},'weight',this.value);refreshRM('${key}','${cId}');refreshRowBg('${key}',${i})"/>
-        <!-- 횟수 -->
+          oninput="updSet('${key}',${i},'weight',this.value);refreshRM('${key}','${cId}');refreshRowBg('${key}',${i})"/>`}
         <input class="set-inp ${s.reps?'filled':''}" type="number"
-          value="${s.reps}" placeholder="${pr?pr:'회'}" min="0" step="1"
+          value="${s.reps}" placeholder="${pr?pr:(noWeight?'회':'회')}" min="0" step="1"
           style="text-align:center;font-size:13px;"
-          oninput="updSet('${key}',${i},'reps',this.value);refreshRM('${key}','${cId}')"/>
-        <!-- 체크 -->
+          oninput="updSet('${key}',${i},'reps',this.value);${noWeight?'':'refreshRM(''+key+'',''+cId+'')'}"/>
         <button class="set-ok ${s.done?'done':''}"
           onclick="toggleSetDone('${key}',${i})">✓</button>
       </div>`;
@@ -2477,13 +2361,6 @@ function toggleTimerSetDone(si,ei,setIdx,total){
 // ══════════════════════════════
 // 홈
 // ══════════════════════════════
-/*
- * [renderHome - 홈 탭 렌더링]
- * · 인사말 / 오늘 루틴 카드
- * · 주간 달력 행 (week-row) - 완료 기록 표시
- * · 유산소 배너 (완주/미완주 구분)
- * · 통계: 총횟수(h-total), 이번달(h-month), 연속(h-streak)
- */
 function renderHome(){
   const now=new Date(),h=now.getHours();
   const greet=h<12?'좋은 아침이에요':h<18?'좋은 오후예요':'좋은 저녁이에요';
@@ -2555,14 +2432,6 @@ function goWorkout(){
 // ══════════════════════════════
 // 운동 탭
 // ══════════════════════════════
-/*
- * [renderWorkout - 운동 탭 렌더링]
- * 1. DAY_SCHED[selDay] → 오늘 루틴 키(tk)
- * 2. RT[tk].sections 순회 → 섹션/운동 카드 생성
- * 3. sets=0 → 타이머 카드 / sets>0 → renderSets()
- * 4. handleWorkoutClick() 으로 버튼 이벤트 위임
- *    AI가이드/유튜브/수정/삭제
- */
 function renderWorkout(){
   // 보충 운동 진행 중이면 해당 루틴을 우선 사용
   const activeTk = makeupActive ? makeupActive.missedTk : DAY_SCHED[selDay];
@@ -3217,18 +3086,6 @@ function resetAll(){
 function setCond(v){selCond=v;document.querySelectorAll('.cond-btn').forEach((b,i)=>b.classList.toggle('active',i+1===v));}
 
 // ── 저장 (Firebase) ──
-
-/*
- * [doSaveRecord - 운동 기록 저장]
- * 1. 완료 운동 수 / 전체 수 집계
- * 2. setData 수집 → allSets[] ({ex, weight, reps, done})
- * 3. ORM_NAME_MAP으로 주요 운동 1RM 자동 추정
- *    → orm1RM 갱신 → localStorage 저장
- * 4. saveRecord(rec) → Firestore 저장
- *    rec: {id, date, type, exDone, exTotal,
- *          sets[], muscles[], cond, memo, phase}
- * 5. localStorage 임시 데이터 초기화
- */
 async function doSaveRecord(){
   // 보충 운동 중이면 해당 루틴 키 사용
   const tk = makeupActive ? makeupActive.missedTk : DAY_SCHED[selDay];
@@ -3285,7 +3142,12 @@ async function doSaveRecord(){
     records=records.filter(r=>r.date!==ds);records.unshift(rec);
     try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}
     const ormMsg = ormUpdated ? '\n📊 1RM 추정값이 자동 갱신됐어요!' : '';
-    showToast('✅ 클라우드에 저장 완료!' + ormMsg,'success');
+    const savedExs = allSets.map(s=>s.ex).filter((v,i,a)=>a.indexOf(v)===i);
+    const setCount = allSets.filter(s=>s.done).length;
+    const ormMsg = ormUpdated ? ' · 1RM 갱신됨' : '';
+    showToast(`✅ 저장완료 · ${exDone}/${exTotal} 운동 · ${setCount}세트${ormMsg}`,'success');
+    // 기록 검증 로그
+    console.log('[FitLog] 저장 완료:', {date:ds, type:tk, exDone, exTotal, sets:allSets.length, muscles:musclesDone});
   } else {
     showToast('⚠️ 저장 실패. 다시 시도해주세요.','error');
   }
@@ -3328,13 +3190,24 @@ function renderCalendar(){
   const ts=toStr(new Date()),firstDow=new Date(calYear,calMonth,1).getDay(),dim=new Date(calYear,calMonth+1,0).getDate();
   let html=DAY_KR.map(d=>`<div class="cal-dlbl">${d}</div>`).join('');
   for(let i=0;i<firstDow;i++)html+=`<div class="cal-cell empty"></div>`;
+  // 체중 기록 불러오기
+  const wHistory=JSON.parse(localStorage.getItem('fitlog-weight-log')||localStorage.getItem('fitlog-weight-history')||'[]');
+  const wMap={};wHistory.forEach(w=>{ if(w.date&&w.weight) wMap[w.date]=w.weight; });
+
   for(let d=1;d<=dim;d++){
     const ds=`${calYear}-${String(calMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const dow=new Date(calYear,calMonth,d).getDay(),tk=DAY_SCHED[dow],rec=records.find(r=>r.date===ds);
     const isRest=tk==='REST';
+    // 유산소 전용 기록 여부
+    const isCardioOnly = rec && (rec.type==='CARDIO_TODAY' || rec.type==='유산소');
+    const dispType = isCardioOnly ? '유산소' : (isRest?'휴':tk);
+    const dispClass = isCardioOnly ? 'cardio-only' : (isRest?'':tk);
+    const wt = wMap[ds]; // 그날 체중
     html+=`<div class="cal-cell${ds===ts?' today':''}${rec?' has-rec':''}${isRest&&!rec?' rest-day':''}" onclick="showCalDetail('${ds}')">
-      <div class="cal-date">${d}</div><div class="cal-type ${isRest?'':tk}">${isRest?'휴':tk}</div>
+      <div class="cal-date">${d}</div>
+      <div class="cal-type ${dispClass}" style="${isCardioOnly?'color:var(--green);font-size:9px;':''}">${dispType}</div>
       ${rec?'<div class="cal-dot"></div>':''}
+      ${wt?`<div style="font-size:8px;color:var(--blue,#4a9eff);font-family:var(--mono);line-height:1;">${wt}kg</div>`:''}
     </div>`;
   }
   document.getElementById('cal-grid').innerHTML=html;document.getElementById('cal-detail').innerHTML='';
@@ -3500,12 +3373,6 @@ function renderStats(){
 // ══════════════════════════════
 // 운동 라이브러리
 // ══════════════════════════════
-/*
- * [EX_LIB - 운동 라이브러리 DB (~170개)]
- * 각 항목: {n:이름, d:세트설명, tags:근육[], w:주의[], sets, cat, type}
- * type: 'gym'기구전용 / 'home'맨몸 / 'both'공통
- * renderLibList()에서 classType에 따라 필터링
- */
 const EX_LIB=[
   // ── 가슴 ──
   {n:'벤치프레스',d:'4세트 × 10회',tags:['대흉근(주)'],w:[],sets:4,cat:'가슴',type:'both'},
@@ -6001,17 +5868,6 @@ function togglePosture(i){
 }
 
 // 설정 탭 초기화
-
-/*
- * [설정 탭 - 4단계 스텝]
- * STEP1: 신체정보 (성별/나이/키/몸무게 → BMI/대사량 계산)
- * STEP2: 운동환경+요일배정+목적
- *        기구/홈트 → classType
- *        요일 선택 → DAY_SCHED 재배정
- *        목적 → applyClassificationWithDays() → RT 재구성
- * STEP3: 성장단계 (세트×횟수 배율 조정, 종목은 유지)
- * STEP4: 1RM + 20회 피드백 + 유산소 기록
- */
 function initSettingsTab(){
   initBodyInfo();
   initClassSettings();
@@ -6450,18 +6306,6 @@ setTimeout(()=>{
 const _CACHE_VER='v3';
 const _aiCache={};  // 운동명 → 생성된 가이드 캐시
 
-
-/*
- * [AI 가이드 - Anthropic API 연동]
- * 1. _aiCache[key] 확인 → 캐시 히트 시 즉시 표시
- * 2. showGuideImage() → EXERCISE_IMAGES{}에서 이미지 매핑
- * 3. Anthropic API (claude-sonnet-4-20250514) 호출
- *    역할: 재활 전문 트레이너
- *    형식: 마크다운 (목적/자세/동작/포인트/주의/팁)
- * 4. buildGuideHtml() → 마크다운 → HTML 변환
- * 5. 실패 시 buildOfflineGuide() → EX_INFO 기반 응급 표시
- * 유튜브: 2가지 검색어 (운동방법 / 올바른자세)
- */
 function openAiGuide(exName,tags,warn){
   try{exName=decodeURIComponent(exName);}catch(e){}
   try{tags=decodeURIComponent(tags);}catch(e){}
@@ -6683,37 +6527,23 @@ function closeAiGuide(){
 // 유산소 추가 (종목별 개별 시간 + 기록 저장)
 // ══════════════════════════════
 
-
-/*
- * [유산소 선택 시스템]
- * _cardioMinMap : Map<인덱스, 분> - 종목별 개별 시간
- * _globalCardioMin : 상단 공통 시간 (기본 20분)
- *
- * 사용 흐름:
- * 1. 상단 시간 설정 → changeGlobalCardioTime()
- * 2. 종목 탭 → _cardioMinMap.set(i, globalTime)
- * 3. 다른 시간 설정 후 다른 종목 탭
- * 4. 합산: kcal = kcalPerMin × 분 × (체중/70)
- *          체지방 = kcal / 7700 × 1000 (g)
- * 5. confirmCardioSelection() → saveCardioHistory() + 루틴 추가
- */
 const WEEKEND_CARDIO = [
-  {n:'업라이트 바이크',   icon:'🚴', kcalPerMin:7.5, defaultMin:20, tip:'무릎 관절 부담 최소',       type:'gym'},
-  {n:'런닝머신',          icon:'🏃', kcalPerMin:10,  defaultMin:20, tip:'페이스 유지가 핵심',         type:'gym'},
-  {n:'인클라인 트레드밀', icon:'⛰️', kcalPerMin:11, defaultMin:20, tip:'둔근·종아리 집중 자극',      type:'gym'},
-  {n:'천국의 계단',       icon:'🪜', kcalPerMin:12,  defaultMin:20, tip:'심폐·하체·둔근 최강 자극',   type:'gym'},
-  {n:'일립티컬',          icon:'🔄', kcalPerMin:9,   defaultMin:20, tip:'전신 저충격 유산소',          type:'gym'},
-  {n:'로잉머신',          icon:'🚣', kcalPerMin:10,  defaultMin:15, tip:'상체+하체 동시 자극',         type:'gym'},
-  {n:'스텝퍼',            icon:'🪜', kcalPerMin:9,   defaultMin:15, tip:'둔근·심폐 동시 강화',         type:'gym'},
-  {n:'실내 사이클',       icon:'🚴', kcalPerMin:8.5, defaultMin:30, tip:'무릎 친화적 유산소',          type:'gym'},
-  {n:'버피',              icon:'💥', kcalPerMin:12,  defaultMin:15, tip:'전신 고강도 — 무릎 주의',    type:'home'},
-  {n:'수영',              icon:'🏊', kcalPerMin:8,   defaultMin:30, tip:'관절 무부하 전신운동',        type:'home'},
-  {n:'걷기 (실외)',       icon:'🚶', kcalPerMin:4,   defaultMin:40, tip:'경보 속도, 팔 흔들기',        type:'both'},
+  {n:'업라이트 바이크',    icon:'🚴', kcalPerMin:7.5, defaultMin:45, tip:'무릎 관절 부담 최소',        type:'gym'},
+  {n:'런닝머신',           icon:'🏃', kcalPerMin:10,  defaultMin:45, tip:'페이스 유지가 핵심',          type:'gym'},
+  {n:'인클라인 트레드밀',  icon:'⛰️', kcalPerMin:11, defaultMin:45, tip:'둔근·종아리 집중 자극',       type:'gym'},
+  {n:'천국의 계단',        icon:'🪜', kcalPerMin:12,  defaultMin:45, tip:'심폐·하체·둔근 최강 자극',    type:'gym'},
+  {n:'일립티컬',           icon:'🔄', kcalPerMin:9,   defaultMin:45, tip:'전신 저충격 유산소',           type:'gym'},
+  {n:'로잉머신',           icon:'🚣', kcalPerMin:10,  defaultMin:45, tip:'상체+하체 동시 자극',          type:'gym'},
+  {n:'실내 사이클',        icon:'🚴', kcalPerMin:8.5, defaultMin:45, tip:'무릎 친화적 유산소',           type:'gym'},
+  {n:'외부 런닝',          icon:'🏃', kcalPerMin:11,  defaultMin:45, tip:'자연 지형으로 다양한 자극',    type:'both'},
+  {n:'버피',               icon:'💥', kcalPerMin:12,  defaultMin:45, tip:'전신 고강도 — 무릎 주의',     type:'home'},
+  {n:'수영',               icon:'🏊', kcalPerMin:8,   defaultMin:45, tip:'관절 무부하 전신운동',         type:'home'},
+  {n:'걷기 (실외)',        icon:'🚶', kcalPerMin:4,   defaultMin:45, tip:'경보 속도, 팔 흔들기',         type:'both'},
 ];
 
 // 선택된 종목 인덱스 → 개별 시간(분) Map
 let _cardioMinMap    = new Map();
-let _globalCardioMin = 20; // 상단 공통 시간
+let _globalCardioMin = 45; // 기본 45분
 
 function isWeekdaysComplete(){
   const now=new Date(), todayDow=now.getDay();
@@ -6778,30 +6608,43 @@ function _renderCardioList(){
       const min =sel?_cardioMinMap.get(i):_globalCardioMin;
       const kcal=sel?Math.round(c.kcalPerMin*min*(weight/70)):0;
       const fat =sel?(kcal/7700*1000).toFixed(1):'';
+      const ytUrl=`https://www.youtube.com/results?search_query=${encodeURIComponent(c.n+' 유산소 운동 방법')}`;
       return `
-      <div onclick="toggleCardioItem(${i})"
-        style="display:flex;align-items:center;gap:12px;padding:13px 14px;border-radius:12px;
-        cursor:pointer;transition:all .15s;
+      <div style="border-radius:12px;transition:all .15s;overflow:hidden;
         border:${sel?'2px solid var(--green)':'1px solid var(--border)'};
         background:${sel?'#4caf7d08':'var(--surface2)'};">
-        <div style="font-size:26px;flex-shrink:0;">${c.icon}</div>
-        <div style="flex:1;min-width:0;">
-          <div style="font-size:14px;font-weight:700;">${c.n}</div>
-          <div style="font-size:10px;color:var(--muted);margin-top:2px;">💡 ${c.tip}</div>
-          ${sel?`<div style="font-size:11px;margin-top:4px;display:flex;gap:8px;">
-            <span style="color:var(--accent);font-weight:700;">🔥 ${kcal}kcal</span>
-            <span style="color:var(--green);">체지방 ${fat}g↓</span>
-          </div>`:''}
+        <div onclick="toggleCardioItem(${i})"
+          style="display:flex;align-items:center;gap:12px;padding:12px 14px;cursor:pointer;">
+          <div style="font-size:26px;flex-shrink:0;">${c.icon}</div>
+          <div style="flex:1;min-width:0;">
+            <div style="font-size:14px;font-weight:700;">${c.n}</div>
+            <div style="font-size:10px;color:var(--muted);margin-top:2px;">💡 ${c.tip}</div>
+            ${sel?`<div style="font-size:11px;margin-top:4px;display:flex;gap:8px;">
+              <span style="color:var(--accent);font-weight:700;">🔥 ${kcal}kcal</span>
+              <span style="color:var(--green);">체지방 ${fat}g↓</span>
+            </div>`:''}
+          </div>
+          ${sel
+            ?`<div style="text-align:right;flex-shrink:0;margin-right:6px;">
+                <div style="font-size:20px;font-weight:900;color:var(--green);font-family:var(--mono);">${min}분</div>
+              </div>
+              <div style="width:26px;height:26px;border-radius:50%;background:var(--green);flex-shrink:0;
+                display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;">✓</div>`
+            :`<div style="font-size:11px;color:var(--muted);border:1px solid var(--border);
+                border-radius:8px;padding:4px 10px;flex-shrink:0;">탭 선택</div>`
+          }
         </div>
-        ${sel
-          ?`<div style="text-align:right;flex-shrink:0;margin-right:6px;">
-              <div style="font-size:20px;font-weight:900;color:var(--green);font-family:var(--mono);">${min}분</div>
-            </div>
-            <div style="width:26px;height:26px;border-radius:50%;background:var(--green);flex-shrink:0;
-              display:flex;align-items:center;justify-content:center;font-size:14px;color:#fff;">✓</div>`
-          :`<div style="font-size:11px;color:var(--muted);border:1px solid var(--border);
-              border-radius:8px;padding:4px 10px;flex-shrink:0;">탭하여 선택</div>`
-        }
+        <div style="display:flex;gap:6px;padding:0 10px 10px;">
+          <button onclick="event.stopPropagation();openAiGuide(encodeURIComponent('${c.n}'),'심폐,유산소','')"
+            style="flex:1;padding:6px;border-radius:7px;border:1px solid #7c6aff44;
+            background:#7c6aff0d;color:#7c6aff;font-size:11px;font-weight:700;
+            cursor:pointer;font-family:var(--font);">🤖 AI 가이드</button>
+          <a href="${ytUrl}" target="_blank" rel="noopener"
+            onclick="event.stopPropagation()"
+            style="flex:1;padding:6px;border-radius:7px;border:1px solid #ff444433;
+            background:#ff444408;color:#ff4444;font-size:11px;font-weight:700;
+            text-decoration:none;display:flex;align-items:center;justify-content:center;">▶ 유튜브</a>
+        </div>
       </div>`;
     }).join('');
 }
@@ -6902,19 +6745,6 @@ function setCardioTime(m){}
 // - 같은 근육군을 다른 각도로 자극
 // - 4주 사이클로 순환
 // ══════════════════════════════
-
-/*
- * [주차별 운동 변동 - 4주 사이클]
- * Week1(cycle=0): 기본 유지
- * Week2(cycle=1): 각도 변경 (variations[0])
- * Week3(cycle=2): 고립 강화 (variations[1])
- * Week4(cycle=3): 복합 강화 (variations[2])
- *
- * applyWeeklyVariation():
- * → weekNum = 올해 몇 번째 주
- * → localStorage 'fitlog-variation-week' 로 중복 방지
- * → RT 내 운동명 교체 → saveRoutine() → renderWorkout()
- */
 const EXERCISE_VARIATIONS = {
   // 가슴
   '시티드 체스트 프레스':   ['덤벨 벤치프레스','인클라인 덤벨 벤치프레스','케이블 체스트 플라이','푸시업'],
@@ -6984,6 +6814,92 @@ function applyWeeklyVariation(){
   }
 }
 
+
+// ── AI 코치 분석 ──
+async function runAiCoachAnalysis(){
+  const result = document.getElementById('ai-coach-result');
+  if(!result){ showToast('분석 패널을 찾을 수 없습니다','error'); return; }
+
+  result.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">🤖 분석 중...</div>';
+
+  const total = records.length;
+  if(total < 3){
+    result.innerHTML = '<div style="padding:10px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--muted);">3회 이상 운동 기록이 필요합니다.</div>';
+    return;
+  }
+
+  const recent = records.slice(0, Math.min(total,20));
+  const avgCond = (recent.reduce((s,r)=>s+(r.cond||3),0)/recent.length).toFixed(1);
+  const doneRate = Math.round(recent.filter(r=>(r.exDone||0)>=(r.exTotal||1)*0.8).length/recent.length*100);
+
+  const muscleFreq={};
+  recent.forEach(r=>{(r.muscles||[]).forEach(m=>{muscleFreq[m]=(muscleFreq[m]||0)+1;});});
+  const topMuscles = Object.entries(muscleFreq).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([m,n])=>m+'('+n+'회)').join(', ');
+
+  const weightGrowth={};
+  records.slice().reverse().forEach(r=>{
+    (r.sets||[]).forEach(s=>{
+      if(s.weight&&s.ex){
+        if(!weightGrowth[s.ex]) weightGrowth[s.ex]={first:parseFloat(s.weight),last:parseFloat(s.weight)};
+        else weightGrowth[s.ex].last=parseFloat(s.weight);
+      }
+    });
+  });
+  const growthStr = Object.entries(weightGrowth).filter(([,v])=>v.last>v.first).slice(0,3)
+    .map(([n,v])=>n+': '+v.first+'→'+v.last+'kg').join(', ') || '아직 성장 데이터 없음';
+
+  const weight = localStorage.getItem('fitlog-weight')||'미입력';
+  const age = localStorage.getItem('fitlog-age')||'미입력';
+  const purposes = JSON.parse(localStorage.getItem('fitlog-purposes')||'[]').join(', ')||'미설정';
+  const level = ['입문','초급','중급','고급','마스터'][parseInt(localStorage.getItem('fitlog-level')||'1')-1]||'초급';
+  const nextMile = Math.ceil(total/20)*20;
+
+  const prompt = `당신은 전문 피트니스 코치입니다. 아래 데이터를 분석하고 한국어로 구체적인 조언을 해주세요.
+
+[사용자 정보]
+체중: ${weight}kg, 나이: ${age}세
+운동 목적: ${purposes}
+현재 단계: ${level}
+
+[운동 기록 (최근 ${recent.length}회 / 누적 ${total}회)]
+평균 컨디션: ${avgCond}/5
+완료율(80%이상): ${doneRate}%
+자주 훈련한 부위: ${topMuscles}
+중량 성장: ${growthStr}
+
+다음 형식으로 답변하세요:
+
+### 📊 현재 상태
+2-3줄
+
+### 💪 잘하고 있는 점
+2가지
+
+### ⚠️ 개선 필요 사항
+구체적으로 2가지
+
+### 🔄 다음 ${nextMile-total}회 루틴 방향
+중점 부위, 강도 조절, 추천 변화를 구체적으로
+
+간결하고 실용적으로 작성하세요.`;
+
+  try{
+    const resp = await fetch('https://api.anthropic.com/v1/messages',{
+      method:'POST',
+      headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:prompt}]})
+    });
+    const data = await resp.json();
+    const text = (data.content&&data.content[0]&&data.content[0].text) || '분석 실패';
+    const html = text
+      .replace(/### (.*)/g,'<div style="font-size:13px;font-weight:700;color:var(--accent);margin:10px 0 4px;">$1</div>')
+      .replace(/\n- /g,'<br>• ')
+      .replace(/\n/g,'<br>');
+    result.innerHTML = '<div style="background:var(--surface2);border-radius:10px;padding:14px;font-size:12px;line-height:1.8;color:var(--text);">'+html+'</div>';
+  }catch(e){
+    result.innerHTML = '<div style="padding:10px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--muted);">AI 분석 중 오류. 인터넷 연결을 확인해주세요.</div>';
+  }
+}
 
 // ── 유산소 기록 히스토리 렌더 ──
 function renderCardioHistory(){
@@ -7122,13 +7038,6 @@ document.addEventListener('visibilitychange', ()=>{
   }
 });
 
-/*
- * [ovToggle - 타이머 시작/일시정지]
- * _requestWakeLock() → 화면 켜짐 유지
- * setInterval 1초마다 current-- → ovUpdateDisplay()
- * 완료: 진동 + playTimerAlarm() (Web Audio API)
- * 백그라운드: visibilitychange → _timerHiddenAt 보정
- */
 function ovToggle(){
   if(_timerState.running){
     clearInterval(_timerState.interval);_timerState.running=false;
