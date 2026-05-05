@@ -10,14 +10,58 @@
 <title>핏로그 · 나만의 재활 운동 플랜</title>
 <meta name="description" content="무릎·허리·어깨 재활부터 체중감량, 근력강화까지. 내 몸에 맞는 운동 루틴을 만들어보세요.">
 
+
+<!--
+╔══════════════════════════════════════════════════════════════╗
+║  FITLOG - 운동 기록 & 실천 앱  (fitlog v2.6)                ║
+║  작성: ssunsmg-smg.github.io/fitlog                         ║
+╠══════════════════════════════════════════════════════════════╣
+║  [전체 아키텍처]                                             ║
+║  1. Firebase (Auth + Firestore) : 로그인 & 클라우드 저장     ║
+║  2. localStorage : 오늘 세트 기록 임시 저장                  ║
+║  3. 단일 HTML 파일 : CSS + JS 전부 인라인                    ║
+║                                                              ║
+║  [탭 구성]                                                   ║
+║  홈 → 운동 → 식단 → 캘린더 → 기록 → 통계 → 설정            ║
+║                                                              ║
+║  [데이터 흐름]                                               ║
+║  로그인 → initApp() → loadRecords() → renderWorkout()        ║
+║        ↘ loadRoutine() → RT{} (오늘 루틴)                   ║
+║        ↘ loadDietData() → dietRecords[]                     ║
+║                                                              ║
+║  [주요 전역변수]                                             ║
+║  records[]    : 운동 완료 기록 배열 (Firestore 동기)         ║
+║  RT{}         : 현재 루틴 객체 (A-F 요일별 루틴)            ║
+║  setData{}    : 오늘 세트별 입력값 (localStorage)           ║
+║  selDay       : 선택된 요일 (0=일, 1=월 ... 6=토)           ║
+║  userProfile  : 사용자 프로필 (이름, 목표, 신체정보 등)     ║
+║  classType    : '기구운동' or '홈트'                         ║
+║  DAY_SCHED{}  : 요일→루틴키 매핑 {0:'REST',1:'A',...}       ║
+╚══════════════════════════════════════════════════════════════╝
+-->
 <!-- Firebase SDK (compat - 모바일 완전 호환) -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"
   onerror="document.getElementById('firebase-error-banner').style.display='block'"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
 <script>
-(function(){
-  // Firebase SDK 로드 실패 방어: firebase 객체가 없으면 안전하게 중단
+/*
+ * ┌─────────────────────────────────────────────────┐
+ * │  [Firebase 초기화 IIFE]                          │
+ * │  - typeof firebase === 'undefined' 체크          │
+ * │  → 네트워크 오류로 SDK 로드 실패 시:             │
+ * │    · stub 함수(빈 함수)로 대체                   │
+ * │    · 300ms 후 firebase-logout 이벤트 dispatch    │
+ * │    → 로그인 화면으로 이동 (무한 로딩 방지)       │
+ * │  - 정상 로드 시:                                 │
+ * │    · firebaseConfig 로 initializeApp()            │
+ * │    · auth / db 객체 생성                         │
+ * │    · auth.onAuthStateChanged() 로 로그인 감지    │
+ * │      → 로그인: firebase-login 이벤트 dispatch    │
+ * │      → 로그아웃: firebase-logout 이벤트 dispatch │
+ * └─────────────────────────────────────────────────┘
+ */
+: firebase 객체가 없으면 안전하게 중단
   if(typeof firebase === 'undefined'){
     console.warn('[FitLog] Firebase SDK 로드 실패');
     window.firebaseLogin = window.firebaseLogout = window.firebaseSignUp =
@@ -1593,9 +1637,29 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 </div>
 
 <script>
-// ══════════════════════════════
-// 상태
-// ══════════════════════════════
+/*
+ * ┌─────────────────────────────────────────────────────────┐
+ * │  [전역 상태 변수]                                        │
+ * │                                                          │
+ * │  records[]      Firestore에서 불러온 운동 완료 기록.    │
+ * │                 각 요소: {id, date, type, exDone,        │
+ * │                  exTotal, sets[], muscles[], cond, memo} │
+ * │                                                          │
+ * │  setData{}      오늘 운동 세트 입력값. localStorage 임시 │
+ * │                 저장. key="set-{si}-{ei}", value=[{      │
+ * │                  weight, reps, done}]                    │
+ * │                                                          │
+ * │  selDay         현재 선택 요일 (0=일~6=토)              │
+ * │  selCond        오늘 컨디션 (1~5)                       │
+ * │  RT{}           현재 루틴. A~F 키별 루틴 객체           │
+ * │                 (Firestore saveRoutine으로 저장됨)       │
+ * │  userProfile    Firestore users/{uid}/profile 문서       │
+ * │  isLoggedIn     Firebase auth 상태                       │
+ * │  editTarget     수정 모달 대상 {tk,si,ei}               │
+ * │  makeupActive   보충운동 진행 상태                       │
+ * └─────────────────────────────────────────────────────────┘
+ */
+
 let records=[], setData={}, selDay=new Date().getDay(), selCond=3;
 let makeupActive=null; // {restDay, missedDay, missedTk, missedName} — 보충 운동 진행 중 상태
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
@@ -1604,6 +1668,17 @@ let editTarget=null, RT={}, userProfile=null, isLoggedIn=false;
 // ══════════════════════════════
 // 운동 설명
 // ══════════════════════════════
+/*
+ * ┌──────────────────────────────────────────────────┐
+ * │  [EX_INFO - 운동 상세 정보 DB]                   │
+ * │  운동명 → {desc, tip, yt, pf} 매핑              │
+ * │  desc  : AI 가이드 기본 설명 (캐시 없을 때 사용) │
+ * │  tip   : 주의사항 (재활/부상 포인트)             │
+ * │  yt    : 유튜브 검색어                           │
+ * │  pf    : 운동 이미지 키 (EXERCISE_IMAGES 매핑)   │
+ * │  → openAiGuide() 에서 읽어 사용                 │
+ * └──────────────────────────────────────────────────┘
+ */
 const EX_INFO={
   '업라이트 바이크':{desc:'안장 높이는 페달이 가장 아래일 때 무릎이 약간 구부러질 정도로 조정. 허리를 곧게 세우고 핸들 가볍게 잡기.',tip:'무릎 수술 후 — 처음엔 저항 최소화',yt:'업라이트 바이크 자세',pf:'upright-bike'},
   '시티드 체스트 프레스':{desc:'등받이에 등을 완전히 밀착. 핸들을 가슴 높이에서 앞으로 밀기. 날개뼈를 모아서 시작.',tip:'어깨 통증 시 팔꿈치가 어깨보다 위로 올라가지 않게',yt:'시티드 체스트 프레스 머신 자세',pf:'seated-chest-press-machine'},
@@ -1854,6 +1929,22 @@ const EX_GUIDE={
 };
 
 
+/*
+ * ┌──────────────────────────────────────────────────────────┐
+ * │  [RT_BASE - 기본 루틴 정의 (기구 헬스장)]                │
+ * │  A: 월 가슴·어깨·삼두+복근  B: 화 등·이두·후면어깨+코어│
+ * │  C: 수 하체·둔근 재활       D: 목 유산소·척추 회복      │
+ * │  E: 금 전신복합+복근        F: 토 하체경량              │
+ * │                                                          │
+ * │  루틴 구조: {label, title, color, muscles[], sections[]} │
+ * │  섹션 구조: {n, exs[{n, d, tags[], w[], sets}]}         │
+ * │  sets=0 → 타이머 운동, sets>0 → 세트×횟수 운동         │
+ * │                                                          │
+ * │  applyClassification() 에서 이 베이스를 복사해           │
+ * │  목적/단계 조정 → RT{} 에 할당 → Firestore 저장         │
+ * └──────────────────────────────────────────────────────────┘
+ */
+
 const RT_BASE={
   A:{label:'월요일 · TypeA',title:'가슴 · 어깨 · 삼두 + 복근',color:'rh-a',muscles:['대흉근','삼각근','삼두근','복직근'],
     sections:[
@@ -1910,6 +2001,16 @@ const RT_BASE={
       {n:'마무리',exs:[{n:'전신 스트레칭',d:'10분',tags:['회복'],w:[],sets:0}]}]},
   REST:{label:'일요일',title:'완전 휴식',color:'rh-rest',muscles:['전신회복'],sections:[]}
 };
+
+/*
+ * ┌──────────────────────────────────────────────────────────┐
+ * │  [DAY_SCHED - 요일별 루틴 배정]                          │
+ * │  {0:'REST',1:'A',2:'B',3:'C',4:'D',5:'E',6:'F'}         │
+ * │  getDay() 기준: 0=일, 1=월, 2=화 ... 6=토               │
+ * │  사용자 요일 설정 시 toggleDayAssign()으로 변경됨        │
+ * │  localStorage 'fitlog-assigned-days' 에 영구 저장        │
+ * └──────────────────────────────────────────────────────────┘
+ */
 
 const DAY_SCHED={0:'REST',1:'A',2:'B',3:'C',4:'D',5:'E',6:'F'};
 const DAY_KR=['일','월','화','수','목','금','토'];
@@ -2106,6 +2207,25 @@ async function doLogout(){
 // ══════════════════════════════
 // 앱 초기화
 // ══════════════════════════════
+/*
+ * ┌──────────────────────────────────────────────────────────┐
+ * │  [initApp - 앱 메인 초기화]                              │
+ * │  Firebase auth 로그인 성공 후 호출됨                     │
+ * │                                                          │
+ * │  흐름:                                                   │
+ * │  1. 타임아웃 안전장치 세팅 (10초)                       │
+ * │  2. 사용자 아바타/이름 표시                              │
+ * │  3. loadUserProfile() → userProfile 세팅                 │
+ * │     → 없으면 온보딩 화면으로 이동                       │
+ * │  4. loadRoutine() → RT{} 세팅 (3초 타임아웃)            │
+ * │  5. loadRecords() → records[] 세팅 (3초 타임아웃)        │
+ * │  6. loadDietData() → 식단 기록 로드                      │
+ * │  7. showApp() → 메인 화면 표시                           │
+ * │  8. applyWeeklyVariation() → 주차별 운동 변동 적용       │
+ * │                                                          │
+ * │  ※ _wt() : Promise.race로 3초 타임아웃 래퍼             │
+ * └──────────────────────────────────────────────────────────┘
+ */
 async function initApp(user){
   isLoggedIn=true;
   // 10초 안전장치
@@ -2204,6 +2324,31 @@ function calc1RM(weight,reps){
   if(!weight||!reps||reps<=0)return 0;
   return Math.round(parseFloat(weight)*(1+parseInt(reps)/30)*10)/10;
 }
+/*
+ * ┌──────────────────────────────────────────────────────────┐
+ * │  [renderSets - 세트 입력 UI 렌더링]                      │
+ * │                                                          │
+ * │  key  : "set-{섹션인덱스}-{운동인덱스}"                  │
+ * │  cId  : DOM container id                                 │
+ * │                                                          │
+ * │  표시 컬럼 (엑셀 형식):                                  │
+ * │  회 | pre kg/ea (이전기록) | today kg | 횟수 | 체크     │
+ * │                                                          │
+ * │  이전 기록: records[]에서 같은 운동명 검색               │
+ * │  → prevRec.date, prevSets[i].weight/reps 표시            │
+ * │  → 오늘 중량 > 이전: ▲ 초록 / 오늘 < 이전: ▼ 빨강     │
+ * │                                                          │
+ * │  1RM 추정: calc1RM(weight, reps) = Epley 공식            │
+ * │  → weight × (1 + reps/30)                               │
+ * │  → rm-badge 로 표시                                     │
+ * │                                                          │
+ * │  연동 함수:                                              │
+ * │  updSet()        : 세트 값 갱신 + localStorage 저장      │
+ * │  toggleSetDone() : 세트 완료 체크                        │
+ * │  refreshRM()     : 1RM 배지 실시간 갱신                  │
+ * │  addSet()        : 세트 추가                             │
+ * └──────────────────────────────────────────────────────────┘
+ */
 function renderSets(key,cId){
   const sets=setData[key];if(!sets)return;
   const c=document.getElementById(cId);if(!c)return;
@@ -2336,6 +2481,22 @@ function toggleTimerSetDone(si,ei,setIdx,total){
 // ══════════════════════════════
 // 홈
 // ══════════════════════════════
+/*
+ * ┌──────────────────────────────────────────────────────────┐
+ * │  [renderHome - 홈 탭 렌더링]                             │
+ * │                                                          │
+ * │  표시 요소:                                              │
+ * │  1. 인사말 + 사용자 이름                                 │
+ * │  2. 오늘 루틴 카드 (tc-label, tc-title, tc-sub)         │
+ * │  3. 주간 달력 행 (week-row) - 7일, 완료 기록 표시       │
+ * │  4. 유산소 배너 (weekend-cardio-banner)                  │
+ * │     → 주말 완주 시: 완주 배너 / 미완주: 일반 배너       │
+ * │  5. 통계 (h-total, h-month, h-streak)                   │
+ * │     streak: 오늘부터 역순으로 연속 기록 일수             │
+ * │                                                          │
+ * │  isWeekdaysComplete(): 월~금 모두 완료 여부 체크         │
+ * └──────────────────────────────────────────────────────────┘
+ */
 function renderHome(){
   const now=new Date(),h=now.getHours();
   const greet=h<12?'좋은 아침이에요':h<18?'좋은 오후예요':'좋은 저녁이에요';
@@ -2407,6 +2568,28 @@ function goWorkout(){
 // ══════════════════════════════
 // 운동 탭
 // ══════════════════════════════
+/*
+ * ┌──────────────────────────────────────────────────────────┐
+ * │  [renderWorkout - 운동 탭 렌더링]                        │
+ * │                                                          │
+ * │  흐름:                                                   │
+ * │  1. selDay 기준 오늘 루틴 키(tk) 결정                   │
+ * │     → DAY_SCHED[selDay] = 'A'~'F' or 'REST'             │
+ * │  2. RT[tk].sections 배열 순회                            │
+ * │     → 섹션(워밍업/메인/마무리 등) 렌더                  │
+ * │  3. 각 운동(ex)마다 ex-card 생성                        │
+ * │     → 타이머 운동: renderTimerExCard()                   │
+ * │     → 세트 운동: renderSets()                            │
+ * │  4. handleWorkoutClick() 으로 버튼 이벤트 위임 처리     │
+ * │                                                          │
+ * │  운동 카드 버튼:                                         │
+ * │  AI 가이드 → openAiGuide()                              │
+ * │  유튜브    → openYT()                                    │
+ * │  수정      → openEdit()                                  │
+ * │  삭제      → delEx()                                     │
+ * │  + 운동 추가 → openLib()                                 │
+ * └──────────────────────────────────────────────────────────┘
+ */
 function renderWorkout(){
   // 보충 운동 진행 중이면 해당 루틴을 우선 사용
   const activeTk = makeupActive ? makeupActive.missedTk : DAY_SCHED[selDay];
@@ -3061,6 +3244,23 @@ function resetAll(){
 function setCond(v){selCond=v;document.querySelectorAll('.cond-btn').forEach((b,i)=>b.classList.toggle('active',i+1===v));}
 
 // ── 저장 (Firebase) ──
+/*
+ * ┌──────────────────────────────────────────────────────────┐
+ * │  [doSaveRecord - 운동 기록 저장]                         │
+ * │                                                          │
+ * │  흐름:                                                   │
+ * │  1. 체크된 운동 수 / 전체 수 집계                        │
+ * │  2. 세트 데이터(setData) 수집 → allSets[]                │
+ * │     각 세트: {ex:운동명, weight, reps, done}             │
+ * │  3. ORM_NAME_MAP으로 주요 운동 1RM 자동 추정             │
+ * │     Epley 공식 → orm1RM 갱신 → localStorage 저장        │
+ * │  4. saveRecord(rec) → Firestore 저장                     │
+ * │     rec: {id, date, type, exDone, exTotal, sets[],       │
+ * │           muscles[], cond, memo, phase}                  │
+ * │  5. localStorage 임시 데이터 초기화                      │
+ * │  6. records[] 배열 최신화                                │
+ * └──────────────────────────────────────────────────────────┘
+ */
 async function doSaveRecord(){
   // 보충 운동 중이면 해당 루틴 키 사용
   const tk = makeupActive ? makeupActive.missedTk : DAY_SCHED[selDay];
@@ -3252,6 +3452,21 @@ async function delRec(date){
 // ══════════════════════════════
 // 통계
 // ══════════════════════════════
+/*
+ * ┌──────────────────────────────────────────────────────────┐
+ * │  [통계 탭 - renderStats]                                 │
+ * │                                                          │
+ * │  표시 요소:                                              │
+ * │  1. 이번 주 볼륨 바 차트                                │
+ * │     records에서 이번 주 날짜 필터 → 세트 집계           │
+ * │  2. 근육 부위별 히트맵                                   │
+ * │     records → typeToMuscle → muscleMap 집계             │
+ * │  3. 최근 기록 카드 (컨디션, 완료율 등)                  │
+ * │                                                          │
+ * │  ※ records[].sets[].weight × 4 로 볼륨 근사             │
+ * │    (세트수 × 대략 4회 기준)                              │
+ * └──────────────────────────────────────────────────────────┘
+ */
 function renderStats(){
   const total=records.length,ym=new Date().toISOString().slice(0,7),thisMonth=records.filter(r=>r.date.startsWith(ym)).length;
   let streak=0;const today=new Date();
@@ -3332,6 +3547,25 @@ function renderStats(){
 // ══════════════════════════════
 // 운동 라이브러리
 // ══════════════════════════════
+/*
+ * ┌──────────────────────────────────────────────────────────┐
+ * │  [EX_LIB - 운동 라이브러리 DB]                           │
+ * │  총 ~170개 운동 종목                                     │
+ * │                                                          │
+ * │  각 항목: {                                              │
+ * │    n    : 운동명 (EX_INFO 키와 일치)                     │
+ * │    d    : 기본 세트×횟수 설명                            │
+ * │    tags : 주동근 배열                                    │
+ * │    w    : 주의사항 배열                                  │
+ * │    sets : 기본 세트 수                                   │
+ * │    cat  : 카테고리 (가슴/등/어깨/팔/하체/복근/유산소 등) │
+ * │    type : 'gym'(기구) / 'home'(맨몸) / 'both'(공통)     │
+ * │  }                                                       │
+ * │                                                          │
+ * │  renderLibList() 에서 classType에 따라 필터링:           │
+ * │  기구운동 → gym+both / 홈트 → home+both                  │
+ * └──────────────────────────────────────────────────────────┘
+ */
 const EX_LIB=[
   // ── 가슴 ──
   {n:'벤치프레스',d:'4세트 × 10회',tags:['대흉근(주)'],w:[],sets:4,cat:'가슴',type:'both'},
@@ -3852,6 +4086,25 @@ function foodEmoji(name){
   return '🍽️';
 }
 
+/*
+ * ┌──────────────────────────────────────────────────────────┐
+ * │  [식단 탭 - renderDiet]                                  │
+ * │                                                          │
+ * │  표시 구성:                                              │
+ * │  1. 목표 칼로리/영양소 대비 오늘 섭취량 (progress bar)  │
+ * │  2. 아침/점심/저녁/간식 섹션별 식품 목록               │
+ * │  3. 체중 기록 카드 (renderWeightCard)                   │
+ * │  4. AI 식단 추천 버튼 (generateAIDiet → Anthropic API)  │
+ * │                                                          │
+ * │  데이터 흐름:                                            │
+ * │  dietRecords[날짜][섹션] → renderDiet() 표시            │
+ * │  openDietModal() → 식품 추가 모달                       │
+ * │  confirmAddFood() → saveDietToFirebase()                 │
+ * │                                                          │
+ * │  체중 기록: saveWeight() → weightHistory[]              │
+ * │  → SVG 라인 차트 렌더 (renderWeightCard)                │
+ * └──────────────────────────────────────────────────────────┘
+ */
 function renderDiet(){
   renderWeightCard();
   const today=toStr(new Date());
@@ -5145,6 +5398,14 @@ const HOME_ROUTINES = {
 };
 
 // 목적별 루틴 조정 프리셋
+/*
+ * ┌──────────────────────────────────────────────────────────┐
+ * │  [PURPOSE_PRESETS - 목적별 루틴 조정 프리셋]             │
+ * │  선택된 목적들의 setMult 합산 → 세트수 배율 결정        │
+ * │  cardioBoost: 유산소 시간 증가                           │
+ * │  lowImpact  : 저충격 (관절 보호)                         │
+ * └──────────────────────────────────────────────────────────┘
+ */
 const PURPOSE_PRESETS = {
   '체중 감량':   {cardioBoost:true, setMult:0.85, cardioTime:30, note:'유산소 중심·칼로리 소모 극대화'},
   '근력 강화':   {setMult:1.1, heavyFirst:true, note:'고중량·저반복 위주'},
@@ -5827,6 +6088,34 @@ function togglePosture(i){
 }
 
 // 설정 탭 초기화
+/*
+ * ┌──────────────────────────────────────────────────────────┐
+ * │  [설정 탭 - 4단계 스텝 구조]                             │
+ * │                                                          │
+ * │  STEP 1: 신체정보                                        │
+ * │    성별/나이/키/몸무게 입력                              │
+ * │    → BMI, 체지방, 기초/활동 대사량 계산                  │
+ * │    → saveBodyInfo() → localStorage 저장                  │
+ * │                                                          │
+ * │  STEP 2: 운동환경 + 요일배정 + 목적                      │
+ * │    기구운동 / 홈트 선택 → classType                      │
+ * │    월~일 운동 요일 선택 → assignedDays[] → DAY_SCHED     │
+ * │    목적 선택 → classPurposes[]                           │
+ * │    applyClassificationWithDays() → RT 재구성             │
+ * │                                                          │
+ * │  STEP 3: 성장단계 선택                                   │
+ * │    입문/초급/중급/고급/마스터                            │
+ * │    applyLevel() → 전체 루틴 세트×횟수 조정              │
+ * │    (종목은 유지, 볼륨만 setMult/repMult로 조정)          │
+ * │                                                          │
+ * │  STEP 4: 기준 중량 (1RM) + 피드백                       │
+ * │    벤치/스쿼트/데드리프트 등 1RM 입력                   │
+ * │    → 목적별 권장 중량 계산 (67/75/85%)                   │
+ * │    운동 저장 시 자동 갱신 (doSaveRecord에서)             │
+ * │    20회 누적 시 피드백 (renderFeedbackPanel)             │
+ * │    유산소 기록 히스토리 (renderCardioHistory)            │
+ * └──────────────────────────────────────────────────────────┘
+ */
 function initSettingsTab(){
   initBodyInfo();
   initClassSettings();
@@ -6265,6 +6554,25 @@ setTimeout(()=>{
 const _CACHE_VER='v3';
 const _aiCache={};  // 운동명 → 생성된 가이드 캐시
 
+/*
+ * ┌──────────────────────────────────────────────────────────┐
+ * │  [AI 가이드 - openAiGuide]                               │
+ * │                                                          │
+ * │  흐름:                                                   │
+ * │  1. _aiCache[key] 확인 → 있으면 캐시 사용               │
+ * │  2. showGuideImage(exName)                               │
+ * │     → EXERCISE_IMAGES{}에서 이미지 URL 매핑             │
+ * │  3. fetchAiGuide(prompt) → Anthropic API 호출           │
+ * │     모델: claude-sonnet-4-20250514                       │
+ * │     프롬프트: 재활 전문 트레이너 역할                    │
+ * │     응답 형식: 마크다운 (목적/자세/동작/포인트/주의)     │
+ * │  4. buildGuideHtml() → 마크다운 → HTML 변환             │
+ * │  5. 실패 시 buildOfflineGuide() → EX_INFO 기반 응급 표시│
+ * │                                                          │
+ * │  유튜브 버튼: 2가지 검색어 (운동 방법 / 올바른 자세)    │
+ * │  주의: "유튜브는 가르치는 방법이 다를 수 있어요" 문구   │
+ * └──────────────────────────────────────────────────────────┘
+ */
 function openAiGuide(exName,tags,warn){
   try{exName=decodeURIComponent(exName);}catch(e){}
   try{tags=decodeURIComponent(tags);}catch(e){}
@@ -6486,6 +6794,29 @@ function closeAiGuide(){
 // 유산소 추가 (종목별 개별 시간 + 기록 저장)
 // ══════════════════════════════
 
+/*
+ * ┌──────────────────────────────────────────────────────────┐
+ * │  [유산소 선택 시스템 - WEEKEND_CARDIO]                   │
+ * │                                                          │
+ * │  11가지 유산소 종목 (gym/home/both 타입 구분)           │
+ * │                                                          │
+ * │  _cardioMinMap : Map<인덱스, 분> - 선택된 종목별 시간   │
+ * │  _globalCardioMin : 상단 공통 시간 (기본 20분)          │
+ * │                                                          │
+ * │  사용 방법:                                              │
+ * │  1. 상단 시간 설정 (changeGlobalCardioTime / set...)     │
+ * │  2. 종목 탭 → 현재 시간으로 _cardioMinMap에 추가        │
+ * │  3. 다른 시간 설정 후 다른 종목 탭                      │
+ * │  4. 합산: 총 시간, 총 kcal, 체지방 감소량 표시          │
+ * │     kcal = kcalPerMin × 분 × (체중/70)                  │
+ * │     체지방 = kcal / 7700 × 1000 (g)                     │
+ * │                                                          │
+ * │  confirmCardioSelection():                               │
+ * │  → saveCardioHistory() : localStorage 저장              │
+ * │  → 루틴에 '유산소(추가)' 섹션으로 추가                  │
+ * │  → 운동 탭으로 이동                                     │
+ * └──────────────────────────────────────────────────────────┘
+ */
 const WEEKEND_CARDIO = [
   {n:'업라이트 바이크',   icon:'🚴', kcalPerMin:7.5, defaultMin:20, tip:'무릎 관절 부담 최소',       type:'gym'},
   {n:'런닝머신',          icon:'🏃', kcalPerMin:10,  defaultMin:20, tip:'페이스 유지가 핵심',         type:'gym'},
@@ -6691,6 +7022,27 @@ function setCardioTime(m){}
 // - 같은 근육군을 다른 각도로 자극
 // - 4주 사이클로 순환
 // ══════════════════════════════
+/*
+ * ┌──────────────────────────────────────────────────────────┐
+ * │  [주차별 운동 변동 시스템 - EXERCISE_VARIATIONS]         │
+ * │                                                          │
+ * │  목적: 같은 근육을 매주 다른 각도/방법으로 자극         │
+ * │       → 적응 정체(plateau) 방지                          │
+ * │                                                          │
+ * │  4주 사이클:                                             │
+ * │  Week1 (cycle=0): 기본 루틴 유지                        │
+ * │  Week2 (cycle=1): 각도 변경 (variations[0])             │
+ * │  Week3 (cycle=2): 고립 강화 (variations[1])             │
+ * │  Week4 (cycle=3): 복합 강화 (variations[2])             │
+ * │                                                          │
+ * │  applyWeeklyVariation():                                 │
+ * │  → weekNum = 올해 몇 번째 주                            │
+ * │  → localStorage 'fitlog-variation-week' 로 중복 방지   │
+ * │  → RT 내 운동명 교체 → Firestore 저장 → renderWorkout() │
+ * │                                                          │
+ * │  ※ 수동으로 운동을 수정/삭제하면 변동이 무시됨         │
+ * └──────────────────────────────────────────────────────────┘
+ */
 const EXERCISE_VARIATIONS = {
   // 가슴
   '시티드 체스트 프레스':   ['덤벨 벤치프레스','인클라인 덤벨 벤치프레스','케이블 체스트 플라이','푸시업'],
@@ -6860,6 +7212,32 @@ function ovUpdateDisplay(){
   document.getElementById('ov-start-btn').textContent=_timerState.running?'⏸ 일시정지':'▶ 시작';
   document.getElementById('ov-start-btn').className=_timerState.running?'stop':'';
 }
+/*
+ * ┌──────────────────────────────────────────────────────────┐
+ * │  [타이머 시스템]                                         │
+ * │                                                          │
+ * │  구조:                                                   │
+ * │  _timerState = {name, total, current, running,           │
+ * │                 interval, exSiEi}                        │
+ * │                                                          │
+ * │  openTimerOverlay(sec, name, si, ei)                     │
+ * │  → 타이머 오버레이(전체화면) 표시                        │
+ * │                                                          │
+ * │  ovToggle()                                              │
+ * │  → 시작/일시정지                                         │
+ * │  → _requestWakeLock() : 화면 꺼짐 방지                  │
+ * │  → setInterval 1초마다 current--                        │
+ * │  → 완료 시: 진동 + playTimerAlarm() (Web Audio API)     │
+ * │                                                          │
+ * │  백그라운드 보정 (visibilitychange):                     │
+ * │  → 화면 꺼질 때 _timerHiddenAt = Date.now()             │
+ * │  → 복귀 시 경과시간 계산 → current 보정                 │
+ * │                                                          │
+ * │  WakeLock:                                               │
+ * │  → navigator.wakeLock.request('screen')                  │
+ * │  → 타이머 종료/일시정지 시 release()                    │
+ * └──────────────────────────────────────────────────────────┘
+ */
 // ── WakeLock (화면 꺼짐 방지) ──
 let _wakeLock = null;
 async function _requestWakeLock(){
