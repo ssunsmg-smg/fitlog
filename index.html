@@ -2215,90 +2215,65 @@ const NO_WEIGHT_EXNAMES = new Set([
   '파이어 하이드런트','도너키 킥','AB 롤아웃','V업','러시안 트위스트','데드버그',
   '버드독','월 싯','슈퍼맨','브이업','씨저스','힐 터치','토 터치','플러터 킥',
 ]);
-
-function isNoWeightEx(exName) {
-  if(NO_WEIGHT_EXNAMES.has(exName)) return true;
-  // EX_LIB에서 해당 운동의 tags 확인
-  const ex = EX_LIB && EX_LIB.find(e=>e.n===exName);
-  return false;
+function buildKgInput(weight, pw, key, i, cId){
+  var cls = 'set-inp' + (weight ? ' filled' : '');
+  var val = weight || '';
+  var ph  = pw || '0';
+  var oi  = "updSet('" + key + "'," + i + ",'weight',this.value);" +
+            "refreshRM('" + key + "','" + cId + "');" +
+            "refreshRowBg('" + key + "'," + i + ")";
+  return '<input class="' + cls + '" type="number" value="' + val +
+         '" placeholder="' + ph + '" min="0" step="0.5"' +
+         ' style="text-align:center;font-size:14px;font-weight:700;"' +
+         ' oninput="' + oi + '"/>';
 }
+
+function buildRepsOninput(nw, key, i, cId){
+  if(nw) return "updSet('" + key + "'," + i + ",'reps',this.value)";
+  return "updSet('" + key + "'," + i + ",'reps',this.value);refreshRM('" + key + "','" + cId + "')";
+}
+
+function isNoWeightEx(n){ return NO_WEIGHT_EXNAMES.has(n); }
 
 function renderSets(key,cId){
   const sets=setData[key];if(!sets)return;
-  const c=document.getElementById(cId);if(!c)return;
-
-  // 이전 기록 (최근 완료 날짜의 같은 운동)
+  const el=document.getElementById(cId);if(!el)return;
   const exName=key.split('-').slice(2).join('-')||'';
   let prevRec=null;
-  for(const r of (records||[])){
-    if(r.sets){const m=r.sets.find(s=>s.ex===exName);if(m){prevRec=r;break;}}
-  }
-  const prevSets=prevRec?.sets?.filter(s=>s.ex===exName)||[];
+  for(const r of (records||[])){if(r.sets){const m=r.sets.find(s=>s.ex===exName);if(m){prevRec=r;break;}}}
+  const prevSets=prevRec?prevRec.sets.filter(s=>s.ex===exName):[];
   const prevDate=prevRec?prevRec.date:'';
-
-  // 중량 없는 종목 여부
-  const noWeight = isNoWeightEx(exName);
-
-  // 1RM 계산 (중량 있는 종목만)
+  const nw=isNoWeightEx(exName);
   let best1RM=0;
-  if(!noWeight) sets.forEach(s=>{if(s.weight&&s.reps){const v=calc1RM(s.weight,s.reps);if(v>best1RM)best1RM=v;}});
-  const rmHtml=best1RM>0
-    ?`<div class="rm-badge">추정 1RM <strong>${best1RM}kg</strong> · 목표 <strong>${Math.round(best1RM*0.75*10)/10}kg×10회</strong></div>`:'';
-
-  // 그리드: 중량있음 → 회|pre|kg|횟수|체크 / 중량없음 → 회|이전횟수|횟수|체크
-  const COL = noWeight ? '30px 90px 1fr 36px' : '30px 90px 1fr 64px 36px';
-  const hdrKg   = noWeight ? '' : '<div>today kg</div>';
-  const hdrPre  = noWeight
-    ? `<div style="color:#f0a500;">이전 횟수${prevDate?'<br><span style="font-size:9px;">'+prevDate+'</span>':''}</div>`
-    : `<div style="color:#f0a500;">pre kg/ea${prevDate?'<br><span style="font-size:9px;">'+prevDate+'</span>':''}</div>`;
-
-  c.innerHTML=`
-    <div style="display:grid;grid-template-columns:${COL};gap:4px;
-      padding:7px 4px 5px;font-size:10px;color:var(--muted);font-family:var(--mono);
-      text-align:center;border-bottom:1px solid var(--border);margin-bottom:5px;">
-      <div>회</div>
-      ${hdrPre}
-      ${hdrKg}
-      <div>횟수</div>
-      <div>체크</div>
-    </div>
-    ${sets.map((s,i)=>{
-      const pw=prevSets[i]?.weight||'';
-      const pr=prevSets[i]?.reps||'';
-      const preLabel = noWeight
-        ? (pr ? `${pr}회` : '-')
-        : (pw||pr ? `${pw||'-'}/${pr||'-'}` : '-');
-      const hasUp = !noWeight && s.weight && pw && parseFloat(s.weight)>parseFloat(pw);
-      const hasDn = !noWeight && s.weight && pw && parseFloat(s.weight)<parseFloat(pw);
-      const repsUp = noWeight && s.reps && pr && parseInt(s.reps)>parseInt(pr);
-      return `<div id="sr-${key}-${i}" style="display:grid;grid-template-columns:${COL};
-        gap:4px;align-items:center;margin-bottom:4px;
-        background:${s.done?'#4caf7d10':'transparent'};border-radius:6px;padding:2px 2px;">
-        <div style="text-align:center;font-size:13px;font-weight:700;
-          color:${s.done?'var(--green)':'var(--muted)'};">${i+1}</div>
-        <div style="text-align:center;font-size:12px;font-family:var(--mono);
-          color:${(pw||pr)?'#f0a500':'var(--border)'};font-weight:${(pw||pr)?'700':'400'};
-          padding:6px 2px;background:var(--surface2);border-radius:6px;">
-          ${preLabel}
-          ${hasUp?'<span style="color:var(--green);font-size:9px;"> ▲</span>':''}
-          ${hasDn?'<span style="color:#e55;font-size:9px;"> ▼</span>':''}
-          ${repsUp?'<span style="color:var(--green);font-size:9px;"> ▲</span>':''}
-        </div>
-        ${noWeight ? '' : `<input class="set-inp ${s.weight?'filled':''}" type="number"
-          value="${s.weight}" placeholder="${pw?pw:'0'}" min="0" step="0.5"
-          style="text-align:center;font-size:14px;font-weight:700;"
-          oninput="updSet('${key}',${i},'weight',this.value);refreshRM('${key}','${cId}');refreshRowBg('${key}',${i})"/>`}
-        <input class="set-inp ${s.reps?'filled':''}" type="number"
-          value="${s.reps}" placeholder="${pr?pr:(noWeight?'회':'회')}" min="0" step="1"
-          style="text-align:center;font-size:13px;"
-          oninput="updSet('${key}',${i},'reps',this.value);${noWeight?'':'refreshRM(''+key+'',''+cId+'')'}"/>
-        <button class="set-ok ${s.done?'done':''}"
-          onclick="toggleSetDone('${key}',${i})">✓</button>
-      </div>`;
-    }).join('')}
-    ${rmHtml}
-    <button class="add-set" onclick="addSet('${key}','${cId}')">+ 세트 추가</button>`;
+  if(!nw) sets.forEach(s=>{if(s.weight&&s.reps){const v=calc1RM(s.weight,s.reps);if(v>best1RM)best1RM=v;}});
+  const rmHtml=best1RM>0?'<div class="rm-badge">추정 1RM <strong>'+best1RM+'kg</strong> · 목표 <strong>'+Math.round(best1RM*0.75*10)/10+'kg×10회</strong></div>':'';
+  const COL=nw?'30px 90px 1fr 36px':'30px 90px 1fr 64px 36px';
+  const hdrPre=(nw?'<div style="color:#f0a500;">이전 횟수':'<div style="color:#f0a500;">pre kg/ea')+(prevDate?'<br><span style="font-size:9px;">'+prevDate+'</span>':'')+' </div>';
+  const hdrKg=nw?'':'<div>today kg</div>';
+  let rows='';
+  sets.forEach(function(s,i){
+    const pw=prevSets[i]&&prevSets[i].weight?prevSets[i].weight:'';
+    const pr=prevSets[i]&&prevSets[i].reps?prevSets[i].reps:'';
+    const preLabel=nw?(pr?pr+'회':'-'):(pw||pr?(pw||'-')+'/'+(pr||'-'):'-');
+    const hasUp=!nw&&s.weight&&pw&&parseFloat(s.weight)>parseFloat(pw);
+    const hasDn=!nw&&s.weight&&pw&&parseFloat(s.weight)<parseFloat(pw);
+    const repsUp=nw&&s.reps&&pr&&parseInt(s.reps)>parseInt(pr);
+    const bg=s.done?'#4caf7d10':'transparent';
+    const kgInp=nw?'':buildKgInput(s.weight,pw,key,i,cId);
+    const repsOi=buildRepsOninput(nw,key,i,cId);
+    rows+='<div id="sr-'+key+'-'+i+'" style="display:grid;grid-template-columns:'+COL+';gap:4px;align-items:center;margin-bottom:4px;background:'+bg+';border-radius:6px;padding:2px;">'
+      +'<div style="text-align:center;font-size:13px;font-weight:700;color:'+(s.done?'var(--green)':'var(--muted)')+';">'+(i+1)+'</div>'
+      +'<div style="text-align:center;font-size:12px;font-family:var(--mono);color:'+((pw||pr)?'#f0a500':'var(--border)')+';font-weight:'+((pw||pr)?'700':'400')+';padding:6px 2px;background:var(--surface2);border-radius:6px;">'
+      +preLabel+(hasUp?'<span style="color:var(--green);font-size:9px;"> ▲</span>':'')+(hasDn?'<span style="color:#e55;font-size:9px;"> ▼</span>':'')+(repsUp?'<span style="color:var(--green);font-size:9px;"> ▲</span>':'')+'</div>'
+      +kgInp
+      +'<input class="set-inp '+(s.reps?'filled':'')+'" type="number" value="'+(s.reps||'')+'" placeholder="'+(pr||'회')+'" min="0" step="1" style="text-align:center;font-size:13px;" oninput="'+repsOi+'"/>'
+      +'<button class="set-ok '+(s.done?'done':'')+' " onclick="toggleSetDone(\'' + key + '\',' + i + ')">✓</button>'
+      +'</div>';
+  });
+  el.innerHTML='<div style="display:grid;grid-template-columns:'+COL+';gap:4px;padding:7px 4px 5px;font-size:10px;color:var(--muted);font-family:var(--mono);text-align:center;border-bottom:1px solid var(--border);margin-bottom:5px;"><div>회</div>'+hdrPre+hdrKg+'<div>횟수</div><div>체크</div></div>'+rows+rmHtml+'<button class="add-set" onclick="addSet(\'' + key + '\',\'' + cId + '\')">+ 세트 추가</button>';
 }
+
+
 
 // 중량 입력 시 이전 대비 색상 실시간 갱신
 function refreshRowBg(key,i){
@@ -3144,7 +3119,7 @@ async function doSaveRecord(){
     const ormMsg = ormUpdated ? '\n📊 1RM 추정값이 자동 갱신됐어요!' : '';
     const savedExs = allSets.map(s=>s.ex).filter((v,i,a)=>a.indexOf(v)===i);
     const setCount = allSets.filter(s=>s.done).length;
-    const ormMsg = ormUpdated ? ' · 1RM 갱신됨' : '';
+    // 중복제거 ormMsg = ormUpdated ? ' · 1RM 갱신됨' : '';
     showToast(`✅ 저장완료 · ${exDone}/${exTotal} 운동 · ${setCount}세트${ormMsg}`,'success');
     // 기록 검증 로그
     console.log('[FitLog] 저장 완료:', {date:ds, type:tk, exDone, exTotal, sets:allSets.length, muscles:musclesDone});
