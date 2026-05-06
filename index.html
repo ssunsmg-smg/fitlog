@@ -2243,7 +2243,23 @@ function showApp(){
 function exKey(si,ei){return`${selDay}-${si}-${ei}`;}
 function initSetData(tk){
   setData={};const rt=RT[tk];if(!rt||!rt.sections)return;
-  rt.sections.forEach((sec,si)=>sec.exs.forEach((ex,ei)=>{if(ex.sets>0){const k=exKey(si,ei);setData[k]=Array.from({length:ex.sets},()=>({weight:'',reps:'',done:false}));}}));
+  rt.sections.forEach((sec,si)=>sec.exs.forEach((ex,ei)=>{
+    // sets>0 이면 해당 세트 수만큼 등록
+    // sets:0 이지만 NO_WEIGHT_EXNAMES 에 있으면 → 기본 3세트 등록 (횟수/체크만)
+    const k=exKey(si,ei);
+    if(ex.sets>0){
+      setData[k]=Array.from({length:ex.sets},()=>({weight:'',reps:'',done:false}));
+    } else if(NO_WEIGHT_EXNAMES && NO_WEIGHT_EXNAMES.has(ex.n)){
+      // 시간기반(분) 종목 제외: d에 '분'이 들어있으면 타이머 운동
+      const isTimer = ex.d && (ex.d.includes('분') || ex.d.includes('초'));
+      if(!isTimer){
+        // d에서 세트 수 파싱 (예: '3세트 × 18회' → 3)
+        const setsMatch = ex.d && ex.d.match(/(\d+)\s*세트/);
+        const defaultSets = setsMatch ? parseInt(setsMatch[1]) : 3;
+        setData[k]=Array.from({length:defaultSets},()=>({weight:'',reps:'',done:false}));
+      }
+    }
+  }));
 }
 function calc1RM(weight,reps){
   if(!weight||!reps||reps<=0)return 0;
@@ -2626,7 +2642,12 @@ function renderWorkout(){
     sec.exs.forEach((ex,ei)=>{
       const wTags=ex.w.map(w=>w.includes('허리')?'<span class="etag t-back">'+w+'</span>':w.includes('무릎')?'<span class="etag t-knee">'+w+'</span>':w.includes('어깨')?'<span class="etag t-sh">'+w+'</span>':'<span class="etag">'+w+'</span>').join('');
       const mTags=ex.tags.map(t=>'<span class="etag t-main">'+t+'</span>').join('');
-      const k=exKey(si,ei),hasSets=ex.sets>0,saId='sa-'+si+'-'+ei;
+      const k=exKey(si,ei);
+      // hasSets: sets>0 이거나, sets:0 이지만 NO_WEIGHT_EXNAMES에 있고 시간형이 아닌 종목
+      const isTimeBased0 = !ex.sets && /초|분/.test(ex.d);
+      const isNoWt = typeof NO_WEIGHT_EXNAMES !== 'undefined' && NO_WEIGHT_EXNAMES.has(ex.n);
+      const hasSets = ex.sets > 0 || (isNoWt && !isTimeBased0);
+      const saId='sa-'+si+'-'+ei;
       const info=EX_INFO[ex.n];
       const ytQ=info?(info.yt||ex.n):'';
       // 시간형 운동 판별 (초/분 포함 + sets:0)
@@ -2659,7 +2680,20 @@ function renderWorkout(){
   content.innerHTML=html;
   // 이벤트 위임 등록
   content.addEventListener('click',handleWorkoutClick);
-  rt.sections.forEach((sec,si)=>sec.exs.forEach((ex,ei)=>{if(ex.sets>0){const k=exKey(si,ei);if(!setData[k])setData[k]=Array.from({length:ex.sets},()=>({weight:'',reps:'',done:false}));}}));
+  rt.sections.forEach((sec,si)=>sec.exs.forEach((ex,ei)=>{
+    const k=exKey(si,ei);
+    const isTimeBased0 = !ex.sets && /초|분/.test(ex.d);
+    const isNoWt = typeof NO_WEIGHT_EXNAMES !== 'undefined' && NO_WEIGHT_EXNAMES.has(ex.n);
+    if(ex.sets>0){
+      if(!setData[k]) setData[k]=Array.from({length:ex.sets},()=>({weight:'',reps:'',done:false}));
+    } else if(isNoWt && !isTimeBased0){
+      if(!setData[k]){
+        const m=ex.d&&ex.d.match(/(\d+)\s*세트/);
+        const cnt=m?parseInt(m[1]):3;
+        setData[k]=Array.from({length:cnt},()=>({weight:'',reps:'',done:false}));
+      }
+    }
+  }));
   loadSetDataLocal();
   loadChkLocal();
   updateProg();
