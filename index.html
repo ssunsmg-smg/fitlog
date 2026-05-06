@@ -966,7 +966,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           style="width:100%;padding:12px;border-radius:10px;border:none;
           background:var(--green);color:#fff;font-size:14px;font-weight:700;
           cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:8px;">
-          🏃 오늘의 유산소 선택하기 (10가지)
+          🏃 오늘의 유산소 선택하기 (7가지)
         </button>
       </div>
       <!-- 미완료 버전 -->
@@ -984,7 +984,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);
           background:none;color:var(--text);font-size:13px;font-weight:700;
           cursor:pointer;font-family:var(--font);">
-          🏃 유산소 선택하기 (10가지)
+          🏃 유산소 선택하기 (7가지)
         </button>
       </div>
     </div>
@@ -1025,7 +1025,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         border:1px solid #4caf7d55;background:#4caf7d0d;color:var(--green);
         font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);
         display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;">
-        🏃 유산소 추가 · 10가지 중 복수 선택
+        🏃 유산소 추가 · 7가지 중 복수 선택
       </button>
       <div id="time-plan-bar" style="font-size:11px;color:var(--muted);padding:5px 10px;background:var(--surface2);border-radius:6px;display:none;"></div>
     </div>
@@ -2250,19 +2250,32 @@ function calc1RM(weight,reps){
   return Math.round(parseFloat(weight)*(1+parseInt(reps)/30)*10)/10;
 }
 // 중량 없는 맨몸/정적 운동 목록
+// sets:0 종목(중량 없이 횟수/체크만 하는 종목) 전체 목록
+// renderSets()에서 이 목록에 있으면 중량 입력 칸 없이 횟수+체크만 표시
 const NO_WEIGHT_EXNAMES = new Set([
+  // ── 맨몸 근력 ──
   '플랭크','사이드 플랭크','바이시클 크런치','크런치','리버스 크런치','레그 레이즈',
-  '행잉 레그레이즈','행잉 니레이즈','마운틴 클라이머','버피','점핑잭','하이니즈',
+  '행잉 레그레이즈','행잉 니레이즈','행잉 니 레이즈','마운틴 클라이머','버피','점핑잭','하이니즈',
   '푸시업','와이드 푸시업','다이아몬드 푸시업','파이크 푸시업','딥스','풀업','친업',
-  '인버티드 로우','글루트 브릿지','힙 브릿지','사이드 라잉 레그레이즈','클램쉘',
-  '파이어 하이드런트','도너키 킥','AB 롤아웃','V업','러시안 트위스트','데드버그',
-  '버드독','월 싯','슈퍼맨','브이업','씨저스','힐 터치','토 터치','플러터 킥',
-  // 추가: 브릿지/힙/어브덕션 계열
-  '누워서 브릿지','싱글레그 브릿지','힙 어브덕션 (밴드)','힙 어브덕션 (기계)',
-  '클램쉘 (밴드)','사이드 라잉 클램쉘','사이드 라잉 레그레이즈','사이드 킥',
-  '킥백 (맨몸)','도너키 킥','파이어 하이드런트','힙 쓰러스트 (맨몸)',
+  '인버티드 로우','AB 롤아웃','V업','러시안 트위스트','데드버그','버드독','월 싯',
+  '슈퍼맨','브이업','씨저스','힐 터치','토 터치','플러터 킥','HIIT (20초ON/10초OFF × 8라운드)',
+  '밴드 풀어파트','제자리 달리기','스쿼트 점프',
+  // ── 둔근/중둔근 계열 ──
+  '글루트 브릿지','힙 브릿지','누워서 브릿지','누워서 무릎 당기기','싱글레그 브릿지',
+  '힙 어브덕션 (밴드)','힙 어브덕션 (기계)','클램쉘','클램쉘 (밴드)','사이드 라잉 클램쉘',
+  '사이드 라잉 레그레이즈','사이드 라잉 레그 레이즈','사이드 킥',
+  '파이어 하이드런트','도너키 킥','킥백 (맨몸)','힙 쓰러스트 (맨몸)','힙 서클',
+  // ── 하체 맨몸 ──
   '스쿼트 (맨몸)','런지','워킹 런지','리버스 런지','사이드 런지','스텝업',
   '카프 레이즈 (맨몸)','점프 스쿼트','박스 점프',
+  // ── 재활/척추/경추 ──
+  '경추 강화','목 등척성 운동','목 스트레칭','맥켄지 운동','척추 이완','척추 회전 스트레칭 (누워)',
+  '코어','관절 돌리기','고양이-소 스트레칭','박스 브리딩','호흡·명상','이완',
+  // ── 스트레칭/쿨다운 ──
+  '가슴 열기 스트레칭','어깨 가로 스트레칭','햄스트링 스트레칭 (앉아)','고관절 굴곡근 스트레칭 (런지)',
+  '아이 포즈 (차일드 포즈)','피전 포즈','전신 스트레칭','마무리',
+  // ── 워밍업 ──
+  '워밍업','워밍업 (5분)','워밍업 (10분)','유산소',
 ]);
 function buildKgInput(weight, pw, key, i, cId){
   var cls = 'set-inp' + (weight ? ' filled' : '');
