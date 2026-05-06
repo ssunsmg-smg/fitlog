@@ -1009,8 +1009,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
             <option value="20">20분</option>
             <option value="30">30분</option>
             <option value="40">40분</option>
-            <option value="45">45분</option>
-            <option value="60" selected>60분</option>
+            <option value="45" selected>45분</option>
+            <option value="60">60분</option>
             <option value="75">75분</option>
             <option value="90">90분</option>
             <option value="120">120분</option>
@@ -2257,6 +2257,12 @@ const NO_WEIGHT_EXNAMES = new Set([
   '인버티드 로우','글루트 브릿지','힙 브릿지','사이드 라잉 레그레이즈','클램쉘',
   '파이어 하이드런트','도너키 킥','AB 롤아웃','V업','러시안 트위스트','데드버그',
   '버드독','월 싯','슈퍼맨','브이업','씨저스','힐 터치','토 터치','플러터 킥',
+  // 추가: 브릿지/힙/어브덕션 계열
+  '누워서 브릿지','싱글레그 브릿지','힙 어브덕션 (밴드)','힙 어브덕션 (기계)',
+  '클램쉘 (밴드)','사이드 라잉 클램쉘','사이드 라잉 레그레이즈','사이드 킥',
+  '킥백 (맨몸)','도너키 킥','파이어 하이드런트','힙 쓰러스트 (맨몸)',
+  '스쿼트 (맨몸)','런지','워킹 런지','리버스 런지','사이드 런지','스텝업',
+  '카프 레이즈 (맨몸)','점프 스쿼트','박스 점프',
 ]);
 function buildKgInput(weight, pw, key, i, cId){
   var cls = 'set-inp' + (weight ? ' filled' : '');
@@ -2872,7 +2878,7 @@ function renderSmartAuto(){
     <div style="font-size:12px;font-weight:700;color:#8b5cf6;margin-bottom:8px;">🤖 AI 맞춤 루틴 분석</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
       <div style="background:rgba(255,255,255,.05);border-radius:8px;padding:8px;text-align:center;">
-        <div style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--green);">${selected.length}</div>
+        <div style="font-size:18px;font-weight:900;font-family:var(--mono);color:var(--green);">${selected.filter(e=>e.cat!=='유산소'&&e.cat!=='스트레칭').length}</div>
         <div style="font-size:9px;color:var(--muted);">운동 수</div>
       </div>
       <div style="background:rgba(255,255,255,.05);border-radius:8px;padding:8px;text-align:center;">
@@ -2936,18 +2942,30 @@ function renderSmartAuto(){
             <span style="font-size:9px;padding:1px 6px;border-radius:10px;background:${recovCol}15;border:1px solid ${recovCol}33;color:${recovCol};">회복 ${recovery}%</span>
           </div>
           <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">${ex.d}</div>
-          <div style="display:flex;gap:4px;flex-wrap:wrap;">
+          <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:4px;">
             ${(ex.tags||[]).map(t=>`<span style="font-size:9px;padding:1px 5px;border-radius:4px;background:var(--surface);border:1px solid var(--border);color:var(--muted);">${t}</span>`).join('')}
             ${warnHtml}
           </div>
-          ${prevWeight?`<div style="font-size:10px;color:var(--blue);margin-top:4px;">📊 이전: ${prevWeight}</div>`:''}
+          ${prevWeight?`<div style="font-size:10px;color:var(--blue);margin-top:2px;">📊 이전: ${prevWeight}</div>`:''}
           ${suggestWeight?`<div style="font-size:10px;color:var(--green);margin-top:2px;">📈 권장: ${suggestWeight}</div>`:''}
+          <div style="display:flex;gap:5px;margin-top:6px;" onclick="event.stopPropagation()">
+            <button onclick="openAiGuide(encodeURIComponent(ex.n),(ex.tags||[]).join(','),'')"
+              style="padding:4px 8px;border-radius:6px;border:1px solid #7c6aff44;background:#7c6aff0d;
+              color:#7c6aff;font-size:10px;font-weight:700;cursor:pointer;font-family:var(--font);">
+              🤖 AI 가이드</button>
+            <a href="https://www.youtube.com/results?search_query=${encodeURIComponent(ex.n+' 운동 방법')}"
+              target="_blank" rel="noopener"
+              style="padding:4px 8px;border-radius:6px;border:1px solid #ff444433;background:#ff444408;
+              color:#ff4444;font-size:10px;font-weight:700;text-decoration:none;display:flex;align-items:center;">
+              ▶ 유튜브</a>
+          </div>
         </div>
         <div style="flex-shrink:0;text-align:right;padding-left:8px;">
-          <div style="font-size:14px;font-weight:900;color:${isSelected?'var(--green)':'var(--muted)'};font-family:var(--mono);">${sets>0?sets+'세트':'—'}</div>
+          <div style="font-size:14px;font-weight:900;color:${isSelected?'var(--green)':'var(--muted)'};font-family:var(--mono);">${sets>0?sets+'세트':'체크'}</div>
           <div style="font-size:10px;color:var(--muted);margin-top:2px;">${isSelected?'✅':''}</div>
         </div>
       </div>`;
+
     });
   });
 
