@@ -2262,16 +2262,40 @@ function doNaverLogin(){ showToast('네이버 로그인 준비 중입니다. Goo
 async function doLogin(){
   try{
     showToast('로그인 중...','info');
-    const user=await window.firebaseLogin();
-    // onAuthStateChanged가 처리
+    document.getElementById('loading').style.display='flex';
+    document.getElementById('login-screen').style.display='none';
+    const user = await window.firebaseLogin();
+    if(user){
+      // onAuthStateChanged 이벤트가 늦거나 누락될 수 있으므로 직접 처리
+      if(!_appStarted){
+        _appStarted = true;
+        await initApp(user);
+      }
+    } else {
+      // 로그인 취소
+      document.getElementById('loading').style.display='none';
+      document.getElementById('login-screen').style.display='flex';
+    }
   }catch(e){
+    document.getElementById('loading').style.display='none';
+    document.getElementById('login-screen').style.display='flex';
     showToast('로그인 실패. 다시 시도해주세요.','error');
   }
 }
 async function doLogout(){
   if(!confirm('로그아웃 할까요?'))return;
-  await window.firebaseLogout();
-  location.reload();
+  try{
+    await window.firebaseLogout();
+  }catch(e){}
+  // 페이지 리로드 없이 직접 초기화 (reload하면 onAuthStateChanged 타이밍 꼬임)
+  _appStarted = false;
+  isLoggedIn  = false;
+  // 모든 화면 초기화
+  document.getElementById('main-app').classList.remove('active');
+  document.getElementById('loading').style.display='none';
+  document.getElementById('onboarding').style.display='none';
+  document.getElementById('login-screen').style.display='flex';
+  showToast('로그아웃 되었습니다','info');
 }
 
 // ══════════════════════════════
@@ -2279,57 +2303,68 @@ async function doLogout(){
 // ══════════════════════════════
 async function initApp(user){
   isLoggedIn=true;
-  // 10초 안전장치
-  var _t = setTimeout(function(){ showApp(); }, 10000);
-  var _wt = function(p,fb){ return Promise.race([p, new Promise(function(r){ setTimeout(function(){ r(fb); },3000); })]); };
+  // 15초 안전장치 - 어떤 오류가 나도 반드시 화면 표시
+  var _t = setTimeout(function(){
+    console.warn('[FitLog] initApp timeout - 강제 showApp');
+    showApp();
+  }, 15000);
+  var _wt = function(p,fb){
+    return Promise.race([
+      Promise.resolve(p).catch(()=>fb),
+      new Promise(function(r){ setTimeout(function(){ r(fb); }, 5000); })
+    ]);
+  };
   try{
-  if(user.photoURL){
-    var av=document.getElementById('user-avatar');
-    if(av){ av.src=user.photoURL; av.style.display='block'; }
-  }
-  var unEl=document.getElementById('user-name');
-  if(unEl) unEl.textContent=(user.displayName||'').split(' ')[0]||'';
-  showToast('데이터 불러오는 중...','info');
-  userProfile = await _wt(window.loadUserProfile(), null);
-
-  if(!userProfile||!userProfile.name){
-    // 온보딩
-    document.getElementById('loading').style.display='none';
-    document.getElementById('onboarding').style.display='flex';
-    obStep=1; renderOb();
-    return;
-  }
-
-  // 루틴 불러오기
-  await _wt(window.loadRoutine(), null); // DAY_SCHED·level 복원 (RT는 재구성)
-
-  // DAY_SCHED localStorage 백업도 복원
-  try{
-    const savedDS = localStorage.getItem('fitlog-day-sched');
-    if(savedDS){
-      const ds = JSON.parse(savedDS);
-      Object.keys(ds).forEach(k=>{ DAY_SCHED[parseInt(k)]=ds[k]; });
+    if(user.photoURL){
+      var av=document.getElementById('user-avatar');
+      if(av){ av.src=user.photoURL; av.style.display='block'; }
     }
-  }catch(e){}
+    var unEl=document.getElementById('user-name');
+    if(unEl) unEl.textContent=(user.displayName||'').split(' ')[0]||'';
 
-  // curLevel 복원 (localStorage 우선)
-  const savedLevel = localStorage.getItem('fitlog-level');
-  if(savedLevel !== null) curLevel = parseInt(savedLevel);
+    showToast('데이터 불러오는 중...','info');
+    userProfile = await _wt(window.loadUserProfile(), null);
 
-  // RT 재구성: SPLIT_ROUTINES[curLevel] 기반
-  RT = JSON.parse(JSON.stringify(RT_BASE)); // 기본값으로 초기화
-  if(typeof SPLIT_ROUTINES !== 'undefined' && SPLIT_ROUTINES[curLevel]){
-    const splitData = SPLIT_ROUTINES[curLevel];
-    Object.keys(splitData).forEach(rk=>{ RT[rk] = JSON.parse(JSON.stringify(splitData[rk])); });
+    if(!userProfile||!userProfile.name){
+      clearTimeout(_t);
+      document.getElementById('loading').style.display='none';
+      document.getElementById('onboarding').style.display='flex';
+      obStep=1; renderOb();
+      return;
+    }
+
+    // 루틴 설정 불러오기
+    await _wt(window.loadRoutine(), null);
+
+    // DAY_SCHED localStorage 백업도 복원
+    try{
+      const savedDS = localStorage.getItem('fitlog-day-sched');
+      if(savedDS){
+        const ds = JSON.parse(savedDS);
+        Object.keys(ds).forEach(k=>{ DAY_SCHED[parseInt(k)]=ds[k]; });
+      }
+    }catch(e){}
+
+    // curLevel 복원
+    const savedLevel = localStorage.getItem('fitlog-level');
+    if(savedLevel !== null) curLevel = parseInt(savedLevel);
+
+    // RT 재구성
+    RT = JSON.parse(JSON.stringify(RT_BASE));
+    if(typeof SPLIT_ROUTINES !== 'undefined' && SPLIT_ROUTINES[curLevel]){
+      const splitData = SPLIT_ROUTINES[curLevel];
+      Object.keys(splitData).forEach(rk=>{ RT[rk] = JSON.parse(JSON.stringify(splitData[rk])); });
+    }
+
+    // 기록 불러오기
+    records = await _wt(window.loadRecords(), []);
+    await _wt(loadDietData(), null);
+
+    clearTimeout(_t);
+  }catch(e){
+    console.error('[FitLog] initApp 오류:', e);
+    clearTimeout(_t);
   }
-
-  // 기록 불러오기
-  records = await _wt(window.loadRecords(), []);
-
-  await loadDietData();
-
-  clearTimeout(_t);
-  }catch(e){ console.error(e); clearTimeout(_t); }
   showApp();
 }
 
@@ -7455,24 +7490,22 @@ function showToast(msg,type='info'){const t=document.getElementById('toast');t.t
 let _appStarted = false;
 
 window.addEventListener('firebase-login', async(e)=>{
-  if(_appStarted) return;
+  if(_appStarted) return; // doLogin에서 이미 처리한 경우 중복 방지
   _appStarted = true;
   document.getElementById('loading').style.display='flex';
   document.getElementById('login-screen').style.display='none';
   document.getElementById('inapp-screen').style.display='none';
   await initApp(e.detail);
+});detail);
 });
 
 window.addEventListener('firebase-logout', ()=>{
-  if(_appStarted){
-    _appStarted = false;
-    document.getElementById('loading').style.display='none';
-    document.getElementById('login-screen').style.display='flex';
-    document.getElementById('main-app').classList.remove('active');
-    return;
-  }
-  // 초기 로딩 중 logout → 로그인 화면 표시
+  // 상태 완전 초기화 (재로그인 대비)
+  _appStarted = false;
+  isLoggedIn  = false;
   document.getElementById('loading').style.display='none';
+  document.getElementById('main-app').classList.remove('active');
+  document.getElementById('onboarding').style.display='none';
   if(detectInApp()){
     document.getElementById('inapp-screen').style.display='flex';
   } else {
