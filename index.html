@@ -5742,7 +5742,7 @@ async function saveBodyInfo(){
   showToast(`🍽️ 식단 목표 칼로리 자동 설정: ${autoKcal}kcal`, 'info');
 }
 
-function applyBodyToRoutine(){
+async function applyBodyToRoutine(){
   const age    = parseFloat(userProfile?.age)    || 30;
   const weight = parseFloat(userProfile?.weight) || 70;
   const height = parseFloat(userProfile?.height) || 170;
@@ -7496,8 +7496,8 @@ window.addEventListener('firebase-login', async(e)=>{
   document.getElementById('login-screen').style.display='none';
   document.getElementById('inapp-screen').style.display='none';
   await initApp(e.detail);
-});detail);
 });
+
 
 window.addEventListener('firebase-logout', ()=>{
   // 상태 완전 초기화 (재로그인 대비)
