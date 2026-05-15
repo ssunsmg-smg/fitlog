@@ -131,12 +131,43 @@
   };
   window.saveRoutine = async (rt) => {
     if (!currentUser) return;
-    await db.collection('users').doc(currentUser.uid).collection('settings').doc('routine').set(rt);
+    // 루틴 전체 대신 설정값(단계·요일배치)만 저장 — 큰 객체 저장 방지
+    await db.collection('users').doc(currentUser.uid).collection('settings').doc('routine').set({
+      level: curLevel,
+      daySchedule: DAY_SCHED,
+      classType: typeof classType !== 'undefined' ? classType : '기구운동',
+      purposes: typeof classPurposes !== 'undefined' ? classPurposes : [],
+      savedAt: new Date().toISOString()
+    });
   };
   window.loadRoutine = async () => {
     if (!currentUser) return null;
     const snap = await db.collection('users').doc(currentUser.uid).collection('settings').doc('routine').get();
-    return snap.exists ? snap.data() : null;
+    if (!snap.exists) return null;
+    const data = snap.data();
+
+    // DAY_SCHED 복원
+    if (data.daySchedule) {
+      Object.keys(data.daySchedule).forEach(k => {
+        DAY_SCHED[parseInt(k)] = data.daySchedule[k];
+      });
+    }
+    // level 복원
+    if (data.level !== undefined) {
+      curLevel = parseInt(data.level);
+      localStorage.setItem('fitlog-level', curLevel);
+    }
+    // classType, purposes 복원
+    if (data.classType) {
+      classType = data.classType;
+      localStorage.setItem('fitlog-classtype', classType);
+    }
+    if (data.purposes) {
+      classPurposes = data.purposes;
+      localStorage.setItem('fitlog-purposes', JSON.stringify(classPurposes));
+    }
+    // RT는 null 반환 → initApp에서 SPLIT_ROUTINES 기반으로 재구성
+    return null;
   };
   window.saveDietRecord = async (date, dietData) => {
     if (!currentUser) return false;
@@ -2270,8 +2301,27 @@ async function initApp(user){
   }
 
   // 루틴 불러오기
-  const savedRT = await _wt(window.loadRoutine(), null);
-  RT=savedRT||JSON.parse(JSON.stringify(RT_BASE));
+  await _wt(window.loadRoutine(), null); // DAY_SCHED·level 복원 (RT는 재구성)
+
+  // DAY_SCHED localStorage 백업도 복원
+  try{
+    const savedDS = localStorage.getItem('fitlog-day-sched');
+    if(savedDS){
+      const ds = JSON.parse(savedDS);
+      Object.keys(ds).forEach(k=>{ DAY_SCHED[parseInt(k)]=ds[k]; });
+    }
+  }catch(e){}
+
+  // curLevel 복원 (localStorage 우선)
+  const savedLevel = localStorage.getItem('fitlog-level');
+  if(savedLevel !== null) curLevel = parseInt(savedLevel);
+
+  // RT 재구성: SPLIT_ROUTINES[curLevel] 기반
+  RT = JSON.parse(JSON.stringify(RT_BASE)); // 기본값으로 초기화
+  if(typeof SPLIT_ROUTINES !== 'undefined' && SPLIT_ROUTINES[curLevel]){
+    const splitData = SPLIT_ROUTINES[curLevel];
+    Object.keys(splitData).forEach(rk=>{ RT[rk] = JSON.parse(JSON.stringify(splitData[rk])); });
+  }
 
   // 기록 불러오기
   records = await _wt(window.loadRecords(), []);
@@ -5707,7 +5757,7 @@ function applyBodyToRoutine(){
     });
   });
 
-  window.saveRoutine(RT);
+  await window.saveRoutine(RT);
   initSetData(DAY_SCHED[selDay]);
 }
 
@@ -6746,7 +6796,7 @@ const SPLIT_ROUTINES = {
   }
 };
 
-function applyLevel(){
+async function applyLevel(){
   const lv = LEVEL_INFO[curLevel];
   if(!lv){ showToast('단계를 먼저 선택해주세요','error'); return; }
 
@@ -6812,8 +6862,8 @@ function applyLevel(){
   }
 
   localStorage.setItem('fitlog-level', curLevel);
-  window.saveRoutine(RT);
-  initSetData(DAY_SCHED[selDay]);
+  localStorage.setItem('fitlog-day-sched', JSON.stringify(DAY_SCHED));
+  await window.saveRoutine(RT);
   renderWorkout && renderWorkout();
   renderHome && renderHome();
 
