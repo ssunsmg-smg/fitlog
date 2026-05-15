@@ -1275,7 +1275,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <div id="day-assign-preview" style="font-size:11px;color:var(--muted);padding:10px;background:var(--surface2);border-radius:8px;line-height:2;"></div>
         <div id="day-routine-detail" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"></div>
       </div>
-      <button onclick="applyClassificationWithDays()" style="width:100%;padding:11px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:10px;">✅ 운동환경·목적·요일 모두 적용</button>
+      <button onclick="applyClassificationWithDays()" id="step2-apply-btn"
+        style="width:100%;padding:14px;border-radius:10px;border:none;
+        background:linear-gradient(135deg,var(--accent),#ff7040);color:#fff;
+        font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font);
+        margin-bottom:10px;box-shadow:0 4px 16px #e8533a44;letter-spacing:.3px;">
+        ✅ 2단계 완료 · 루틴 적용하기
+      </button>
 
       <!-- 내 헬스장 기구 설정 -->
       <div class="level-card" style="margin-bottom:10px;">
@@ -1315,7 +1321,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <button class="level-step" onclick="selectLevel(4,this)">🔥<br>마스터</button>
       </div>
       <div class="level-desc-box" id="level-desc"></div>
-      <button class="level-apply-btn" onclick="applyLevel()">✅ 이 단계로 루틴 적용</button>
+      <button class="level-apply-btn" onclick="applyLevel()" id="step3-apply-btn"
+        style="background:linear-gradient(135deg,var(--green),#2d9e6b);box-shadow:0 4px 16px #4caf7d44;">
+        ✅ 3단계 완료 · 이 단계로 루틴 적용
+      </button>
     </div>
       <button onclick="goSettStep(4)" style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);margin-top:10px;">다음 → 기준중량 설정</button>
     </div>
@@ -6303,8 +6312,8 @@ function startCardioSession(){
 function selectLevel(n, btn){
   curLevel = n;
   document.querySelectorAll('.level-step').forEach((b,i)=>{
-    b.classList.toggle('active', i+1===n);
-    b.classList.toggle('done', i+1<n);
+    b.classList.toggle('active', i===n);
+    b.classList.toggle('done',   i<n);
   });
   renderLevelDesc();
 }
@@ -6320,7 +6329,9 @@ function renderLevelDesc(){
 
 function applyLevel(){
   const lv = LEVEL_INFO[curLevel];
-  if(!confirm(`${lv.label} 단계로 루틴을 조정할까요?\n\n✅ 운동 종목은 그대로 유지됩니다.\n📊 세트수·횟수만 조정됩니다.\n   세트: 기본 × ${Math.round(lv.setMult*100)}%\n   횟수: 기본 × ${Math.round(lv.repMult*100)}%`)) return;
+  if(!lv){ showToast('단계를 먼저 선택해주세요','error'); return; }
+
+  // RT_BASE 기반으로 세트·횟수 배율 적용 (confirm 없이 즉시 적용)
   const snap = JSON.parse(JSON.stringify(RT_BASE));
   Object.keys(RT).forEach(tk=>{
     if(tk==='REST') return;
@@ -6340,8 +6351,23 @@ function applyLevel(){
   });
   localStorage.setItem('fitlog-level', curLevel);
   window.saveRoutine(RT);
-  showToast(`✅ ${lv.label} 단계 적용 완료!`,'success');
-  renderAdjPanel();
+  initSetData(DAY_SCHED[selDay]);
+  renderWorkout && renderWorkout();
+  renderHome && renderHome();
+  showToast(`✅ ${lv.label} 단계 적용! 세트 기본×${Math.round(lv.setMult*100)}% · 횟수 기본×${Math.round(lv.repMult*100)}%`,'success');
+
+  // 완료 표시 후 다음 단계로 자동 이동
+  const applyBtn = document.querySelector('.level-apply-btn');
+  if(applyBtn){
+    applyBtn.textContent='✅ 적용 완료!';
+    applyBtn.style.background='var(--green)';
+    setTimeout(()=>{
+      applyBtn.textContent='✅ 이 단계로 루틴 적용';
+      applyBtn.style.background='';
+    }, 2000);
+  }
+  markSettDone(3);
+  renderAdjPanel && renderAdjPanel();
 }
 
 // ── 1RM 기준 중량 ──
@@ -6576,26 +6602,69 @@ function updateInjuryNote(){
 
 function saveBodyInfoAndNext(){
   saveBodyInfo();
+  markSettDone(1);
   goSettStep(2);
 }
 
 function initSettingsTab(){
+  // 저장된 설정 기반으로 완료 단계 복구
+  const hasBio    = localStorage.getItem('fitlog-age') || localStorage.getItem('fitlog-weight');
+  const hasPurpose= (JSON.parse(localStorage.getItem('fitlog-purposes')||'[]')).length > 0;
+  const hasLevel  = localStorage.getItem('fitlog-level') !== null;
+  const has1RM    = localStorage.getItem('fitlog-1rm');
+
+  if(hasBio)     settDone[1] = true;
+  if(hasPurpose) settDone[2] = true;
+  if(hasLevel)   settDone[3] = true;
+  if(has1RM)     settDone[4] = true;
+
   initBodyInfo();
   initInjuryBtns();
   initClassSettings();
   initDayAssignBtns();
   document.querySelectorAll('.level-step').forEach((b,i)=>{
-    b.classList.toggle('active',i===curLevel);
-    b.classList.toggle('done',i<curLevel);
+    b.classList.toggle('active', i===curLevel);
+    b.classList.toggle('done',   i<curLevel);
   });
   renderLevelDesc();
   renderORMGrid();
   renderFeedbackPanel();
   renderCardioHistory();
+
+  // 완료된 스텝 버튼에 초록 표시
+  for(let i=1;i<=4;i++){
+    const btn = document.getElementById('sstep-'+i);
+    if(btn && settDone[i]){
+      btn.style.background='var(--green)';
+      btn.style.color='#fff';
+      btn.style.fontWeight='700';
+    }
+  }
+
+  // 완료 현황 안내 토스트
+  const doneCount = Object.values(settDone).filter(Boolean).length;
+  if(doneCount === 0){
+    // 처음 설정 - STEP1부터 시작
+    _showSettPanel(1);
+    setTimeout(()=>showToast('👋 신체정보부터 입력해주세요 (①→②→③→④ 순서)','info'), 300);
+  }
 }
 
-// ── 설정 스텝 이동 ──
+// ── 설정 단계 완료 추적 ──
+let settDone = {1:false, 2:false, 3:false, 4:false};
+
 function goSettStep(n){
+  // 절차적 진행: 이전 단계 완료 여부 체크 (1단계는 언제나 접근 가능)
+  if(n > 1 && !settDone[n-1]){
+    showToast(`⚠️ ${n-1}단계를 먼저 완료해주세요`,'error');
+    // 미완료 단계로 이동
+    _showSettPanel(n-1);
+    return;
+  }
+  _showSettPanel(n);
+}
+
+function _showSettPanel(n){
   for(let i=1;i<=4;i++){
     const panel = document.getElementById('sett-panel-'+i);
     const btn   = document.getElementById('sstep-'+i);
@@ -6603,22 +6672,23 @@ function goSettStep(n){
     if(btn){
       if(i===n){
         btn.style.background='var(--accent)'; btn.style.color='#fff'; btn.style.fontWeight='700';
+      } else if(settDone[i]){
+        btn.style.background='var(--green)'; btn.style.color='#fff'; btn.style.fontWeight='700';
       } else if(i<n){
-        btn.style.background='#4caf7d22'; btn.style.color='var(--green)'; btn.style.fontWeight='700';
+        btn.style.background='var(--surface2)'; btn.style.color='var(--muted)'; btn.style.fontWeight='500';
       } else {
         btn.style.background='none'; btn.style.color='var(--muted)'; btn.style.fontWeight='500';
       }
     }
   }
-  // 스텝별 추가 초기화
-  if(n===2){ initDayAssignBtns(); initClassSettings(); }
-  if(n===4){ renderORMGrid(); renderFeedbackPanel(); }
 }
 
-// ── 요일 배정 버튼 ──
-let assignedDays = JSON.parse(localStorage.getItem('fitlog-assigned-days')||'["월","화","수","목","금"]');
-const DAY_NUM_MAP = {월:1,화:2,수:3,목:4,금:5,토:6,일:0};
-
+function markSettDone(n){
+  settDone[n]=true;
+  // 상단 스텝 버튼에 ✓ 표시
+  const btn = document.getElementById('sstep-'+n);
+  if(btn){ btn.style.background='var(--green)'; btn.style.color='#fff'; }
+}
 function initDayAssignBtns(){
   document.querySelectorAll('.day-assign-btn').forEach(btn=>{
     const d = btn.textContent.trim();
@@ -6687,7 +6757,7 @@ function updateDayAssignPreview(){
 async function applyClassificationWithDays(){
   if(assignedDays.length < 1){ showToast('운동 요일을 하나 이상 선택해주세요','error'); return; }
   if(!classPurposes.length){ showToast('목적을 하나 이상 선택해주세요','error'); return; }
-  if(!confirm(`${classType} · ${classPurposes.join('+')} 루틴으로 적용할까요?\n선택 요일: ${assignedDays.join(', ')}\n현재 루틴이 변경됩니다.`)) return;
+  // 자동 적용 (confirm 없이)
 
   // 요일 배정 적용
   const dayOrder = ['월','화','수','목','금','토','일'];
@@ -6738,6 +6808,8 @@ async function applyClassificationWithDays(){
   localStorage.setItem('fitlog-purposes', JSON.stringify(classPurposes));
   await window.saveRoutine(RT);
 
+  markSettDone(2);
+  goSettStep(3); // 자동으로 STEP3으로 이동
   updateDayAssignPreview();
   showToast(`✅ ${classType}·${classPurposes.join('+')} 루틴 + 요일 배정 완료!\n오늘(${['일','월','화','수','목','금','토'][new Date().getDay()]}): ${RT[DAY_SCHED[new Date().getDay()]]?.title||'휴식'}`, 'success');
   initSetData(DAY_SCHED[selDay]);
