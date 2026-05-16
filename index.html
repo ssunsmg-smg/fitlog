@@ -1263,7 +1263,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <div id="injury-btns" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px;"></div>
         <div id="injury-note" style="font-size:11px;color:var(--accent);display:none;padding:8px;background:#e8533a10;border-radius:8px;"></div>
       </div>
-      <button onclick="saveBodyInfoAndNext()" style="width:100%;padding:11px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);margin-top:12px;">다음 → 운동환경 설정</button>
+      <button onclick="saveBodyInfoAndNext()" 
+        style="width:100%;padding:14px;border-radius:10px;border:none;
+        background:linear-gradient(135deg,var(--accent),#ff7040);color:#fff;
+        font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font);
+        margin-top:12px;box-shadow:0 4px 16px #e8533a44;letter-spacing:.3px;">
+        💾 저장 후 ② 운동환경 설정으로 →
+      </button>:12px;">다음 → 운동환경 설정</button>
     </div>
 
     <!-- STEP 2: 운동 분류 + 요일배정 + 목적 -->
@@ -1306,11 +1312,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <div id="day-assign-preview" style="font-size:11px;color:var(--muted);padding:10px;background:var(--surface2);border-radius:8px;line-height:2;"></div>
         <div id="day-routine-detail" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"></div>
       </div>
+<!-- STEP2 적용 상태 안내 -->
+      <div id="step2-status-bar" style="display:flex;align-items:center;gap:8px;padding:10px 14px;
+        border-radius:8px;background:var(--surface2);border:1px solid var(--border);margin-bottom:10px;">
+        <div id="step2-status-dot" style="width:10px;height:10px;border-radius:50%;background:var(--border);flex-shrink:0;"></div>
+        <span id="step2-status-txt" style="font-size:12px;color:var(--muted);">아직 적용 전입니다. 운동환경·목적·요일을 선택 후 아래 버튼을 누르세요.</span>
+      </div>
       <button onclick="applyClassificationWithDays()" id="step2-apply-btn"
-        style="width:100%;padding:14px;border-radius:10px;border:none;
-        background:linear-gradient(135deg,var(--accent),#ff7040);color:#fff;
+        style="width:100%;padding:14px;border-radius:10px;border:2px solid var(--border);
+        background:var(--surface2);color:var(--muted);
         font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font);
-        margin-bottom:10px;box-shadow:0 4px 16px #e8533a44;letter-spacing:.3px;">
+        margin-bottom:10px;letter-spacing:.3px;transition:all .3s;">
         ✅ 2단계 완료 · 루틴 적용하기
       </button>
 
@@ -1332,7 +1344,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         </div>
       </div>
 
-      <button onclick="goSettStep(3)" style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);">다음 → 성장단계 설정</button>
+      <button id="step2-next-btn" onclick="goSettStep(3)" 
+        style="width:100%;padding:14px;border-radius:10px;border:2px solid var(--border);
+        background:var(--surface2);color:var(--muted);font-size:15px;font-weight:800;
+        cursor:not-allowed;font-family:var(--font);opacity:0.5;transition:all .3s;"
+        disabled>
+        💾 저장 후 ③ 성장단계 설정으로 →
+      </button>
     </div>
 
     <!-- STEP 3: 성장 단계 -->
@@ -1352,12 +1370,24 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <button class="level-step" onclick="selectLevel(4,this)">🔥<br>마스터</button>
       </div>
       <div class="level-desc-box" id="level-desc"></div>
+      <!-- STEP3 적용 상태 안내 -->
+      <div id="step3-status-bar" style="display:flex;align-items:center;gap:8px;padding:10px 14px;
+        border-radius:8px;background:var(--surface2);border:1px solid var(--border);margin-bottom:8px;">
+        <div id="step3-status-dot" style="width:10px;height:10px;border-radius:50%;background:var(--border);flex-shrink:0;"></div>
+        <span id="step3-status-txt" style="font-size:12px;color:var(--muted);">단계를 선택 후 아래 버튼으로 루틴을 적용하세요.</span>
+      </div>
       <button class="level-apply-btn" onclick="applyLevel()" id="step3-apply-btn"
         style="background:linear-gradient(135deg,var(--green),#2d9e6b);box-shadow:0 4px 16px #4caf7d44;">
         ✅ 3단계 완료 · 이 단계로 루틴 적용
       </button>
     </div>
-      <button onclick="goSettStep(4)" style="width:100%;padding:9px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;font-family:var(--font);margin-top:10px;">다음 → 기준중량 설정</button>
+      <button id="step3-next-btn" onclick="goSettStep(4)" 
+        style="width:100%;padding:14px;border-radius:10px;border:2px solid var(--border);
+        background:var(--surface2);color:var(--muted);font-size:15px;font-weight:800;
+        cursor:not-allowed;font-family:var(--font);opacity:0.5;transition:all .3s;margin-top:10px;"
+        disabled>
+        💾 저장 후 ④ 기준중량 설정으로 →
+      </button>
     </div>
 
     <!-- STEP 4: 기준 중량 + 피드백 -->
@@ -1400,6 +1430,23 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         </div>
         <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">유산소를 추가할 때마다 자동으로 기록됩니다. 몸의 변화 추적에 활용하세요.</div>
         <div id="cardio-history-panel"></div>
+      </div>
+
+      <!-- 전체 설정 저장완료 버튼 -->
+      <div id="step4-final-card" style="background:linear-gradient(135deg,#4caf7d18,#4a9eff15);
+        border:2px solid var(--green);border-radius:14px;padding:20px;margin-top:8px;">
+        <div style="font-size:14px;font-weight:800;color:var(--green);margin-bottom:6px;">🎉 모든 설정 완료!</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7;">
+          ① 신체정보 · ② 운동환경 · ③ 성장단계 설정이 완료되었습니다.<br>
+          아래 버튼을 누르면 모든 설정이 저장되고 운동 루틴에 즉시 반영됩니다.
+        </div>
+        <button onclick="saveAllSettings()" 
+          style="width:100%;padding:16px;border-radius:12px;border:none;
+          background:linear-gradient(135deg,var(--green),#2d9e6b);color:#fff;
+          font-size:16px;font-weight:900;cursor:pointer;font-family:var(--font);
+          box-shadow:0 4px 20px #4caf7d55;letter-spacing:.3px;">
+          ✅ 모든 설정 저장 · 운동 시작하기
+        </button>
       </div>
     </div>
 
@@ -6913,6 +6960,23 @@ async function applyLevel(){
     setTimeout(()=>{ applyBtn.textContent='✅ 이 단계로 루틴 적용'; applyBtn.style.background=''; }, 2000);
   }
   markSettDone(3);
+
+  // ── STEP3 버튼 상태 업데이트 ──
+  const dot3 = document.getElementById('step3-status-dot');
+  const txt3 = document.getElementById('step3-status-txt');
+  if(dot3) dot3.style.background = 'var(--green)';
+  if(txt3){ txt3.textContent = '✅ 단계가 적용되었습니다! 아래 버튼으로 다음 단계로 이동하세요.'; txt3.style.color='var(--green)'; }
+  const nextBtn3 = document.getElementById('step3-next-btn');
+  if(nextBtn3){
+    nextBtn3.disabled = false;
+    nextBtn3.style.cursor = 'pointer';
+    nextBtn3.style.opacity = '1';
+    nextBtn3.style.background = 'linear-gradient(135deg,var(--blue),#2563eb)';
+    nextBtn3.style.color = '#fff';
+    nextBtn3.style.border = 'none';
+    nextBtn3.style.boxShadow = '0 4px 16px #4a9eff44';
+  }
+
   renderAdjPanel && renderAdjPanel();
   updateDayAssignPreview && updateDayAssignPreview();
 }
@@ -6921,7 +6985,36 @@ async function applyLevel(){
 function renderORMGrid(){
   const grid = document.getElementById('orm-grid');
   if(!grid) return;
-  // 최근 기록에서 해당 운동의 최신 날짜 찾기
+
+  // 기록이 전혀 없을 때 안내 표시
+  const hasAnyRecord = records && records.length > 0;
+  const hasAny1RM = ORM_EXERCISES.some(ex => orm1RM[ex.key] > 0);
+
+  if(!hasAnyRecord && !hasAny1RM){
+    grid.innerHTML = `<div style="text-align:center;padding:20px 10px;color:var(--muted);font-size:12px;line-height:1.8;
+      background:var(--surface2);border-radius:10px;border:1px dashed var(--border);">
+      <div style="font-size:24px;margin-bottom:8px;">🏋️</div>
+      <strong style="color:var(--text);">처음이시군요!</strong><br>
+      운동을 기록하면 세트마다 자동으로 1RM이 추정·갱신됩니다.<br>
+      <span style="color:var(--accent2);">지금은 건너뛰어도 됩니다.</span><br><br>
+      직접 알고 있다면 아래에 입력하세요.
+    </div>`;
+    // 입력 그리드는 빈 상태로 추가
+    grid.innerHTML += '<div style="margin-top:12px;">' + ORM_EXERCISES.map(ex => {
+      const val = orm1RM[ex.key]||'';
+      return `<div class="orm-item">
+        <div class="orm-name">${ex.icon} ${ex.name}</div>
+        <div class="orm-row">
+          <input class="orm-inp" type="number" id="orm-${ex.key}" value="${val}" placeholder="모르면 빈칸" min="0" step="2.5"
+            oninput="updateORMCalc('${ex.key}')"/>
+          <span class="orm-unit">kg</span>
+        </div>
+        <div id="orm-calc-${ex.key}"></div>
+      </div>`;
+    }).join('') + '</div>';
+    return;
+  }
+
   const ORM_NAME_MAP_REV = {
     bench:['벤치프레스','시티드 체스트 프레스','덤벨 벤치프레스'],
     squat:['바벨 스쿼트','스미스 머신 스쿼트','레그 프레스'],
@@ -6935,7 +7028,6 @@ function renderORMGrid(){
   grid.innerHTML = ORM_EXERCISES.map(ex=>{
     const val = orm1RM[ex.key]||'';
     const pct = val ? `<div class="orm-1rm">근지구력: ${Math.round(val*0.6)}kg · 근비대: ${Math.round(val*0.75)}kg · 근력: ${Math.round(val*0.87)}kg</div>` : '';
-    // 최근 기록에서 해당 운동 날짜 찾기
     let lastDate = '';
     const names = ORM_NAME_MAP_REV[ex.key] || [];
     for(const rec of (records||[])){
@@ -6953,6 +7045,43 @@ function renderORMGrid(){
       ${autoTag}
     </div>`;
   }).join('');
+}
+
+// ── 전체 설정 저장완료 ──
+async function saveAllSettings(){
+  const btn = document.querySelector('#step4-final-card button');
+  if(btn){ btn.textContent = '저장 중...'; btn.disabled = true; }
+
+  // 1RM 저장
+  save1RM();
+
+  // 부상 정보 저장
+  localStorage.setItem('fitlog-injuries', JSON.stringify(selectedInjuries));
+
+  // 전체 루틴 저장
+  await window.saveRoutine(RT);
+
+  // 홈·운동탭 갱신
+  initSetData(DAY_SCHED[selDay]);
+  renderWorkout && renderWorkout();
+  renderHome && renderHome();
+
+  if(btn){
+    btn.textContent = '✅ 저장 완료!';
+    btn.style.background = 'linear-gradient(135deg,#4caf7d,#2d9e6b)';
+    btn.disabled = false;
+  }
+
+  showToast('✅ 모든 설정이 저장되었습니다! 운동을 시작하세요 💪', 'success');
+
+  // 2초 후 홈 탭으로 이동
+  setTimeout(()=>{
+    document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+    document.querySelectorAll('.nav-tab').forEach(b=>b.classList.remove('active'));
+    document.getElementById('page-home')?.classList.add('active');
+    document.querySelector('.nav-tab')?.classList.add('active');
+    renderHome();
+  }, 1500);
 }
 
 function updateORMCalc(key){
@@ -7356,6 +7485,31 @@ async function applyClassificationWithDays(){
   await window.saveRoutine(RT);
 
   markSettDone(2);
+
+  // ── STEP2 버튼 상태 업데이트 (회색→컬러) ──
+  const applyBtn2 = document.getElementById('step2-apply-btn');
+  if(applyBtn2){
+    applyBtn2.style.background = 'linear-gradient(135deg,var(--accent),#ff7040)';
+    applyBtn2.style.color = '#fff';
+    applyBtn2.style.border = 'none';
+    applyBtn2.style.boxShadow = '0 4px 16px #e8533a44';
+    applyBtn2.textContent = '✅ 2단계 적용 완료!';
+  }
+  const dot2 = document.getElementById('step2-status-dot');
+  const txt2 = document.getElementById('step2-status-txt');
+  if(dot2) dot2.style.background = 'var(--green)';
+  if(txt2){ txt2.textContent = '✅ 루틴이 적용되었습니다! 아래 버튼으로 다음 단계로 이동하세요.'; txt2.style.color='var(--green)'; }
+  const nextBtn2 = document.getElementById('step2-next-btn');
+  if(nextBtn2){
+    nextBtn2.disabled = false;
+    nextBtn2.style.cursor = 'pointer';
+    nextBtn2.style.opacity = '1';
+    nextBtn2.style.background = 'linear-gradient(135deg,var(--blue),#2563eb)';
+    nextBtn2.style.color = '#fff';
+    nextBtn2.style.border = 'none';
+    nextBtn2.style.boxShadow = '0 4px 16px #4a9eff44';
+  }
+
   goSettStep(3); // 자동으로 STEP3으로 이동
   updateDayAssignPreview();
   showToast(`✅ ${classType}·${classPurposes.join('+')} 루틴 + 요일 배정 완료!\n오늘(${['일','월','화','수','목','금','토'][new Date().getDay()]}): ${RT[DAY_SCHED[new Date().getDay()]]?.title||'휴식'}`, 'success');
