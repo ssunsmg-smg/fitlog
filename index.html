@@ -7542,6 +7542,7 @@ async function applyClassificationWithDays(){
 
   try {
     // ── 목적 분석 ──
+    var DAY_NUM_MAP = {일:0,월:1,화:2,수:3,목:4,금:5,토:6};
     var isCardio   = classPurposes.some(function(p){ return p==='체중 감량'||p==='다이어트'; });
     var isCore     = classPurposes.some(function(p){ return p.indexOf('복근')>=0; });
     var isGlute    = classPurposes.some(function(p){ return p.indexOf('하체')>=0||p.indexOf('둔근')>=0; });
@@ -7770,8 +7771,7 @@ async function applyClassificationWithDays(){
       applyBtn2x.innerHTML='✅ 2단계 완료 · 루틴 적용하기';
       applyBtn2x.style.opacity='1';
     }
-    showToast('오류: ' + (e && e.message ? e.message.slice(0,60) : String(e).slice(0,60)), 'error');
-    alert('[FitLog 디버그] ' + (e && e.message ? e.message : String(e)));
+    showToast('저장 중 오류가 발생했습니다. 다시 시도해주세요.','error');
   }
 }
 
