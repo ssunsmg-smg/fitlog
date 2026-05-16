@@ -7496,301 +7496,272 @@ function updateDayAssignPreview(){
 }
 
 // applyClassification 을 요일배정과 통합
+function makeCardioSection(min, isHome){
+  if(min===undefined) min=20;
+  if(isHome===undefined) isHome=false;
+  return {n:'유산소 (목적 필수)',exs:[
+    {n:isHome?'버피':'런닝머신', d:min+'분',tags:['심폐'],w:['무릎주의'],sets:0},
+    {n:isHome?'마운틴 클라이머':'업라이트 바이크', d:'10분',tags:['심폐'],w:[],sets:0},
+  ]};
+}
+function makeCoreSection(sets, isHome){
+  if(sets===undefined) sets=4;
+  if(isHome===undefined) isHome=false;
+  return {n:'복근 집중 (목적 필수)',exs:[
+    {n:'플랭크',d:sets+'세트 × 45초',tags:['복횡근(주)'],w:[],sets:0},
+    {n:'크런치',d:sets+'세트 × 20회',tags:['복직근(주)'],w:[],sets:sets},
+    {n:'레그 레이즈',d:sets+'세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:sets},
+    {n:isHome?'바이시클 크런치':'케이블 크런치', d:'3세트 × 20회',tags:['복사근(주)'],w:[],sets:3},
+  ]};
+}
+function makeGluteSection(isHome){
+  if(isHome===undefined) isHome=false;
+  return {n:'하체·둔근 집중 (목적 필수)',exs:[
+    {n:isHome?'힙 쓰러스트 (맨몸)':'바벨 힙 쓰러스트',d:'4세트 × 12회',tags:['대둔근(주)'],w:['허리주의'],sets:4},
+    {n:isHome?'클램쉘':'힙 어브덕션 (기계)',d:'4세트 × 15회',tags:['중둔근(주)'],w:[],sets:isHome?0:4},
+    {n:isHome?'사이드 라잉 레그 레이즈':'레그 컬',d:'3세트 × 15회',tags:['햄스트링(주)'],w:[],sets:isHome?0:3},
+  ]};
+}
 async function applyClassificationWithDays(){
-  if(assignedDays.length < 1){ showToast('운동 요일을 하나 이상 선택해주세요','error'); return; }
-  if(!classPurposes.length){ showToast('목적을 하나 이상 선택해주세요','error'); return; }
+  if(!assignedDays || assignedDays.length < 1){
+    showToast('운동 요일을 하나 이상 선택해주세요','error'); return;
+  }
+  if(!classPurposes || !classPurposes.length){
+    showToast('목적을 하나 이상 선택해주세요','error'); return;
+  }
 
-  // 버튼 저장 중 상태
-  const applyBtn2x = document.getElementById('step2-apply-btn');
+  var applyBtn2x = document.getElementById('step2-apply-btn');
   if(applyBtn2x){ applyBtn2x.disabled=true; applyBtn2x.innerHTML='⏳ 저장 중...'; applyBtn2x.style.opacity='0.7'; }
 
-  // 10초 타임아웃 안전장치 - 저장이 너무 오래 걸리면 강제 복구
-  const _safeTimer = setTimeout(()=>{
+  var _safeTimer = setTimeout(function(){
     if(applyBtn2x && applyBtn2x.disabled){
       applyBtn2x.disabled=false; applyBtn2x.innerHTML='✅ 2단계 완료 · 루틴 적용하기'; applyBtn2x.style.opacity='1';
-      showToast('저장 시간 초과. 네트워크를 확인 후 다시 눌러주세요.','error');
+      showToast('저장 시간 초과. 다시 눌러주세요.','error');
     }
-  }, 10000);
+  }, 8000);
 
-  try{
+  try {
+    // ── 목적 분석 ──
+    var isCardio   = classPurposes.some(function(p){ return p==='체중 감량'||p==='다이어트'; });
+    var isCore     = classPurposes.some(function(p){ return p.indexOf('복근')>=0; });
+    var isGlute    = classPurposes.some(function(p){ return p.indexOf('하체')>=0||p.indexOf('둔근')>=0; });
+    var isStrength = classPurposes.some(function(p){ return p.indexOf('근력')>=0||p.indexOf('근육')>=0; });
+    var isRehab    = classPurposes.some(function(p){ return p.indexOf('재활')>=0||p.indexOf('시니어')>=0; });
+    var isHome     = classType === '홈트';
 
-  // ── 요일 배정 ──
-  const dayOrder = ['월','화','수','목','금','토','일'];
-  const routineKeys = ['A','B','C','D','E','F'];
-  const sorted = [...assignedDays].sort((a,b)=>dayOrder.indexOf(a)-dayOrder.indexOf(b));
-  dayOrder.forEach(d=>{ DAY_SCHED[DAY_NUM_MAP[d]] = 'REST'; });
-  localStorage.setItem('fitlog-assigned-days', JSON.stringify(assignedDays));
+    // ── 요일 배정 ──
+    var dayOrder = ['월','화','수','목','금','토','일'];
+    var routineKeys = ['A','B','C','D','E','F'];
+    var sorted = assignedDays.slice().sort(function(a,b){ return dayOrder.indexOf(a)-dayOrder.indexOf(b); });
+    dayOrder.forEach(function(d){ DAY_SCHED[DAY_NUM_MAP[d]] = 'REST'; });
+    localStorage.setItem('fitlog-assigned-days', JSON.stringify(assignedDays));
 
-  // ── 목적 분석 ──
-  const isCardio    = classPurposes.some(p=>['체중 감량','다이어트'].includes(p));
-  const isCore      = classPurposes.some(p=>p.includes('복근'));
-  const isGlute     = classPurposes.some(p=>p.includes('하체') || p.includes('둔근'));
-  const isStrength  = classPurposes.some(p=>p.includes('근력') || p.includes('근육'));
-  const isRehab     = classPurposes.some(p=>p.includes('재활') || p.includes('시니어'));
-  const isFlexible  = classPurposes.some(p=>p.includes('유연'));
-  const isHome      = classType === '홈트';
+    // ── 목적별 루틴 결정 ──
+    var splitKeys, splitData;
 
-  // ── 목적별 맞춤 루틴 섹션 빌더 ──
-  function makeCardioSection(min=20){
-    return {n:'유산소 (목적 필수)',exs:[
-      {n:isHome?'버피':'런닝머신', d:min+'분',tags:['심폐'],w:['무릎주의'],sets:0},
-      {n:isHome?'마운틴 클라이머':'업라이트 바이크', d:'10분',tags:['심폐'],w:[],sets:0},
-    ]};
-  }
-  function makeCoreSection(sets=4){
-    return {n:'복근 집중 (목적 필수)',exs:[
-      {n:'플랭크',d:`${sets}세트 × 45초`,tags:['복횡근(주)'],w:[],sets:0},
-      {n:'크런치',d:`${sets}세트 × 20회`,tags:['복직근(주)'],w:[],sets:sets},
-      {n:'레그 레이즈',d:`${sets}세트 × 15회`,tags:['복직근하부(주)'],w:['허리주의'],sets:sets},
-      {n:isHome?'바이시클 크런치':'케이블 크런치', d:`3세트 × 20회`,tags:['복사근(주)'],w:[],sets:3},
-    ]};
-  }
-  function makeGluteSection(){
-    return {n:'하체·둔근 집중 (목적 필수)',exs:[
-      {n:isHome?'힙 쓰러스트 (맨몸)':'바벨 힙 쓰러스트',d:'4세트 × 12회',tags:['대둔근(주)'],w:['허리주의'],sets:4},
-      {n:isHome?'클램쉘':'힙 어브덕션 (기계)',d:'4세트 × 15회',tags:['중둔근(주)'],w:[],sets:isHome?0:4},
-      {n:isHome?'사이드 라잉 레그 레이즈':'레그 컬',d:'3세트 × 15회',tags:['햄스트링(주)'],w:[],sets:isHome?0:3},
-    ]};
-  }
+    if(isCardio && isCore){
+      // 체중감량 + 복근
+      splitData = {
+        A: {label:'체감·복근A',title:'유산소 + 복근 집중',color:'rh-a',muscles:['심폐','복직근'],
+          sections:[
+            {n:'워밍업',exs:[{n:isHome?'제자리 달리기':'업라이트 바이크',d:'5분',tags:['심폐'],w:[],sets:0}]},
+            makeCardioSection(25, isHome),
+            makeCoreSection(4, isHome),
+            {n:'쿨다운',exs:[{n:'전신 스트레칭',d:'5분',tags:['유연성'],w:[],sets:0}]}
+          ]},
+        B: {label:'체감·복근B',title:'상체 + 유산소',color:'rh-b',muscles:['대흉근','광배근','심폐'],
+          sections:[
+            {n:'워밍업',exs:[{n:'관절 돌리기',d:'3분',tags:['관절가동성'],w:[],sets:0}]},
+            {n:'상체',exs:[
+              {n:isHome?'푸시업':'시티드 체스트 프레스',d:'3세트 × 12회',tags:['대흉근(주)'],w:[],sets:3},
+              {n:isHome?'인버티드 로우':'렛 풀다운',d:'3세트 × 12회',tags:['광배근(주)'],w:[],sets:3}
+            ]},
+            makeCardioSection(20, isHome),
+            makeCoreSection(3, isHome),
+            {n:'쿨다운',exs:[{n:'상체 스트레칭',d:'3분',tags:['유연성'],w:[],sets:0}]}
+          ]},
+        C: {label:'체감·복근C',title:'하체 + 유산소 + 복근',color:'rh-c',muscles:['대퇴사두근','심폐','복근'],
+          sections:[
+            {n:'워밍업',exs:[{n:'고양이-소 스트레칭',d:'3분',tags:['관절가동성'],w:[],sets:0}]},
+            {n:'하체',exs:[
+              {n:isHome?'스쿼트 (맨몸)':'레그 프레스',d:'4세트 × 15회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:4},
+              {n:isHome?'글루트 브릿지':'레그 컬',d:'3세트 × 12회',tags:['햄스트링(주)'],w:['허리주의'],sets:isHome?0:3}
+            ]},
+            makeCardioSection(20, isHome),
+            makeCoreSection(3, isHome),
+            {n:'쿨다운',exs:[{n:'하체 스트레칭',d:'5분',tags:['유연성'],w:[],sets:0}]}
+          ]}
+      };
+    } else if(isGlute && !isStrength){
+      // 하체·둔근 중심
+      splitData = {
+        A: {label:'하체·둔근A',title:'둔근 집중 + 하체',color:'rh-a',muscles:['대둔근','중둔근','대퇴사두근'],
+          sections:[
+            {n:'워밍업',exs:[{n:'고양이-소 스트레칭',d:'3분',tags:['관절가동성'],w:[],sets:0}]},
+            makeGluteSection(isHome),
+            {n:'하체',exs:[
+              {n:isHome?'스쿼트 (맨몸)':'레그 프레스',d:'4세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:4}
+            ]},
+            {n:'쿨다운',exs:[{n:'피전 포즈',d:'양쪽 60초',tags:['둔근이완'],w:[],sets:0}]}
+          ]},
+        B: {label:'하체·둔근B',title:'전신 + 유산소',color:'rh-b',muscles:['심폐','전신'],
+          sections:[
+            {n:'워밍업',exs:[{n:isHome?'제자리 달리기':'업라이트 바이크',d:'5분',tags:['심폐'],w:[],sets:0}]},
+            {n:'상체',exs:[
+              {n:isHome?'푸시업':'시티드 체스트 프레스',d:'3세트 × 12회',tags:['대흉근(주)'],w:[],sets:3},
+              {n:isHome?'인버티드 로우':'렛 풀다운',d:'3세트 × 12회',tags:['광배근(주)'],w:[],sets:3}
+            ]},
+            makeGluteSection(isHome),
+            {n:'쿨다운',exs:[{n:'전신 스트레칭',d:'5분',tags:['유연성'],w:[],sets:0}]}
+          ]}
+      };
+    } else if(isStrength){
+      // 근력·근육 중심
+      splitData = {
+        A: {label:'근력A',title:'가슴·어깨·삼두 (밀기)',color:'rh-a',muscles:['대흉근','삼각근','삼두근'],
+          sections:[
+            {n:'워밍업',exs:[{n:'관절 돌리기',d:'3분',tags:['관절가동성'],w:[],sets:0}]},
+            {n:'가슴',exs:[
+              {n:isHome?'푸시업':'벤치 프레스',d:'4세트 × 10회',tags:['대흉근(주)'],w:['어깨주의'],sets:4},
+              {n:isHome?'와이드 푸시업':'인클라인 덤벨 프레스',d:'3세트 × 12회',tags:['대흉근상부(주)'],w:[],sets:3}
+            ]},
+            {n:'어깨·삼두',exs:[
+              {n:isHome?'파이크 푸시업':'오버헤드 프레스',d:'3세트 × 10회',tags:['삼각근(주)'],w:['어깨주의'],sets:3},
+              {n:isHome?'다이아몬드 푸시업':'트라이셉 푸시다운',d:'3세트 × 15회',tags:['삼두근(주)'],w:[],sets:3}
+            ]},
+            {n:'쿨다운',exs:[{n:'가슴 열기 스트레칭',d:'3분',tags:['유연성'],w:[],sets:0}]}
+          ]},
+        B: {label:'근력B',title:'등·이두 (당기기)',color:'rh-b',muscles:['광배근','이두근'],
+          sections:[
+            {n:'워밍업',exs:[{n:'밴드 풀어파트',d:'2분',tags:['어깨가동성'],w:[],sets:0}]},
+            {n:'등',exs:[
+              {n:isHome?'풀업':'렛 풀다운',d:'4세트 × 10회',tags:['광배근(주)'],w:[],sets:isHome?0:4},
+              {n:isHome?'인버티드 로우':'바벨 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3}
+            ]},
+            {n:'이두',exs:[
+              {n:isHome?'친업':'바벨 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:isHome?0:3}
+            ]},
+            {n:'쿨다운',exs:[{n:'등 스트레칭',d:'3분',tags:['유연성'],w:[],sets:0}]}
+          ]},
+        C: {label:'근력C',title:'하체·둔근',color:'rh-c',muscles:['대퇴사두근','햄스트링','대둔근'],
+          sections:[
+            {n:'워밍업',exs:[{n:'고양이-소 스트레칭',d:'3분',tags:['관절가동성'],w:[],sets:0}]},
+            {n:'하체',exs:[
+              {n:isHome?'스쿼트 (맨몸)':'바벨 스쿼트',d:'4세트 × 10회',tags:['대퇴사두근(주)'],w:['무릎주의','허리주의'],sets:4},
+              {n:isHome?'런지':'레그 프레스',d:'3세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:isHome?0:3},
+              {n:isHome?'글루트 브릿지':'루마니안 데드리프트',d:'3세트 × 12회',tags:['햄스트링(주)'],w:['허리주의'],sets:isHome?0:3}
+            ]},
+            {n:'쿨다운',exs:[{n:'하체 스트레칭',d:'5분',tags:['유연성'],w:[],sets:0}]}
+          ]}
+      };
+    } else if(isRehab){
+      // 재활/시니어
+      splitData = {
+        A: {label:'재활전신',title:'전신 재활 · 기초 활성화',color:'rh-a',muscles:['전신','코어'],
+          sections:[
+            {n:'워밍업',exs:[
+              {n:isHome?'제자리 달리기':'업라이트 바이크',d:'5분 · 저강도',tags:['심폐'],w:[],sets:0},
+              {n:'관절 돌리기',d:'3분',tags:['관절가동성'],w:[],sets:0}
+            ]},
+            {n:'상체',exs:[
+              {n:isHome?'푸시업':'시티드 체스트 프레스',d:'3세트 × 15회',tags:['대흉근(주)'],w:[],sets:3},
+              {n:isHome?'인버티드 로우':'렛 풀다운',d:'3세트 × 15회',tags:['광배근(주)'],w:[],sets:3}
+            ]},
+            {n:'하체',exs:[
+              {n:isHome?'스쿼트 (맨몸)':'레그 프레스',d:'3세트 × 15회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3},
+              {n:'글루트 브릿지',d:'3세트 × 15회',tags:['대둔근(주)'],w:[],sets:0}
+            ]},
+            {n:'코어',exs:[
+              {n:'플랭크',d:'3세트 × 30초',tags:['복횡근(주)'],w:[],sets:0},
+              {n:'버드독',d:'3세트 × 10회',tags:['코어'],w:[],sets:0}
+            ]},
+            {n:'쿨다운',exs:[{n:'전신 스트레칭',d:'5분',tags:['유연성'],w:[],sets:0}]}
+          ]}
+      };
+    } else {
+      // 기본 (건강관리 등) - RT_BASE 기반
+      splitData = null;
+    }
 
-  // ── 목적별 루틴 구성 결정 ──
-  // 체중감량+복근 → 유산소 중심 + 복근 + 간단한 상체/하체
-  // 근력+근육 → 3대운동 중심
-  // 하체+둔근 → 하체/둔근 중심
-  // 재활/시니어 → 가벼운 전신
-
-  let customRoutines = {};
-
-  if(isCardio && isCore){
-    // 체중감량 + 복근: 유산소+복근 중심
-    customRoutines = {
-      A:{label:'체감·복근 A',title:'유산소 + 복근 집중',color:'rh-a',muscles:['심폐','복직근','복사근'],
-        sections:[
-          {n:'워밍업',exs:[{n:isHome?'제자리 달리기':'업라이트 바이크',d:'5분',tags:['심폐'],w:[],sets:0}]},
-          makeCardioSection(25),
-          makeCoreSection(4),
-          {n:'쿨다운',exs:[{n:'전신 스트레칭',d:'5분',tags:['유연성'],w:[],sets:0}]}
-        ]},
-      B:{label:'체감·복근 B',title:'상체 근력 + 유산소',color:'rh-b',muscles:['대흉근','광배근','심폐'],
-        sections:[
-          {n:'워밍업',exs:[{n:isHome?'팔 돌리기':'관절 돌리기',d:'3분',tags:['관절가동성'],w:[],sets:0}]},
-          {n:'상체',exs:[
-            {n:isHome?'푸시업':'시티드 체스트 프레스',d:'3세트 × 12회',tags:['대흉근(주)'],w:[],sets:3},
-            {n:isHome?'인버티드 로우':'렛 풀다운',d:'3세트 × 12회',tags:['광배근(주)'],w:[],sets:3},
-            {n:isHome?'파이크 푸시업':'시티드 숄더 프레스',d:'3세트 × 10회',tags:['삼각근(주)'],w:['어깨주의'],sets:3},
-          ]},
-          makeCardioSection(20),
-          makeCoreSection(3),
-          {n:'쿨다운',exs:[{n:'상체 스트레칭',d:'3분',tags:['유연성'],w:[],sets:0}]}
-        ]},
-      C:{label:'체감·복근 C',title:'하체 + 유산소 + 복근',color:'rh-c',muscles:['대퇴사두근','심폐','복근'],
-        sections:[
-          {n:'워밍업',exs:[{n:isHome?'레그 스윙':'고양이-소 스트레칭',d:'3분',tags:['관절가동성'],w:[],sets:0}]},
-          {n:'하체',exs:[
-            {n:isHome?'스쿼트 (맨몸)':'레그 프레스',d:'4세트 × 15회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:4},
-            {n:isHome?'런지':'레그 컬',d:'3세트 × 12회',tags:['햄스트링(주)'],w:['무릎주의'],sets:isHome?0:3},
-            {n:isHome?'글루트 브릿지':'힙 쓰러스트',d:'3세트 × 15회',tags:['대둔근(주)'],w:['허리주의'],sets:isHome?0:3},
-          ]},
-          makeCardioSection(20),
-          makeCoreSection(3),
-          {n:'쿨다운',exs:[{n:'하체 스트레칭',d:'5분',tags:['유연성'],w:[],sets:0}]}
-        ]},
-    };
-  } else if(isGlute && !isStrength){
-    // 하체+둔근 중심
-    customRoutines = {
-      A:{label:'하체·둔근 A',title:'둔근 집중 + 하체',color:'rh-a',muscles:['대둔근','중둔근','대퇴사두근'],
-        sections:[
-          {n:'워밍업',exs:[{n:'고양이-소 스트레칭',d:'3분',tags:['관절가동성'],w:[],sets:0}]},
-          makeGluteSection(),
-          {n:'하체',exs:[
-            {n:isHome?'스쿼트 (맨몸)':'레그 프레스',d:'4세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:4},
-            {n:isHome?'런지':'레그 익스텐션',d:'3세트 × 15회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:isHome?0:3},
-          ]},
-          isCardio?makeCardioSection(15):{n:'코어',exs:[{n:'플랭크',d:'3세트 × 45초',tags:['복횡근(주)'],w:[],sets:0}]},
-          {n:'쿨다운',exs:[{n:'피전 포즈',d:'양쪽 60초',tags:['둔근이완'],w:[],sets:0}]}
-        ]},
-      B:{label:'하체·둔근 B',title:'전신 + 유산소',color:'rh-b',muscles:['심폐','전신'],
-        sections:[
-          {n:'워밍업',exs:[{n:isHome?'제자리 달리기':'업라이트 바이크',d:'5분',tags:['심폐'],w:[],sets:0}]},
-          {n:'상체',exs:[
-            {n:isHome?'푸시업':'시티드 체스트 프레스',d:'3세트 × 12회',tags:['대흉근(주)'],w:[],sets:3},
-            {n:isHome?'인버티드 로우':'렛 풀다운',d:'3세트 × 12회',tags:['광배근(주)'],w:[],sets:3},
-          ]},
-          makeGluteSection(),
-          isCardio?makeCardioSection(15):{n:'쿨다운',exs:[{n:'전신 스트레칭',d:'5분',tags:['유연성'],w:[],sets:0}]},
-        ]},
-    };
-  } else if(isStrength){
-    // 근력·근육 중심
-    customRoutines = {
-      A:{label:'근력 A',title:'가슴·어깨·삼두 (밀기)',color:'rh-a',muscles:['대흉근','삼각근','삼두근'],
-        sections:[
-          {n:'워밍업',exs:[{n:isHome?'팔 돌리기':'관절 돌리기',d:'3분',tags:['관절가동성'],w:[],sets:0}]},
-          {n:'가슴',exs:[
-            {n:isHome?'푸시업':'벤치 프레스',d:'4세트 × 10회',tags:['대흉근(주)'],w:['어깨주의'],sets:4},
-            {n:isHome?'와이드 푸시업':'인클라인 덤벨 프레스',d:'3세트 × 12회',tags:['대흉근상부(주)'],w:[],sets:3},
-          ]},
-          {n:'어깨·삼두',exs:[
-            {n:isHome?'파이크 푸시업':'오버헤드 프레스',d:'3세트 × 10회',tags:['삼각근(주)'],w:['어깨주의'],sets:3},
-            {n:isHome?'다이아몬드 푸시업':'트라이셉 푸시다운',d:'3세트 × 15회',tags:['삼두근(주)'],w:[],sets:3},
-          ]},
-          isCore?makeCoreSection(3):{n:'복근',exs:[{n:'플랭크',d:'3세트 × 45초',tags:['복횡근(주)'],w:[],sets:0}]},
-          {n:'쿨다운',exs:[{n:'가슴 열기 스트레칭',d:'3분',tags:['유연성'],w:[],sets:0}]}
-        ]},
-      B:{label:'근력 B',title:'등·이두 (당기기)',color:'rh-b',muscles:['광배근','이두근','승모근'],
-        sections:[
-          {n:'워밍업',exs:[{n:'밴드 풀어파트',d:'2분',tags:['어깨가동성'],w:[],sets:0}]},
-          {n:'등',exs:[
-            {n:isHome?'풀업':'렛 풀다운',d:'4세트 × 10회',tags:['광배근(주)'],w:[],sets:isHome?0:4},
-            {n:isHome?'인버티드 로우':'바벨 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3},
-          ]},
-          {n:'이두',exs:[
-            {n:isHome?'친업':'바벨 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:isHome?0:3},
-          ]},
-          isCore?makeCoreSection(3):{n:'쿨다운',exs:[{n:'등 스트레칭',d:'3분',tags:['유연성'],w:[],sets:0}]},
-        ]},
-      C:{label:'근력 C',title:'하체·둔근',color:'rh-c',muscles:['대퇴사두근','햄스트링','대둔근'],
-        sections:[
-          {n:'워밍업',exs:[{n:'고양이-소 스트레칭',d:'3분',tags:['관절가동성'],w:[],sets:0}]},
-          {n:'하체',exs:[
-            {n:isHome?'스쿼트 (맨몸)':'바벨 스쿼트',d:'4세트 × 10회',tags:['대퇴사두근(주)'],w:['무릎주의','허리주의'],sets:4},
-            {n:isHome?'런지':'레그 프레스',d:'3세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:isHome?0:3},
-            {n:isHome?'글루트 브릿지':'루마니안 데드리프트',d:'3세트 × 12회',tags:['햄스트링(주)'],w:['허리주의'],sets:isHome?0:3},
-          ]},
-          isCore?makeCoreSection(2):{n:'쿨다운',exs:[{n:'하체 스트레칭',d:'5분',tags:['유연성'],w:[],sets:0}]},
-        ]},
-    };
-  } else if(isRehab){
-    // 재활/시니어: 전신 무분할, 저강도
-    customRoutines = {
-      A:{label:'재활 전신',title:'전신 재활 · 기초 활성화',color:'rh-a',muscles:['전신','코어','관절안정화'],
-        sections:[
-          {n:'워밍업',exs:[
-            {n:isHome?'제자리 달리기':'업라이트 바이크',d:'5분 · 저강도',tags:['심폐'],w:[],sets:0},
-            {n:'관절 돌리기',d:'3분',tags:['관절가동성'],w:[],sets:0}
-          ]},
-          {n:'상체 (저강도)',exs:[
-            {n:isHome?'푸시업':'시티드 체스트 프레스',d:'3세트 × 15회',tags:['대흉근(주)'],w:[],sets:3},
-            {n:isHome?'인버티드 로우':'렛 풀다운',d:'3세트 × 15회',tags:['광배근(주)'],w:[],sets:3},
-          ]},
-          {n:'하체 (저강도)',exs:[
-            {n:isHome?'스쿼트 (맨몸)':'레그 프레스',d:'3세트 × 15회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3},
-            {n:'글루트 브릿지',d:'3세트 × 15회',tags:['대둔근(주)'],w:[],sets:0},
-          ]},
-          {n:'코어·재활',exs:[
-            {n:'플랭크',d:'3세트 × 30초',tags:['복횡근(주)'],w:[],sets:0},
-            {n:'버드독',d:'3세트 × 10회',tags:['코어'],w:[],sets:0},
-          ]},
-          {n:'쿨다운',exs:[{n:'전신 스트레칭',d:'5분',tags:['유연성'],w:[],sets:0}]}
-        ]},
-    };
-  } else {
-    // 기본(건강관리/체중유지 등): RT_BASE 기반
-    customRoutines = null;
-  }
-
-  // ── 루틴 적용 ──
-  let baseRT;
-  if(customRoutines){
-    // 목적별 커스텀 루틴 사용
-    baseRT = {};
-    const splitKeys = Object.keys(customRoutines);
-    const numSplits = splitKeys.length;
-
-    sorted.forEach((day,i)=>{
-      const rk = routineKeys[i % numSplits];
-      const srcKey = splitKeys[i % numSplits];
-      DAY_SCHED[DAY_NUM_MAP[day]] = rk;
-      baseRT[rk] = JSON.parse(JSON.stringify(customRoutines[srcKey]));
-      baseRT[rk].label = rk + '요일 · ' + baseRT[rk].label;
-      RT[rk] = baseRT[rk];
-    });
-
-    // 사용하지 않는 키 REST 처리
-    routineKeys.forEach(rk=>{ if(!(rk in baseRT)) delete RT[rk]; });
-  } else {
-    // 기본 루틴(RT_BASE) 사용 + 세트 배율만 조정
-    baseRT = classType==='홈트'
-      ? JSON.parse(JSON.stringify(HOME_ROUTINES))
-      : JSON.parse(JSON.stringify(RT_BASE));
-
-    sorted.forEach((day,i)=>{
-      const rk = routineKeys[i % routineKeys.length];
-      DAY_SCHED[DAY_NUM_MAP[day]] = rk;
-    });
-
-    // 목적 배율 적용
-    let totalSetMult = 1.0, cardioBoost2 = false, lowImpact2 = false;
-    classPurposes.forEach(p=>{
-      const pr = PURPOSE_PRESETS[p]; if(!pr) return;
-      totalSetMult += (pr.setMult||1.0) - 1.0;
-      if(pr.cardioBoost) cardioBoost2 = true;
-      if(pr.lowImpact) lowImpact2 = true;
-    });
-    totalSetMult = Math.max(0.4, Math.min(1.6, totalSetMult));
-
-    Object.keys(baseRT).forEach(tk=>{
-      if(tk==='REST') return;
-      baseRT[tk].sections.forEach(sec=>{
-        sec.exs.forEach(ex=>{
-          if(ex.sets>0) ex.sets=Math.max(1,Math.round(ex.sets*totalSetMult));
-          if(lowImpact2 && ex.d?.includes('분')){
-            const m=ex.d.match(/(\d+)분/);
-            if(m) ex.d=ex.d.replace(/\d+분/, Math.max(5,Math.round(parseInt(m[1])*0.6))+'분');
-          }
-        });
-        if(cardioBoost2 && sec.n.includes('유산소')) sec.exs.forEach(ex=>{
-          if(ex.d?.includes('분')){
-            const m=ex.d.match(/(\d+)분/);
-            if(m) ex.d=ex.d.replace(/\d+분/, Math.min(60,Math.round(parseInt(m[1])*1.4))+'분');
-          }
-        });
+    // ── 루틴 적용 ──
+    if(splitData){
+      splitKeys = Object.keys(splitData);
+      var numSplits = splitKeys.length;
+      sorted.forEach(function(day, i){
+        var rk = routineKeys[i % numSplits];
+        var sk = splitKeys[i % numSplits];
+        DAY_SCHED[DAY_NUM_MAP[day]] = rk;
+        RT[rk] = JSON.parse(JSON.stringify(splitData[sk]));
+        RT[rk].label = rk + '요일 · ' + RT[rk].label;
       });
-      RT[tk]=baseRT[tk];
-    });
-  }
+      routineKeys.forEach(function(rk){
+        var used = splitKeys.some(function(_,i){ return routineKeys[i % splitKeys.length] === rk; });
+        if(!used) delete RT[rk];
+      });
+    } else {
+      // 기본 루틴 세트 배율만 조정
+      var baseRT = isHome ? JSON.parse(JSON.stringify(HOME_ROUTINES)) : JSON.parse(JSON.stringify(RT_BASE));
+      sorted.forEach(function(day, i){
+        var rk = routineKeys[i % routineKeys.length];
+        DAY_SCHED[DAY_NUM_MAP[day]] = rk;
+      });
+      var totalSetMult = 1.0;
+      classPurposes.forEach(function(p){
+        var pr = PURPOSE_PRESETS[p]; if(!pr) return;
+        totalSetMult += (pr.setMult||1.0) - 1.0;
+      });
+      totalSetMult = Math.max(0.4, Math.min(1.6, totalSetMult));
+      Object.keys(baseRT).forEach(function(tk){
+        if(tk==='REST') return;
+        baseRT[tk].sections.forEach(function(sec){
+          sec.exs.forEach(function(ex){
+            if(ex.sets>0) ex.sets=Math.max(1,Math.round(ex.sets*totalSetMult));
+          });
+        });
+        RT[tk] = baseRT[tk];
+      });
+    }
 
-  localStorage.setItem('fitlog-classtype', classType);
-  localStorage.setItem('fitlog-purposes', JSON.stringify(classPurposes));
-  await window.saveRoutine(RT);
+    // ── 저장 ──
+    localStorage.setItem('fitlog-classtype', classType);
+    localStorage.setItem('fitlog-purposes', JSON.stringify(classPurposes));
+    await window.saveRoutine(RT);
 
-  // ── STEP2 완료 표시 ──
-  markSettDone(2);
-  const applyBtn2 = applyBtn2x || document.getElementById('step2-apply-btn');
-  if(applyBtn2){
-    applyBtn2.style.background = 'linear-gradient(135deg,var(--green),#2d9e6b)';
-    applyBtn2.style.color = '#fff'; applyBtn2.style.border = 'none';
-    applyBtn2.style.boxShadow = '0 4px 16px #4caf7d44';
-    applyBtn2.innerHTML = '✅ 2단계 적용 완료!';
-  }
-  const dot2 = document.getElementById('step2-status-dot');
-  const txt2 = document.getElementById('step2-status-txt');
-  if(dot2) dot2.style.background = 'var(--green)';
-  if(txt2){ txt2.style.color='var(--green)';
-    txt2.textContent = `✅ [${classPurposes.join('+')}] 목적 루틴 적용 완료! 다음 단계로 이동하세요.`; }
-  const nextBtn2 = document.getElementById('step2-next-btn');
-  if(nextBtn2){
-    nextBtn2.disabled=false; nextBtn2.style.cursor='pointer'; nextBtn2.style.opacity='1';
-    nextBtn2.style.background='linear-gradient(135deg,var(--blue),#2563eb)';
-    nextBtn2.style.color='#fff'; nextBtn2.style.border='none';
-    nextBtn2.style.boxShadow='0 4px 16px #4a9eff44';
-  }
+    // ── 완료 표시 ──
+    markSettDone(2);
 
-  goSettStep(3);
-  updateDayAssignPreview();
+    var applyBtn2 = applyBtn2x || document.getElementById('step2-apply-btn');
+    if(applyBtn2){
+      applyBtn2.style.background = 'linear-gradient(135deg,var(--green),#2d9e6b)';
+      applyBtn2.style.color = '#fff';
+      applyBtn2.style.border = 'none';
+      applyBtn2.innerHTML = '✅ 2단계 적용 완료!';
+      applyBtn2.disabled = false;
+      applyBtn2.style.opacity = '1';
+    }
+    var dot2 = document.getElementById('step2-status-dot');
+    var txt2 = document.getElementById('step2-status-txt');
+    if(dot2) dot2.style.background = 'var(--green)';
+    if(txt2){ txt2.style.color='var(--green)'; txt2.textContent = '✅ ['+classPurposes.join('+')+'] 루틴 적용 완료! 다음 단계로 이동하세요.'; }
+    var nextBtn2 = document.getElementById('step2-next-btn');
+    if(nextBtn2){
+      nextBtn2.disabled=false; nextBtn2.style.cursor='pointer'; nextBtn2.style.opacity='1';
+      nextBtn2.style.background='linear-gradient(135deg,var(--blue),#2563eb)';
+      nextBtn2.style.color='#fff'; nextBtn2.style.border='none';
+    }
 
-  // 오늘 루틴 표시
-  const todayTk = DAY_SCHED[new Date().getDay()];
-  const todayTitle = RT[todayTk]?.title || '휴식';
-  showToast(`✅ [${classPurposes.join('+')}] 루틴 적용!\n오늘: ${todayTitle}`, 'success');
-  initSetData(DAY_SCHED[selDay]);
-  renderWorkout && renderWorkout();
-  renderHome && renderHome();
+    clearTimeout(_safeTimer);
+    goSettStep(3);
+    updateDayAssignPreview();
 
-  clearTimeout(_safeTimer);
+    var todayTk = DAY_SCHED[new Date().getDay()];
+    var todayTitle = (RT[todayTk] && RT[todayTk].title) ? RT[todayTk].title : '휴식';
+    showToast('✅ ['+classPurposes.join('+')+'] 루틴 적용!\n오늘: '+todayTitle, 'success');
+    initSetData(DAY_SCHED[selDay]);
+    renderWorkout && renderWorkout();
+    renderHome && renderHome();
 
-  }catch(e){
+  } catch(e) {
     console.error('[FitLog] applyClassificationWithDays 오류:', e);
     clearTimeout(_safeTimer);
     if(applyBtn2x){
