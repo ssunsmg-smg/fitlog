@@ -7770,7 +7770,8 @@ async function applyClassificationWithDays(){
       applyBtn2x.innerHTML='✅ 2단계 완료 · 루틴 적용하기';
       applyBtn2x.style.opacity='1';
     }
-    showToast('오류: ' + (e && e.message ? e.message.slice(0,40) : String(e).slice(0,40)), 'error');
+    showToast('오류: ' + (e && e.message ? e.message.slice(0,60) : String(e).slice(0,60)), 'error');
+    alert('[FitLog 디버그] ' + (e && e.message ? e.message : String(e)));
   }
 }
 
