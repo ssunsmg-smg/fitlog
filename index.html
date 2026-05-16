@@ -2140,6 +2140,7 @@ const RT_BASE={
 };
 
 const DAY_SCHED={0:'REST',1:'A',2:'B',3:'C',4:'D',5:'E',6:'F'};
+const DAY_NUM_MAP={일:0,월:1,화:2,수:3,목:4,금:5,토:6};
 const DAY_KR=['일','월','화','수','목','금','토'];
 
 // ══════════════════════════════
@@ -6919,21 +6920,20 @@ async function applyLevel(){
     // 현재 운동 요일 배정에 따라 분할 순환 배치
     const assignedDaysLocal = JSON.parse(localStorage.getItem('fitlog-assigned-days')||'["월","화","수","목","금"]');
     const sorted = [...assignedDaysLocal].sort((a,b)=>dayOrder.indexOf(a)-dayOrder.indexOf(b));
-    const DAY_NUM_MAP2 = {일:0,월:1,화:2,수:3,목:4,금:5,토:6};
 
     // 요일→루틴 초기화
-    dayOrder.forEach(d=>{ if(DAY_NUM_MAP2[d]!==undefined) DAY_SCHED[DAY_NUM_MAP2[d]]='REST'; });
+    dayOrder.forEach(d=>{ if(DAY_NUM_MAP[d]!==undefined) DAY_SCHED[DAY_NUM_MAP[d]]='REST'; });
 
     // 분할에 맞게 요일 배치 (순환)
     sorted.forEach((day,i)=>{
       const rk = splitKeys[i % numSplits];
-      DAY_SCHED[DAY_NUM_MAP2[day]] = rk;
+      DAY_SCHED[DAY_NUM_MAP[day]] = rk;
       RT[rk] = JSON.parse(JSON.stringify(splitData[rk]));
     });
 
     // 사용하지 않는 루틴 키는 REST로
     routineKeys.forEach(rk=>{
-      if(!splitKeys.includes(rk)) DAY_SCHED[Object.values(DAY_NUM_MAP2).find(v=>DAY_SCHED[v]===rk)||''] = 'REST';
+      if(!splitKeys.includes(rk)) DAY_SCHED[Object.values(DAY_NUM_MAP).find(v=>DAY_SCHED[v]===rk)||''] = 'REST';
     });
 
     localStorage.setItem('fitlog-assigned-days', JSON.stringify(assignedDaysLocal));
@@ -6959,17 +6959,16 @@ async function applyLevel(){
   // 재활 단계는 무분할 - 모든 요일에 동일 루틴 A
   if(curLevel===0){
     const assignedDaysLocal = JSON.parse(localStorage.getItem('fitlog-assigned-days')||'["월","화","수","목","금"]');
-    const DAY_NUM_MAP3 = {일:0,월:1,화:2,수:3,목:4,금:5,토:6};
     const rehabRoutine = splitData ? splitData['A'] : RT_BASE['A'];
     assignedDaysLocal.forEach(d=>{
-      const dow = DAY_NUM_MAP3[d];
+      const dow = DAY_NUM_MAP[d];
       if(dow!==undefined){ DAY_SCHED[dow]='A'; RT['A']=JSON.parse(JSON.stringify(rehabRoutine)); }
     });
   }
 
   localStorage.setItem('fitlog-level', curLevel);
   localStorage.setItem('fitlog-day-sched', JSON.stringify(DAY_SCHED));
-  await window.saveRoutine(RT);
+  try { window.saveRoutine(RT); } catch(se){ console.warn("saveRoutine 실패",se); }
   renderWorkout && renderWorkout();
   renderHome && renderHome();
 
@@ -7016,7 +7015,7 @@ async function applyLevel(){
     console.error('[FitLog] applyLevel 오류:', e);
     clearTimeout(_safeTimer3);
     if(applyBtn3){ applyBtn3.disabled=false; applyBtn3.textContent='✅ 3단계 완료 · 이 단계로 루틴 적용'; applyBtn3.style.opacity='1'; }
-    showToast('저장 중 오류. 다시 시도해주세요.','error');
+    showToast('저장 중 오류. 다시 시도해주세요. (' + (e&&e.message?e.message.slice(0,30):String(e).slice(0,30)) + ')','error');
   }
 }
 
