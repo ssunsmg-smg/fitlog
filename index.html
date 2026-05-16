@@ -131,14 +131,25 @@
   };
   window.saveRoutine = async (rt) => {
     if (!currentUser) return;
-    // 루틴 전체 대신 설정값(단계·요일배치)만 저장 — 큰 객체 저장 방지
-    await db.collection('users').doc(currentUser.uid).collection('settings').doc('routine').set({
+    // 3초 타임아웃: Firestore가 응답 없으면 localStorage에만 저장하고 반환
+    const payload = {
       level: curLevel,
       daySchedule: DAY_SCHED,
       classType: typeof classType !== 'undefined' ? classType : '기구운동',
       purposes: typeof classPurposes !== 'undefined' ? classPurposes : [],
       savedAt: new Date().toISOString()
-    });
+    };
+    // localStorage 항상 즉시 저장 (오프라인 백업)
+    localStorage.setItem('fitlog-routine-backup', JSON.stringify(payload));
+    // Firestore 저장 (3초 타임아웃)
+    try {
+      await Promise.race([
+        db.collection('users').doc(currentUser.uid).collection('settings').doc('routine').set(payload),
+        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
+      ]);
+    } catch(e) {
+      console.warn('[FitLog] saveRoutine Firestore 저장 실패(로컬 백업 유지):', e.message);
+    }
   };
   window.loadRoutine = async () => {
     if (!currentUser) return null;
@@ -6886,6 +6897,16 @@ async function applyLevel(){
   const applyBtn3 = document.getElementById('step3-apply-btn');
   if(applyBtn3){ applyBtn3.disabled=true; applyBtn3.textContent='⏳ 저장 중...'; applyBtn3.style.opacity='0.7'; }
 
+  // 10초 타임아웃 안전장치
+  const _safeTimer3 = setTimeout(()=>{
+    if(applyBtn3 && applyBtn3.disabled){
+      applyBtn3.disabled=false; applyBtn3.textContent='✅ 3단계 완료 · 이 단계로 루틴 적용'; applyBtn3.style.opacity='1';
+      showToast('저장 시간 초과. 다시 눌러주세요.','error');
+    }
+  }, 10000);
+
+  try{
+
   // ── 단계별 분할 루틴 데이터 적용 ──
   const splitData = SPLIT_ROUTINES[curLevel];
 
@@ -6990,6 +7011,14 @@ async function applyLevel(){
 
   renderAdjPanel && renderAdjPanel();
   updateDayAssignPreview && updateDayAssignPreview();
+  clearTimeout(_safeTimer3);
+
+  }catch(e){
+    console.error('[FitLog] applyLevel 오류:', e);
+    clearTimeout(_safeTimer3);
+    if(applyBtn3){ applyBtn3.disabled=false; applyBtn3.textContent='✅ 3단계 완료 · 이 단계로 루틴 적용'; applyBtn3.style.opacity='1'; }
+    showToast('저장 중 오류. 다시 시도해주세요.','error');
+  }
 }
 
 // ── 1RM 기준 중량 ──
@@ -7476,6 +7505,16 @@ async function applyClassificationWithDays(){
   const applyBtn2x = document.getElementById('step2-apply-btn');
   if(applyBtn2x){ applyBtn2x.disabled=true; applyBtn2x.innerHTML='⏳ 저장 중...'; applyBtn2x.style.opacity='0.7'; }
 
+  // 10초 타임아웃 안전장치 - 저장이 너무 오래 걸리면 강제 복구
+  const _safeTimer = setTimeout(()=>{
+    if(applyBtn2x && applyBtn2x.disabled){
+      applyBtn2x.disabled=false; applyBtn2x.innerHTML='✅ 2단계 완료 · 루틴 적용하기'; applyBtn2x.style.opacity='1';
+      showToast('저장 시간 초과. 네트워크를 확인 후 다시 눌러주세요.','error');
+    }
+  }, 10000);
+
+  try{
+
   // ── 요일 배정 ──
   const dayOrder = ['월','화','수','목','금','토','일'];
   const routineKeys = ['A','B','C','D','E','F'];
@@ -7749,6 +7788,19 @@ async function applyClassificationWithDays(){
   initSetData(DAY_SCHED[selDay]);
   renderWorkout && renderWorkout();
   renderHome && renderHome();
+
+  clearTimeout(_safeTimer);
+
+  }catch(e){
+    console.error('[FitLog] applyClassificationWithDays 오류:', e);
+    clearTimeout(_safeTimer);
+    if(applyBtn2x){
+      applyBtn2x.disabled=false;
+      applyBtn2x.innerHTML='✅ 2단계 완료 · 루틴 적용하기';
+      applyBtn2x.style.opacity='1';
+    }
+    showToast('저장 중 오류가 발생했습니다. 다시 시도해주세요.','error');
+  }
 }
 
 
