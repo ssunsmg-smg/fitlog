@@ -98,10 +98,15 @@
   // ── DB 함수들 ──
   window.saveUserProfile = async (profile) => {
     if (!currentUser) return;
-    await db.collection('users').doc(currentUser.uid).set({
+    const data = {
       ...profile, email:currentUser.email, displayName:currentUser.displayName,
       photoURL:currentUser.photoURL, updatedAt:new Date().toISOString()
-    }, { merge: true });
+    };
+    // localStorage 즉시 백업
+    try{ localStorage.setItem('fitlog-profile-backup', JSON.stringify(data)); }catch(e){}
+    // Firestore 백그라운드 저장 (기다리지 않음)
+    db.collection('users').doc(currentUser.uid).set(data, { merge: true })
+      .catch(e => console.warn('[FitLog] saveUserProfile 백그라운드 저장 실패:', e.message));
   };
   window.loadUserProfile = async () => {
     if (!currentUser) return null;
@@ -131,7 +136,6 @@
   };
   window.saveRoutine = async (rt) => {
     if (!currentUser) return;
-    // 3초 타임아웃: Firestore가 응답 없으면 localStorage에만 저장하고 반환
     const payload = {
       level: curLevel,
       daySchedule: DAY_SCHED,
@@ -139,17 +143,12 @@
       purposes: typeof classPurposes !== 'undefined' ? classPurposes : [],
       savedAt: new Date().toISOString()
     };
-    // localStorage 항상 즉시 저장 (오프라인 백업)
+    // localStorage 즉시 저장 (항상 성공)
     localStorage.setItem('fitlog-routine-backup', JSON.stringify(payload));
-    // Firestore 저장 (3초 타임아웃)
-    try {
-      await Promise.race([
-        db.collection('users').doc(currentUser.uid).collection('settings').doc('routine').set(payload),
-        new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), 3000))
-      ]);
-    } catch(e) {
-      console.warn('[FitLog] saveRoutine Firestore 저장 실패(로컬 백업 유지):', e.message);
-    }
+    // Firestore 저장: 기다리지 않고 백그라운드에서 시도 (fire-and-forget)
+    db.collection('users').doc(currentUser.uid).collection('settings').doc('routine').set(payload)
+      .catch(e => console.warn('[FitLog] saveRoutine 백그라운드 저장 실패:', e.message));
+    // localStorage에 즉시 저장했으므로 바로 반환
   };
   window.loadRoutine = async () => {
     if (!currentUser) return null;
