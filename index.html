@@ -5766,7 +5766,7 @@ async function saveBodyInfo(){
   }
 
   // 신체정보 기반으로 루틴 세트수 재계산
-  applyBodyToRoutine();
+  await applyBodyToRoutine();
 
   // Firebase에 저장
   await window.saveUserProfile(userProfile);
@@ -6882,6 +6882,10 @@ async function applyLevel(){
   const lv = LEVEL_INFO[curLevel];
   if(!lv){ showToast('단계를 먼저 선택해주세요','error'); return; }
 
+  // 버튼 저장 중 상태
+  const applyBtn3 = document.getElementById('step3-apply-btn');
+  if(applyBtn3){ applyBtn3.disabled=true; applyBtn3.textContent='⏳ 저장 중...'; applyBtn3.style.opacity='0.7'; }
+
   // ── 단계별 분할 루틴 데이터 적용 ──
   const splitData = SPLIT_ROUTINES[curLevel];
 
@@ -6959,6 +6963,13 @@ async function applyLevel(){
     applyBtn.style.background='var(--green)';
     setTimeout(()=>{ applyBtn.textContent='✅ 이 단계로 루틴 적용'; applyBtn.style.background=''; }, 2000);
   }
+  // 버튼 완료 상태
+  if(applyBtn3){
+    applyBtn3.disabled=false; applyBtn3.style.opacity='1';
+    applyBtn3.textContent='✅ 적용 완료!';
+    applyBtn3.style.background='linear-gradient(135deg,var(--green),#2d9e6b)';
+  }
+
   markSettDone(3);
 
   // ── STEP3 버튼 상태 업데이트 ──
@@ -7276,7 +7287,7 @@ function updateInjuryNote(){
   note.style.display = 'block';
 }
 
-function saveBodyInfoAndNext(){
+async function saveBodyInfoAndNext(){
   const age    = document.getElementById('bi-age')?.value;
   const height = document.getElementById('bi-height')?.value;
   const weight = document.getElementById('bi-weight')?.value;
@@ -7284,24 +7295,29 @@ function saveBodyInfoAndNext(){
     showToast('⚠️ 나이·키·몸무게를 모두 입력해주세요','error');
     return;
   }
-  saveBodyInfo();
-  markSettDone(1);
 
-  // STEP1 저장 완료 시각 피드백
-  const nextBtn1 = document.querySelector('[onclick="saveBodyInfoAndNext()"]');
-  if(nextBtn1){
-    const orig = nextBtn1.innerHTML;
-    nextBtn1.innerHTML = '✅ 1단계 저장 완료! ② 운동환경으로 이동 중...';
-    nextBtn1.style.background = 'linear-gradient(135deg,var(--green),#2d9e6b)';
+  const btn = document.querySelector('[onclick="saveBodyInfoAndNext()"]');
+  if(btn){ btn.disabled=true; btn.innerHTML='⏳ 저장 중...'; btn.style.opacity='0.7'; }
+
+  try{
+    await saveBodyInfo();          // Firebase 저장 완료까지 대기
+    markSettDone(1);
+
+    if(btn){
+      btn.innerHTML = '✅ 1단계 저장 완료!';
+      btn.style.background = 'linear-gradient(135deg,var(--green),#2d9e6b)';
+      btn.style.opacity = '1';
+    }
+    showToast('✅ 1단계 신체정보 저장 완료!', 'success');
+
     setTimeout(()=>{
-      nextBtn1.innerHTML = orig;
-      nextBtn1.style.background = '';
+      if(btn){ btn.disabled=false; }
       goSettStep(2);
-    }, 800);
-  } else {
-    goSettStep(2);
+    }, 700);
+  }catch(e){
+    if(btn){ btn.disabled=false; btn.innerHTML='💾 저장 후 ② 운동환경 설정으로 →'; btn.style.opacity='1'; }
+    showToast('저장 실패. 다시 시도해주세요.','error');
   }
-  showToast('✅ 1단계 신체정보 저장 완료!', 'success');
 }
 
 function initSettingsTab(){
@@ -7455,6 +7471,10 @@ function updateDayAssignPreview(){
 async function applyClassificationWithDays(){
   if(assignedDays.length < 1){ showToast('운동 요일을 하나 이상 선택해주세요','error'); return; }
   if(!classPurposes.length){ showToast('목적을 하나 이상 선택해주세요','error'); return; }
+
+  // 버튼 저장 중 상태
+  const applyBtn2x = document.getElementById('step2-apply-btn');
+  if(applyBtn2x){ applyBtn2x.disabled=true; applyBtn2x.innerHTML='⏳ 저장 중...'; applyBtn2x.style.opacity='0.7'; }
 
   // ── 요일 배정 ──
   const dayOrder = ['월','화','수','목','금','토','일'];
@@ -7699,7 +7719,7 @@ async function applyClassificationWithDays(){
 
   // ── STEP2 완료 표시 ──
   markSettDone(2);
-  const applyBtn2 = document.getElementById('step2-apply-btn');
+  const applyBtn2 = applyBtn2x || document.getElementById('step2-apply-btn');
   if(applyBtn2){
     applyBtn2.style.background = 'linear-gradient(135deg,var(--green),#2d9e6b)';
     applyBtn2.style.color = '#fff'; applyBtn2.style.border = 'none';
