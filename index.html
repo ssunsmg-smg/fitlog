@@ -7561,7 +7561,7 @@ async function applyClassificationWithDays(){
     // ── 목적별 루틴 결정 ──
     var splitKeys, splitData;
 
-    if(isCardio && isCore){
+    if(isCardio || isCore){
       // 체중감량 + 복근
       splitData = {
         A: {label:'체감·복근A',title:'유산소 + 복근 집중',color:'rh-a',muscles:['심폐','복직근'],
@@ -7582,10 +7582,14 @@ async function applyClassificationWithDays(){
             makeCoreSection(3, isHome),
             {n:'쿨다운',exs:[{n:'상체 스트레칭',d:'3분',tags:['유연성'],w:[],sets:0}]}
           ]},
-        C: {label:'체감·복근C',title:'하체 + 유산소 + 복근',color:'rh-c',muscles:['대퇴사두근','심폐','복근'],
+        C: {label:'체감·복근C',title:isGlute?'하체·둔근 + 유산소 + 복근':'하체 + 유산소 + 복근',color:'rh-c',muscles:isGlute?['대둔근','대퇴사두근','심폐','복근']:['대퇴사두근','심폐','복근'],
           sections:[
             {n:'워밍업',exs:[{n:'고양이-소 스트레칭',d:'3분',tags:['관절가동성'],w:[],sets:0}]},
-            {n:'하체',exs:[
+            {n:isGlute?'하체·둔근':'하체',exs:isGlute?[
+              {n:isHome?'힙 쓰러스트 (맨몸)':'바벨 힙 쓰러스트',d:'4세트 × 12회',tags:['대둔근(주)'],w:['허리주의'],sets:4},
+              {n:isHome?'스쿼트 (맨몸)':'레그 프레스',d:'3세트 × 15회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3},
+              {n:isHome?'클램쉘':'힙 어브덕션 (기계)',d:'3세트 × 15회',tags:['중둔근(주)'],w:[],sets:isHome?0:3}
+            ]:[
               {n:isHome?'스쿼트 (맨몸)':'레그 프레스',d:'4세트 × 15회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:4},
               {n:isHome?'글루트 브릿지':'레그 컬',d:'3세트 × 12회',tags:['햄스트링(주)'],w:['허리주의'],sets:isHome?0:3}
             ]},
