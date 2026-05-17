@@ -7034,16 +7034,55 @@ async function saveAllSettings(){
     const setMult  = lv.setMult || 1.0;
     const repRange = lv.repRange|| '10~15회';
 
-    // ── 목적별 루틴 구성 ──
+    // ── 목적별 루틴 구성 (우선순위: 근력 > 체중감량/복근 > 하체둔근 > 재활) ──
     let splitData = null;
 
-    if(isCardio || isCore){
+    if(isStrength){
+      // 근력·근육 중심 (복근이 추가되면 C요일에 복근 포함)
+      splitData = {
+        A:{label:'근력A',title:'가슴·어깨·삼두 (밀기)',color:'rh-a',muscles:['대흉근','삼각근','삼두근'],
+          sections:[
+            {n:'워밍업',exs:[{n:'관절 돌리기',d:'3분',tags:['관절가동성'],w:[],sets:0}]},
+            {n:'가슴',exs:[
+              {n:isHome?'푸시업':'벤치 프레스',d:Math.round(4*setMult)+'세트 × '+repRange,tags:['대흉근(주)'],w:['어깨주의'],sets:Math.round(4*setMult)},
+              {n:isHome?'와이드 푸시업':'인클라인 덤벨 프레스',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['대흉근상부(주)'],w:[],sets:Math.round(3*setMult)}
+            ]},
+            {n:'어깨·삼두',exs:[
+              {n:isHome?'파이크 푸시업':'오버헤드 프레스',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['삼각근(주)'],w:['어깨주의'],sets:Math.round(3*setMult)},
+              {n:isHome?'다이아몬드 푸시업':'트라이셉 푸시다운',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['삼두근(주)'],w:[],sets:Math.round(3*setMult)}
+            ]},
+            isCore?makeCoreSection(Math.round(2*setMult),isHome):{n:'쿨다운',exs:[{n:'가슴 열기 스트레칭',d:'3분',tags:['유연성'],w:[],sets:0}]}
+          ]},
+        B:{label:'근력B',title:'등·이두 (당기기)',color:'rh-b',muscles:['광배근','이두근','승모근'],
+          sections:[
+            {n:'워밍업',exs:[{n:'밴드 풀어파트',d:'2분',tags:['어깨가동성'],w:[],sets:0}]},
+            {n:'등',exs:[
+              {n:isHome?'풀업':'렛 풀다운',d:Math.round(4*setMult)+'세트 × '+repRange,tags:['광배근(주)'],w:[],sets:isHome?0:Math.round(4*setMult)},
+              {n:isHome?'인버티드 로우':'바벨 로우',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['광배근(주)'],w:['허리주의'],sets:Math.round(3*setMult)}
+            ]},
+            {n:'이두',exs:[{n:isHome?'친업':'바벨 컬',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['이두근(주)'],w:[],sets:isHome?0:Math.round(3*setMult)}]},
+            {n:'쿨다운',exs:[{n:'등 스트레칭',d:'3분',tags:['유연성'],w:[],sets:0}]}
+          ]},
+        C:{label:'근력C',title:'하체'+(isGlute?'·둔근':'')+(isCore?'+복근':''),color:'rh-c',muscles:['대퇴사두근','햄스트링','대둔근'],
+          sections:[
+            {n:'워밍업',exs:[{n:'고양이-소 스트레칭',d:'3분',tags:['관절가동성'],w:[],sets:0}]},
+            {n:'하체',exs:[
+              {n:isHome?'스쿼트 (맨몸)':'바벨 스쿼트',d:Math.round(4*setMult)+'세트 × '+repRange,tags:['대퇴사두근(주)'],w:['무릎주의','허리주의'],sets:Math.round(4*setMult)},
+              isGlute?{n:isHome?'힙 쓰러스트 (맨몸)':'바벨 힙 쓰러스트',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['대둔근(주)'],w:['허리주의'],sets:Math.round(3*setMult)}:
+                      {n:isHome?'런지':'레그 프레스',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['대퇴사두근(주)'],w:['무릎주의'],sets:isHome?0:Math.round(3*setMult)},
+              {n:isHome?'글루트 브릿지':'루마니안 데드리프트',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['햄스트링(주)'],w:['허리주의'],sets:isHome?0:Math.round(3*setMult)}
+            ]},
+            isCore?makeCoreSection(Math.round(3*setMult),isHome):{n:'쿨다운',exs:[{n:'하체 스트레칭',d:'5분',tags:['유연성'],w:[],sets:0}]}
+          ]}
+      };
+    } else if(isCardio || isCore){
+      // 체중감량·복근 중심
       splitData = {
         A:{label:'체감·복근A',title:'유산소 + 복근 집중',color:'rh-a',muscles:['심폐','복직근'],
           sections:[
             {n:'워밍업',exs:[{n:isHome?'제자리 달리기':'업라이트 바이크',d:'5분',tags:['심폐'],w:[],sets:0}]},
-            makeCardioSection(25, isHome),
-            makeCoreSection(Math.round(4*setMult), isHome),
+            makeCardioSection(25,isHome),
+            makeCoreSection(Math.round(4*setMult),isHome),
             {n:'쿨다운',exs:[{n:'전신 스트레칭',d:'5분',tags:['유연성'],w:[],sets:0}]}
           ]},
         B:{label:'체감·복근B',title:'상체 + 유산소',color:'rh-b',muscles:['대흉근','광배근','심폐'],
@@ -7053,27 +7092,27 @@ async function saveAllSettings(){
               {n:isHome?'푸시업':'시티드 체스트 프레스',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['대흉근(주)'],w:[],sets:Math.round(3*setMult)},
               {n:isHome?'인버티드 로우':'렛 풀다운',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['광배근(주)'],w:[],sets:Math.round(3*setMult)}
             ]},
-            makeCardioSection(20, isHome),
-            makeCoreSection(Math.round(3*setMult), isHome),
+            makeCardioSection(20,isHome),
+            makeCoreSection(Math.round(3*setMult),isHome),
             {n:'쿨다운',exs:[{n:'상체 스트레칭',d:'3분',tags:['유연성'],w:[],sets:0}]}
           ]},
-        C:{label:'체감·복근C',title:isGlute?'하체·둔근 + 유산소 + 복근':'하체 + 유산소 + 복근',color:'rh-c',muscles:['대퇴사두근','심폐','복근'],
+        C:{label:'체감·복근C',title:'하체'+(isGlute?'·둔근':'')+'+유산소+복근',color:'rh-c',muscles:['대퇴사두근','심폐','복근'],
           sections:[
             {n:'워밍업',exs:[{n:'고양이-소 스트레칭',d:'3분',tags:['관절가동성'],w:[],sets:0}]},
             {n:isGlute?'하체·둔근':'하체',exs:isGlute?[
               {n:isHome?'힙 쓰러스트 (맨몸)':'바벨 힙 쓰러스트',d:Math.round(4*setMult)+'세트 × '+repRange,tags:['대둔근(주)'],w:['허리주의'],sets:Math.round(4*setMult)},
-              {n:isHome?'스쿼트 (맨몸)':'레그 프레스',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['대퇴사두근(주)'],w:['무릎주의'],sets:Math.round(3*setMult)},
-              {n:isHome?'클램쉘':'힙 어브덕션 (기계)',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['중둔근(주)'],w:[],sets:Math.round(3*setMult)}
+              {n:isHome?'스쿼트 (맨몸)':'레그 프레스',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['대퇴사두근(주)'],w:['무릎주의'],sets:Math.round(3*setMult)}
             ]:[
               {n:isHome?'스쿼트 (맨몸)':'레그 프레스',d:Math.round(4*setMult)+'세트 × '+repRange,tags:['대퇴사두근(주)'],w:['무릎주의'],sets:Math.round(4*setMult)},
-              {n:isHome?'글루트 브릿지':'레그 컬',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['햄스트링(주)'],w:['허리주의'],sets:Math.round(3*setMult)}
+              {n:isHome?'글루트 브릿지':'레그 컬',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['햄스트링(주)'],w:['허리주의'],sets:isHome?0:Math.round(3*setMult)}
             ]},
-            makeCardioSection(20, isHome),
-            makeCoreSection(Math.round(3*setMult), isHome),
+            makeCardioSection(20,isHome),
+            makeCoreSection(Math.round(3*setMult),isHome),
             {n:'쿨다운',exs:[{n:'하체 스트레칭',d:'5분',tags:['유연성'],w:[],sets:0}]}
           ]}
       };
     } else if(isGlute){
+      // 하체·둔근 중심
       splitData = {
         A:{label:'하체·둔근A',title:'둔근 집중 + 하체',color:'rh-a',muscles:['대둔근','중둔근','대퇴사두근'],
           sections:[
@@ -7093,40 +7132,8 @@ async function saveAllSettings(){
             {n:'쿨다운',exs:[{n:'전신 스트레칭',d:'5분',tags:['유연성'],w:[],sets:0}]}
           ]}
       };
-    } else if(isStrength){
-      splitData = {
-        A:{label:'근력A',title:'가슴·어깨·삼두 (밀기)',color:'rh-a',muscles:['대흉근','삼각근','삼두근'],
-          sections:[
-            {n:'가슴',exs:[
-              {n:isHome?'푸시업':'벤치 프레스',d:Math.round(4*setMult)+'세트 × '+repRange,tags:['대흉근(주)'],w:['어깨주의'],sets:Math.round(4*setMult)},
-              {n:isHome?'와이드 푸시업':'인클라인 덤벨 프레스',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['대흉근상부(주)'],w:[],sets:Math.round(3*setMult)}
-            ]},
-            {n:'어깨·삼두',exs:[
-              {n:isHome?'파이크 푸시업':'오버헤드 프레스',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['삼각근(주)'],w:['어깨주의'],sets:Math.round(3*setMult)},
-              {n:isHome?'다이아몬드 푸시업':'트라이셉 푸시다운',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['삼두근(주)'],w:[],sets:Math.round(3*setMult)}
-            ]},
-            {n:'쿨다운',exs:[{n:'가슴 열기 스트레칭',d:'3분',tags:['유연성'],w:[],sets:0}]}
-          ]},
-        B:{label:'근력B',title:'등·이두 (당기기)',color:'rh-b',muscles:['광배근','이두근'],
-          sections:[
-            {n:'등',exs:[
-              {n:isHome?'풀업':'렛 풀다운',d:Math.round(4*setMult)+'세트 × '+repRange,tags:['광배근(주)'],w:[],sets:Math.round(4*setMult)},
-              {n:isHome?'인버티드 로우':'바벨 로우',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['광배근(주)'],w:['허리주의'],sets:Math.round(3*setMult)}
-            ]},
-            {n:'이두',exs:[{n:isHome?'친업':'바벨 컬',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['이두근(주)'],w:[],sets:Math.round(3*setMult)}]},
-            {n:'쿨다운',exs:[{n:'등 스트레칭',d:'3분',tags:['유연성'],w:[],sets:0}]}
-          ]},
-        C:{label:'근력C',title:'하체·둔근',color:'rh-c',muscles:['대퇴사두근','햄스트링','대둔근'],
-          sections:[
-            {n:'하체',exs:[
-              {n:isHome?'스쿼트 (맨몸)':'바벨 스쿼트',d:Math.round(4*setMult)+'세트 × '+repRange,tags:['대퇴사두근(주)'],w:['무릎주의','허리주의'],sets:Math.round(4*setMult)},
-              {n:isHome?'런지':'레그 프레스',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['대퇴사두근(주)'],w:['무릎주의'],sets:Math.round(3*setMult)},
-              {n:isHome?'글루트 브릿지':'루마니안 데드리프트',d:Math.round(3*setMult)+'세트 × '+repRange,tags:['햄스트링(주)'],w:['허리주의'],sets:Math.round(3*setMult)}
-            ]},
-            {n:'쿨다운',exs:[{n:'하체 스트레칭',d:'5분',tags:['유연성'],w:[],sets:0}]}
-          ]}
-      };
     } else if(isRehab){
+      // 재활·시니어
       splitData = {
         A:{label:'재활전신',title:'전신 재활 · 기초 활성화',color:'rh-a',muscles:['전신','코어'],
           sections:[
@@ -7556,12 +7563,15 @@ function updateDayAssignPreview(){
     const isGlute    = classPurposes.some(p=>p.indexOf('하체')>=0||p.indexOf('둔근')>=0);
     const isStrength = classPurposes.some(p=>p.indexOf('근력')>=0||p.indexOf('근육량')>=0);
     const isRehab    = classPurposes.some(p=>p.indexOf('재활')>=0||p.indexOf('시니어')>=0);
-    if(isCardio||isCore){
-      return ['유산소+복근','상체+유산소','하체'+(isGlute?'·둔근':'')+'+유산소+복근'];
-    } else if(isGlute){
+    // 근력이 있으면 근력 루틴 (복근/하체는 루틴 안에 포함)
+    if(isStrength){
+      const titles = ['밀기(가슴·어깨·삼두)','당기기(등·이두)','하체'+(isGlute?'·둔근':'')];
+      if(isCore) titles.push('복근 집중');
+      return titles;
+    } else if(isGlute && !isCardio && !isCore){
       return ['둔근집중+하체','전신+유산소'];
-    } else if(isStrength){
-      return ['밀기(가슴·어깨·삼두)','당기기(등·이두)','하체·둔근'];
+    } else if(isCardio||isCore){
+      return ['유산소+복근','상체+유산소','하체'+(isGlute?'·둔근':'')+'+유산소+복근'];
     } else if(isRehab){
       return ['전신재활'];
     }
