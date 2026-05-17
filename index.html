@@ -2407,25 +2407,22 @@ async function initApp(user){
     const savedLevel = localStorage.getItem('fitlog-level');
     if(savedLevel !== null) curLevel = parseInt(savedLevel);
 
-    // RT 재구성: 저장된 목적별 루틴이 있으면 우선 사용, 없으면 SPLIT_ROUTINES
+    // RT 재구성: SPLIT_ROUTINES 기반 기본 루틴
     RT = JSON.parse(JSON.stringify(RT_BASE));
     if(typeof SPLIT_ROUTINES !== 'undefined' && SPLIT_ROUTINES[curLevel]){
       const splitData = SPLIT_ROUTINES[curLevel];
       Object.keys(splitData).forEach(rk=>{ RT[rk] = JSON.parse(JSON.stringify(splitData[rk])); });
     }
-
-    // 목적별 커스텀 루틴 백업 복원 (우선순위 1: localStorage 직접 백업)
+    // 커스텀 루틴 백업이 있으면 복원 (saveAllSettings가 저장한 것)
     const _rtBackup = localStorage.getItem('fitlog-rt-custom');
     if(_rtBackup){
       try{
         const _rtObj = JSON.parse(_rtBackup);
-        if(_rtObj && typeof _rtObj === 'object' && Object.keys(_rtObj).length > 0){
-          // RT 전체 교체
-          ['A','B','C','D','E','F'].forEach(function(rk){ delete RT[rk]; });
-          Object.keys(_rtObj).forEach(function(rk){ RT[rk] = _rtObj[rk]; });
-          console.log('[FitLog] 커스텀 루틴 복원 완료:', Object.keys(_rtObj));
+        if(_rtObj && Object.keys(_rtObj).length > 0){
+          ['A','B','C','D','E','F'].forEach(rk=>{ delete RT[rk]; });
+          Object.keys(_rtObj).forEach(rk=>{ RT[rk] = _rtObj[rk]; });
         }
-      }catch(e){ console.warn('커스텀 루틴 복원 실패', e); }
+      }catch(e){ console.warn('커스텀 루틴 복원 실패',e); }
     }
 
     // 기록 불러오기
@@ -7009,6 +7006,9 @@ async function saveAllSettings(){
   if(btn){ btn.textContent = '⏳ 루틴 생성 중...'; btn.disabled = true; }
 
   try{
+    // 기존 커스텀 루틴 백업 초기화 (새로 만들 것이므로)
+    localStorage.removeItem('fitlog-rt-custom');
+
     // ── 저장된 설정값 읽기 ──
     const _purposes  = JSON.parse(localStorage.getItem('fitlog-purposes') || '[]');
     const _classType = localStorage.getItem('fitlog-classtype') || '기구운동';
@@ -7667,6 +7667,7 @@ async function applyClassificationWithDays(){
   localStorage.setItem('fitlog-classtype', classType);
   localStorage.setItem('fitlog-purposes', JSON.stringify(classPurposes));
   localStorage.setItem('fitlog-assigned-days', JSON.stringify(assignedDays));
+  localStorage.removeItem('fitlog-rt-custom'); // 목적 바뀌면 기존 루틴 백업 무효화
 
   // 요일 배정만 DAY_SCHED에 반영
   var dayOrder = ['월','화','수','목','금','토','일'];
