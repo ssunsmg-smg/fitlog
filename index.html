@@ -7548,31 +7548,79 @@ function updateDayAssignPreview(){
   const dayOrder = ['월','화','수','목','금','토','일'];
   const sorted = [...assignedDays].sort((a,b)=>dayOrder.indexOf(a)-dayOrder.indexOf(b));
   const routineKeys = ['A','B','C','D','E','F'];
-  const lines = dayOrder.map((d,i)=>{
-    const dow = DAY_NUM_MAP[d];
+
+  // 목적별 미리보기 제목 계산
+  function _getPreviewTitles(){
+    const isCardio   = classPurposes.some(p=>p==='체중 감량'||p==='다이어트');
+    const isCore     = classPurposes.some(p=>p.indexOf('복근')>=0);
+    const isGlute    = classPurposes.some(p=>p.indexOf('하체')>=0||p.indexOf('둔근')>=0);
+    const isStrength = classPurposes.some(p=>p.indexOf('근력')>=0||p.indexOf('근육량')>=0);
+    const isRehab    = classPurposes.some(p=>p.indexOf('재활')>=0||p.indexOf('시니어')>=0);
+    if(isCardio||isCore){
+      return ['유산소+복근','상체+유산소','하체'+(isGlute?'·둔근':'')+'+유산소+복근'];
+    } else if(isGlute){
+      return ['둔근집중+하체','전신+유산소'];
+    } else if(isStrength){
+      return ['밀기(가슴·어깨·삼두)','당기기(등·이두)','하체·둔근'];
+    } else if(isRehab){
+      return ['전신재활'];
+    }
+    return null;
+  }
+
+  const previewTitles = classPurposes && classPurposes.length ? _getPreviewTitles() : null;
+
+  const lines = dayOrder.map((d)=>{
     if(sorted.includes(d)){
-      const idx = sorted.indexOf(d);
-      const tk = routineKeys[idx % routineKeys.length];
-      const rt = RT[tk];
-      return `<span style="color:var(--text);font-weight:700;">${d}</span> → ${rt ? rt.title : tk+'루틴'}`;
+      const i = sorted.indexOf(d);
+      const tk = routineKeys[i % routineKeys.length];
+      // 커스텀 루틴 제목 우선, 없으면 미리보기 제목, 없으면 RT 제목
+      let title;
+      if(previewTitles){
+        title = previewTitles[i % previewTitles.length];
+      } else {
+        const rt = RT[tk];
+        title = rt ? rt.title : tk+'루틴';
+      }
+      return `<span style="color:var(--text);font-weight:700;">${d}</span> → ${title}`;
     }
     return `<span style="color:var(--muted);">${d} → 휴식</span>`;
   });
   preview.innerHTML = lines.join('　·　');
 
-  // 요일별 루틴 상세 설명
+  // 요일별 루틴 상세 카드
   const detail = document.getElementById('day-routine-detail');
   if(!detail) return;
   const sorted2 = [...assignedDays].sort((a,b)=>dayOrder.indexOf(a)-dayOrder.indexOf(b));
-  const routineKeys2 = ['A','B','C','D','E','F'];
-  detail.innerHTML = sorted2.map((day,idx)=>{
-    const rk = routineKeys2[idx % routineKeys2.length];
-    const rt = RT[rk];  // RT_BASE 아닌 실제 현재 RT 참조
-    if(!rt) return '';
-    const muscles = (rt.muscles||[]).map(m=>`<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:var(--surface);border:1px solid var(--border);">${m}</span>`).join(' ');
+
+  // 목적별 근육 미리보기
+  function _getMuscles(i){
+    const isCardio   = classPurposes.some(p=>p==='체중 감량'||p==='다이어트');
+    const isCore     = classPurposes.some(p=>p.indexOf('복근')>=0);
+    const isGlute    = classPurposes.some(p=>p.indexOf('하체')>=0||p.indexOf('둔근')>=0);
+    const isStrength = classPurposes.some(p=>p.indexOf('근력')>=0||p.indexOf('근육량')>=0);
+    const isRehab    = classPurposes.some(p=>p.indexOf('재활')>=0||p.indexOf('시니어')>=0);
+    if(isCardio||isCore){
+      const sets=[['심폐','복직근','복사근'],['대흉근','광배근','심폐'],['대퇴사두근','대둔근','복근']];
+      return sets[i%3];
+    } else if(isGlute){
+      return [['대둔근','중둔근','대퇴사두근'],['심폐','전신']][i%2];
+    } else if(isStrength){
+      return [['대흉근','삼각근','삼두근'],['광배근','이두근'],['대퇴사두근','햄스트링','대둔근']][i%3];
+    } else if(isRehab){
+      return ['전신','코어'];
+    }
+    return null;
+  }
+
+  detail.innerHTML = sorted2.map((day,i)=>{
+    const rk = routineKeys[i % routineKeys.length];
+    const title = previewTitles ? previewTitles[i%previewTitles.length] : (RT[rk]&&RT[rk].title)||rk+'루틴';
+    const muscles = previewTitles ? (_getMuscles(i)||[]) : (RT[rk]&&RT[rk].muscles||[]);
+    const muscleHtml = muscles.map(m=>`<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:var(--surface);border:1px solid var(--border);">${m}</span>`).join(' ');
     return `<div style="padding:8px 10px;background:var(--surface2);border-radius:8px;border-left:3px solid var(--accent);">
-      <div style="font-size:12px;font-weight:700;margin-bottom:4px;">${day}요일 — ${rt.title||rk+'루틴'}</div>
-      <div style="display:flex;flex-wrap:wrap;gap:4px;">${muscles}</div>
+      <div style="font-size:12px;font-weight:700;margin-bottom:4px;">${day}요일 — ${title}</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;">${muscleHtml}</div>
     </div>`;
   }).join('');
 }
