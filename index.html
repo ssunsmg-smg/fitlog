@@ -7501,7 +7501,7 @@ function updateDayAssignPreview(){
   const routineKeys2 = ['A','B','C','D','E','F'];
   detail.innerHTML = sorted2.map((day,idx)=>{
     const rk = routineKeys2[idx % routineKeys2.length];
-    const rt = RT_BASE && RT_BASE[rk];
+    const rt = RT[rk];  // RT_BASE 아닌 실제 현재 RT 참조
     if(!rt) return '';
     const muscles = (rt.muscles||[]).map(m=>`<span style="font-size:10px;padding:1px 6px;border-radius:8px;background:var(--surface);border:1px solid var(--border);">${m}</span>`).join(' ');
     return `<div style="padding:8px 10px;background:var(--surface2);border-radius:8px;border-left:3px solid var(--accent);">
