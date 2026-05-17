@@ -6027,6 +6027,7 @@ function initClassSettings(){
   // 목적 버튼 렌더
   renderPurposeBtns();
   updateClassPreview();
+  updateDayAssignPreview(); // 현재 목적에 맞는 미리보기 즉시 갱신
 }
 
 function selectClassType(type, btn){
@@ -6064,6 +6065,7 @@ function togglePurpose(key, btn){
   }
   renderPurposeBtns();
   updateClassPreview();
+  updateDayAssignPreview(); // 목적 바뀌면 요일 미리보기도 즉시 갱신
 }
 
 function updateClassPreview(){
