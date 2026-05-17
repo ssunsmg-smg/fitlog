@@ -2407,11 +2407,26 @@ async function initApp(user){
     const savedLevel = localStorage.getItem('fitlog-level');
     if(savedLevel !== null) curLevel = parseInt(savedLevel);
 
-    // RT 재구성
+    // RT 재구성: 저장된 목적별 루틴이 있으면 우선 사용, 없으면 SPLIT_ROUTINES
     RT = JSON.parse(JSON.stringify(RT_BASE));
     if(typeof SPLIT_ROUTINES !== 'undefined' && SPLIT_ROUTINES[curLevel]){
       const splitData = SPLIT_ROUTINES[curLevel];
       Object.keys(splitData).forEach(rk=>{ RT[rk] = JSON.parse(JSON.stringify(splitData[rk])); });
+    }
+    // 목적별 커스텀 루틴 백업 복원 (applyClassificationWithDays가 저장한 것)
+    const _rtBackup = localStorage.getItem('fitlog-rt-custom');
+    const _purposes = localStorage.getItem('fitlog-purposes');
+    if(_rtBackup && _purposes){
+      try{
+        const _rtObj = JSON.parse(_rtBackup);
+        if(_rtObj && typeof _rtObj === 'object' && Object.keys(_rtObj).length > 0){
+          Object.keys(_rtObj).forEach(function(rk){ RT[rk] = _rtObj[rk]; });
+          // 커스텀 루틴에 없는 키 제거
+          Object.keys(RT).forEach(function(rk){
+            if(!_rtObj[rk] && rk !== 'REST') delete RT[rk];
+          });
+        }
+      }catch(e){ console.warn('커스텀 루틴 복원 실패', e); }
     }
 
     // 기록 불러오기
@@ -7731,8 +7746,14 @@ async function applyClassificationWithDays(){
     // ── 저장 ──
     localStorage.setItem('fitlog-classtype', classType);
     localStorage.setItem('fitlog-purposes', JSON.stringify(classPurposes));
-    // saveRoutine은 fire-and-forget - 실패해도 UI는 계속 진행
-    try { window.saveRoutine(RT); } catch(se) { console.warn('saveRoutine 실패:', se); }
+    // 커스텀 루틴 백업 (앱 재시작 후에도 복원)
+    if(splitData){
+      localStorage.setItem('fitlog-rt-custom', JSON.stringify(RT));
+    } else {
+      localStorage.removeItem('fitlog-rt-custom'); // 기본 루틴은 백업 불필요
+    }
+    // fire-and-forget
+    try { window.saveRoutine(RT); } catch(e){ console.warn('saveRoutine 실패',e); }
 
     // ── 완료 표시 ──
     markSettDone(2);
