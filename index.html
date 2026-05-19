@@ -335,8 +335,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .today-meta{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;}
 .today-title{font-size:22px;font-weight:900;margin-bottom:3px;}
 .today-type{font-size:12px;color:var(--accent);font-family:var(--mono);margin-bottom:16px;}
-.day-sel{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:16px;}
-.day-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--font);}
+.day-sel{display:flex;gap:4px;flex-wrap:nowrap;margin-bottom:16px;justify-content:space-between;width:100%;overflow:visible;}
+.day-btn{flex:1;min-width:0;max-width:42px;height:36px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--font);}
 .day-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
 .day-btn.has-rec{border-color:var(--green);color:var(--green);}
 .prog-wrap{margin-bottom:14px;}
