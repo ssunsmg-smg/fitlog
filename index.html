@@ -288,10 +288,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 /* 메인 앱 */
 .app{display:none;}
 .app.active{display:block;}
-.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:100;flex-wrap:wrap;gap:8px;}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:100;flex-wrap:nowrap;gap:6px;}
 .nav-logo{font-size:14px;font-weight:900;color:var(--accent);}
 .nav-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.nav-tabs{display:flex;gap:2px;}
+.nav-tabs{display:flex;gap:2px;flex-wrap:nowrap;overflow-x:auto;}
 .nav-tab{padding:5px 11px;border-radius:6px;font-size:12px;cursor:pointer;border:none;background:none;color:var(--muted);font-family:var(--font);transition:all .15s;}
 .nav-tab.active{background:var(--surface2);color:var(--text);}
 .user-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid var(--border);}
@@ -335,7 +335,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .today-meta{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;}
 .today-title{font-size:22px;font-weight:900;margin-bottom:3px;}
 .today-type{font-size:12px;color:var(--accent);font-family:var(--mono);margin-bottom:16px;}
-.day-sel{display:flex;gap:4px;flex-wrap:nowrap;margin-bottom:8px;justify-content:space-between;width:100%;}
+.day-sel{display:flex;gap:4px;flex-wrap:nowrap;margin-bottom:8px;margin-top:4px;justify-content:space-between;width:100%;}
 .day-btn{flex:1;min-width:0;max-width:42px;height:36px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--font);}
 .day-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
 .day-btn.has-rec{border-color:var(--green);color:var(--green);}
@@ -1037,11 +1037,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
   <!-- 운동 -->
   <div class="page" id="page-workout">
-    <div class="today-meta" id="today-meta"></div>
     <div id="missed-banner" style="display:none;background:#f0a5000d;border:1px solid #f0a50033;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;line-height:1.8;"></div>
     <div id="makeup-banner" style="display:none;background:#4a9eff0d;border:1px solid #4a9eff55;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--blue);font-weight:500;"></div>
 
     <div class="day-sel" id="day-sel"></div>
+    <div class="today-meta" id="today-meta" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;"></div>
     <div class="today-title" id="today-title">오늘의 루틴</div>
     <div class="today-type" id="today-type"></div>
     <!-- 스마트 루틴 생성기 -->
@@ -3035,22 +3035,7 @@ function renderWorkout(){
     const btn=document.createElement('button');
     btn.className='day-btn'+(i===selDay?' active':'')+(records.find(r=>r.date===getDateForDow(i))?' has-rec':'');
     btn.textContent=n;
-    const _handleDayClick = (e)=>{
-      e.preventDefault(); e.stopPropagation();
-      if(makeupActive && i !== makeupActive.restDay){
-        if(!confirm('보충 운동 진행 중입니다. 다른 요일로 이동하면 보충 운동이 취소됩니다. 계속하시겠어요?')){
-          return;
-        }
-        makeupActive=null;
-      }
-      selDay=i;
-      setData={};
-      try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}
-      initSetData(DAY_SCHED[i]);
-      renderWorkout();
-    };
-    btn.addEventListener('click', _handleDayClick);
-    btn.addEventListener('touchend', _handleDayClick, {passive:false});
+    btn.setAttribute('onclick', 'changeDayTo('+i+')');
     sel.appendChild(btn);
   });
   const content=document.getElementById('routine-content'),bottom=document.getElementById('bottom-bar');
@@ -6436,6 +6421,17 @@ function renderRoutineCompare(){
   }).join('');
 }
 
+function changeDayTo(i){
+  if(makeupActive && i !== makeupActive.restDay){
+    if(!confirm('보충 운동 진행 중입니다. 다른 요일로 이동하면 보충 운동이 취소됩니다. 계속하시겠어요?')) return;
+    makeupActive=null;
+  }
+  selDay=i;
+  setData={};
+  try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}
+  initSetData(DAY_SCHED[i]);
+  renderWorkout();
+}
 function jumpToDay(dow){
   selDay = dow;
   initSetData(DAY_SCHED[dow]);
