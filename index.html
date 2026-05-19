@@ -1069,17 +1069,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div id="time-plan-bar" style="font-size:11px;color:var(--muted);padding:5px 10px;background:var(--surface2);border-radius:6px;display:none;"></div>
     </div>
 
-    <!-- 유산소 추가 버튼 -->
-    <button onclick="openCardioModal()" style="width:100%;padding:9px;border-radius:10px;
-      border:1px solid #4caf7d55;background:#4caf7d0d;color:var(--green);
-      font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);
-      display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:12px;margin-top:8px;">
-      🏃 유산소 추가 · 8가지 중 복수 선택
-    </button>
-    <div class="prog-wrap">
+        <div class="prog-wrap">
       <div class="prog-info"><span id="prog-txt">0 / 0 완료</span><button style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;" onclick="resetAll()">초기화</button></div>
       <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
     </div>
+    <!-- 유산소 추가 버튼 -->
+    <button onclick="openCardioModal()" style="width:100%;padding:9px;border-radius:10px;border:1px solid #4caf7d55;background:#4caf7d0d;color:var(--green);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:12px;">🏃 유산소 추가 · 8가지 중 복수 선택</button>
     <div id="routine-content"></div>
     <div class="bottom-bar" id="bottom-bar" style="display:none;">
       <div class="cond-row">
