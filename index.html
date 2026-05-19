@@ -1007,7 +1007,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           style="width:100%;padding:12px;border-radius:10px;border:none;
           background:var(--green);color:#fff;font-size:14px;font-weight:700;
           cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:8px;">
-          🏃 오늘의 유산소 선택하기 (8가지)
+          🏃 오늘의 유산소 선택하기 (7가지)
         </button>
       </div>
       <!-- 미완료 버전 -->
@@ -1025,7 +1025,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);
           background:none;color:var(--text);font-size:13px;font-weight:700;
           cursor:pointer;font-family:var(--font);">
-          🏃 유산소 선택하기 (8가지)
+          🏃 유산소 선택하기 (7가지)
         </button>
       </div>
     </div>
@@ -1066,7 +1066,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         border:1px solid #4caf7d55;background:#4caf7d0d;color:var(--green);
         font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);
         display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;">
-        🏃 유산소 추가 · 8가지 중 복수 선택
+        🏃 유산소 추가 · 7가지 중 복수 선택
       </button>
       <div id="time-plan-bar" style="font-size:11px;color:var(--muted);padding:5px 10px;background:var(--surface2);border-radius:6px;display:none;"></div>
     </div>
@@ -1795,7 +1795,7 @@ const EX_INFO={
   '피전 포즈':{desc:'한 다리를 앞으로 접어 놓고 뒷다리를 뒤로 쭉 뻗기.',tip:'둔근이 당기는 느낌이 나야 정상',yt:'피전 포즈 고관절 스트레칭',pf:'pigeon-pose'},
   '누워서 무릎 당기기':{desc:'한쪽 무릎을 가슴 쪽으로 당기기. 30-60초 유지.',tip:'허리 수술 후 재활에 기본 스트레칭',yt:'무릎 당기기 스트레칭 허리',pf:'lying-knee-to-chest-stretch'},
   '밴드 풀어파트':{desc:'밴드를 양손으로 잡고 양쪽으로 당기기.',tip:'라운드숄더와 굽은 등 교정에 효과적',yt:'밴드 풀어파트 어깨 교정 운동',pf:'band-pull-apart'},
-  '케이블 크런치':{desc:'케이블 머신 앞에 무릎 꿇기. 복근으로 몸을 아래로 말기.',tip:'허리로 당기지 말고 복근만 사용',yt:'케이블 크런치 복근 운동 자세',pf:'cable-crunch'},
+  'ABDOMINAL CRUNCH':{desc:'케이블 머신 앞에 무릎 꿇기. 복근으로 몸을 아래로 말기.',tip:'허리로 당기지 말고 복근만 사용',yt:'ABDOMINAL CRUNCH 복근 운동 자세',pf:'cable-crunch'},
   '행잉 니 레이즈':{desc:'철봉에 매달리기. 무릎을 구부려 가슴까지 당기기.',tip:'처음엔 무릎을 90도까지만',yt:'행잉 니 레이즈 하복부 운동',pf:'hanging-knee-raise'},
   '리버스 크런치':{desc:'무릎을 구부려 가슴 쪽으로 당기기.',tip:'복근이 당기는 느낌에 집중',yt:'리버스 크런치 하복부 운동',pf:'reverse-crunch'},
   '덤벨 숄더 프레스':{desc:'덤벨을 귀 옆 높이에 위치. 팔을 위로 뻗기.',tip:'어깨 통증 주의',yt:'덤벨 숄더 프레스 어깨 운동',pf:'dumbbell-shoulder-press'},
@@ -2125,7 +2125,7 @@ const RT_BASE={
         {n:'업라이트 바이크',d:'3분 · 저강도',tags:['심폐'],w:['무릎주의'],sets:0},
         {n:'관절 돌리기',d:'2분 · 전신 관절 풀기',tags:['관절가동성'],w:[],sets:0}
       ]},
-      {n:'복근 집중',exs:[{n:'케이블 크런치',d:'4세트 × 20회',tags:['복직근(주)'],w:['허리주의'],sets:4},{n:'행잉 니 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:[],sets:0},{n:'바이시클 크런치',d:'3세트 × 30회',tags:['복사근(주)'],w:[],sets:0},{n:'리버스 크런치',d:'3세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:0}]},
+      {n:'복근 집중',exs:[{n:'ABDOMINAL CRUNCH',d:'4세트 × 20회',tags:['복직근(주)'],w:['허리주의'],sets:4},{n:'행잉 니 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:[],sets:0},{n:'바이시클 크런치',d:'3세트 × 30회',tags:['복사근(주)'],w:[],sets:0},{n:'리버스 크런치',d:'3세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:0}]},
       {n:'전신 복합',exs:[{n:'시티드 케이블 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3},{n:'덤벨 숄더 프레스',d:'3세트 × 12회',tags:['삼각근(주)'],w:['어깨주의'],sets:3},{n:'힙 어브덕션 (기계)',d:'3세트 × 15회',tags:['중둔근(주)'],w:['무릎주의'],sets:3}]},
       {n:'마무리',exs:[{n:'업라이트 바이크',d:'10분 · 중강도',tags:['체지방'],w:['무릎주의'],sets:0}]}]},
   F:{label:'토요일 · TypeF',title:'하체 · 둔근 2회차 (경량)',color:'rh-f',muscles:['대둔근','중둔근','햄스트링'],
@@ -2585,7 +2585,7 @@ function renderSets(key,cId){
     const kgInp=nw?'':buildKgInput(s.weight,pw,key,i,cId);
     const repsOi=buildRepsOninput(nw,key,i,cId);
     rows+='<div id="sr-'+key+'-'+i+'" style="display:grid;grid-template-columns:'+COL+';gap:4px;align-items:center;margin-bottom:4px;background:'+bg+';border-radius:6px;padding:2px;">'
-      +'<div style="text-align:center;font-size:13px;font-weight:700;color:'+(s.done?'var(--green)':'var(--muted)')+';">'+(i+1)+'</div>'
+      +'<div style="text-align:center;font-size:13px;font-weight:700;color:'+(s.done?'var(--green)':'var(--text)')+';">'+(i+1)+'</div>'
       +'<div style="text-align:center;font-size:12px;font-family:var(--mono);color:'+((pw||pr)?'#f0a500':'var(--border)')+';font-weight:'+((pw||pr)?'700':'400')+';padding:6px 2px;background:var(--surface2);border-radius:6px;">'
       +preLabel+(hasUp?'<span style="color:var(--green);font-size:9px;"> ▲</span>':'')+(hasDn?'<span style="color:#e55;font-size:9px;"> ▼</span>':'')+(repsUp?'<span style="color:var(--green);font-size:9px;"> ▲</span>':'')+'</div>'
       +kgInp
@@ -2593,7 +2593,7 @@ function renderSets(key,cId){
       +'<button class="set-ok '+(s.done?'done':'')+' " onclick="toggleSetDone(\'' + key + '\',' + i + ')">✓</button>'
       +'</div>';
   });
-  el.innerHTML='<div style="display:grid;grid-template-columns:'+COL+';gap:4px;padding:7px 4px 5px;font-size:10px;color:var(--muted);font-family:var(--mono);text-align:center;border-bottom:1px solid var(--border);margin-bottom:5px;"><div>회</div>'+hdrPre+hdrKg+'<div>횟수</div><div>체크</div></div>'+rows+rmHtml+'<button class="add-set" onclick="addSet(\'' + key + '\',\'' + cId + '\')">+ 세트 추가</button>';
+  el.innerHTML='<div style="display:grid;grid-template-columns:'+COL+';gap:4px;padding:7px 4px 5px;font-size:10px;color:var(--text);font-family:var(--mono);text-align:center;border-bottom:1px solid var(--border);margin-bottom:5px;"><div>회</div>'+hdrPre+hdrKg+'<div>횟수</div><div>체크</div></div>'+rows+rmHtml+'<button class="add-set" onclick="addSet(\'' + key + '\',\'' + cId + '\')">+ 세트 추가</button>';
 }
 
 
@@ -2642,6 +2642,9 @@ function toggleSetDone(k,i){
   const card=document.getElementById(`ec-${parts[1]}-${parts[2]}`),chk=document.getElementById(`echk-${parts[1]}-${parts[2]}`);
   if(card)card.classList.toggle('done',allDone);if(chk)chk.classList.toggle('done',allDone);
   saveSetDataLocal();saveChkLocal();updateProg();
+  // ── 실시간 자동저장 ──
+  const anyDone = Object.values(setData).some(arr=>arr.some(s=>s.done));
+  if(anyDone){ clearTimeout(window._autoSaveTimer); window._autoSaveTimer=setTimeout(function(){ doSaveRecord(true); },1500); }
 }
 function addSet(k,cId){if(!setData[k])setData[k]=[];setData[k].push({weight:'',reps:'',done:false});renderSets(k,cId);}
 
@@ -3629,7 +3632,7 @@ function resetAll(){
 function setCond(v){selCond=v;document.querySelectorAll('.cond-btn').forEach((b,i)=>b.classList.toggle('active',i+1===v));}
 
 // ── 저장 (Firebase) ──
-async function doSaveRecord(){
+async function doSaveRecord(silent=false){
   // 보충 운동 중이면 해당 루틴 키 사용
   const tk = makeupActive ? makeupActive.missedTk : DAY_SCHED[selDay];
   if(!makeupActive && tk==='REST')return;
@@ -3687,7 +3690,7 @@ async function doSaveRecord(){
     try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}
     const ormMsg = ormUpdated ? '\n📊 1RM 추정값이 자동 갱신됐어요!' : '';
     const setCount = allSets.filter(s=>s.done).length;
-    showToast(`✅ 저장완료 · ${exDone}/${exTotal} 운동 · ${setCount}세트${ormMsg}`,'success');
+    if(!silent) showToast(`✅ 저장완료 · ${exDone}/${exTotal} 운동 · ${setCount}세트${ormMsg}`,'success');
     console.log('[FitLog] 저장 완료:', {date:ds, type:tk, exDone, exTotal, sets:allSets.length, muscles:musclesDone});
 
     // ── 저장 후 선택 UI: 추가 운동 or 완료 ──
@@ -4255,7 +4258,7 @@ const EX_LIB=[
   {n:'행잉 니 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:[],sets:0,cat:'복근',type:'home'},
   {n:'플랭크',d:'3세트 × 45초',tags:['복횡근(주)'],w:[],sets:0,cat:'복근',type:'home'},
   {n:'사이드 플랭크',d:'2세트 × 30초',tags:['외복사근(주)'],w:['허리주의'],sets:0,cat:'복근',type:'home'},
-  {n:'케이블 크런치',d:'4세트 × 20회',tags:['복직근(주)'],w:['허리주의'],sets:4,cat:'복근',type:'home'},
+  {n:'ABDOMINAL CRUNCH',d:'4세트 × 20회',tags:['복직근(주)'],w:['허리주의'],sets:4,cat:'복근',type:'home'},
   {n:'데드버그',d:'3세트 × 10회',tags:['복횡근(주)'],w:['허리주의'],sets:3,cat:'복근',type:'home'},
   {n:'브이업',d:'3세트 × 15회',tags:['복직근(주)'],w:['허리주의'],sets:0,cat:'복근',type:'home'},
   {n:'러시안 트위스트',d:'3세트 × 20회',tags:['복사근(주)'],w:['허리주의'],sets:0,cat:'복근',type:'home'},
@@ -5606,12 +5609,12 @@ const POSTURE_DB = [
    tip:'턱 당기고 복부 조이기. 허리로 하지 말고 엉덩이만.',
    mistake:'발 위치가 너무 멀거나 가까우면 둔근 대신 햄스트링·요추 개입.',
    yt:'힙 쓰러스트 둔근 운동'},
-  {name:'케이블 크런치',tags:['복근'],
-   key:'케이블 크런치',
+  {name:'ABDOMINAL CRUNCH',tags:['복근'],
+   key:'ABDOMINAL CRUNCH',
    steps:['① 케이블 머신 앞에 무릎 꿇기','② 로프를 귀 옆에 고정','③ 복근으로만 상체를 둥글게 말아 내리기','④ 고관절은 고정, 척추만 굴곡','⑤ 위로 올릴 때 완전 펴지 말고 긴장 유지'],
    tip:'허리로 당기지 말 것. 배꼽을 바닥 쪽으로 당기는 느낌.',
    mistake:'고관절이 구부러지면 복근 대신 장요근 운동.',
-   yt:'케이블 크런치 복근 운동'},
+   yt:'ABDOMINAL CRUNCH 복근 운동'},
   {name:'인클라인 트레드밀',tags:['유산소','둔근'],
    key:'인클라인 트레드밀',
    steps:['① 경사 8~15도 설정','② 속도: 4.5~6km/h','③ 손잡이 잡지 말 것 (칼로리 급감)','④ 발바닥 전체로 착지','⑤ 상체는 약간 앞으로 기울기'],
@@ -6890,7 +6893,7 @@ const SPLIT_ROUTINES = {
         ]},
         {n:'복근',exs:[
           {n:'행잉 레그레이즈',d:'4세트 × 20회',tags:['복직근하부(주)'],w:[],sets:0},
-          {n:'케이블 크런치',d:'4세트 × 20회',tags:['복직근(주)'],w:[],sets:4},
+          {n:'ABDOMINAL CRUNCH',d:'4세트 × 20회',tags:['복직근(주)'],w:[],sets:4},
           {n:'러시안 트위스트',d:'4세트 × 20회',tags:['복사근(주)'],w:[],sets:0},
           {n:'플랭크',d:'4세트 × 60초',tags:['복횡근(주)'],w:[],sets:0}
         ]},
@@ -7653,7 +7656,7 @@ function makeCoreSection(sets, isHome){
     {n:'플랭크',d:sets+'세트 × 45초',tags:['복횡근(주)'],w:[],sets:0},
     {n:'크런치',d:sets+'세트 × 20회',tags:['복직근(주)'],w:[],sets:sets},
     {n:'레그 레이즈',d:sets+'세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:sets},
-    {n:isHome?'바이시클 크런치':'케이블 크런치', d:'3세트 × 20회',tags:['복사근(주)'],w:[],sets:3},
+    {n:isHome?'바이시클 크런치':'ABDOMINAL CRUNCH', d:'3세트 × 20회',tags:['복사근(주)'],w:[],sets:3},
   ]};
 }
 function makeGluteSection(isHome){
@@ -8454,7 +8457,7 @@ const EXERCISE_VARIATIONS = {
   '레그 컬':                ['루마니안 데드리프트','스티프레그 데드리프트','굿모닝','노르딕 햄컬'],
   '레그 익스텐션':          ['불가리안 스플릿 스쿼트','런지','스텝업','싱글레그 프레스'],
   // 복근
-  '케이블 크런치':          ['행잉 레그레이즈','AB 롤아웃','바이시클 크런치','러시안 트위스트'],
+  'ABDOMINAL CRUNCH':          ['행잉 레그레이즈','AB 롤아웃','바이시클 크런치','러시안 트위스트'],
   '레그 레이즈':            ['행잉 니레이즈','리버스 크런치','드래곤 플래그','V업'],
   '플랭크':                 ['사이드 플랭크','TRX 플랭크','짐볼 플랭크','RKC 플랭크'],
 };
