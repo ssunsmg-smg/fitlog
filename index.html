@@ -2501,7 +2501,13 @@ function initSetData(tk){
       // 중량 없는 맨몸 종목 (플랭크, 사이드플랭크 등) — 초/분 포함 여부 무관
       const m=ex.d&&ex.d.match(/(\d+)\s*세트/);
       const cnt=m?parseInt(m[1]):3;
-      setData[k]=Array.from({length:cnt},()=>({weight:'',reps:'',done:false}));
+      // 초 단위 운동이면 _sec에 시간 저장
+      const secMatch = ex.d&&ex.d.match(/(\d+)\s*초/);
+      const minMatch = ex.d&&ex.d.match(/(\d+)\s*분/);
+      const secVal = secMatch?parseInt(secMatch[1]):(minMatch?parseInt(minMatch[1])*60:0);
+      const arr = Array.from({length:cnt},()=>({weight:'',reps:'',done:false}));
+      if(secVal>0) arr._sec = secVal;
+      setData[k]=arr;
     }
     // sets:0 이고 NO_WEIGHT 아닌 종목 = 타이머 운동 → setData 등록 안 함
   }));
@@ -2562,6 +2568,9 @@ function renderSets(key,cId){
   const sets=setData[key];if(!sets)return;
   const el=document.getElementById(cId);if(!el)return;
   const exName=key.split('-').slice(2).join('-')||'';
+  // 초 단위 운동 판별
+  const _isTimedEx = (typeof NO_WEIGHT_EXNAMES!=='undefined'&&NO_WEIGHT_EXNAMES.has(exName)&&sets._sec>0);
+  const timerSec = _isTimedEx ? sets._sec : 0;
   let prevRec=null;
   for(const r of (records||[])){if(r.sets){const m=r.sets.find(s=>s.ex===exName);if(m){prevRec=r;break;}}}
   const prevSets=prevRec?prevRec.sets.filter(s=>s.ex===exName):[];
@@ -2591,6 +2600,7 @@ function renderSets(key,cId){
       +kgInp
       +'<input class="set-inp '+(s.reps?'filled':'')+'" type="number" value="'+(s.reps||'')+'" placeholder="'+(pr||'회')+'" min="0" step="1" style="text-align:center;font-size:13px;" oninput="'+repsOi+'"/>'
       +'<button class="set-ok '+(s.done?'done':'')+' " onclick="toggleSetDone(\'' + key + '\',' + i + ')">✓</button>'
+      +(timerSec>0?'<button onclick="startTimerFromKey('+timerSec+',\'' + key + '\')" style="font-size:10px;padding:2px 6px;border-radius:6px;background:#3ecf8e22;border:1px solid #3ecf8e44;color:var(--green);cursor:pointer;">⏱</button>':'')
       +'</div>';
   });
   el.innerHTML='<div style="display:grid;grid-template-columns:'+COL+';gap:4px;padding:7px 4px 5px;font-size:10px;color:var(--text);font-family:var(--mono);text-align:center;border-bottom:1px solid var(--border);margin-bottom:5px;"><div>회</div>'+hdrPre+hdrKg+'<div>횟수</div><div>체크</div></div>'+rows+rmHtml+'<button class="add-set" onclick="addSet(\'' + key + '\',\'' + cId + '\')">+ 세트 추가</button>';
@@ -3031,8 +3041,8 @@ function renderWorkout(){
       const saId='sa-'+si+'-'+ei;
       const info=EX_INFO[ex.n];
       const ytQ=info?(info.yt||ex.n):'';
-      // 시간형 운동 판별 (초/분 포함 + sets:0)
-      const isTimeBased=!hasSets&&/초|분/.test(ex.d);
+      // 시간형 운동 판별 (초/분 포함 + sets:0) — NO_WEIGHT라도 '초' 포함이면 타이머 표시
+      const isTimeBased = /초/.test(ex.d) || (!hasSets && /분/.test(ex.d));
       const timerSec=isTimeBased?parseTimerSec(ex.d):0;
       // 시간 운동 세트 수 파싱 (예: "3세트 × 45초" → 3)
       const timerSetCount=isTimeBased?(parseInt(ex.d.match(/(\d+)\s*세트/)?.[1]||'1')):0;
@@ -8674,6 +8684,11 @@ function parseTimerSec(detailStr){
   return 45;
 }
 
+function startTimerFromKey(sec, key){
+  // 세트 행 타이머 버튼 클릭 시 타이머 오버레이 실행
+  const exName = key.split('-').slice(2).join('-') || '운동';
+  openTimerOverlay(exName, sec, 0, 0);
+}
 function openTimerOverlay(name,sec,si,ei){
   // 이전 타이머 완전 정리 후 초기화
   clearInterval(_timerState.interval);
