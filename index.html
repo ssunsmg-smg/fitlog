@@ -2434,9 +2434,44 @@ async function initApp(user){
     console.error('[FitLog] initApp 오류:', e);
     clearTimeout(_t);
   }
+  migrateExNames();
   showApp();
 }
 
+
+// ── 운동명 마이그레이션 (구버전 데이터 호환) ──
+function migrateExNames(){
+  const nameMap = {
+    '케이블 크런치': 'ABDOMINAL CRUNCH',
+  };
+  Object.keys(RT).forEach(tk=>{
+    if(!RT[tk]||!RT[tk].sections) return;
+    RT[tk].sections.forEach(sec=>{
+      if(!sec.exs) return;
+      sec.exs.forEach(ex=>{
+        if(nameMap[ex.n]) ex.n = nameMap[ex.n];
+      });
+    });
+  });
+  // localStorage 백업도 갱신
+  const backup = localStorage.getItem('fitlog-rt-custom');
+  if(backup){
+    try{
+      const obj = JSON.parse(backup);
+      let changed = false;
+      Object.keys(obj).forEach(tk=>{
+        if(!obj[tk]||!obj[tk].sections) return;
+        obj[tk].sections.forEach(sec=>{
+          if(!sec.exs) return;
+          sec.exs.forEach(ex=>{
+            if(nameMap[ex.n]){ ex.n = nameMap[ex.n]; changed=true; }
+          });
+        });
+      });
+      if(changed) localStorage.setItem('fitlog-rt-custom', JSON.stringify(obj));
+    }catch(e){}
+  }
+}
 function showApp(){
   document.getElementById('loading').style.display='none';
   document.getElementById('login-screen').style.display='none';
