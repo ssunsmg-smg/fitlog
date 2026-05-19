@@ -335,8 +335,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .today-meta{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;}
 .today-title{font-size:22px;font-weight:900;margin-bottom:3px;}
 .today-type{font-size:12px;color:var(--accent);font-family:var(--mono);margin-bottom:16px;}
-.day-sel{display:flex;gap:4px;flex-wrap:nowrap;margin-bottom:16px;justify-content:space-between;width:100%;overflow:visible;position:relative;z-index:2;pointer-events:auto;}
-.day-btn{flex:1;min-width:0;max-width:42px;height:36px;pointer-events:auto;position:relative;z-index:2;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--font);}
+.day-sel{display:flex;gap:4px;flex-wrap:nowrap;margin-bottom:8px;justify-content:space-between;width:100%;}
+.day-btn{flex:1;min-width:0;max-width:42px;height:36px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--font);}
 .day-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
 .day-btn.has-rec{border-color:var(--green);color:var(--green);}
 .prog-wrap{margin-bottom:14px;}
@@ -1041,7 +1041,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div id="missed-banner" style="display:none;background:#f0a5000d;border:1px solid #f0a50033;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;line-height:1.8;"></div>
     <div id="makeup-banner" style="display:none;background:#4a9eff0d;border:1px solid #4a9eff55;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--blue);font-weight:500;"></div>
     <!-- 스마트 루틴 생성기 상단 -->
-    <div style="margin-bottom:12px;position:relative;z-index:1;">
+    <div style="margin-bottom:12px;">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
         <div style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:8px;">
           <span style="font-size:12px;color:var(--muted);white-space:nowrap;">⏱ 운동 시간</span>
@@ -1061,18 +1061,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           🎯 스마트 루틴 생성기
         </button>
       </div>
-      <!-- 유산소 추가 버튼 (평일·주말 항상 표시) -->
-      <button onclick="openCardioModal()" style="width:100%;padding:9px;border-radius:10px;
-        border:1px solid #4caf7d55;background:#4caf7d0d;color:var(--green);
-        font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);
-        display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;">
-        🏃 유산소 추가 · 7가지 중 복수 선택
-      </button>
+
       <div id="time-plan-bar" style="font-size:11px;color:var(--muted);padding:5px 10px;background:var(--surface2);border-radius:6px;display:none;"></div>
     </div>
     <div class="today-title" id="today-title">오늘의 루틴</div>
     <div class="today-type" id="today-type"></div>
     <div class="day-sel" id="day-sel"></div>
+    <!-- 유산소 추가 버튼 -->
+    <button onclick="openCardioModal()" style="width:100%;padding:9px;border-radius:10px;
+      border:1px solid #4caf7d55;background:#4caf7d0d;color:var(--green);
+      font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);
+      display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:12px;margin-top:8px;">
+      🏃 유산소 추가 · 8가지 중 복수 선택
+    </button>
     <div class="prog-wrap">
       <div class="prog-info"><span id="prog-txt">0 / 0 완료</span><button style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;" onclick="resetAll()">초기화</button></div>
       <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
