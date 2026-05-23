@@ -1615,6 +1615,14 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <button id="ov-start-btn" onclick="ovToggle()">▶ 시작</button>
     <button id="ov-reset-btn" onclick="ovReset()">↺ 리셋</button>
   </div>
+  <!-- 완료 버튼 - 타이머 완료 시 표시 -->
+  <button id="ov-done-btn" onclick="ovDoneAndClose()" style="display:none;
+    width:100%;padding:16px;border-radius:14px;border:none;margin-top:8px;
+    background:linear-gradient(135deg,var(--green),#2d9e6b);color:#fff;
+    font-size:18px;font-weight:900;cursor:pointer;font-family:var(--font);
+    box-shadow:0 4px 20px #4caf7d55;">
+    ✅ 완료 · 운동 체크
+  </button>
   <button id="ov-close-btn" onclick="closeTimerOverlay()">✕ 닫기</button>
 </div>
 
@@ -8744,11 +8752,45 @@ function openTimerOverlay(name,sec,si,ei){
   _timerState={name,total:sec,current:sec,running:false,interval:null,exSiEi:si+'-'+ei};
   document.getElementById('timer-ov-name').textContent=name;
   document.getElementById('timer-overlay').classList.add('show');
+  // 버튼 초기 상태
+  const doneBtn=document.getElementById('ov-done-btn');
+  const startBtn=document.getElementById('ov-start-btn');
+  if(doneBtn) doneBtn.style.display='none';
+  if(startBtn) startBtn.style.display='';
   ovUpdateDisplay();
 }
 function closeTimerOverlay(){
   clearInterval(_timerState.interval);_timerState.running=false;
   document.getElementById('timer-overlay').classList.remove('show');
+  // 버튼 상태 초기화
+  const doneBtn=document.getElementById('ov-done-btn');
+  const startBtn=document.getElementById('ov-start-btn');
+  if(doneBtn) doneBtn.style.display='none';
+  if(startBtn) startBtn.style.display='';
+}
+
+// 타이머 완료 후 "완료·운동 체크" 버튼 클릭
+function ovDoneAndClose(){
+  // 운동 체크 (이미 됐을 수 있음)
+  if(_timerState.exSiEi){
+    const parts=_timerState.exSiEi.split('-');
+    const si=parts[0],ei=parts[1];
+    const chk=document.getElementById('echk-'+si+'-'+ei);
+    const card=document.getElementById('ec-'+si+'-'+ei);
+    if(chk&&!chk.classList.contains('done')){
+      chk.classList.add('done');
+      if(card) card.classList.add('done');
+      const key=selDay+'-'+si+'-'+ei;
+      if(setData[key]){
+        setData[key].forEach(function(s){s.done=true;});
+        document.querySelectorAll('#ec-'+si+'-'+ei+' .set-ok').forEach(function(b){b.classList.add('done');});
+      }
+      saveChkLocal();saveSetDataLocal();updateProg();
+      clearTimeout(window._autoSaveTimer);
+      window._autoSaveTimer=setTimeout(function(){doSaveRecord(true);},1500);
+    }
+  }
+  closeTimerOverlay();
 }
 function ovFmtTime(s){const m=Math.floor(s/60),ss=s%60;return(m?m+':':'')+(ss<10&&m?'0':'')+ss+(m?'':'초');}
 function ovUpdateDisplay(){
@@ -8852,6 +8894,11 @@ function ovToggle(){
       playTimerAlarm();
       const timeEl = document.getElementById('timer-ov-time');
       if(timeEl){ timeEl.textContent='완료! 🎉'; timeEl.style.color='var(--green)'; }
+      // 완료 버튼 표시, 시작 버튼 숨김
+      const _doneBtn = document.getElementById('ov-done-btn');
+      const _startBtn = document.getElementById('ov-start-btn');
+      if(_doneBtn) _doneBtn.style.display='block';
+      if(_startBtn) _startBtn.style.display='none';
       setTimeout(function(){
         ovUpdateDisplay();
         const t = document.getElementById('timer-ov-time');
