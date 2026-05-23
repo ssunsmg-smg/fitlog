@@ -3733,8 +3733,10 @@ async function doSaveRecord(silent=false){
 
   if(ok){
     records=records.filter(r=>r.date!==ds);records.unshift(rec);
-    // ── 임시 데이터 초기화 (저장 완료 후에만) ──
-    try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}
+    // ── 임시 데이터 초기화 (수동 저장 시에만, 자동저장은 유지) ──
+    if(!silent){
+      try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}
+    }
     const ormMsg = ormUpdated ? '\n📊 1RM 추정값이 자동 갱신됐어요!' : '';
     const setCount = allSets.filter(s=>s.done).length;
     if(!silent) showToast(`✅ 저장완료 · ${exDone}/${exTotal} 운동 · ${setCount}세트${ormMsg}`,'success');
@@ -6422,8 +6424,7 @@ function changeDayTo(i){
     makeupActive=null;
   }
   selDay=i;
-  setData={};
-  try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}
+  // setData 초기화하지 않음 - 이전 요일 기록 유지
   initSetData(DAY_SCHED[i]);
   renderWorkout();
 }
@@ -8825,7 +8826,7 @@ function ovToggle(){
       _timerState.interval = null;
       _timerState.running = false;
       _releaseWakeLock();
-      // 운동 자동 체크
+      // 운동 자동 체크 (setData 기반 + DOM)
       if(_timerState.exSiEi){
         const parts = _timerState.exSiEi.split('-');
         const si = parts[0], ei = parts[1];
@@ -8834,7 +8835,17 @@ function ovToggle(){
         if(chk && !chk.classList.contains('done')){
           chk.classList.add('done');
           if(card) card.classList.add('done');
-          saveChkLocal(); updateProg();
+          // setData 체크 (세트 행 타이머 버튼으로 실행한 경우)
+          const key = selDay+'-'+si+'-'+ei;
+          if(setData[key]){
+            setData[key].forEach(function(s){ s.done=true; });
+            const setEl = document.querySelector('#sr-'+key+'-0 .set-ok');
+            if(setEl) document.querySelectorAll('#ec-'+si+'-'+ei+' .set-ok').forEach(function(b){ b.classList.add('done'); });
+          }
+          saveChkLocal(); saveSetDataLocal(); updateProg();
+          // 실시간 자동저장
+          clearTimeout(window._autoSaveTimer);
+          window._autoSaveTimer = setTimeout(function(){ doSaveRecord(true); }, 1500);
         }
       }
       try{ if(navigator.vibrate) navigator.vibrate([300,100,300,100,300]); }catch(e){}
