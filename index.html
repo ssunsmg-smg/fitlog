@@ -451,11 +451,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 /* ── 타이머 오버레이 (전체화면) ── */
 #timer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
 #timer-overlay.show{display:flex;}
-#timer-overlay.completed{background:rgba(76,175,125,.15);}
 #timer-ov-name{font-size:18px;font-weight:700;color:#fff;}
 #timer-ov-time{font-size:80px;font-weight:900;font-family:var(--mono);color:var(--accent);line-height:1;}
 #timer-ov-time.running{color:var(--green);}
-#timer-ov-time.completed{animation:pulse 0.4s ease-in-out 3;color:#4caf7d;font-size:100px;}
 #timer-ov-bar-wrap{width:260px;height:6px;background:rgba(255,255,255,.15);border-radius:3px;}
 #timer-ov-bar{height:100%;background:var(--accent);border-radius:3px;transition:width .5s linear;}
 .timer-ov-btns{display:flex;gap:12px;}
@@ -1617,14 +1615,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <button id="ov-start-btn" onclick="ovToggle()">▶ 시작</button>
     <button id="ov-reset-btn" onclick="ovReset()">↺ 리셋</button>
   </div>
-  <!-- 완료 버튼 - 타이머 완료 시 표시 -->
-  <button id="ov-done-btn" onclick="ovDoneAndClose()" style="display:none;
-    width:100%;padding:16px;border-radius:14px;border:none;margin-top:8px;
-    background:linear-gradient(135deg,var(--green),#2d9e6b);color:#fff;
-    font-size:18px;font-weight:900;cursor:pointer;font-family:var(--font);
-    box-shadow:0 4px 20px #4caf7d55;">
-    ✅ 완료 · 운동 체크
-  </button>
   <button id="ov-close-btn" onclick="closeTimerOverlay()">✕ 닫기</button>
 </div>
 
@@ -3040,7 +3030,7 @@ function renderWorkout(){
     const btn=document.createElement('button');
     btn.className='day-btn'+(i===selDay?' active':'')+(records.find(r=>r.date===getDateForDow(i))?' has-rec':'');
     btn.textContent=n;
-    btn.onclick = new Function('changeDayTo('+i+')');  // 가장 확실한 방법
+    btn.setAttribute('onclick', 'changeDayTo('+i+')');
     sel.appendChild(btn);
   });
   const content=document.getElementById('routine-content'),bottom=document.getElementById('bottom-bar');
@@ -3088,8 +3078,8 @@ function renderWorkout(){
       const saId='sa-'+si+'-'+ei;
       const info=EX_INFO[ex.n];
       const ytQ=info?(info.yt||ex.n):'';
-      // 시간형 운동 판별 (초/분 포함 + sets:0) — NO_WEIGHT라도 '초'나 '분' 포함이면 타이머 표시
-      const isTimeBased = /초/.test(ex.d) || /분/.test(ex.d);
+      // 시간형 운동 판별 (초/분 포함 + sets:0) — NO_WEIGHT라도 '초' 포함이면 타이머 표시
+      const isTimeBased = /초/.test(ex.d) || (!hasSets && /분/.test(ex.d));
       const timerSec=isTimeBased?parseTimerSec(ex.d):0;
       // 시간 운동 세트 수 파싱 (예: "3세트 × 45초" → 3)
       const timerSetCount=isTimeBased?(parseInt(ex.d.match(/(\d+)\s*세트/)?.[1]||'1')):0;
@@ -3743,10 +3733,8 @@ async function doSaveRecord(silent=false){
 
   if(ok){
     records=records.filter(r=>r.date!==ds);records.unshift(rec);
-    // ── 임시 데이터 초기화 (수동 저장 시에만, 자동저장은 유지) ──
-    if(!silent){
-      try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}
-    }
+    // ── 임시 데이터 초기화 (저장 완료 후에만) ──
+    try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}
     const ormMsg = ormUpdated ? '\n📊 1RM 추정값이 자동 갱신됐어요!' : '';
     const setCount = allSets.filter(s=>s.done).length;
     if(!silent) showToast(`✅ 저장완료 · ${exDone}/${exTotal} 운동 · ${setCount}세트${ormMsg}`,'success');
@@ -6434,7 +6422,8 @@ function changeDayTo(i){
     makeupActive=null;
   }
   selDay=i;
-  // setData 초기화하지 않음 - 이전 요일 기록 유지
+  setData={};
+  try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}
   initSetData(DAY_SCHED[i]);
   renderWorkout();
 }
@@ -8754,45 +8743,11 @@ function openTimerOverlay(name,sec,si,ei){
   _timerState={name,total:sec,current:sec,running:false,interval:null,exSiEi:si+'-'+ei};
   document.getElementById('timer-ov-name').textContent=name;
   document.getElementById('timer-overlay').classList.add('show');
-  // 버튼 초기 상태
-  const doneBtn=document.getElementById('ov-done-btn');
-  const startBtn=document.getElementById('ov-start-btn');
-  if(doneBtn) doneBtn.style.display='none';
-  if(startBtn) startBtn.style.display='';
   ovUpdateDisplay();
 }
 function closeTimerOverlay(){
   clearInterval(_timerState.interval);_timerState.running=false;
   document.getElementById('timer-overlay').classList.remove('show');
-  // 버튼 상태 초기화
-  const doneBtn=document.getElementById('ov-done-btn');
-  const startBtn=document.getElementById('ov-start-btn');
-  if(doneBtn) doneBtn.style.display='none';
-  if(startBtn) startBtn.style.display='';
-}
-
-// 타이머 완료 후 "완료·운동 체크" 버튼 클릭
-function ovDoneAndClose(){
-  // 운동 체크 (이미 됐을 수 있음)
-  if(_timerState.exSiEi){
-    const parts=_timerState.exSiEi.split('-');
-    const si=parts[0],ei=parts[1];
-    const chk=document.getElementById('echk-'+si+'-'+ei);
-    const card=document.getElementById('ec-'+si+'-'+ei);
-    if(chk&&!chk.classList.contains('done')){
-      chk.classList.add('done');
-      if(card) card.classList.add('done');
-      const key=selDay+'-'+si+'-'+ei;
-      if(setData[key]){
-        setData[key].forEach(function(s){s.done=true;});
-        document.querySelectorAll('#ec-'+si+'-'+ei+' .set-ok').forEach(function(b){b.classList.add('done');});
-      }
-      saveChkLocal();saveSetDataLocal();updateProg();
-      clearTimeout(window._autoSaveTimer);
-      window._autoSaveTimer=setTimeout(function(){doSaveRecord(true);},1500);
-    }
-  }
-  closeTimerOverlay();
 }
 function ovFmtTime(s){const m=Math.floor(s/60),ss=s%60;return(m?m+':':'')+(ss<10&&m?'0':'')+ss+(m?'':'초');}
 function ovUpdateDisplay(){
@@ -8870,7 +8825,7 @@ function ovToggle(){
       _timerState.interval = null;
       _timerState.running = false;
       _releaseWakeLock();
-      // 운동 자동 체크 (setData 기반 + DOM)
+      // 운동 자동 체크
       if(_timerState.exSiEi){
         const parts = _timerState.exSiEi.split('-');
         const si = parts[0], ei = parts[1];
@@ -8879,47 +8834,13 @@ function ovToggle(){
         if(chk && !chk.classList.contains('done')){
           chk.classList.add('done');
           if(card) card.classList.add('done');
-          // setData 체크 (세트 행 타이머 버튼으로 실행한 경우)
-          const key = selDay+'-'+si+'-'+ei;
-          if(setData[key]){
-            setData[key].forEach(function(s){ s.done=true; });
-            const setEl = document.querySelector('#sr-'+key+'-0 .set-ok');
-            if(setEl) document.querySelectorAll('#ec-'+si+'-'+ei+' .set-ok').forEach(function(b){ b.classList.add('done'); });
-          }
-          saveChkLocal(); saveSetDataLocal(); updateProg();
-          // 실시간 자동저장
-          clearTimeout(window._autoSaveTimer);
-          window._autoSaveTimer = setTimeout(function(){ doSaveRecord(true); }, 1500);
+          saveChkLocal(); updateProg();
         }
       }
-      try{
-        // 진동 시도 (모바일)
-        if(navigator.vibrate){
-          navigator.vibrate([200,50,200,50,200,50,200]); // 더 강한 패턴
-          console.log('진동 발송');
-        }
-      } catch(e){ console.log('진동 오류:', e); }
-      
-      // 알림음 재생
+      try{ if(navigator.vibrate) navigator.vibrate([300,100,300,100,300]); }catch(e){}
       playTimerAlarm();
-      
-      // 시각적 알림 강화
       const timeEl = document.getElementById('timer-ov-time');
-      const overlayEl = document.getElementById('timer-overlay');
-      if(timeEl){ 
-        timeEl.textContent='완료! 🎉'; 
-        timeEl.classList.add('completed');
-        // 깜빡임 효과
-        timeEl.style.animation='pulse 0.4s ease-in-out';
-      }
-      if(overlayEl){
-        overlayEl.classList.add('completed');
-      }
-      // 완료 버튼 표시, 시작 버튼 숨김
-      const _doneBtn = document.getElementById('ov-done-btn');
-      const _startBtn = document.getElementById('ov-start-btn');
-      if(_doneBtn) _doneBtn.style.display='block';
-      if(_startBtn) _startBtn.style.display='none';
+      if(timeEl){ timeEl.textContent='완료! 🎉'; timeEl.style.color='var(--green)'; }
       setTimeout(function(){
         ovUpdateDisplay();
         const t = document.getElementById('timer-ov-time');
@@ -8931,48 +8852,17 @@ function ovToggle(){
 
 // ── 타이머 알람 소리 (Web Audio API - 서버 불필요) ──
 function playTimerAlarm(){
-  // 1단계: 진동 시도 (모든 모바일 기기 지원)
-  try{
-    if(navigator.vibrate){
-      navigator.vibrate([300,100,300,100,300]);
-      console.log('진동 실행됨');
-    }
-  } catch(e){ console.log('진동 실패:', e); }
-  
-  // 2단계: Web Audio API 시도
   try{
     const ctx = new (window.AudioContext||window.webkitAudioContext)();
-    
-    // AudioContext가 suspended 상태일 수 있으므로 resume 시도
-    if(ctx.state === 'suspended'){
-      ctx.resume().then(()=>{
-        console.log('AudioContext resumed');
-        playAlarmTones(ctx);
-      }).catch(e=>{
-        console.log('AudioContext resume 실패:', e);
-        playFallbackAlarm();
-      });
-    } else {
-      playAlarmTones(ctx);
-    }
-  } catch(e){ 
-    console.log('AudioContext 생성 실패:', e);
-    playFallbackAlarm();
-  }
-}
-
-function playAlarmTones(ctx){
-  const beeps = [
-    {freq:880, start:0,    dur:0.15},
-    {freq:880, start:0.2,  dur:0.15},
-    {freq:1320,start:0.4,  dur:0.4},
-  ];
-  beeps.forEach(b=>{
-    try{
+    const beeps = [
+      {freq:880, start:0,    dur:0.15},
+      {freq:880, start:0.2,  dur:0.15},
+      {freq:1320,start:0.4,  dur:0.4},
+    ];
+    beeps.forEach(b=>{
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.connect(gain);
-      gain.connect(ctx.destination);
+      osc.connect(gain); gain.connect(ctx.destination);
       osc.type = 'sine';
       osc.frequency.value = b.freq;
       gain.gain.setValueAtTime(0, ctx.currentTime+b.start);
@@ -8980,18 +8870,8 @@ function playAlarmTones(ctx){
       gain.gain.linearRampToValueAtTime(0, ctx.currentTime+b.start+b.dur);
       osc.start(ctx.currentTime+b.start);
       osc.stop(ctx.currentTime+b.start+b.dur+0.05);
-    } catch(e){ console.log('오실레이터 생성 실패:', e); }
-  });
-}
-
-// 폴백: 비프음 또는 시각적 알림
-function playFallbackAlarm(){
-  console.log('폴백 알람 실행');
-  // 3단계: 시각적 피드백 강화
-  const timeEl = document.getElementById('timer-ov-time');
-  if(timeEl){
-    timeEl.style.animation = 'pulse 0.5s ease-in-out 3';
-  }
+    });
+  } catch(e){ console.log('알람 소리 재생 실패:', e); }
 }
 function ovReset(){clearInterval(_timerState.interval);_timerState.running=false;_timerState.current=_timerState.total;ovUpdateDisplay();}
 function ovAdjTime(delta){
