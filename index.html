@@ -3038,7 +3038,12 @@ function renderWorkout(){
     const btn=document.createElement('button');
     btn.className='day-btn'+(i===selDay?' active':'')+(records.find(r=>r.date===getDateForDow(i))?' has-rec':'');
     btn.textContent=n;
-    btn.setAttribute('onclick', 'changeDayTo('+i+')');
+    btn.addEventListener('click', (function(dayIndex){
+      return function(e){
+        e.preventDefault();
+        changeDayTo(dayIndex);
+      };
+    })(i));
     sel.appendChild(btn);
   });
   const content=document.getElementById('routine-content'),bottom=document.getElementById('bottom-bar');
