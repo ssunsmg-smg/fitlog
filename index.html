@@ -3040,21 +3040,9 @@ function renderWorkout(){
     const btn=document.createElement('button');
     btn.className='day-btn'+(i===selDay?' active':'')+(records.find(r=>r.date===getDateForDow(i))?' has-rec':'');
     btn.textContent=n;
-    btn.dataset.dayIndex = i;  // 데이터 속성에 저장
+    btn.onclick = new Function('changeDayTo('+i+')');  // 가장 확실한 방법
     sel.appendChild(btn);
   });
-  // 이벤트 위임: 부모에 한 번만 리스너 등록
-  if(sel.clickHandler) {
-    sel.removeEventListener('click', sel.clickHandler);
-  }
-  sel.clickHandler = function(e){
-    const btn = e.target.closest('.day-btn');
-    if(btn){
-      const i = parseInt(btn.dataset.dayIndex);
-      changeDayTo(i);
-    }
-  };
-  sel.addEventListener('click', sel.clickHandler, false);
   const content=document.getElementById('routine-content'),bottom=document.getElementById('bottom-bar');
   // 보충 운동 진행 중이면 휴일이어도 루틴 표시
   if(tk==='REST' && !makeupActive){
