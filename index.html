@@ -1773,11 +1773,6 @@ let editTarget=null, RT={}, userProfile=null, isLoggedIn=false;
 // ✅ 타이머 변수 선언
 let _wakeLock = null;
 let _timerState = { running: false, timerSec: 0, timerName: '' };
-let _releaseWakeLock = function() {
-  if(_wakeLock) {
-    _wakeLock.release().then(()=>{ _wakeLock = null; }).catch(()=>{});
-  }
-};
 
 // ══════════════════════════════
 // 운동 설명
@@ -8846,7 +8841,7 @@ document.addEventListener('visibilitychange', ()=>{
       if(_timerState.current <= 0){
         clearInterval(_timerState.interval);
         _timerState.running = false;
-        _releaseWakeLock();
+        // ✅ _releaseWakeLock 제거 (정의되지 않음)
         try{if(navigator.vibrate)navigator.vibrate([300,100,300,100,300]);}catch(e){}
         playTimerAlarm();
         document.getElementById('timer-ov-time').textContent = '완료! 🎉';
@@ -8861,7 +8856,7 @@ function ovToggle(){
   if(_timerState.running){
     clearInterval(_timerState.interval);
     _timerState.running = false;
-    _releaseWakeLock();
+    // ✅ _releaseWakeLock 제거 (정의되지 않음)
     _timerHiddenAt = null;
     ovUpdateDisplay();
     return;
@@ -8890,7 +8885,7 @@ function ovToggle(){
       clearInterval(_timerState.interval);
       _timerState.interval = null;
       _timerState.running = false;
-      _releaseWakeLock();
+      // ✅ _releaseWakeLock 제거 (정의되지 않음)
       // 운동 자동 체크 (setData 기반 + DOM)
       if(_timerState.exSiEi){
         const parts = _timerState.exSiEi.split('-');
