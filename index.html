@@ -3040,8 +3040,8 @@ function renderWorkout(){
     const btn=document.createElement('button');
     btn.className='day-btn'+(i===selDay?' active':'')+(records.find(r=>r.date===getDateForDow(i))?' has-rec':'');
     btn.textContent=n;
-    // 목요일(4), 금요일(5) 버튼 클릭 문제 해결: setAttribute 대신 addEventListener 사용
-    btn.addEventListener('click', function(){
+    // 각 버튼에 고유한 클로저 캡처: 화살표 함수 사용 (중요!)
+    btn.addEventListener('click', ()=>{
       changeDayTo(i);
     }, false);
     sel.appendChild(btn);
