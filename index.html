@@ -1770,9 +1770,8 @@ let makeupActive=null; // {restDay, missedDay, missedTk, missedName} — 보충 
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 let editTarget=null, RT={}, userProfile=null, isLoggedIn=false;
 
-// ✅ 타이머 변수 선언
+// ✅ 타이머 변수 선언 (_timerState는 이미 원본에 있음)
 let _wakeLock = null;
-let _timerState = { running: false, timerSec: 0, timerName: '' };
 
 // ══════════════════════════════
 // 운동 설명
