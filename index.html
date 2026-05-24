@@ -3024,13 +3024,23 @@ function renderWorkout(){
   const activeTk = makeupActive ? makeupActive.missedTk : DAY_SCHED[selDay];
   const tk = activeTk;
   const rt=RT[tk];
+  
+  // 에러 체크: rt가 undefined면 기본값 설정
+  if(!rt){
+    console.warn('⚠️ 루틴을 찾을 수 없습니다. tk='+tk+', selDay='+selDay+', DAY_SCHED='+JSON.stringify(DAY_SCHED));
+    document.getElementById('routine-content').innerHTML='<div style="padding:20px;text-align:center;color:var(--muted);">루틴 데이터를 로드하는 중입니다...</div>';
+    return;
+  }
+  
   const dayNames=['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
   const ds=getDateForDow(selDay);
   document.getElementById('today-meta').textContent='오늘: '+toStr(new Date())+' ('+DAY_KR[new Date().getDay()]+')';
   // 빠진 운동 배너 갱신
   renderMissedBanner();
   renderMakeupBanner();
-  document.getElementById('today-title').textContent=rt.title;
+  if(document.getElementById('today-title')) {
+    document.getElementById('today-title').textContent=rt.title;
+  }
   const dispLabel = makeupActive
     ? '📅 보충운동 · '+makeupActive.missedName+'요일('+makeupActive.missedTk+') 루틴 · '+ds
     : (tk==='REST'?'휴식일':'Type '+tk+' · '+dayNames[selDay]+' · '+ds);
@@ -3040,9 +3050,21 @@ function renderWorkout(){
     const btn=document.createElement('button');
     btn.className='day-btn'+(i===selDay?' active':'')+(records.find(r=>r.date===getDateForDow(i))?' has-rec':'');
     btn.textContent=n;
-    btn.onclick = new Function('changeDayTo('+i+')');  // 가장 확실한 방법
+    btn.dataset.dayIndex = i;  // 데이터 속성에 저장
     sel.appendChild(btn);
   });
+  // 이벤트 위임: 부모에 한 번만 리스너 등록
+  if(sel.clickHandler) {
+    sel.removeEventListener('click', sel.clickHandler);
+  }
+  sel.clickHandler = function(e){
+    const btn = e.target.closest('.day-btn');
+    if(btn){
+      const i = parseInt(btn.dataset.dayIndex);
+      changeDayTo(i);
+    }
+  };
+  sel.addEventListener('click', sel.clickHandler, false);
   const content=document.getElementById('routine-content'),bottom=document.getElementById('bottom-bar');
   // 보충 운동 진행 중이면 휴일이어도 루틴 표시
   if(tk==='REST' && !makeupActive){
