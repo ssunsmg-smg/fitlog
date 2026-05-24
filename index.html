@@ -1770,6 +1770,15 @@ let makeupActive=null; // {restDay, missedDay, missedTk, missedName} — 보충 
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 let editTarget=null, RT={}, userProfile=null, isLoggedIn=false;
 
+// ✅ 타이머 변수 선언
+let _wakeLock = null;
+let _timerState = { running: false, timerSec: 0, timerName: '' };
+let _releaseWakeLock = function() {
+  if(_wakeLock) {
+    _wakeLock.release().then(()=>{ _wakeLock = null; }).catch(()=>{});
+  }
+};
+
 // ══════════════════════════════
 // 운동 설명
 // ══════════════════════════════
@@ -3030,12 +3039,7 @@ function renderWorkout(){
   // 빠진 운동 배너 갱신
   renderMissedBanner();
   renderMakeupBanner();
-  // ✅ rt가 없어도 에러 안 나게 처리
-  if(document.getElementById('today-title') && rt) {
-    document.getElementById('today-title').textContent=rt.title;
-  } else if(document.getElementById('today-title')) {
-    document.getElementById('today-title').textContent=dayNames[selDay];
-  }
+  document.getElementById('today-title').textContent=rt.title;
   const dispLabel = makeupActive
     ? '📅 보충운동 · '+makeupActive.missedName+'요일('+makeupActive.missedTk+') 루틴 · '+ds
     : (tk==='REST'?'휴식일':'Type '+tk+' · '+dayNames[selDay]+' · '+ds);
@@ -3048,8 +3052,7 @@ function renderWorkout(){
     btn.dataset.dayIndex = i;  // 데이터 속성에 저장
     sel.appendChild(btn);
   });
-  
-  // ✅ 이벤트 위임: 부모에 한 번만 리스너 등록
+  // 이벤트 위임: 부모에 한 번만 리스너 등록
   if(sel.clickHandler) {
     sel.removeEventListener('click', sel.clickHandler);
   }
@@ -3057,7 +3060,6 @@ function renderWorkout(){
     const btn = e.target.closest('.day-btn');
     if(btn){
       const i = parseInt(btn.dataset.dayIndex);
-      console.log('요일 버튼 클릭:', i);
       changeDayTo(i);
     }
   };
@@ -3069,15 +3071,6 @@ function renderWorkout(){
       + buildMakeupCard(selDay);
     bottom.style.display='none';document.getElementById('prog-txt').textContent='휴식일';document.getElementById('prog-fill').style.width='0%';return;
   }
-  
-  // ✅ rt가 없으면 렌더링 스킵
-  if(!rt || !rt.color){
-    console.warn('⚠️ 루틴 데이터 없음: tk='+tk);
-    bottom.style.display='none';
-    document.getElementById('routine-content').innerHTML='<div style="padding:40px;text-align:center;color:var(--muted);">이 요일의 루틴이 아직 설정되지 않았습니다.</div>';
-    return;
-  }
-  
   bottom.style.display='block';
   let html='<div class="rh '+rt.color+'"><div class="rh-lbl">'+rt.label+'</div><div class="rh-title">'+rt.title+'</div><div class="rh-muscles">'+rt.muscles.map(m=>'<span class="mtag">'+m+'</span>').join('')+'</div></div>';
   // 섹션 필터 적용
