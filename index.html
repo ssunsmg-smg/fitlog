@@ -1769,9 +1769,7 @@ let records=[], setData={}, selDay=new Date().getDay(), selCond=3;
 let makeupActive=null; // {restDay, missedDay, missedTk, missedName} — 보충 운동 진행 중 상태
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 let editTarget=null, RT={}, userProfile=null, isLoggedIn=false;
-
-// ✅ 타이머 변수 선언 (_timerState는 이미 원본에 있음)
-let _wakeLock = null;
+let _wakeLock = null; // ✅ 타이머 WakeLock
 
 // ══════════════════════════════
 // 운동 설명
@@ -3033,7 +3031,12 @@ function renderWorkout(){
   // 빠진 운동 배너 갱신
   renderMissedBanner();
   renderMakeupBanner();
-  document.getElementById('today-title').textContent=rt.title;
+  // ✅ rt가 없어도 에러 안 남
+  if(rt && document.getElementById('today-title')) {
+    document.getElementById('today-title').textContent=rt.title;
+  } else if(document.getElementById('today-title')) {
+    document.getElementById('today-title').textContent=DAY_KR[selDay];
+  }
   const dispLabel = makeupActive
     ? '📅 보충운동 · '+makeupActive.missedName+'요일('+makeupActive.missedTk+') 루틴 · '+ds
     : (tk==='REST'?'휴식일':'Type '+tk+' · '+dayNames[selDay]+' · '+ds);
@@ -8840,7 +8843,7 @@ document.addEventListener('visibilitychange', ()=>{
       if(_timerState.current <= 0){
         clearInterval(_timerState.interval);
         _timerState.running = false;
-        // ✅ _releaseWakeLock 제거 (정의되지 않음)
+        // ✅ _releaseWakeLock 제거
         try{if(navigator.vibrate)navigator.vibrate([300,100,300,100,300]);}catch(e){}
         playTimerAlarm();
         document.getElementById('timer-ov-time').textContent = '완료! 🎉';
@@ -8855,7 +8858,7 @@ function ovToggle(){
   if(_timerState.running){
     clearInterval(_timerState.interval);
     _timerState.running = false;
-    // ✅ _releaseWakeLock 제거 (정의되지 않음)
+    // ✅ _releaseWakeLock 제거
     _timerHiddenAt = null;
     ovUpdateDisplay();
     return;
@@ -8884,7 +8887,7 @@ function ovToggle(){
       clearInterval(_timerState.interval);
       _timerState.interval = null;
       _timerState.running = false;
-      // ✅ _releaseWakeLock 제거 (정의되지 않음)
+      // ✅ _releaseWakeLock 제거
       // 운동 자동 체크 (setData 기반 + DOM)
       if(_timerState.exSiEi){
         const parts = _timerState.exSiEi.split('-');
