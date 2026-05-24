@@ -3034,8 +3034,7 @@ function renderWorkout(){
   
   const dayNames=['일요일','월요일','화요일','수요일','목요일','금요일','토요일'];
   const ds=getDateForDow(selDay);
- if(document.getElementById('today-title') && rt) {document.getElementById('today-title').textContent=rt.title;
-   }
+  document.getElementById('today-meta').textContent='오늘: '+toStr(new Date())+' ('+DAY_KR[new Date().getDay()]+')';
   // 빠진 운동 배너 갱신
   renderMissedBanner();
   renderMakeupBanner();
