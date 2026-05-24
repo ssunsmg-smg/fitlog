@@ -451,9 +451,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 /* ── 타이머 오버레이 (전체화면) ── */
 #timer-overlay{position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:9999;display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;}
 #timer-overlay.show{display:flex;}
+#timer-overlay.completed{background:rgba(76,175,125,.15);}
 #timer-ov-name{font-size:18px;font-weight:700;color:#fff;}
 #timer-ov-time{font-size:80px;font-weight:900;font-family:var(--mono);color:var(--accent);line-height:1;}
 #timer-ov-time.running{color:var(--green);}
+#timer-ov-time.completed{animation:pulse 0.4s ease-in-out 3;color:#4caf7d;font-size:100px;}
 #timer-ov-bar-wrap{width:260px;height:6px;background:rgba(255,255,255,.15);border-radius:3px;}
 #timer-ov-bar{height:100%;background:var(--accent);border-radius:3px;transition:width .5s linear;}
 .timer-ov-btns{display:flex;gap:12px;}
@@ -3038,12 +3040,10 @@ function renderWorkout(){
     const btn=document.createElement('button');
     btn.className='day-btn'+(i===selDay?' active':'')+(records.find(r=>r.date===getDateForDow(i))?' has-rec':'');
     btn.textContent=n;
-    btn.addEventListener('click', (function(dayIndex){
-      return function(e){
-        e.preventDefault();
-        changeDayTo(dayIndex);
-      };
-    })(i));
+    // 목요일(4), 금요일(5) 버튼 클릭 문제 해결: setAttribute 대신 addEventListener 사용
+    btn.addEventListener('click', function(){
+      changeDayTo(i);
+    }, false);
     sel.appendChild(btn);
   });
   const content=document.getElementById('routine-content'),bottom=document.getElementById('bottom-bar');
@@ -8895,10 +8895,29 @@ function ovToggle(){
           window._autoSaveTimer = setTimeout(function(){ doSaveRecord(true); }, 1500);
         }
       }
-      try{ if(navigator.vibrate) navigator.vibrate([300,100,300,100,300]); }catch(e){}
+      try{
+        // 진동 시도 (모바일)
+        if(navigator.vibrate){
+          navigator.vibrate([200,50,200,50,200,50,200]); // 더 강한 패턴
+          console.log('진동 발송');
+        }
+      } catch(e){ console.log('진동 오류:', e); }
+      
+      // 알림음 재생
       playTimerAlarm();
+      
+      // 시각적 알림 강화
       const timeEl = document.getElementById('timer-ov-time');
-      if(timeEl){ timeEl.textContent='완료! 🎉'; timeEl.style.color='var(--green)'; }
+      const overlayEl = document.getElementById('timer-overlay');
+      if(timeEl){ 
+        timeEl.textContent='완료! 🎉'; 
+        timeEl.classList.add('completed');
+        // 깜빡임 효과
+        timeEl.style.animation='pulse 0.4s ease-in-out';
+      }
+      if(overlayEl){
+        overlayEl.classList.add('completed');
+      }
       // 완료 버튼 표시, 시작 버튼 숨김
       const _doneBtn = document.getElementById('ov-done-btn');
       const _startBtn = document.getElementById('ov-start-btn');
@@ -8915,17 +8934,48 @@ function ovToggle(){
 
 // ── 타이머 알람 소리 (Web Audio API - 서버 불필요) ──
 function playTimerAlarm(){
+  // 1단계: 진동 시도 (모든 모바일 기기 지원)
+  try{
+    if(navigator.vibrate){
+      navigator.vibrate([300,100,300,100,300]);
+      console.log('진동 실행됨');
+    }
+  } catch(e){ console.log('진동 실패:', e); }
+  
+  // 2단계: Web Audio API 시도
   try{
     const ctx = new (window.AudioContext||window.webkitAudioContext)();
-    const beeps = [
-      {freq:880, start:0,    dur:0.15},
-      {freq:880, start:0.2,  dur:0.15},
-      {freq:1320,start:0.4,  dur:0.4},
-    ];
-    beeps.forEach(b=>{
+    
+    // AudioContext가 suspended 상태일 수 있으므로 resume 시도
+    if(ctx.state === 'suspended'){
+      ctx.resume().then(()=>{
+        console.log('AudioContext resumed');
+        playAlarmTones(ctx);
+      }).catch(e=>{
+        console.log('AudioContext resume 실패:', e);
+        playFallbackAlarm();
+      });
+    } else {
+      playAlarmTones(ctx);
+    }
+  } catch(e){ 
+    console.log('AudioContext 생성 실패:', e);
+    playFallbackAlarm();
+  }
+}
+
+function playAlarmTones(ctx){
+  const beeps = [
+    {freq:880, start:0,    dur:0.15},
+    {freq:880, start:0.2,  dur:0.15},
+    {freq:1320,start:0.4,  dur:0.4},
+  ];
+  beeps.forEach(b=>{
+    try{
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
-      osc.connect(gain); gain.connect(ctx.destination);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
       osc.type = 'sine';
       osc.frequency.value = b.freq;
       gain.gain.setValueAtTime(0, ctx.currentTime+b.start);
@@ -8933,8 +8983,18 @@ function playTimerAlarm(){
       gain.gain.linearRampToValueAtTime(0, ctx.currentTime+b.start+b.dur);
       osc.start(ctx.currentTime+b.start);
       osc.stop(ctx.currentTime+b.start+b.dur+0.05);
-    });
-  } catch(e){ console.log('알람 소리 재생 실패:', e); }
+    } catch(e){ console.log('오실레이터 생성 실패:', e); }
+  });
+}
+
+// 폴백: 비프음 또는 시각적 알림
+function playFallbackAlarm(){
+  console.log('폴백 알람 실행');
+  // 3단계: 시각적 피드백 강화
+  const timeEl = document.getElementById('timer-ov-time');
+  if(timeEl){
+    timeEl.style.animation = 'pulse 0.5s ease-in-out 3';
+  }
 }
 function ovReset(){clearInterval(_timerState.interval);_timerState.running=false;_timerState.current=_timerState.total;ovUpdateDisplay();}
 function ovAdjTime(delta){
