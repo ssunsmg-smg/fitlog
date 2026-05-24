@@ -288,10 +288,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 /* 메인 앱 */
 .app{display:none;}
 .app.active{display:block;}
-.nav{display:flex;align-items:center;justify-content:space-between;padding:8px 14px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:100;flex-wrap:nowrap;gap:6px;}
+.nav{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:100;flex-wrap:wrap;gap:8px;}
 .nav-logo{font-size:14px;font-weight:900;color:var(--accent);}
 .nav-right{display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.nav-tabs{display:flex;gap:2px;flex-wrap:nowrap;overflow-x:auto;}
+.nav-tabs{display:flex;gap:2px;}
 .nav-tab{padding:5px 11px;border-radius:6px;font-size:12px;cursor:pointer;border:none;background:none;color:var(--muted);font-family:var(--font);transition:all .15s;}
 .nav-tab.active{background:var(--surface2);color:var(--text);}
 .user-avatar{width:28px;height:28px;border-radius:50%;object-fit:cover;border:2px solid var(--border);}
@@ -335,8 +335,8 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .today-meta{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;}
 .today-title{font-size:22px;font-weight:900;margin-bottom:3px;}
 .today-type{font-size:12px;color:var(--accent);font-family:var(--mono);margin-bottom:16px;}
-.day-sel{display:flex;gap:4px;flex-wrap:nowrap;margin-bottom:8px;margin-top:4px;justify-content:space-between;width:100%;}
-.day-btn{flex:1;min-width:0;max-width:42px;height:36px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--font);}
+.day-sel{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:16px;}
+.day-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:all .15s;font-family:var(--font);}
 .day-btn.active{background:var(--accent);border-color:var(--accent);color:#fff;}
 .day-btn.has-rec{border-color:var(--green);color:var(--green);}
 .prog-wrap{margin-bottom:14px;}
@@ -1007,7 +1007,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           style="width:100%;padding:12px;border-radius:10px;border:none;
           background:var(--green);color:#fff;font-size:14px;font-weight:700;
           cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:8px;">
-          🏃 오늘의 유산소 선택하기 (8가지)
+          🏃 오늘의 유산소 선택하기 (7가지)
         </button>
       </div>
       <!-- 미완료 버전 -->
@@ -1025,7 +1025,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           style="width:100%;padding:11px;border-radius:10px;border:1px solid var(--border);
           background:none;color:var(--text);font-size:13px;font-weight:700;
           cursor:pointer;font-family:var(--font);">
-          🏃 유산소 선택하기 (8가지)
+          🏃 유산소 선택하기 (7가지)
         </button>
       </div>
     </div>
@@ -1037,15 +1037,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
   <!-- 운동 -->
   <div class="page" id="page-workout">
+    <div class="today-meta" id="today-meta"></div>
     <div id="missed-banner" style="display:none;background:#f0a5000d;border:1px solid #f0a50033;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;line-height:1.8;"></div>
     <div id="makeup-banner" style="display:none;background:#4a9eff0d;border:1px solid #4a9eff55;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--blue);font-weight:500;"></div>
-
-    <div class="day-sel" id="day-sel"></div>
-    <div class="today-meta" id="today-meta" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;"></div>
-    <div class="today-title" id="today-title">오늘의 루틴</div>
-    <div class="today-type" id="today-type"></div>
-    <!-- 스마트 루틴 생성기 -->
-    <div style="margin-bottom:8px;">
+    <!-- 스마트 루틴 생성기 상단 -->
+    <div style="margin-bottom:12px;">
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
         <div style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:8px;">
           <span style="font-size:12px;color:var(--muted);white-space:nowrap;">⏱ 운동 시간</span>
@@ -1065,16 +1061,22 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           🎯 스마트 루틴 생성기
         </button>
       </div>
-
+      <!-- 유산소 추가 버튼 (평일·주말 항상 표시) -->
+      <button onclick="openCardioModal()" style="width:100%;padding:9px;border-radius:10px;
+        border:1px solid #4caf7d55;background:#4caf7d0d;color:var(--green);
+        font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);
+        display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:8px;">
+        🏃 유산소 추가 · 7가지 중 복수 선택
+      </button>
       <div id="time-plan-bar" style="font-size:11px;color:var(--muted);padding:5px 10px;background:var(--surface2);border-radius:6px;display:none;"></div>
     </div>
-
-        <div class="prog-wrap">
+    <div class="today-title" id="today-title">오늘의 루틴</div>
+    <div class="today-type" id="today-type"></div>
+    <div class="day-sel" id="day-sel"></div>
+    <div class="prog-wrap">
       <div class="prog-info"><span id="prog-txt">0 / 0 완료</span><button style="background:none;border:none;color:var(--muted);font-size:11px;cursor:pointer;" onclick="resetAll()">초기화</button></div>
       <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
     </div>
-    <!-- 유산소 추가 버튼 -->
-    <button onclick="openCardioModal()" style="width:100%;padding:9px;border-radius:10px;border:1px solid #4caf7d55;background:#4caf7d0d;color:var(--green);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);display:flex;align-items:center;justify-content:center;gap:6px;margin-bottom:12px;">🏃 유산소 추가 · 8가지 중 복수 선택</button>
     <div id="routine-content"></div>
     <div class="bottom-bar" id="bottom-bar" style="display:none;">
       <div class="cond-row">
@@ -1769,7 +1771,7 @@ const EX_INFO={
   '케이블 체스트 플라이':{desc:'팔꿈치를 살짝 구부린 채 유지. 가슴을 쥐어짜는 느낌으로 마무리.',tip:'팔꿈치를 완전히 펴면 관절에 무리',yt:'케이블 체스트 플라이 자세',pf:'cable-chest-fly'},
   '시티드 숄더 프레스':{desc:'핸들을 귀 옆 높이에서 시작. 팔을 위로 뻗되 귀 높이까지만.',tip:'어깨 통증 있으면 귀 높이 이상 올리지 말 것!',yt:'시티드 숄더 프레스 머신 자세',pf:'shoulder-press-machine'},
   '케이블 사이드 레터럴':{desc:'케이블을 가장 낮은 위치에 설정. 반동 없이 천천히 내리기.',tip:'중량보다 자세가 중요',yt:'케이블 사이드 레터럴 레이즈 자세',pf:'cable-lateral-raise'},
-  '크런치':{desc:'등을 바닥에 대고 무릎을 세우기. 손을 귀 옆에 가볍게 대고, 복근으로 상체를 말아 올리기. 허리는 바닥에서 떼지 않기.',tip:'목을 당기지 말 것. 복근이 당기는 느낌에만 집중. 올라갈 때 날숨',yt:'크런치 복근 운동 자세',pf:'crunch'},
+  '크런치':{desc:'복근으로 상체를 말아 올리되 허리는 바닥에서 떼지 않기.',tip:'목을 당기지 말 것. 복근이 당기는 느낌에 집중',yt:'크런치 복근 운동 자세',pf:'crunch'},
   '레그 레이즈':{desc:'다리를 곧게 펴서 90도까지 올리기. 천천히 내리기.',tip:'허리가 뜨는 느낌이 나면 무릎을 살짝 구부리기',yt:'레그 레이즈 복근 자세',pf:'leg-raise'},
   '데드버그':{desc:'오른팔-왼다리를 동시에 펴고 복근으로 버티기. 반대편 반복.',tip:'허리가 바닥에서 떨어지지 않는 게 핵심',yt:'데드버그 운동 자세',pf:'dead-bug'},
   '랫 풀다운':{desc:'가슴 상단을 향해 바를 당기기. 등 근육이 수축하는 느낌에 집중.',tip:'팔꿈치를 아래-뒤쪽으로 당기는 느낌',yt:'랫 풀다운 자세 등운동',pf:'lat-pulldown'},
@@ -1777,7 +1779,7 @@ const EX_INFO={
   '시티드 리어 델트 플라이':{desc:'팔을 옆으로 벌려 후면 삼각근 수축.',tip:'승모근이 아닌 후면 삼각근을 쓰는 느낌으로',yt:'리어 델트 플라이 후면 어깨 운동',pf:'rear-delt-fly-machine'},
   '시티드 덤벨 컬':{desc:'팔꿈치 위치 고정하고 손목을 돌리며 올리기.',tip:'반동 사용 금지. 팔꿈치를 몸 옆에 고정',yt:'덤벨 컬 이두근 운동 자세',pf:'dumbbell-curl'},
   '플랭크':{desc:'팔꿈치를 어깨 아래에 위치. 발끝으로 버티며 몸이 일직선이 되게.',tip:'허리 통증 시 즉시 중단',yt:'플랭크 올바른 자세',pf:'plank'},
-  '바이시클 크런치':{desc:'등을 바닥에 대고 눕기. 한쪽 무릎을 당기며 반대쪽 팔꿈치를 교차. 자전거 페달 밟듯 번갈아 반복.',tip:'빠르게 하지 말고 복사근이 당기는 느낌으로. 목이 아닌 복근으로 회전',yt:'바이시클 크런치 복사근 운동',pf:'bicycle-crunch'},
+  '바이시클 크런치':{desc:'자전거 페달 밟는 동작.',tip:'빠르게 하지 말고 복사근이 당기는 느낌으로',yt:'바이시클 크런치 복사근 운동',pf:'bicycle-crunch'},
   '사이드 플랭크':{desc:'옆으로 누워 팔꿈치로 지지. 몸이 일직선이 되게.',tip:'허리 통증 시 무릎을 바닥에 대고 변형 동작으로',yt:'사이드 플랭크 올바른 자세',pf:'side-plank'},
   '힙 어브덕션 (기계)':{desc:'다리를 천천히 벌리기. 엉덩이 근육이 수축하는 느낌에 집중.',tip:'무릎 수술 후 초경량부터',yt:'힙 어브덕션 머신 자세 중둔근',pf:'hip-abduction-machine'},
   '누워서 브릿지':{desc:'발바닥으로 바닥을 밀며 엉덩이를 최대한 높이 들기.',tip:'엉덩이를 끝까지 올려야 대둔근 완전 수축',yt:'힙 브릿지 대둔근 운동',pf:'glute-bridge'},
@@ -1793,7 +1795,7 @@ const EX_INFO={
   '피전 포즈':{desc:'한 다리를 앞으로 접어 놓고 뒷다리를 뒤로 쭉 뻗기.',tip:'둔근이 당기는 느낌이 나야 정상',yt:'피전 포즈 고관절 스트레칭',pf:'pigeon-pose'},
   '누워서 무릎 당기기':{desc:'한쪽 무릎을 가슴 쪽으로 당기기. 30-60초 유지.',tip:'허리 수술 후 재활에 기본 스트레칭',yt:'무릎 당기기 스트레칭 허리',pf:'lying-knee-to-chest-stretch'},
   '밴드 풀어파트':{desc:'밴드를 양손으로 잡고 양쪽으로 당기기.',tip:'라운드숄더와 굽은 등 교정에 효과적',yt:'밴드 풀어파트 어깨 교정 운동',pf:'band-pull-apart'},
-  'ABDOMINAL CRUNCH':{desc:'복근 기계(Abdominal Crunch Machine)에 앉아 등받이에 기대기. 손잡이를 잡고 복근으로 상체를 앞으로 말아 내리기. 천천히 원위치.',tip:'허리힘이 아닌 복직근으로만 수축. 끝까지 쥐어짜는 느낌',yt:'abdominal crunch machine 복근 기계 사용법',pf:'abdominal-crunch-machine'},
+  '케이블 크런치':{desc:'케이블 머신 앞에 무릎 꿇기. 복근으로 몸을 아래로 말기.',tip:'허리로 당기지 말고 복근만 사용',yt:'케이블 크런치 복근 운동 자세',pf:'cable-crunch'},
   '행잉 니 레이즈':{desc:'철봉에 매달리기. 무릎을 구부려 가슴까지 당기기.',tip:'처음엔 무릎을 90도까지만',yt:'행잉 니 레이즈 하복부 운동',pf:'hanging-knee-raise'},
   '리버스 크런치':{desc:'무릎을 구부려 가슴 쪽으로 당기기.',tip:'복근이 당기는 느낌에 집중',yt:'리버스 크런치 하복부 운동',pf:'reverse-crunch'},
   '덤벨 숄더 프레스':{desc:'덤벨을 귀 옆 높이에 위치. 팔을 위로 뻗기.',tip:'어깨 통증 주의',yt:'덤벨 숄더 프레스 어깨 운동',pf:'dumbbell-shoulder-press'},
@@ -1804,29 +1806,12 @@ const EX_INFO={
   },
   '고관절 굴곡근 스트레칭 (런지)':{desc:'한쪽 무릎을 앞에, 뒷무릎은 바닥에. 골반을 앞으로 밀며 장요근을 이완.',tip:'허리가 꺾이지 않게 코어 힘 유지',yt:'고관절 굴곡근 스트레칭 런지'},
   '햄스트링 스트레칭 (앉아)':{desc:'다리를 앞으로 펴고 앉아 발끝을 당기며 상체를 천천히 숙인다.',tip:'허리를 굽히지 말고 고관절에서 접는 느낌으로',yt:'햄스트링 스트레칭 앉아서'},
-    '폼롤러 전신 이완':{desc:'등→둔근→허벅지→종아리 순서로 체중 실어 천천히 롤링. 통증 부위 10~20초 정지.',tip:'뼈 위에 직접 올리지 말 것. 근육 부위만',yt:'폼롤러 전신 이완 방법'},
+  '피전 포즈':{desc:'한 다리를 앞으로 접고 뒷다리를 쭉 뻗기. 상체를 앞으로 숙여 둔근 깊이 이완.',tip:'둔근이 당기는 느낌이 나야 정상. 고관절 통증 시 중단',yt:'피전 포즈 고관절 스트레칭'},
+  '폼롤러 전신 이완':{desc:'등→둔근→허벅지→종아리 순서로 체중 실어 천천히 롤링. 통증 부위 10~20초 정지.',tip:'뼈 위에 직접 올리지 말 것. 근육 부위만',yt:'폼롤러 전신 이완 방법'},
   '종아리 스트레칭 (벽)':{desc:'벽에 손 짚고 뒷발 뒤꿈치 바닥에 고정. 앞으로 체중 이동.',tip:'무릎 약간 구부린 버전으로 가자미근도 이완 가능',yt:'종아리 스트레칭 방법'},
   '가슴 열기 스트레칭':{desc:'양손을 등 뒤에서 깍지 끼고 가슴을 위·앞으로 열기.',tip:'라운드숄더 교정에 매우 효과적. 천천히 호흡하며',yt:'가슴 스트레칭 흉근 이완'},
   '척추 회전 스트레칭 (누워)':{desc:'누워서 무릎을 구부려 양쪽으로 넘기기. 어깨는 바닥에 고정.',tip:'척추 디스크에 좋음. 너무 무리하지 말 것',yt:'척추 회전 스트레칭'},
   '코브라 포즈':{desc:'엎드려 손으로 바닥 짚고 상체를 서서히 들어올리기. 팔꿈치를 살짝 구부린 채 유지.',tip:'허리 통증이 다리로 퍼지면 즉시 중단',yt:'코브라 포즈 허리 재활'},
-  '벤치 프레스':{desc:'벤치에 눕기. 바를 가슴 중앙으로 내린 후 밀어 올리기. 날개뼈를 모아서 가슴을 위로 내밀기.',tip:'팔꿈치가 90도 이하로 내려가지 않게. 그립은 어깨너비보다 약간 넓게',yt:'벤치프레스 자세 교정',pf:'bench-press'},
-  '인클라인 덤벨 프레스':{desc:'벤치를 30~45도로 세팅. 덤벨을 가슴 상단 높이에서 밀어 올리기.',tip:'어깨가 앞으로 말리지 않게. 날개뼈 모아서 시작',yt:'인클라인 덤벨 프레스 자세',pf:'incline-dumbbell-press'},
-  '오버헤드 프레스':{desc:'바 또는 덤벨을 귀 옆 높이에서 시작. 머리 위로 밀어 올리기.',tip:'허리가 과도하게 젖혀지지 않게 코어 힘 유지',yt:'오버헤드 프레스 자세',pf:'overhead-press'},
-  '바벨 로우':{desc:'상체를 45도로 숙이고 바를 배꼽 방향으로 당기기. 팔꿈치를 몸 가까이.',tip:'허리를 곧게 유지. 등 근육이 수축하는 느낌에 집중',yt:'바벨 로우 자세 교정',pf:'barbell-row'},
-  '바벨 스쿼트':{desc:'바를 승모근 위에 올리기. 발을 어깨너비로 벌리고 앉기. 무릎이 발끝 방향으로.',tip:'허리를 곧게 유지. 무릎이 안으로 모이지 않게',yt:'바벨 스쿼트 자세',pf:'barbell-squat'},
-  '레그 프레스':{desc:'발판을 어깨너비로 세팅. 무릎을 90도까지 구부렸다가 펴기.',tip:'허리가 플랫폼에서 떨어지지 않게. 무릎이 안으로 모이지 않게',yt:'레그 프레스 자세',pf:'leg-press'},
-  '레그 컬':{desc:'엎드리거나 앉아서 발목으로 패드를 누르고 무릎을 구부리기.',tip:'골반이 들리지 않게. 햄스트링이 당기는 느낌에 집중',yt:'레그 컬 자세',pf:'leg-curl'},
-  '풀업':{desc:'철봉을 어깨너비보다 약간 넓게 잡기. 가슴을 바에 붙이듯 몸을 당기기.',tip:'반동 쓰지 말고 등 근육으로만. 내려올 때 천천히',yt:'풀업 풀다운 자세',pf:'pull-up'},
-  '루마니안 데드리프트':{desc:'바를 허벅지 앞에 위치. 엉덩이를 뒤로 밀며 상체를 앞으로 숙이기. 햄스트링이 당길 때까지.',tip:'무릎을 살짝만 구부리기. 허리를 곧게 유지',yt:'루마니안 데드리프트 자세',pf:'romanian-deadlift'},
-  '바벨 힙 쓰러스트':{desc:'벤치에 등 상단을 기대고 바를 고관절 위에 올리기. 엉덩이를 위로 밀어 올리기.',tip:'엉덩이 끝까지 조이기. 허리가 과하게 젖혀지지 않게',yt:'힙 쓰러스트 자세',pf:'hip-thrust'},
-  '트라이셉 푸시다운':{desc:'케이블 머신에서 바 또는 로프를 잡고 팔꿈치 고정하여 아래로 밀기.',tip:'팔꿈치가 벌어지지 않게. 삼두근 완전 수축 느낌',yt:'트라이셉 푸시다운 자세',pf:'tricep-pushdown'},
-  '바벨 컬':{desc:'바를 어깨너비로 잡기. 팔꿈치 위치 고정하고 바를 어깨 높이까지 올리기.',tip:'반동 사용 금지. 팔꿈치를 몸 옆에 고정',yt:'바벨 컬 이두 운동 자세',pf:'barbell-curl'},
-  '힙 쓰러스트 (맨몸)':{desc:'등을 벤치나 소파에 기대고 무릎을 세우기. 엉덩이를 위로 들어 올리기.',tip:'엉덩이를 끝까지 조이기. 복근도 함께 긴장',yt:'맨몸 힙 쓰러스트 자세',pf:'bodyweight-hip-thrust'},
-  '글루트 브릿지':{desc:'등을 바닥에 대고 무릎을 세우기. 발바닥으로 바닥을 밀며 엉덩이를 들기.',tip:'엉덩이를 끝까지 올려야 대둔근 완전 수축',yt:'글루트 브릿지 자세',pf:'glute-bridge'},
-  '힙 어브덕션 (기계)':{desc:'기계에 앉아 패드를 허벅지 바깥쪽에 위치. 천천히 다리를 벌리기.',tip:'무릎 수술 후 초경량부터. 중둔근이 당기는 느낌',yt:'힙 어브덕션 기계 자세',pf:'hip-abduction'},
-  '런지':{desc:'한 발을 앞으로 크게 내딛기. 뒷무릎이 바닥에 닿기 직전까지 내려가기.',tip:'앞 무릎이 발끝을 넘지 않게. 상체는 곧게',yt:'런지 자세 교정',pf:'lunge'},
-  '버드독':{desc:'네발기기 자세에서 반대편 팔과 다리를 동시에 뻗기. 3초 유지.',tip:'허리가 바닥에서 떨어지지 않게. 코어 힘 유지',yt:'버드독 코어 운동',pf:'bird-dog'},
-  '레그 레이즈':{desc:'등을 바닥에 대고 눕기. 다리를 곧게 펴서 90도까지 올리기. 천천히 내리기.',tip:'허리가 뜨는 느낌이 나면 무릎을 살짝 구부리기',yt:'레그 레이즈 하복부 운동',pf:'leg-raise'},
   '마무리 스트레칭':{
     desc:'🔵 마무리 순서 (총 5분)\n\n① 폼롤러 등 이완 — 30초\n   등 중간(흉추)에 폼롤러 올리고 팔을 가슴에 모으기\n\n② 고양이-소 스트레칭 — 10회\n   네 발 기기 자세, 호흡에 맞춰 천천히\n\n③ 피전 포즈 — 양쪽 각 30초\n   한 다리 앞으로 접고 둔근 이완\n\n④ 가슴/어깨 스트레칭 — 30초\n   양손 등 뒤에서 깍지 끼고 가슴 열기\n\n⑤ 목 옆 스트레칭 — 양쪽 각 20초\n   한 손으로 머리를 부드럽게 옆으로 당기기',
     tip:'운동 후 근육이 따뜻할 때 정적 스트레칭이 가장 효과적',
@@ -2140,7 +2125,7 @@ const RT_BASE={
         {n:'업라이트 바이크',d:'3분 · 저강도',tags:['심폐'],w:['무릎주의'],sets:0},
         {n:'관절 돌리기',d:'2분 · 전신 관절 풀기',tags:['관절가동성'],w:[],sets:0}
       ]},
-      {n:'복근 집중',exs:[{n:'ABDOMINAL CRUNCH',d:'4세트 × 20회',tags:['복직근(주)'],w:['허리주의'],sets:4},{n:'행잉 니 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:[],sets:0},{n:'바이시클 크런치',d:'3세트 × 30회',tags:['복사근(주)'],w:[],sets:0},{n:'리버스 크런치',d:'3세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:0}]},
+      {n:'복근 집중',exs:[{n:'케이블 크런치',d:'4세트 × 20회',tags:['복직근(주)'],w:['허리주의'],sets:4},{n:'행잉 니 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:[],sets:0},{n:'바이시클 크런치',d:'3세트 × 30회',tags:['복사근(주)'],w:[],sets:0},{n:'리버스 크런치',d:'3세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:0}]},
       {n:'전신 복합',exs:[{n:'시티드 케이블 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3},{n:'덤벨 숄더 프레스',d:'3세트 × 12회',tags:['삼각근(주)'],w:['어깨주의'],sets:3},{n:'힙 어브덕션 (기계)',d:'3세트 × 15회',tags:['중둔근(주)'],w:['무릎주의'],sets:3}]},
       {n:'마무리',exs:[{n:'업라이트 바이크',d:'10분 · 중강도',tags:['체지방'],w:['무릎주의'],sets:0}]}]},
   F:{label:'토요일 · TypeF',title:'하체 · 둔근 2회차 (경량)',color:'rh-f',muscles:['대둔근','중둔근','햄스트링'],
@@ -2449,44 +2434,9 @@ async function initApp(user){
     console.error('[FitLog] initApp 오류:', e);
     clearTimeout(_t);
   }
-  migrateExNames();
   showApp();
 }
 
-
-// ── 운동명 마이그레이션 (구버전 데이터 호환) ──
-function migrateExNames(){
-  const nameMap = {
-    '케이블 크런치': 'ABDOMINAL CRUNCH',
-  };
-  Object.keys(RT).forEach(tk=>{
-    if(!RT[tk]||!RT[tk].sections) return;
-    RT[tk].sections.forEach(sec=>{
-      if(!sec.exs) return;
-      sec.exs.forEach(ex=>{
-        if(nameMap[ex.n]) ex.n = nameMap[ex.n];
-      });
-    });
-  });
-  // localStorage 백업도 갱신
-  const backup = localStorage.getItem('fitlog-rt-custom');
-  if(backup){
-    try{
-      const obj = JSON.parse(backup);
-      let changed = false;
-      Object.keys(obj).forEach(tk=>{
-        if(!obj[tk]||!obj[tk].sections) return;
-        obj[tk].sections.forEach(sec=>{
-          if(!sec.exs) return;
-          sec.exs.forEach(ex=>{
-            if(nameMap[ex.n]){ ex.n = nameMap[ex.n]; changed=true; }
-          });
-        });
-      });
-      if(changed) localStorage.setItem('fitlog-rt-custom', JSON.stringify(obj));
-    }catch(e){}
-  }
-}
 function showApp(){
   document.getElementById('loading').style.display='none';
   document.getElementById('login-screen').style.display='none';
@@ -2551,13 +2501,7 @@ function initSetData(tk){
       // 중량 없는 맨몸 종목 (플랭크, 사이드플랭크 등) — 초/분 포함 여부 무관
       const m=ex.d&&ex.d.match(/(\d+)\s*세트/);
       const cnt=m?parseInt(m[1]):3;
-      // 초 단위 운동이면 _sec에 시간 저장
-      const secMatch = ex.d&&ex.d.match(/(\d+)\s*초/);
-      const minMatch = ex.d&&ex.d.match(/(\d+)\s*분/);
-      const secVal = secMatch?parseInt(secMatch[1]):(minMatch?parseInt(minMatch[1])*60:0);
-      const arr = Array.from({length:cnt},()=>({weight:'',reps:'',done:false}));
-      if(secVal>0) arr._sec = secVal;
-      setData[k]=arr;
+      setData[k]=Array.from({length:cnt},()=>({weight:'',reps:'',done:false}));
     }
     // sets:0 이고 NO_WEIGHT 아닌 종목 = 타이머 운동 → setData 등록 안 함
   }));
@@ -2618,9 +2562,6 @@ function renderSets(key,cId){
   const sets=setData[key];if(!sets)return;
   const el=document.getElementById(cId);if(!el)return;
   const exName=key.split('-').slice(2).join('-')||'';
-  // 초 단위 운동 판별
-  const _isTimedEx = (typeof NO_WEIGHT_EXNAMES!=='undefined'&&NO_WEIGHT_EXNAMES.has(exName)&&sets._sec>0);
-  const timerSec = _isTimedEx ? sets._sec : 0;
   let prevRec=null;
   for(const r of (records||[])){if(r.sets){const m=r.sets.find(s=>s.ex===exName);if(m){prevRec=r;break;}}}
   const prevSets=prevRec?prevRec.sets.filter(s=>s.ex===exName):[];
@@ -2644,16 +2585,15 @@ function renderSets(key,cId){
     const kgInp=nw?'':buildKgInput(s.weight,pw,key,i,cId);
     const repsOi=buildRepsOninput(nw,key,i,cId);
     rows+='<div id="sr-'+key+'-'+i+'" style="display:grid;grid-template-columns:'+COL+';gap:4px;align-items:center;margin-bottom:4px;background:'+bg+';border-radius:6px;padding:2px;">'
-      +'<div style="text-align:center;font-size:13px;font-weight:700;color:'+(s.done?'var(--green)':'var(--text)')+';">'+(i+1)+'</div>'
+      +'<div style="text-align:center;font-size:13px;font-weight:700;color:'+(s.done?'var(--green)':'var(--muted)')+';">'+(i+1)+'</div>'
       +'<div style="text-align:center;font-size:12px;font-family:var(--mono);color:'+((pw||pr)?'#f0a500':'var(--border)')+';font-weight:'+((pw||pr)?'700':'400')+';padding:6px 2px;background:var(--surface2);border-radius:6px;">'
       +preLabel+(hasUp?'<span style="color:var(--green);font-size:9px;"> ▲</span>':'')+(hasDn?'<span style="color:#e55;font-size:9px;"> ▼</span>':'')+(repsUp?'<span style="color:var(--green);font-size:9px;"> ▲</span>':'')+'</div>'
       +kgInp
       +'<input class="set-inp '+(s.reps?'filled':'')+'" type="number" value="'+(s.reps||'')+'" placeholder="'+(pr||'회')+'" min="0" step="1" style="text-align:center;font-size:13px;" oninput="'+repsOi+'"/>'
       +'<button class="set-ok '+(s.done?'done':'')+' " onclick="toggleSetDone(\'' + key + '\',' + i + ')">✓</button>'
-      +(timerSec>0?'<button onclick="startTimerFromKey('+timerSec+',\'' + key + '\')" style="font-size:10px;padding:2px 6px;border-radius:6px;background:#3ecf8e22;border:1px solid #3ecf8e44;color:var(--green);cursor:pointer;">⏱</button>':'')
       +'</div>';
   });
-  el.innerHTML='<div style="display:grid;grid-template-columns:'+COL+';gap:4px;padding:7px 4px 5px;font-size:10px;color:var(--text);font-family:var(--mono);text-align:center;border-bottom:1px solid var(--border);margin-bottom:5px;"><div>회</div>'+hdrPre+hdrKg+'<div>횟수</div><div>체크</div></div>'+rows+rmHtml+'<button class="add-set" onclick="addSet(\'' + key + '\',\'' + cId + '\')">+ 세트 추가</button>';
+  el.innerHTML='<div style="display:grid;grid-template-columns:'+COL+';gap:4px;padding:7px 4px 5px;font-size:10px;color:var(--muted);font-family:var(--mono);text-align:center;border-bottom:1px solid var(--border);margin-bottom:5px;"><div>회</div>'+hdrPre+hdrKg+'<div>횟수</div><div>체크</div></div>'+rows+rmHtml+'<button class="add-set" onclick="addSet(\'' + key + '\',\'' + cId + '\')">+ 세트 추가</button>';
 }
 
 
@@ -2702,9 +2642,6 @@ function toggleSetDone(k,i){
   const card=document.getElementById(`ec-${parts[1]}-${parts[2]}`),chk=document.getElementById(`echk-${parts[1]}-${parts[2]}`);
   if(card)card.classList.toggle('done',allDone);if(chk)chk.classList.toggle('done',allDone);
   saveSetDataLocal();saveChkLocal();updateProg();
-  // ── 실시간 자동저장 ──
-  const anyDone = Object.values(setData).some(arr=>arr.some(s=>s.done));
-  if(anyDone){ clearTimeout(window._autoSaveTimer); window._autoSaveTimer=setTimeout(function(){ doSaveRecord(true); },1500); }
 }
 function addSet(k,cId){if(!setData[k])setData[k]=[];setData[k].push({weight:'',reps:'',done:false});renderSets(k,cId);}
 
@@ -3030,7 +2967,20 @@ function renderWorkout(){
     const btn=document.createElement('button');
     btn.className='day-btn'+(i===selDay?' active':'')+(records.find(r=>r.date===getDateForDow(i))?' has-rec':'');
     btn.textContent=n;
-    btn.setAttribute('onclick', 'changeDayTo('+i+')');
+    btn.addEventListener('click',()=>{
+      // 보충 운동 진행 중 다른 요일 클릭 시 확인
+      if(makeupActive && i !== makeupActive.restDay){
+        if(!confirm('보충 운동 진행 중입니다. 다른 요일로 이동하면 보충 운동이 취소됩니다. 계속하시겠어요?')){
+          return;
+        }
+        makeupActive=null;
+      }
+      selDay=i;
+      setData={};
+      try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}
+      initSetData(DAY_SCHED[i]);
+      renderWorkout();
+    });
     sel.appendChild(btn);
   });
   const content=document.getElementById('routine-content'),bottom=document.getElementById('bottom-bar');
@@ -3078,8 +3028,8 @@ function renderWorkout(){
       const saId='sa-'+si+'-'+ei;
       const info=EX_INFO[ex.n];
       const ytQ=info?(info.yt||ex.n):'';
-      // 시간형 운동 판별 (초/분 포함 + sets:0) — NO_WEIGHT라도 '초' 포함이면 타이머 표시
-      const isTimeBased = /초/.test(ex.d) || (!hasSets && /분/.test(ex.d));
+      // 시간형 운동 판별 (초/분 포함 + sets:0)
+      const isTimeBased=!hasSets&&/초|분/.test(ex.d);
       const timerSec=isTimeBased?parseTimerSec(ex.d):0;
       // 시간 운동 세트 수 파싱 (예: "3세트 × 45초" → 3)
       const timerSetCount=isTimeBased?(parseInt(ex.d.match(/(\d+)\s*세트/)?.[1]||'1')):0;
@@ -3679,7 +3629,7 @@ function resetAll(){
 function setCond(v){selCond=v;document.querySelectorAll('.cond-btn').forEach((b,i)=>b.classList.toggle('active',i+1===v));}
 
 // ── 저장 (Firebase) ──
-async function doSaveRecord(silent=false){
+async function doSaveRecord(){
   // 보충 운동 중이면 해당 루틴 키 사용
   const tk = makeupActive ? makeupActive.missedTk : DAY_SCHED[selDay];
   if(!makeupActive && tk==='REST')return;
@@ -3737,7 +3687,7 @@ async function doSaveRecord(silent=false){
     try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}
     const ormMsg = ormUpdated ? '\n📊 1RM 추정값이 자동 갱신됐어요!' : '';
     const setCount = allSets.filter(s=>s.done).length;
-    if(!silent) showToast(`✅ 저장완료 · ${exDone}/${exTotal} 운동 · ${setCount}세트${ormMsg}`,'success');
+    showToast(`✅ 저장완료 · ${exDone}/${exTotal} 운동 · ${setCount}세트${ormMsg}`,'success');
     console.log('[FitLog] 저장 완료:', {date:ds, type:tk, exDone, exTotal, sets:allSets.length, muscles:musclesDone});
 
     // ── 저장 후 선택 UI: 추가 운동 or 완료 ──
@@ -4305,7 +4255,7 @@ const EX_LIB=[
   {n:'행잉 니 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:[],sets:0,cat:'복근',type:'home'},
   {n:'플랭크',d:'3세트 × 45초',tags:['복횡근(주)'],w:[],sets:0,cat:'복근',type:'home'},
   {n:'사이드 플랭크',d:'2세트 × 30초',tags:['외복사근(주)'],w:['허리주의'],sets:0,cat:'복근',type:'home'},
-  {n:'ABDOMINAL CRUNCH',d:'4세트 × 20회',tags:['복직근(주)'],w:['허리주의'],sets:4,cat:'복근',type:'home'},
+  {n:'케이블 크런치',d:'4세트 × 20회',tags:['복직근(주)'],w:['허리주의'],sets:4,cat:'복근',type:'home'},
   {n:'데드버그',d:'3세트 × 10회',tags:['복횡근(주)'],w:['허리주의'],sets:3,cat:'복근',type:'home'},
   {n:'브이업',d:'3세트 × 15회',tags:['복직근(주)'],w:['허리주의'],sets:0,cat:'복근',type:'home'},
   {n:'러시안 트위스트',d:'3세트 × 20회',tags:['복사근(주)'],w:['허리주의'],sets:0,cat:'복근',type:'home'},
@@ -5656,12 +5606,12 @@ const POSTURE_DB = [
    tip:'턱 당기고 복부 조이기. 허리로 하지 말고 엉덩이만.',
    mistake:'발 위치가 너무 멀거나 가까우면 둔근 대신 햄스트링·요추 개입.',
    yt:'힙 쓰러스트 둔근 운동'},
-  {name:'ABDOMINAL CRUNCH',tags:['복근'],
-   key:'ABDOMINAL CRUNCH',
+  {name:'케이블 크런치',tags:['복근'],
+   key:'케이블 크런치',
    steps:['① 케이블 머신 앞에 무릎 꿇기','② 로프를 귀 옆에 고정','③ 복근으로만 상체를 둥글게 말아 내리기','④ 고관절은 고정, 척추만 굴곡','⑤ 위로 올릴 때 완전 펴지 말고 긴장 유지'],
    tip:'허리로 당기지 말 것. 배꼽을 바닥 쪽으로 당기는 느낌.',
    mistake:'고관절이 구부러지면 복근 대신 장요근 운동.',
-   yt:'ABDOMINAL CRUNCH 복근 운동'},
+   yt:'케이블 크런치 복근 운동'},
   {name:'인클라인 트레드밀',tags:['유산소','둔근'],
    key:'인클라인 트레드밀',
    steps:['① 경사 8~15도 설정','② 속도: 4.5~6km/h','③ 손잡이 잡지 말 것 (칼로리 급감)','④ 발바닥 전체로 착지','⑤ 상체는 약간 앞으로 기울기'],
@@ -6416,17 +6366,6 @@ function renderRoutineCompare(){
   }).join('');
 }
 
-function changeDayTo(i){
-  if(makeupActive && i !== makeupActive.restDay){
-    if(!confirm('보충 운동 진행 중입니다. 다른 요일로 이동하면 보충 운동이 취소됩니다. 계속하시겠어요?')) return;
-    makeupActive=null;
-  }
-  selDay=i;
-  setData={};
-  try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}
-  initSetData(DAY_SCHED[i]);
-  renderWorkout();
-}
 function jumpToDay(dow){
   selDay = dow;
   initSetData(DAY_SCHED[dow]);
@@ -6951,7 +6890,7 @@ const SPLIT_ROUTINES = {
         ]},
         {n:'복근',exs:[
           {n:'행잉 레그레이즈',d:'4세트 × 20회',tags:['복직근하부(주)'],w:[],sets:0},
-          {n:'ABDOMINAL CRUNCH',d:'4세트 × 20회',tags:['복직근(주)'],w:[],sets:4},
+          {n:'케이블 크런치',d:'4세트 × 20회',tags:['복직근(주)'],w:[],sets:4},
           {n:'러시안 트위스트',d:'4세트 × 20회',tags:['복사근(주)'],w:[],sets:0},
           {n:'플랭크',d:'4세트 × 60초',tags:['복횡근(주)'],w:[],sets:0}
         ]},
@@ -7714,7 +7653,7 @@ function makeCoreSection(sets, isHome){
     {n:'플랭크',d:sets+'세트 × 45초',tags:['복횡근(주)'],w:[],sets:0},
     {n:'크런치',d:sets+'세트 × 20회',tags:['복직근(주)'],w:[],sets:sets},
     {n:'레그 레이즈',d:sets+'세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:sets},
-    {n:isHome?'바이시클 크런치':'ABDOMINAL CRUNCH', d:'3세트 × 20회',tags:['복사근(주)'],w:[],sets:3},
+    {n:isHome?'바이시클 크런치':'케이블 크런치', d:'3세트 × 20회',tags:['복사근(주)'],w:[],sets:3},
   ]};
 }
 function makeGluteSection(isHome){
@@ -8059,7 +7998,7 @@ setTimeout(()=>{
 // ══════════════════════════════
 // AI 운동 가이드 (Claude API)
 // ══════════════════════════════
-const _CACHE_VER='v4';
+const _CACHE_VER='v3';
 const _aiCache={};  // 운동명 → 생성된 가이드 캐시
 
 function openAiGuide(exName,tags,warn){
@@ -8286,7 +8225,6 @@ function closeAiGuide(){
 const WEEKEND_CARDIO = [
   {n:'업라이트 바이크', icon:'🚴', kcalPerMin:7.5, defaultMin:45, tip:'무릎 관절 부담 최소 · 헬스장 기본 유산소',   type:'gym'},
   {n:'런닝머신',        icon:'🏃', kcalPerMin:10,  defaultMin:45, tip:'속도·경사 조절로 강도 자유롭게',            type:'gym'},
-  {n:'런닝머신 걷기 (경사도)', icon:'🚶', kcalPerMin:6.5, defaultMin:45, tip:'경사 10~15% · 무릎 부담 적고 칼로리 소모 높음', type:'gym'},
   {n:'천국의 계단',     icon:'🪜', kcalPerMin:12,  defaultMin:45, tip:'심폐·하체·둔근 최강 자극',                  type:'gym'},
   {n:'외부 런닝',       icon:'🏃', kcalPerMin:11,  defaultMin:45, tip:'자연 지형으로 다양한 근육 자극',            type:'both'},
   {n:'걷기 (실외)',     icon:'🚶', kcalPerMin:4,   defaultMin:45, tip:'빠른 경보 속도 유지 · 팔 흔들기',           type:'both'},
@@ -8515,7 +8453,7 @@ const EXERCISE_VARIATIONS = {
   '레그 컬':                ['루마니안 데드리프트','스티프레그 데드리프트','굿모닝','노르딕 햄컬'],
   '레그 익스텐션':          ['불가리안 스플릿 스쿼트','런지','스텝업','싱글레그 프레스'],
   // 복근
-  'ABDOMINAL CRUNCH':          ['행잉 레그레이즈','AB 롤아웃','바이시클 크런치','러시안 트위스트'],
+  '케이블 크런치':          ['행잉 레그레이즈','AB 롤아웃','바이시클 크런치','러시안 트위스트'],
   '레그 레이즈':            ['행잉 니레이즈','리버스 크런치','드래곤 플래그','V업'],
   '플랭크':                 ['사이드 플랭크','TRX 플랭크','짐볼 플랭크','RKC 플랭크'],
 };
@@ -8732,11 +8670,6 @@ function parseTimerSec(detailStr){
   return 45;
 }
 
-function startTimerFromKey(sec, key){
-  // 세트 행 타이머 버튼 클릭 시 타이머 오버레이 실행
-  const exName = key.split('-').slice(2).join('-') || '운동';
-  openTimerOverlay(exName, sec, 0, 0);
-}
 function openTimerOverlay(name,sec,si,ei){
   // 이전 타이머 완전 정리 후 초기화
   clearInterval(_timerState.interval);
