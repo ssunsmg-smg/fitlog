@@ -3065,6 +3065,7 @@ function renderWorkout(){
     }
   };
   sel.addEventListener('click', sel.clickHandler, false);
+
   const content=document.getElementById('routine-content'),bottom=document.getElementById('bottom-bar');
   // 보충 운동 진행 중이면 휴일이어도 루틴 표시
   if(tk==='REST' && !makeupActive){
