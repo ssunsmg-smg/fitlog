@@ -3086,8 +3086,8 @@ function renderWorkout(){
       const saId='sa-'+si+'-'+ei;
       const info=EX_INFO[ex.n];
       const ytQ=info?(info.yt||ex.n):'';
-      // 시간형 운동 판별 (초/분 포함 + sets:0) — NO_WEIGHT라도 '초' 포함이면 타이머 표시
-      const isTimeBased = /초/.test(ex.d) || (!hasSets && /분/.test(ex.d));
+      // 시간형 운동 판별 (초/분 포함 + sets:0) — NO_WEIGHT라도 '초'나 '분' 포함이면 타이머 표시
+      const isTimeBased = /초/.test(ex.d) || /분/.test(ex.d);
       const timerSec=isTimeBased?parseTimerSec(ex.d):0;
       // 시간 운동 세트 수 파싱 (예: "3세트 × 45초" → 3)
       const timerSetCount=isTimeBased?(parseInt(ex.d.match(/(\d+)\s*세트/)?.[1]||'1')):0;
