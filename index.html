@@ -3030,7 +3030,12 @@ function renderWorkout(){
   // 빠진 운동 배너 갱신
   renderMissedBanner();
   renderMakeupBanner();
-  document.getElementById('today-title').textContent=rt.title;
+  // ✅ rt가 없어도 에러 안 나게 처리
+  if(document.getElementById('today-title') && rt) {
+    document.getElementById('today-title').textContent=rt.title;
+  } else if(document.getElementById('today-title')) {
+    document.getElementById('today-title').textContent=dayNames[selDay];
+  }
   const dispLabel = makeupActive
     ? '📅 보충운동 · '+makeupActive.missedName+'요일('+makeupActive.missedTk+') 루틴 · '+ds
     : (tk==='REST'?'휴식일':'Type '+tk+' · '+dayNames[selDay]+' · '+ds);
