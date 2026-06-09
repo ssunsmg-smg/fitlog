@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- fitlog v2.7 build:20260609-2 -->
+<!-- fitlog v2.8 build:20260609-3 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -1246,228 +1246,257 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
   <!-- 설정 -->
   <div class="page" id="page-settings">
-    <div style="margin-bottom:16px;">
+    <div style="margin-bottom:20px;">
       <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;">SETTINGS</div>
-      <div style="font-size:21px;font-weight:900;">⚙️ 나의 운동 설정</div>
+      <div style="font-size:22px;font-weight:900;">나의 운동 설정</div>
     </div>
 
-    <!-- 스텝 인디케이터 -->
-    <div style="display:flex;gap:0;margin-bottom:20px;border-radius:10px;overflow:hidden;border:1px solid var(--border);">
-      <button class="sett-step-btn active" id="sstep-1" onclick="goSettStep(1)" style="flex:1;padding:11px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:700;background:var(--accent);color:#fff;font-family:var(--font);border:none;">①<br>신체정보</button>
-      <button class="sett-step-btn" id="sstep-2" onclick="goSettStep(2)" style="flex:1;padding:11px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:500;background:none;color:var(--muted);font-family:var(--font);border:none;border-left:1px solid var(--border);">②<br>운동환경</button>
-      <button class="sett-step-btn" id="sstep-3" onclick="goSettStep(3)" style="flex:1;padding:11px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:500;background:none;color:var(--muted);font-family:var(--font);border:none;border-left:1px solid var(--border);">③<br>성장단계</button>
-      <button class="sett-step-btn" id="sstep-4" onclick="goSettStep(4)" style="flex:1;padding:11px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:500;background:none;color:var(--muted);font-family:var(--font);border:none;border-left:1px solid var(--border);">④<br>기준중량</button>
+    <!-- 탭 네비게이션 - 상용앱 스타일 -->
+    <div style="display:flex;gap:0;margin-bottom:20px;background:var(--surface2);border-radius:12px;padding:4px;">
+      <button id="sstep-1" onclick="goSettStep(1)"
+        style="flex:1;padding:10px 4px;border-radius:9px;border:none;background:#e8533a;color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .2s;">
+        ① 신체정보
+      </button>
+      <button id="sstep-2" onclick="goSettStep(2)"
+        style="flex:1;padding:10px 4px;border-radius:9px;border:none;background:none;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .2s;">
+        ② 운동환경
+      </button>
+      <button id="sstep-3" onclick="goSettStep(3)"
+        style="flex:1;padding:10px 4px;border-radius:9px;border:none;background:none;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .2s;">
+        ③ 성장단계
+      </button>
+      <button id="sstep-4" onclick="goSettStep(4)"
+        style="flex:1;padding:10px 4px;border-radius:9px;border:none;background:none;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .2s;">
+        ④ 기준중량
+      </button>
     </div>
 
     <!-- STEP 1: 신체 정보 -->
     <div id="sett-panel-1" class="sett-panel">
-      <div class="level-card" id="body-info-card">
-      <div class="level-card-title">
-        <span>👤 신체 정보</span>
-        <button onclick="saveBodyInfo()" style="padding:5px 14px;border-radius:6px;border:none;background:var(--green);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);">저장 · 재계산</button>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+
+      <!-- 신체 정보 카드 -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+          <div style="font-size:16px;font-weight:800;">👤 신체 정보</div>
+          <button onclick="saveBodyInfo()" style="padding:8px 18px;border-radius:10px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">저장 · 재계산</button>
+        </div>
+
         <!-- 성별 -->
-        <div>
-          <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;">성별</div>
-          <div style="display:flex;gap:6px;">
-            <button id="bi-male" onclick="selectGender('male')" style="flex:1;padding:9px;border-radius:8px;border:2px solid var(--blue);background:#4a9eff15;color:var(--blue);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">👨 남성</button>
-            <button id="bi-female" onclick="selectGender('female')" style="flex:1;padding:9px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">👩 여성</button>
+        <div style="margin-bottom:16px;">
+          <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;">성별</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <button id="bi-male" onclick="selectGender('male')"
+              style="padding:14px;border-radius:12px;border:2px solid var(--blue);background:#4a9eff15;color:var(--blue);font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s;">
+              👨 남성
+            </button>
+            <button id="bi-female" onclick="selectGender('female')"
+              style="padding:14px;border-radius:12px;border:1px solid var(--border);background:none;color:var(--muted);font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s;">
+              👩 여성
+            </button>
           </div>
         </div>
+
         <!-- 나이 -->
-        <div>
-          <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;">나이</div>
-          <div style="display:flex;align-items:center;gap:6px;">
+        <div style="margin-bottom:14px;">
+          <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;">나이</div>
+          <div style="position:relative;">
             <input id="bi-age" type="number" oninput="calcBodyMetrics()" min="10" max="99" placeholder="40"
-              style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono);text-align:center;width:100%;">
-            <span style="font-size:12px;color:var(--muted);">세</span>
+              style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 48px 14px 16px;font-size:22px;font-weight:900;color:var(--text);font-family:var(--mono);box-sizing:border-box;">
+            <span style="position:absolute;right:14px;top:50%;transform:translateY(-50%);font-size:14px;color:var(--muted);font-weight:600;">세</span>
           </div>
         </div>
-        <!-- 키 -->
-        <div>
-          <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;">키</div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <input id="bi-height" type="number" oninput="calcBodyMetrics()" min="100" max="230" placeholder="170"
-              style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono);text-align:center;width:100%;">
-            <span style="font-size:12px;color:var(--muted);">cm</span>
+
+        <!-- 키 / 몸무게 나란히 -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px;">
+          <div>
+            <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;">키</div>
+            <div style="position:relative;">
+              <input id="bi-height" type="number" oninput="calcBodyMetrics()" min="100" max="230" placeholder="170"
+                style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 38px 14px 12px;font-size:22px;font-weight:900;color:var(--text);font-family:var(--mono);box-sizing:border-box;">
+              <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);">cm</span>
+            </div>
           </div>
-        </div>
-        <!-- 몸무게 -->
-        <div>
-          <div style="font-size:10px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;">몸무게</div>
-          <div style="display:flex;align-items:center;gap:6px;">
-            <input id="bi-weight" type="number" oninput="calcBodyMetrics()" min="20" max="300" step="0.1" placeholder="70"
-              style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:9px 10px;font-size:16px;font-weight:700;color:var(--text);font-family:var(--mono);text-align:center;width:100%;">
-            <span style="font-size:12px;color:var(--muted);">kg</span>
+          <div>
+            <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;">몸무게</div>
+            <div style="position:relative;">
+              <input id="bi-weight" type="number" oninput="calcBodyMetrics()" min="20" max="300" step="0.1" placeholder="70"
+                style="width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 34px 14px 12px;font-size:22px;font-weight:900;color:var(--text);font-family:var(--mono);box-sizing:border-box;">
+              <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);font-size:12px;color:var(--muted);">kg</span>
+            </div>
           </div>
         </div>
       </div>
-      <!-- 계산 결과 -->
-      <div id="body-calc-result" style="background:var(--surface2);border-radius:10px;padding:12px;font-size:12px;line-height:2;"></div>
-      </div>
-      <!-- 부상/아픈곳 체크 -->
-      <div class="level-card" style="margin-top:0;">
-        <div class="level-card-title">
-          <span>🩺 부상·불편한 부위</span>
-          <span style="font-size:10px;color:var(--muted);">없으면 넘어가세요</span>
+
+      <!-- 건강 지표 결과 카드 (calcBodyMetrics가 채움) -->
+      <div id="body-calc-result" style="margin-bottom:14px;"></div>
+
+      <!-- 부상 체크 카드 -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+          <div style="font-size:15px;font-weight:700;">🩺 부상·불편한 부위</div>
+          <span style="font-size:11px;color:var(--muted);">없으면 넘어가세요</span>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">해당 부위가 있으면 체크하세요. 루틴에 주의사항이 반영됩니다.</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">해당 부위를 체크하면 루틴에 주의사항이 반영됩니다.</div>
         <div id="injury-btns" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:8px;"></div>
         <div id="injury-note" style="font-size:11px;color:var(--accent);display:none;padding:8px;background:#e8533a10;border-radius:8px;"></div>
       </div>
-      <button onclick="saveBodyInfoAndNext()" 
-        style="width:100%;padding:14px;border-radius:10px;border:none;
+
+      <button onclick="saveBodyInfoAndNext()"
+        style="width:100%;padding:16px;border-radius:12px;border:none;
         background:linear-gradient(135deg,var(--accent),#ff7040);color:#fff;
         font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font);
-        margin-top:12px;box-shadow:0 4px 16px #e8533a44;letter-spacing:.3px;">
-        💾 저장 후 ② 운동환경 설정으로 →
+        box-shadow:0 4px 16px #e8533a44;">
+        저장 후 ② 운동환경 설정으로 →
       </button>
     </div>
 
     <!-- STEP 2: 운동 분류 + 요일배정 + 목적 -->
     <div id="sett-panel-2" class="sett-panel" style="display:none;">
-      <!-- ② 운동 분류 + 목적 선택 -->
-    <div class="level-card">
-      <div class="level-card-title">
-        <span>🏷️ 운동 분류 · 목적 설정</span>
-        <span id="class-badge" style="font-size:10px;padding:2px 10px;border-radius:10px;background:var(--blue);color:#fff;font-family:var(--mono);">기구운동</span>
+
+      <!-- 운동 분류 카드 -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-size:15px;font-weight:700;">🏷️ 운동 분류 · 목적</div>
+          <span id="class-badge" style="font-size:11px;padding:3px 12px;border-radius:10px;background:var(--blue);color:#fff;font-family:var(--mono);">기구운동</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">운동 환경과 목적을 선택하면 <strong style="color:var(--accent);">루틴 전체</strong>가 자동 재구성됩니다.</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px;" id="class-type-btns">
+          <button class="class-type-btn active" onclick="selectClassType('기구운동',this)"
+            style="padding:16px 12px;border-radius:12px;border:2px solid var(--blue);background:#4a9eff15;color:var(--blue);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">
+            🏋️ 기구운동<br><span style="font-size:11px;font-weight:400;color:var(--muted);">헬스장·기구 사용</span>
+          </button>
+          <button class="class-type-btn" onclick="selectClassType('홈트',this)"
+            style="padding:16px 12px;border-radius:12px;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">
+            🏠 홈트레이닝<br><span style="font-size:11px;font-weight:400;">기구 없이 집에서</span>
+          </button>
+        </div>
+        <div style="font-size:12px;font-weight:700;margin-bottom:10px;">🎯 운동 목적 <span style="font-size:11px;color:var(--muted);font-weight:400;">(복수 선택)</span></div>
+        <div id="purpose-btns" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;"></div>
+        <div id="class-preview" style="font-size:11px;color:var(--muted);padding:10px;background:var(--surface2);border-radius:8px;line-height:1.8;"></div>
+        <button onclick="updateClassPreview()" style="width:100%;margin-top:10px;padding:10px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">루틴 미리보기</button>
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">운동 환경과 목적을 선택하면 <strong style="color:var(--accent);">루틴 전체</strong>가 자동으로 재구성됩니다.</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;" id="class-type-btns">
-        <button class="class-type-btn active" onclick="selectClassType('기구운동',this)" style="padding:14px;border-radius:10px;border:2px solid var(--blue);background:#4a9eff15;color:var(--blue);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">
-          🏋️ 기구운동<br><span style="font-size:10px;font-weight:400;color:var(--muted);">헬스장·기구 사용</span>
-        </button>
-        <button class="class-type-btn" onclick="selectClassType('홈트',this)" style="padding:14px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">
-          🏠 홈트레이닝<br><span style="font-size:10px;font-weight:400;">기구 없이 집에서</span>
-        </button>
-      </div>
-      <div class="level-card-title" style="margin-top:4px;">
-        <span>🎯 운동 목적 <span style="font-size:10px;color:var(--muted);font-weight:400;">(복수 선택)</span></span>
-        <button onclick="updateClassPreview()" style="padding:5px 12px;border-radius:6px;border:none;background:var(--surface2);color:var(--muted);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);">미리보기</button>
-      </div>
-      <div id="purpose-btns" style="display:flex;flex-wrap:wrap;gap:7px;margin-bottom:12px;"></div>
-      <div id="class-preview" style="font-size:11px;color:var(--muted);padding:10px;background:var(--surface2);border-radius:8px;line-height:1.8;"></div>
-    </div>
-      <!-- 요일 배정 -->
-      <div class="level-card" style="margin-top:0;">
-        <div class="level-card-title"><span>📅 운동 요일 설정</span><span id="day-assign-count" style="font-size:10px;padding:2px 10px;border-radius:10px;background:var(--surface2);color:var(--muted);font-family:var(--mono);">0일/주</span></div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">운동할 요일을 선택하세요. 쉬는 날은 자동으로 휴식일이 됩니다.</div>
-        <div style="display:flex;gap:8px;justify-content:center;margin-bottom:14px;" id="day-assign-btns">
-          <button class="day-assign-btn" onclick="toggleDayAssign('월',this)" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">월</button>
-          <button class="day-assign-btn" onclick="toggleDayAssign('화',this)" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">화</button>
-          <button class="day-assign-btn" onclick="toggleDayAssign('수',this)" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">수</button>
-          <button class="day-assign-btn" onclick="toggleDayAssign('목',this)" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">목</button>
-          <button class="day-assign-btn" onclick="toggleDayAssign('금',this)" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">금</button>
-          <button class="day-assign-btn" onclick="toggleDayAssign('토',this)" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">토</button>
-          <button class="day-assign-btn" onclick="toggleDayAssign('일',this)" style="width:40px;height:40px;border-radius:50%;border:1px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">일</button>
+
+      <!-- 요일 배정 카드 -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+          <div style="font-size:15px;font-weight:700;">📅 운동 요일</div>
+          <span id="day-assign-count" style="font-size:12px;padding:3px 12px;border-radius:10px;background:var(--surface2);color:var(--muted);font-family:var(--mono);">0일/주</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">운동할 요일을 선택하세요. 나머지는 자동으로 휴식일이 됩니다.</div>
+        <div style="display:flex;gap:6px;justify-content:space-between;margin-bottom:14px;" id="day-assign-btns">
+          <button class="day-assign-btn" onclick="toggleDayAssign('월',this)" style="flex:1;aspect-ratio:1;border-radius:50%;border:2px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s;min-width:36px;">월</button>
+          <button class="day-assign-btn" onclick="toggleDayAssign('화',this)" style="flex:1;aspect-ratio:1;border-radius:50%;border:2px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s;min-width:36px;">화</button>
+          <button class="day-assign-btn" onclick="toggleDayAssign('수',this)" style="flex:1;aspect-ratio:1;border-radius:50%;border:2px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s;min-width:36px;">수</button>
+          <button class="day-assign-btn" onclick="toggleDayAssign('목',this)" style="flex:1;aspect-ratio:1;border-radius:50%;border:2px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s;min-width:36px;">목</button>
+          <button class="day-assign-btn" onclick="toggleDayAssign('금',this)" style="flex:1;aspect-ratio:1;border-radius:50%;border:2px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s;min-width:36px;">금</button>
+          <button class="day-assign-btn" onclick="toggleDayAssign('토',this)" style="flex:1;aspect-ratio:1;border-radius:50%;border:2px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s;min-width:36px;">토</button>
+          <button class="day-assign-btn" onclick="toggleDayAssign('일',this)" style="flex:1;aspect-ratio:1;border-radius:50%;border:2px solid var(--border);background:none;color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s;min-width:36px;">일</button>
         </div>
         <div id="day-assign-preview" style="font-size:11px;color:var(--muted);padding:10px;background:var(--surface2);border-radius:8px;line-height:2;"></div>
         <div id="day-routine-detail" style="margin-top:8px;display:flex;flex-direction:column;gap:6px;"></div>
       </div>
 <!-- STEP2 적용 상태 안내 -->
-      <div id="step2-status-bar" style="display:flex;align-items:center;gap:8px;padding:10px 14px;
-        border-radius:8px;background:var(--surface2);border:1px solid var(--border);margin-bottom:10px;">
+      <div id="step2-status-bar" style="display:flex;align-items:center;gap:8px;padding:12px 14px;
+        border-radius:10px;background:var(--surface2);border:1px solid var(--border);margin-bottom:10px;">
         <div id="step2-status-dot" style="width:10px;height:10px;border-radius:50%;background:var(--border);flex-shrink:0;"></div>
         <span id="step2-status-txt" style="font-size:12px;color:var(--muted);">아직 적용 전입니다. 운동환경·목적·요일을 선택 후 아래 버튼을 누르세요.</span>
       </div>
       <button onclick="applyClassificationWithDays()" id="step2-apply-btn"
-        style="width:100%;padding:14px;border-radius:10px;border:2px solid var(--border);
+        style="width:100%;padding:16px;border-radius:12px;border:none;
         background:var(--surface2);color:var(--muted);
         font-size:15px;font-weight:800;cursor:pointer;font-family:var(--font);
-        margin-bottom:10px;letter-spacing:.3px;transition:all .3s;">
+        margin-bottom:12px;transition:all .3s;">
         ✅ 2단계 완료 · 루틴 적용하기
       </button>
 
       <!-- 내 헬스장 기구 설정 -->
-      <div class="level-card" style="margin-bottom:10px;">
-        <div class="level-card-title">
-          <span>🏋️ 내 헬스장 기구 설정</span>
-          <button onclick="toggleMyGymPanel()" style="padding:3px 10px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font);">설정</button>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <div style="font-size:15px;font-weight:700;">🏋️ 내 헬스장 기구 설정</div>
+          <button onclick="toggleMyGymPanel()" style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">설정</button>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">없는 기구를 해제하면 대체 운동을 추천해드립니다.</div>
-        <div id="my-gym-panel" style="display:none;margin-top:8px;">
-          <div id="my-gym-list" style="display:flex;flex-direction:column;gap:5px;max-height:260px;overflow-y:auto;margin-bottom:8px;"></div>
-          <div style="display:flex;gap:6px;margin-bottom:8px;">
-            <button onclick="saveMyGymSettings()" style="flex:2;padding:8px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);">✅ 저장 적용</button>
-            <button onclick="selectAllGym(true)" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font);">전체선택</button>
-            <button onclick="selectAllGym(false)" style="flex:1;padding:8px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font);">전체해제</button>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:4px;">없는 기구를 해제하면 대체 운동을 추천해드립니다.</div>
+        <div id="my-gym-panel" style="display:none;margin-top:12px;">
+          <div id="my-gym-list" style="display:flex;flex-direction:column;gap:5px;max-height:260px;overflow-y:auto;margin-bottom:10px;"></div>
+          <div style="display:flex;gap:8px;margin-bottom:8px;">
+            <button onclick="saveMyGymSettings()" style="flex:2;padding:10px;border-radius:10px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">✅ 저장 적용</button>
+            <button onclick="selectAllGym(true)" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);">전체선택</button>
+            <button onclick="selectAllGym(false)" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);">전체해제</button>
           </div>
           <div id="my-gym-alt" style="font-size:11px;color:var(--muted);line-height:1.8;padding:8px;background:#4a9eff10;border-radius:8px;border:1px solid #4a9eff22;display:none;"></div>
         </div>
       </div>
 
-      <button id="step2-next-btn" onclick="goSettStep(3)" 
-        style="width:100%;padding:14px;border-radius:10px;border:2px solid var(--border);
+      <button id="step2-next-btn" onclick="goSettStep(3)"
+        style="width:100%;padding:16px;border-radius:12px;border:2px solid var(--border);
         background:var(--surface2);color:var(--muted);font-size:15px;font-weight:800;
         cursor:not-allowed;font-family:var(--font);opacity:0.5;transition:all .3s;"
         disabled>
-        💾 저장 후 ③ 성장단계 설정으로 →
+        저장 후 ③ 성장단계 설정으로 →
       </button>
     </div>
 
     <!-- STEP 3: 성장 단계 -->
     <div id="sett-panel-3" class="sett-panel" style="display:none;">
-      <!-- ③ 성장 단계 -->
-    <div class="level-card">
-      <div class="level-card-title">
-        <span>🏆 나의 성장 단계</span>
-        <span id="cur-level-badge" style="font-size:10px;padding:2px 10px;border-radius:10px;background:var(--accent);color:#fff;font-family:var(--mono);">입문</span>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;">
+          <div style="font-size:16px;font-weight:800;">🏆 나의 성장 단계</div>
+          <span id="cur-level-badge" style="font-size:11px;padding:3px 12px;border-radius:10px;background:var(--accent);color:#fff;font-family:var(--mono);">입문</span>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:16px;">단계를 선택하면 <strong style="color:var(--accent);">세트수·횟수</strong>가 자동 조정됩니다.</div>
+        <div class="level-steps">
+          <button class="level-step" onclick="selectLevel(0,this)">🏥<br>재활</button>
+          <button class="level-step" onclick="selectLevel(1,this)">🌱<br>초급</button>
+          <button class="level-step" onclick="selectLevel(2,this)">⚡<br>중급</button>
+          <button class="level-step" onclick="selectLevel(3,this)">💪<br>고급</button>
+          <button class="level-step" onclick="selectLevel(4,this)">🔥<br>마스터</button>
+        </div>
+        <div class="level-desc-box" id="level-desc"></div>
+        <div id="step3-status-bar" style="display:flex;align-items:center;gap:8px;padding:12px 14px;
+          border-radius:10px;background:var(--surface2);border:1px solid var(--border);margin-bottom:10px;">
+          <div id="step3-status-dot" style="width:10px;height:10px;border-radius:50%;background:var(--border);flex-shrink:0;"></div>
+          <span id="step3-status-txt" style="font-size:12px;color:var(--muted);">단계를 선택 후 아래 버튼으로 루틴을 적용하세요.</span>
+        </div>
+        <button class="level-apply-btn" onclick="applyLevel()" id="step3-apply-btn"
+          style="background:linear-gradient(135deg,var(--green),#2d9e6b);box-shadow:0 4px 16px #4caf7d44;">
+          ✅ 3단계 완료 · 이 단계로 루틴 적용
+        </button>
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">단계를 선택하면 <strong style="color:var(--accent);">세트수·횟수</strong>가 자동 조정됩니다. 운동 종목은 유지되고 볼륨만 바뀝니다.</div>
-      <div class="level-steps">
-        <button class="level-step" onclick="selectLevel(0,this)">🏥<br>재활</button>
-        <button class="level-step" onclick="selectLevel(1,this)">🌱<br>초급</button>
-        <button class="level-step" onclick="selectLevel(2,this)">⚡<br>중급</button>
-        <button class="level-step" onclick="selectLevel(3,this)">💪<br>고급</button>
-        <button class="level-step" onclick="selectLevel(4,this)">🔥<br>마스터</button>
-      </div>
-      <div class="level-desc-box" id="level-desc"></div>
-      <!-- STEP3 적용 상태 안내 -->
-      <div id="step3-status-bar" style="display:flex;align-items:center;gap:8px;padding:10px 14px;
-        border-radius:8px;background:var(--surface2);border:1px solid var(--border);margin-bottom:8px;">
-        <div id="step3-status-dot" style="width:10px;height:10px;border-radius:50%;background:var(--border);flex-shrink:0;"></div>
-        <span id="step3-status-txt" style="font-size:12px;color:var(--muted);">단계를 선택 후 아래 버튼으로 루틴을 적용하세요.</span>
-      </div>
-      <button class="level-apply-btn" onclick="applyLevel()" id="step3-apply-btn"
-        style="background:linear-gradient(135deg,var(--green),#2d9e6b);box-shadow:0 4px 16px #4caf7d44;">
-        ✅ 3단계 완료 · 이 단계로 루틴 적용
-      </button>
-    </div>
-      <button id="step3-next-btn" onclick="goSettStep(4)" 
-        style="width:100%;padding:14px;border-radius:10px;border:2px solid var(--border);
+      <button id="step3-next-btn" onclick="goSettStep(4)"
+        style="width:100%;padding:16px;border-radius:12px;border:2px solid var(--border);
         background:var(--surface2);color:var(--muted);font-size:15px;font-weight:800;
-        cursor:not-allowed;font-family:var(--font);opacity:0.5;transition:all .3s;margin-top:10px;"
+        cursor:not-allowed;font-family:var(--font);opacity:0.5;transition:all .3s;margin-top:4px;"
         disabled>
-        💾 저장 후 ④ 기준중량 설정으로 →
+        저장 후 ④ 기준중량 설정으로 →
       </button>
     </div>
 
     <!-- STEP 4: 기준 중량 + 피드백 -->
     <div id="sett-panel-4" class="sett-panel" style="display:none;">
-      <!-- ④ 기준 중량 (1RM) - 운동 기록에서 자동 갱신 -->
-    <div class="level-card">
-      <div class="level-card-title">
-        <span>⚖️ 나의 기준 중량 (1RM)</span>
-        <button onclick="save1RM()" style="padding:4px 12px;border-radius:6px;border:none;background:var(--green);color:#fff;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);">저장</button>
+
+      <!-- 기준 중량 카드 -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:15px;font-weight:700;">⚖️ 나의 기준 중량 (1RM)</div>
+          <button onclick="save1RM()" style="padding:8px 18px;border-radius:10px;border:none;background:var(--green);color:#fff;font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">저장</button>
+        </div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:14px;">직접 입력하거나, 운동 탭에서 세트를 기록하면 <strong style="color:var(--green);">자동으로 추정·갱신</strong>됩니다.</div>
+        <div class="orm-grid" id="orm-grid"></div>
+        <div style="font-size:11px;color:var(--muted);padding:10px;background:var(--surface2);border-radius:8px;line-height:1.7;margin-top:8px;">
+          💡 <strong>목적별 권장 중량</strong><br>
+          근력: 1RM의 85~95% · 근비대: 67~85% · 근지구력: 50~67%
+        </div>
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">직접 입력하거나, 운동 탭에서 세트를 기록하면 <strong style="color:var(--green);">자동으로 추정·갱신</strong>됩니다.</div>
-      <div class="orm-grid" id="orm-grid"></div>
-      <div style="font-size:10px;color:var(--muted);padding:8px;background:var(--surface2);border-radius:6px;line-height:1.7;">
-        💡 <strong>목적별 권장 중량</strong><br>
-        근력: 1RM의 85~95% · 근비대: 67~85% · 근지구력: 50~67%
-      </div>
-    </div>
 
       <!-- 누적 피드백 카드 -->
-      <div class="level-card" style="margin-top:0;">
-        <div class="level-card-title">
-          <span>📊 누적 운동 피드백</span>
-          <span id="feedback-count-badge" style="font-size:10px;padding:2px 10px;border-radius:10px;background:var(--surface2);color:var(--muted);font-family:var(--mono);">0회</span>
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:15px;font-weight:700;">📊 누적 운동 피드백</div>
+          <span id="feedback-count-badge" style="font-size:11px;padding:3px 12px;border-radius:10px;background:var(--surface2);color:var(--muted);font-family:var(--mono);">0회</span>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">20회마다 운동 패턴을 분석해 루틴 조정을 제안합니다.</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">20회마다 운동 패턴을 분석해 루틴 조정을 제안합니다.</div>
         <div id="feedback-panel"></div>
-        <button onclick="runAiCoachAnalysis()" style="width:100%;padding:11px;border-radius:8px;border:none;
+        <button onclick="runAiCoachAnalysis()" style="width:100%;padding:12px;border-radius:10px;border:none;
           background:linear-gradient(135deg,#7c6aff,var(--accent));color:#fff;font-size:13px;font-weight:700;
           cursor:pointer;font-family:var(--font);margin-top:10px;">
           🤖 AI 코치 분석 · 루틴 조언 받기
@@ -1475,29 +1504,29 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
         <div id="ai-coach-result" style="margin-top:8px;"></div>
       </div>
 
-      <!-- 유산소 기록 히스토리 카드 -->
-      <div class="level-card" style="margin-top:0;">
-        <div class="level-card-title">
-          <span>🏃 유산소 운동 기록</span>
-          <button onclick="renderCardioHistory()" style="padding:4px 10px;border-radius:6px;border:none;background:var(--surface2);color:var(--muted);font-size:11px;cursor:pointer;font-family:var(--font);">🔄 갱신</button>
+      <!-- 유산소 기록 카드 -->
+      <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:20px;margin-bottom:14px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+          <div style="font-size:15px;font-weight:700;">🏃 유산소 운동 기록</div>
+          <button onclick="renderCardioHistory()" style="padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);">🔄 갱신</button>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">유산소를 추가할 때마다 자동으로 기록됩니다. 몸의 변화 추적에 활용하세요.</div>
+        <div style="font-size:12px;color:var(--muted);margin-bottom:12px;">유산소를 추가할 때마다 자동으로 기록됩니다.</div>
         <div id="cardio-history-panel"></div>
       </div>
 
-      <!-- 전체 설정 저장완료 버튼 -->
-      <div id="step4-final-card" style="background:linear-gradient(135deg,#4caf7d18,#4a9eff15);
-        border:2px solid var(--green);border-radius:14px;padding:20px;margin-top:8px;">
-        <div style="font-size:14px;font-weight:800;color:var(--green);margin-bottom:6px;">🎉 모든 설정 완료!</div>
-        <div style="font-size:12px;color:var(--muted);margin-bottom:14px;line-height:1.7;">
+      <!-- 전체 설정 완료 카드 -->
+      <div style="background:linear-gradient(135deg,#4caf7d18,#4a9eff15);
+        border:2px solid var(--green);border-radius:16px;padding:22px;margin-top:4px;">
+        <div style="font-size:16px;font-weight:800;color:var(--green);margin-bottom:8px;">🎉 모든 설정 완료!</div>
+        <div style="font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.8;">
           ① 신체정보 · ② 운동환경 · ③ 성장단계 설정이 완료되었습니다.<br>
           아래 버튼을 누르면 모든 설정이 저장되고 운동 루틴에 즉시 반영됩니다.
         </div>
-        <button onclick="saveAllSettings()" 
-          style="width:100%;padding:16px;border-radius:12px;border:none;
+        <button onclick="saveAllSettings()"
+          style="width:100%;padding:18px;border-radius:12px;border:none;
           background:linear-gradient(135deg,var(--green),#2d9e6b);color:#fff;
           font-size:16px;font-weight:900;cursor:pointer;font-family:var(--font);
-          box-shadow:0 4px 20px #4caf7d55;letter-spacing:.3px;">
+          box-shadow:0 4px 20px #4caf7d55;">
           ✅ 모든 설정 저장 · 운동 시작하기
         </button>
       </div>
@@ -6134,46 +6163,60 @@ function calcBodyMetrics(){
   else               ageAdvice = '🌿 균형·유연성 중심 · 무리 금물';
 
   el.innerHTML = `
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;">
-      <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center;">
-        <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:${bmiColor};">${bmi}</div>
-        <div style="font-size:10px;color:var(--muted);">BMI</div>
-        <div style="font-size:11px;font-weight:700;color:${bmiColor};">${bmiLabel}</div>
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:18px;margin-bottom:4px;">
+      <!-- BMI + 체지방 -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+        <div style="background:var(--surface2);border-radius:12px;padding:14px;text-align:center;">
+          <div style="font-size:32px;font-weight:900;font-family:var(--mono);color:${bmiColor};">${bmi}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">BMI</div>
+          <div style="font-size:13px;font-weight:700;color:${bmiColor};margin-top:2px;">${bmiLabel}</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:12px;padding:14px;text-align:center;">
+          <div style="font-size:32px;font-weight:900;font-family:var(--mono);color:var(--accent2);">${bfp}%</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">체지방 추정</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">±3% 오차</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:12px;padding:14px;text-align:center;">
+          <div style="font-size:32px;font-weight:900;font-family:var(--mono);color:var(--green);">${bmr}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">기초대사량</div>
+          <div style="font-size:11px;color:var(--muted);">kcal/일</div>
+        </div>
+        <div style="background:var(--surface2);border-radius:12px;padding:14px;text-align:center;">
+          <div style="font-size:32px;font-weight:900;font-family:var(--mono);color:var(--blue);">${tdee}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:2px;">활동대사량</div>
+          <div style="font-size:11px;color:var(--muted);">kcal/일</div>
+        </div>
       </div>
-      <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center;">
-        <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--accent2);">${bfp}%</div>
-        <div style="font-size:10px;color:var(--muted);">체지방 추정</div>
-        <div style="font-size:11px;color:var(--muted);">±3% 오차</div>
-      </div>
-      <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center;">
-        <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--green);">${bmr}</div>
-        <div style="font-size:10px;color:var(--muted);">기초대사량</div>
-        <div style="font-size:11px;color:var(--muted);">kcal/일</div>
-      </div>
-      <div style="background:var(--surface);border-radius:8px;padding:10px;text-align:center;">
-        <div style="font-size:22px;font-weight:900;font-family:var(--mono);color:var(--blue);">${tdee}</div>
-        <div style="font-size:10px;color:var(--muted);">활동대사량</div>
-        <div style="font-size:11px;color:var(--muted);">kcal/일</div>
-      </div>
-    </div>
-    <div style="border-top:1px solid var(--border);padding-top:10px;">
-      <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
-        <span style="color:var(--muted);">표준체중</span>
-        <span style="font-weight:700;font-family:var(--mono);">${idealWeight} kg</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
-        <span style="color:var(--muted);">권장 단백질</span>
-        <span style="font-weight:700;font-family:var(--mono);color:var(--green);">${protMin}~${protMax} g/일</span>
-      </div>
-      <div style="border-top:1px solid var(--border);margin:8px 0;"></div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">🔥 목적별 하루 칼로리</div>
-      <div style="display:flex;gap:6px;flex-wrap:wrap;">
-        <span style="padding:3px 10px;border-radius:12px;background:#e8533a15;border:1px solid var(--accent);color:var(--accent);font-size:11px;font-family:var(--mono);">감량 ${dietKcal}</span>
-        <span style="padding:3px 10px;border-radius:12px;background:#4caf7d15;border:1px solid var(--green);color:var(--green);font-size:11px;font-family:var(--mono);">유지 ${maintKcal}</span>
-        <span style="padding:3px 10px;border-radius:12px;background:#4a9eff15;border:1px solid var(--blue);color:var(--blue);font-size:11px;font-family:var(--mono);">증량 ${bulkKcal}</span>
-      </div>
-      <div style="margin-top:10px;padding:8px;background:var(--surface);border-radius:8px;font-size:11px;color:var(--accent2);">
-        ${ageAdvice}
+      <!-- 표준체중 / 권장단백질 -->
+      <div style="border-top:1px solid var(--border);padding-top:12px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+          <span style="font-size:13px;color:var(--muted);">표준체중</span>
+          <span style="font-size:15px;font-weight:700;font-family:var(--mono);">${idealWeight} kg</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+          <span style="font-size:13px;color:var(--muted);">권장 단백질</span>
+          <span style="font-size:15px;font-weight:700;font-family:var(--mono);color:var(--green);">${protMin}~${protMax} g/일</span>
+        </div>
+        <!-- 목표별 칼로리 -->
+        <div style="font-size:12px;color:var(--muted);margin-bottom:8px;">🔥 목적별 하루 칼로리</div>
+        <div style="display:flex;gap:8px;">
+          <div style="flex:1;padding:10px;border-radius:10px;background:#e8533a15;border:1px solid var(--accent);text-align:center;">
+            <div style="font-size:10px;color:var(--accent);font-weight:600;margin-bottom:2px;">감량</div>
+            <div style="font-size:16px;font-weight:900;font-family:var(--mono);color:var(--accent);">${dietKcal}</div>
+          </div>
+          <div style="flex:1;padding:10px;border-radius:10px;background:#4caf7d15;border:1px solid var(--green);text-align:center;">
+            <div style="font-size:10px;color:var(--green);font-weight:600;margin-bottom:2px;">유지</div>
+            <div style="font-size:16px;font-weight:900;font-family:var(--mono);color:var(--green);">${maintKcal}</div>
+          </div>
+          <div style="flex:1;padding:10px;border-radius:10px;background:#4a9eff15;border:1px solid var(--blue);text-align:center;">
+            <div style="font-size:10px;color:var(--blue);font-weight:600;margin-bottom:2px;">증량</div>
+            <div style="font-size:16px;font-weight:900;font-family:var(--mono);color:var(--blue);">${bulkKcal}</div>
+          </div>
+        </div>
+        <!-- 나이별 조언 -->
+        <div style="margin-top:12px;padding:10px 14px;background:var(--surface2);border-radius:10px;font-size:12px;color:var(--accent2);font-weight:600;">
+          ${ageAdvice}
+        </div>
       </div>
     </div>`;
 }
@@ -7927,12 +7970,13 @@ function _showSettPanel(n){
     if(btn){
       if(i===n){
         btn.style.background='var(--accent)'; btn.style.color='#fff'; btn.style.fontWeight='700';
+        btn.style.boxShadow='0 2px 8px #e8533a44';
       } else if(settDone[i]){
         btn.style.background='var(--green)'; btn.style.color='#fff'; btn.style.fontWeight='700';
-      } else if(i<n){
-        btn.style.background='var(--surface2)'; btn.style.color='var(--muted)'; btn.style.fontWeight='500';
+        btn.style.boxShadow='none';
       } else {
-        btn.style.background='none'; btn.style.color='var(--muted)'; btn.style.fontWeight='500';
+        btn.style.background='none'; btn.style.color='var(--muted)'; btn.style.fontWeight='600';
+        btn.style.boxShadow='none';
       }
     }
   }
