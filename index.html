@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- fitlog v2.7 build:20260609-2 -->
+<!-- fitlog v3.1 build:20260609-6 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -962,19 +962,88 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <!-- 온보딩 -->
 <div id="onboarding" style="display:none;">
-  <div class="onboard">
-    <div class="ob-card">
-      <div class="ob-step" id="ob-step">1 / 4 단계</div>
-      <div class="ob-title" id="ob-title">환영합니다! 👋</div>
-      <div class="ob-sub" id="ob-sub">처음 오셨군요! 맞춤 루틴을 위해 정보를 입력해주세요.</div>
-      <div class="ob-prog"><div class="ob-prog-fill" id="ob-prog" style="width:25%"></div></div>
+
+  <!-- BetterMe 스타일 나이 랜딩 페이지 -->
+  <div id="ob-landing-screen" class="ob-landing">
+    <!-- 상단 프로그레스 바 -->
+    <div style="position:fixed;top:0;left:0;right:0;height:3px;background:var(--border);z-index:999;">
+      <div style="height:100%;width:8%;background:#3b82f6;transition:width .4s;" id="ob-top-bar"></div>
+    </div>
+
+    <!-- 로고 -->
+    <div style="font-size:22px;font-weight:900;color:var(--accent);margin-bottom:28px;letter-spacing:-0.5px;">핏로그</div>
+
+    <!-- 헤드 카피 -->
+    <div class="ob-landing-title">맞춤 운동 플랜</div>
+    <div class="ob-landing-sub">나이 기준으로 최적화된 루틴을 만들어드려요</div>
+
+    <!-- 나이대 카드 4개 -->
+    <div class="ob-age-grid">
+      <div class="ob-age-card" onclick="selectAgeGroup('18-29', 18)">
+        <div class="ob-age-card-bg" style="background:linear-gradient(135deg,#1a1a2e,#16213e);">
+          <span style="filter:drop-shadow(0 2px 8px rgba(0,0,0,0.5));">🧑‍💪</span>
+        </div>
+        <div class="ob-age-card-label">
+          <span class="ob-age-card-text">나이: 18–29</span>
+          <span class="ob-age-card-arrow">›</span>
+        </div>
+      </div>
+      <div class="ob-age-card" onclick="selectAgeGroup('30-39', 30)">
+        <div class="ob-age-card-bg" style="background:linear-gradient(135deg,#1a2a1a,#162116);">
+          <span style="filter:drop-shadow(0 2px 8px rgba(0,0,0,0.5));">💪</span>
+        </div>
+        <div class="ob-age-card-label">
+          <span class="ob-age-card-text">나이: 30–39</span>
+          <span class="ob-age-card-arrow">›</span>
+        </div>
+      </div>
+      <div class="ob-age-card" onclick="selectAgeGroup('40-49', 42)">
+        <div class="ob-age-card-bg" style="background:linear-gradient(135deg,#2a1a1a,#211616);">
+          <span style="filter:drop-shadow(0 2px 8px rgba(0,0,0,0.5));">🏋️</span>
+        </div>
+        <div class="ob-age-card-label">
+          <span class="ob-age-card-text">나이: 40–49</span>
+          <span class="ob-age-card-arrow">›</span>
+        </div>
+      </div>
+      <div class="ob-age-card" onclick="selectAgeGroup('50+', 52)">
+        <div class="ob-age-card-bg" style="background:linear-gradient(135deg,#1a1a2a,#161625);">
+          <span style="filter:drop-shadow(0 2px 8px rgba(0,0,0,0.5));">🧘</span>
+        </div>
+        <div class="ob-age-card-label">
+          <span class="ob-age-card-text">나이: 50+</span>
+          <span class="ob-age-card-arrow">›</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="ob-legal">
+      나이를 선택하고 계속함으로써 <span style="color:#3b82f6;">서비스 약관</span> 및<br>
+      <span style="color:#3b82f6;">개인정보 보호정책</span>에 동의하게 됩니다.
+    </div>
+  </div>
+
+  <!-- 기존 온보딩 플로우 (나이 선택 후 표시) -->
+  <div id="ob-main-screen" style="display:none;width:100%;min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px;flex-direction:column;">
+    <!-- 상단 프로그레스 바 -->
+    <div style="position:fixed;top:0;left:0;right:0;height:3px;background:var(--border);z-index:999;">
+      <div style="height:100%;background:#3b82f6;transition:width .4s;" id="ob-top-bar2"></div>
+    </div>
+    <!-- 뒤로가기 -->
+    <div style="position:fixed;top:10px;left:16px;z-index:1000;">
+      <button id="ob-back" onclick="obBack()" style="display:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">←</button>
+    </div>
+    <div class="ob-card" style="margin-top:32px;">
+      <div class="ob-step" id="ob-step">2 / 9 단계</div>
+      <div class="ob-title" id="ob-title"></div>
+      <div class="ob-sub" id="ob-sub"></div>
       <div id="ob-content"></div>
-      <div class="ob-btns">
-        <button class="ob-back" id="ob-back" onclick="obBack()" style="display:none;">← 이전</button>
+      <div class="ob-btns" style="margin-top:20px;">
         <button class="ob-next" id="ob-next" onclick="obNext()">다음 →</button>
       </div>
     </div>
   </div>
+
 </div>
 
 <!-- 메인 앱 -->
@@ -1246,17 +1315,31 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
   <!-- 설정 -->
   <div class="page" id="page-settings">
-    <div style="margin-bottom:16px;">
-      <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;">SETTINGS</div>
-      <div style="font-size:21px;font-weight:900;">⚙️ 나의 운동 설정</div>
-    </div>
-
-    <!-- 스텝 인디케이터 -->
-    <div style="display:flex;gap:0;margin-bottom:20px;border-radius:10px;overflow:hidden;border:1px solid var(--border);">
-      <button class="sett-step-btn active" id="sstep-1" onclick="goSettStep(1)" style="flex:1;padding:11px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:700;background:var(--accent);color:#fff;font-family:var(--font);border:none;">①<br>신체정보</button>
-      <button class="sett-step-btn" id="sstep-2" onclick="goSettStep(2)" style="flex:1;padding:11px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:500;background:none;color:var(--muted);font-family:var(--font);border:none;border-left:1px solid var(--border);">②<br>운동환경</button>
-      <button class="sett-step-btn" id="sstep-3" onclick="goSettStep(3)" style="flex:1;padding:11px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:500;background:none;color:var(--muted);font-family:var(--font);border:none;border-left:1px solid var(--border);">③<br>성장단계</button>
-      <button class="sett-step-btn" id="sstep-4" onclick="goSettStep(4)" style="flex:1;padding:11px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:500;background:none;color:var(--muted);font-family:var(--font);border:none;border-left:1px solid var(--border);">④<br>기준중량</button>
+    <!-- BetterMe 스타일 상단 프로그레스 탭 -->
+    <div style="margin-bottom:24px;">
+      <div style="font-size:22px;font-weight:900;margin-bottom:16px;">나의 운동 설정</div>
+      <!-- 단계 표시 - BetterMe 스타일 점 프로그레스 -->
+      <div style="display:flex;align-items:center;gap:0;margin-bottom:4px;">
+        <div id="sstep-1" onclick="goSettStep(1)" style="flex:1;cursor:pointer;">
+          <div style="height:4px;border-radius:2px;background:var(--accent);margin-bottom:6px;transition:all .3s;"></div>
+          <div style="font-size:10px;font-weight:700;color:var(--accent);text-align:center;font-family:var(--mono);">① 신체</div>
+        </div>
+        <div style="width:6px;"></div>
+        <div id="sstep-2" onclick="goSettStep(2)" style="flex:1;cursor:pointer;">
+          <div style="height:4px;border-radius:2px;background:var(--border);margin-bottom:6px;transition:all .3s;" class="sett-prog-bar"></div>
+          <div style="font-size:10px;font-weight:500;color:var(--muted);text-align:center;font-family:var(--mono);" class="sett-tab-label">② 환경</div>
+        </div>
+        <div style="width:6px;"></div>
+        <div id="sstep-3" onclick="goSettStep(3)" style="flex:1;cursor:pointer;">
+          <div style="height:4px;border-radius:2px;background:var(--border);margin-bottom:6px;transition:all .3s;" class="sett-prog-bar"></div>
+          <div style="font-size:10px;font-weight:500;color:var(--muted);text-align:center;font-family:var(--mono);" class="sett-tab-label">③ 단계</div>
+        </div>
+        <div style="width:6px;"></div>
+        <div id="sstep-4" onclick="goSettStep(4)" style="flex:1;cursor:pointer;">
+          <div style="height:4px;border-radius:2px;background:var(--border);margin-bottom:6px;transition:all .3s;" class="sett-prog-bar"></div>
+          <div style="font-size:10px;font-weight:500;color:var(--muted);text-align:center;font-family:var(--mono);" class="sett-tab-label">④ 중량</div>
+        </div>
+      </div>
     </div>
 
     <!-- STEP 1: 신체 정보 -->
@@ -2219,8 +2302,31 @@ const DAY_KR=['일','월','화','수','목','금','토'];
 // 새 온보딩 시스템 (v2 - 상용앱 스타일)
 // ══════════════════════════════
 let obStep=1;
-const obData={name:'',age:'',gender:'male',height:170,weight:70,goals:[],focusParts:[],injuries:[],days:[],time:'60',level:'2',bench:30,benchReps:5};
+const obData={name:'',age:'',gender:'male',height:170,weight:70,goals:[],focusParts:[],injuries:[],days:[],time:'60',level:'2',bench:30,benchReps:5,ageGroup:''};
 const OB_TOTAL=9;
+
+// ── BetterMe 나이 카드 선택 ──
+function selectAgeGroup(group, age){
+  obData.ageGroup=group;
+  obData.age=age;
+  // 선택 효과
+  document.querySelectorAll('.ob-age-card').forEach(c=>c.classList.remove('sel'));
+  // 랜딩→메인 전환 (짧은 딜레이로 선택 피드백)
+  setTimeout(()=>{
+    document.getElementById('ob-landing-screen').style.display='none';
+    const main=document.getElementById('ob-main-screen');
+    main.style.display='flex';
+    obStep=1; renderOb();
+  }, 180);
+}
+
+// 상단 프로그레스 바 업데이트
+function updateTopBar(pct){
+  const b1=document.getElementById('ob-top-bar');
+  const b2=document.getElementById('ob-top-bar2');
+  if(b1) b1.style.width=pct+'%';
+  if(b2) b2.style.width=pct+'%';
+}
 
 // 스크롤 눈금자 상태
 let _rulerDragging=false, _rulerStartY=0, _rulerStartVal=0, _rulerTarget='height';
@@ -2318,12 +2424,19 @@ const OB_STEPS=[
   // 3. 목표
   {title:'주된 목표는 무엇인가요?',sub:'목표에 맞게 루틴의 강도와 방향을 설정해요.',prog:33,
     render:()=>`<div class="ob-goal-grid">${[
-      {v:'체중 감량',icon:'⚖️'},{v:'근육량 늘리기',icon:'💪'},{v:'슬림하고 정의된 몸매',icon:'✨'},
-      {v:'건강과 웰빙 향상',icon:'❤️'},{v:'운동 성능 향상',icon:'🏆'},{v:'재활·회복',icon:'🩺'}
-    ].map(g=>`<div class="ob-goal-item ${obData.goals.includes(g.v)?'sel':''}" onclick="obTogGoal('${g.v}',this)">
-      <span class="ob-goal-icon">${g.icon}</span>
-      <span class="ob-goal-text">${g.v}</span>
-      ${obData.goals.includes(g.v)?'<span style="margin-left:auto;color:#3b82f6;font-size:16px;">✓</span>':''}
+      {v:'체중 감량',icon:'⚖️',d:'체지방을 줄이고 날씬한 몸매로'},
+      {v:'근육량 늘리기',icon:'💪',d:'근육을 키우고 강한 체형으로'},
+      {v:'슬림하고 정의된 몸매',icon:'✨',d:'선명한 근육선과 탄탄한 몸매'},
+      {v:'건강과 웰빙 향상',icon:'❤️',d:'전반적인 건강과 활력 증진'},
+      {v:'운동 성능 향상',icon:'🏆',d:'퍼포먼스와 지구력 강화'},
+      {v:'재활·회복',icon:'🩺',d:'부상 회복 및 기능 개선'}
+    ].map(g=>`<div class="ob-goal-item ${obData.goals.includes(g.v)?'sel':''}" onclick="obTogGoal('${g.v}',this)" style="align-items:flex-start;">
+      <span class="ob-goal-icon" style="font-size:22px;margin-top:2px;">${g.icon}</span>
+      <div style="flex:1;">
+        <div class="ob-goal-text">${g.v}</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:2px;">${g.d}</div>
+      </div>
+      <span style="color:${obData.goals.includes(g.v)?'#3b82f6':'var(--muted)'};font-size:18px;margin-top:2px;">${obData.goals.includes(g.v)?'✓':'›'}</span>
     </div>`).join('')}</div>`,
     save:()=>{},
     validate:()=>{if(!obData.goals.length){showToast('목표를 하나 이상 선택해주세요','error');return false;}return true;}},
@@ -2432,12 +2545,17 @@ function selLevel(v,el){obSelLevel(v,el);}
 
 function renderOb(){
   const s=OB_STEPS[obStep-1];
-  document.getElementById('ob-step').textContent=obStep+' / '+OB_TOTAL+' 단계';
+  document.getElementById('ob-step').textContent=(obStep+1)+' / '+(OB_TOTAL+1)+' 단계';
   document.getElementById('ob-title').textContent=s.title;
   document.getElementById('ob-sub').textContent=s.sub;
-  document.getElementById('ob-prog').style.width=s.prog+'%';
+  // ob-prog 없을 수 있으므로 체크
+  const prog=document.getElementById('ob-prog');
+  if(prog) prog.style.width=s.prog+'%';
+  // 상단 프로그레스 바
+  updateTopBar(Math.round((obStep/(OB_TOTAL+1))*100));
   document.getElementById('ob-content').innerHTML=s.render();
-  document.getElementById('ob-back').style.display=obStep>1?'block':'none';
+  const backBtn=document.getElementById('ob-back');
+  if(backBtn) backBtn.style.display=obStep>1?'flex':'none';
   document.getElementById('ob-next').textContent=obStep===OB_TOTAL?'맞춤 루틴 만들기 🚀':'다음 →';
   document.getElementById('ob-next').onclick=obNext;
 }
@@ -2447,7 +2565,15 @@ function obNext(){
   if(s.validate&&!s.validate())return;
   if(obStep<OB_TOTAL){obStep++;renderOb();}else finishOb();
 }
-function obBack(){if(obStep>1){obStep--;renderOb();}}
+function obBack(){
+  if(obStep>1){obStep--;renderOb();}
+  else{
+    // 첫 단계에서 뒤로 → 랜딩 화면으로
+    document.getElementById('ob-main-screen').style.display='none';
+    document.getElementById('ob-landing-screen').style.display='flex';
+    updateTopBar(8);
+  }
+}
 function generateCustomRT(){
   const rt=JSON.parse(JSON.stringify(RT_BASE));
   const level=parseInt(obData.level);
@@ -4276,362 +4402,117 @@ async function delRec(date){
 // 통계
 // ══════════════════════════════
 
-// ══════════════════════════════
-// 해부학적 근육 시각화 v3 - 세밀한 SVG 패스 기반
-// ══════════════════════════════
+// ── 근육 부위 시각화 SVG ──
 function renderMuscleBodySvg(muscleMap, muscTotal){
   const panel = document.getElementById('muscle-body-panel');
   if(!panel) return;
 
-  const intensity = (keys) => {
+  // 부위별 강도 (0~1)
+  const intensity = (key) => {
+    const keys = {
+      '가슴'   : ['가슴','대흉근'],
+      '등'     : ['등','광배근','척추기립근'],
+      '어깨'   : ['어깨','삼각근'],
+      '팔'     : ['팔','이두근','삼두근'],
+      '하체'   : ['하체','대퇴사두근','햄스트링'],
+      '둔근'   : ['둔근','대둔근','중둔근'],
+      '복근'   : ['복근','코어','복직근','복사근'],
+      '심폐'   : ['심폐','유산소'],
+    };
+    const parts = keys[key] || [key];
     let total = 0;
-    (Array.isArray(keys)?keys:[keys]).forEach(k=>{ total += muscleMap[k]||0; });
-    return Math.min(1, total / Math.max(1, muscTotal) * 3.5);
+    parts.forEach(p=>{ total += muscleMap[p]||0; });
+    return Math.min(1, total / Math.max(1, muscTotal) * 3);
   };
 
-  // 강도 → 색상 (어두운 기본 → 파랑 → 초록 → 주황 → 빨강)
-  const mc = (v) => {
-    if(v <= 0.02) return '#1e2033';
-    if(v < 0.2)  return `rgba(59,130,246,${0.35+v*2})`;
-    if(v < 0.45) return `rgba(34,197,94,${0.55+v*0.8})`;
-    if(v < 0.72) return `rgba(234,179,8,${0.7+v*0.3})`;
-    return `rgba(239,68,68,${0.82+v*0.18})`;
+  const col = (key, base='#4a9eff') => {
+    const v = intensity(key);
+    if(v <= 0) return '#2a2a3a';
+    const alpha = Math.round(v * 200 + 55);
+    // 강도에 따라 색상: 파랑→초록→주황→빨강
+    if(v < 0.33) return '#4a9eff';
+    if(v < 0.66) return '#4caf7d';
+    return '#e8533a';
   };
 
-  const I = {
-    chest:      intensity(['가슴']),
-    upper_chest:intensity(['가슴']),
-    front_delt: intensity(['어깨']),
-    side_delt:  intensity(['어깨']),
-    rear_delt:  intensity(['어깨']),
-    trap_upper: intensity(['등','어깨']),
-    bicep:      intensity(['팔']),
-    tricep:     intensity(['팔']),
-    forearm_f:  intensity(['팔']),
-    forearm_b:  intensity(['팔']),
-    serratus:   intensity(['가슴','복근']),
-    core:       intensity(['복근']),
-    oblique:    intensity(['복근']),
-    lat:        intensity(['등']),
-    rhomboid:   intensity(['등']),
-    lower_back: intensity(['등']),
-    teres:      intensity(['등','어깨']),
-    quad:       intensity(['하체']),
-    inner_quad: intensity(['하체']),
-    ham:        intensity(['하체']),
-    glute_max:  intensity(['둔근']),
-    glute_med:  intensity(['둔근']),
-    adductor:   intensity(['하체','둔근']),
-    calf_med:   intensity(['하체']),
-    calf_lat:   intensity(['하체']),
-    shin:       intensity(['하체']),
-  };
-
-  const growthStage = (v) => {
-    if(v<=0.02) return null;
-    if(v<0.2)  return '시작';
-    if(v<0.45) return '성장중';
-    if(v<0.72) return '발달';
-    return '강화';
-  };
-
-  // ─── 앞면 SVG (전신 해부학적 패스) ───
-  const front = `<svg width="160" height="360" viewBox="0 0 160 360">
-  <defs>
-    <filter id="glow"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
-    <filter id="soft"><feGaussianBlur stdDeviation="1.2"/></filter>
-  </defs>
-
-  <!-- 머리 -->
-  <ellipse cx="80" cy="24" rx="19" ry="23" fill="#2d2d45"/>
-  <!-- 귀 -->
-  <ellipse cx="61" cy="25" rx="4" ry="6" fill="#28283e"/>
-  <ellipse cx="99" cy="25" rx="4" ry="6" fill="#28283e"/>
-  <!-- 목 -->
-  <path d="M71 45 Q80 43 89 45 L90 58 Q80 60 70 58Z" fill="#2d2d45"/>
-  <!-- 흉쇄유돌근(목) -->
-  <path d="M71 47 Q68 52 67 58 Q70 60 72 56 Q73 51 74 47Z" fill="${mc(I.trap_upper*0.6)}"/>
-  <path d="M89 47 Q92 52 93 58 Q90 60 88 56 Q87 51 86 47Z" fill="${mc(I.trap_upper*0.6)}"/>
-
-  <!-- 승모근 상부(앞) -->
-  <path d="M67 57 Q80 53 93 57 Q88 66 80 68 Q72 66 67 57Z" fill="${mc(I.trap_upper)}" filter="url(#glow)"/>
-
-  <!-- 전면 삼각근 (좌) -->
-  <path d="M51 67 Q43 72 40 84 Q42 94 50 96 Q57 90 58 78 Q57 70 51 67Z" fill="${mc(I.front_delt)}" filter="url(#glow)"/>
-  <!-- 측면 삼각근 (좌) -->
-  <path d="M40 83 Q35 90 36 102 Q40 108 46 106 Q50 98 50 88Z" fill="${mc(I.side_delt)}" filter="url(#glow)"/>
-  <!-- 전면 삼각근 (우) -->
-  <path d="M109 67 Q117 72 120 84 Q118 94 110 96 Q103 90 102 78 Q103 70 109 67Z" fill="${mc(I.front_delt)}" filter="url(#glow)"/>
-  <!-- 측면 삼각근 (우) -->
-  <path d="M120 83 Q125 90 124 102 Q120 108 114 106 Q110 98 110 88Z" fill="${mc(I.side_delt)}" filter="url(#glow)"/>
-
-  <!-- 대흉근 상부 (좌) - 쇄골 라인 -->
-  <path d="M67 64 Q74 61 80 64 Q78 72 72 76 Q65 74 62 68Z" fill="${mc(I.upper_chest)}" filter="url(#glow)"/>
-  <!-- 대흉근 상부 (우) -->
-  <path d="M93 64 Q86 61 80 64 Q82 72 88 76 Q95 74 98 68Z" fill="${mc(I.upper_chest)}" filter="url(#glow)"/>
-  <!-- 대흉근 주체부 (좌) - 해부학적 사선 패스 -->
-  <path d="M62 68 Q58 74 56 84 Q57 94 62 98 Q70 94 76 86 Q78 76 74 70Z" fill="${mc(I.chest)}" filter="url(#glow)"/>
-  <!-- 대흉근 주체부 (우) -->
-  <path d="M98 68 Q102 74 104 84 Q103 94 98 98 Q90 94 84 86 Q82 76 86 70Z" fill="${mc(I.chest)}" filter="url(#glow)"/>
-  <!-- 대흉근 중앙 융기 (흉골 라인) -->
-  <path d="M76 66 Q80 69 84 66 L84 96 Q80 98 76 96Z" fill="${mc(I.chest*0.7)}"/>
-
-  <!-- 전거근 (좌) - 갈비뼈 위 톱니 -->
-  <path d="M56 87 Q52 92 53 99 Q56 102 60 99 Q62 95 60 88Z" fill="${mc(I.serratus*0.9)}"/>
-  <path d="M56 96 Q51 101 52 107 Q55 109 59 107 Q61 103 59 97Z" fill="${mc(I.serratus*0.8)}"/>
-  <!-- 전거근 (우) -->
-  <path d="M104 87 Q108 92 107 99 Q104 102 100 99 Q98 95 100 88Z" fill="${mc(I.serratus*0.9)}"/>
-  <path d="M104 96 Q109 101 108 107 Q105 109 101 107 Q99 103 101 97Z" fill="${mc(I.serratus*0.8)}"/>
-
-  <!-- 이두근 (좌) - 두 갈래 표현 -->
-  <path d="M37 100 Q31 108 30 120 Q32 130 38 132 Q44 128 46 116 Q46 106 40 100Z" fill="${mc(I.bicep)}" filter="url(#glow)"/>
-  <path d="M38 100 Q35 108 35 118 Q37 126 41 126 Q44 120 43 110 Q42 103 38 100Z" fill="${mc(I.bicep*0.7)}"/>
-  <!-- 이두근 (우) -->
-  <path d="M123 100 Q129 108 130 120 Q128 130 122 132 Q116 128 114 116 Q114 106 120 100Z" fill="${mc(I.bicep)}" filter="url(#glow)"/>
-  <path d="M122 100 Q125 108 125 118 Q123 126 119 126 Q116 120 117 110 Q118 103 122 100Z" fill="${mc(I.bicep*0.7)}"/>
-
-  <!-- 전완 앞면 (좌) -->
-  <path d="M30 133 Q25 146 26 162 Q29 170 35 168 Q40 162 41 148 Q40 136 36 132Z" fill="${mc(I.forearm_f)}" filter="url(#glow)"/>
-  <path d="M38 133 Q36 144 37 156 Q40 162 44 160 Q46 150 45 138 Q43 132 39 131Z" fill="${mc(I.forearm_f*0.7)}"/>
-  <!-- 전완 앞면 (우) -->
-  <path d="M130 133 Q135 146 134 162 Q131 170 125 168 Q120 162 119 148 Q120 136 124 132Z" fill="${mc(I.forearm_f)}" filter="url(#glow)"/>
-  <path d="M122 133 Q124 144 123 156 Q120 162 116 160 Q114 150 115 138 Q117 132 121 131Z" fill="${mc(I.forearm_f*0.7)}"/>
-
-  <!-- 손목/손 -->
-  <ellipse cx="30" cy="173" rx="7" ry="5" fill="#28283e"/>
-  <ellipse cx="130" cy="173" rx="7" ry="5" fill="#28283e"/>
-
-  <!-- 복직근 + 건획 (6-pack) -->
-  <rect x="68" y="100" width="10" height="10" rx="3" fill="${mc(I.core)}"/>
-  <rect x="82" y="100" width="10" height="10" rx="3" fill="${mc(I.core)}"/>
-  <rect x="68" y="113" width="10" height="10" rx="3" fill="${mc(I.core)}"/>
-  <rect x="82" y="113" width="10" height="10" rx="3" fill="${mc(I.core)}"/>
-  <rect x="68" y="126" width="10" height="10" rx="3" fill="${mc(I.core*0.85)}"/>
-  <rect x="82" y="126" width="10" height="10" rx="3" fill="${mc(I.core*0.85)}"/>
-  <!-- 건획 라인 -->
-  <line x1="78" y1="100" x2="78" y2="136" stroke="${mc(I.core*0.3)}" stroke-width="1.5"/>
-  <line x1="66" y1="110" x2="94" y2="110" stroke="${mc(I.core*0.3)}" stroke-width="1"/>
-  <line x1="66" y1="123" x2="94" y2="123" stroke="${mc(I.core*0.3)}" stroke-width="1"/>
-
-  <!-- 외복사근 (좌) -->
-  <path d="M62 100 Q56 112 57 128 Q62 134 67 130 Q68 116 68 100Z" fill="${mc(I.oblique)}" filter="url(#glow)"/>
-  <!-- 외복사근 (우) -->
-  <path d="M98 100 Q104 112 103 128 Q98 134 93 130 Q92 116 92 100Z" fill="${mc(I.oblique)}" filter="url(#glow)"/>
-
-  <!-- 장요근/골반 -->
-  <path d="M63 136 Q80 142 97 136 L96 150 Q80 156 64 150Z" fill="${mc((I.core+I.oblique)/2*0.7)}"/>
-
-  <!-- 봉공근 (대퇴 내측 사선) 좌 -->
-  <path d="M68 155 Q60 170 58 196 Q62 200 66 196 Q70 178 72 158Z" fill="${mc(I.quad*0.6)}"/>
-  <!-- 봉공근 우 -->
-  <path d="M92 155 Q100 170 102 196 Q98 200 94 196 Q90 178 88 158Z" fill="${mc(I.quad*0.6)}"/>
-
-  <!-- 대퇴사두 (외측광근) 좌 -->
-  <path d="M60 154 Q50 168 50 196 Q54 208 62 208 Q68 200 70 182 Q70 164 64 154Z" fill="${mc(I.quad)}" filter="url(#glow)"/>
-  <!-- 대퇴직근 (중앙) 좌 -->
-  <path d="M65 154 Q62 168 62 192 Q66 202 70 200 Q74 192 74 168 Q73 156 68 153Z" fill="${mc(I.quad*0.9)}"/>
-  <!-- 외측광근 (외측) 좌 -->
-  <path d="M50 168 Q44 180 44 202 Q48 212 56 210 Q62 202 62 182 Q58 170 52 167Z" fill="${mc(I.quad*0.85)}" filter="url(#glow)"/>
-
-  <!-- 대퇴사두 (외측광근) 우 -->
-  <path d="M100 154 Q110 168 110 196 Q106 208 98 208 Q92 200 90 182 Q90 164 96 154Z" fill="${mc(I.quad)}" filter="url(#glow)"/>
-  <!-- 대퇴직근 우 -->
-  <path d="M95 154 Q98 168 98 192 Q94 202 90 200 Q86 192 86 168 Q87 156 92 153Z" fill="${mc(I.quad*0.9)}"/>
-  <!-- 외측광근 우 -->
-  <path d="M110 168 Q116 180 116 202 Q112 212 104 210 Q98 202 98 182 Q102 170 108 167Z" fill="${mc(I.quad*0.85)}" filter="url(#glow)"/>
-
-  <!-- 내측광근 (물방울근) 좌 -->
-  <path d="M62 202 Q58 210 60 218 Q66 222 72 218 Q74 210 70 202Z" fill="${mc(I.inner_quad)}" filter="url(#glow)"/>
-  <!-- 내측광근 우 -->
-  <path d="M98 202 Q102 210 100 218 Q94 222 88 218 Q86 210 90 202Z" fill="${mc(I.inner_quad)}" filter="url(#glow)"/>
-
-  <!-- 내전근 좌 -->
-  <path d="M68 156 Q72 170 72 196 Q68 204 64 200 Q62 186 64 164Z" fill="${mc(I.adductor*0.7)}"/>
-  <!-- 내전근 우 -->
-  <path d="M92 156 Q88 170 88 196 Q92 204 96 200 Q98 186 96 164Z" fill="${mc(I.adductor*0.7)}"/>
-
-  <!-- 무릎 -->
-  <ellipse cx="62" cy="224" rx="10" ry="7" fill="#242438"/>
-  <ellipse cx="98" cy="224" rx="10" ry="7" fill="#242438"/>
-
-  <!-- 전경골근 (좌) -->
-  <path d="M56 230 Q52 244 53 262 Q57 268 62 266 Q66 258 65 242 Q63 232 58 229Z" fill="${mc(I.shin)}" filter="url(#glow)"/>
-  <!-- 전경골근 (우) -->
-  <path d="M104 230 Q108 244 107 262 Q103 268 98 266 Q94 258 95 242 Q97 232 102 229Z" fill="${mc(I.shin)}" filter="url(#glow)"/>
-
-  <!-- 비복근 앞쪽 노출 (좌) -->
-  <path d="M66 232 Q69 248 68 264 Q64 270 60 268 Q66 256 66 240Z" fill="${mc(I.calf_med*0.5)}"/>
-  <!-- 비복근 앞쪽 노출 (우) -->
-  <path d="M94 232 Q91 248 92 264 Q96 270 100 268 Q94 256 94 240Z" fill="${mc(I.calf_med*0.5)}"/>
-
-  <!-- 발목/발 -->
-  <ellipse cx="59" cy="272" rx="10" ry="5" fill="#242438"/>
-  <ellipse cx="101" cy="272" rx="10" ry="5" fill="#242438"/>
-  <path d="M50 273 Q59 276 68 273 L69 280 Q59 283 50 280Z" fill="#1e1e30"/>
-  <path d="M92 273 Q101 276 110 273 L111 280 Q101 283 92 280Z" fill="#1e1e30"/>
-
-  <!-- 성장 단계 텍스트 -->
-  ${growthStage(I.chest)?`<text x="80" y="86" text-anchor="middle" font-size="8" fill="white" font-weight="700" opacity="0.95">${growthStage(I.chest)}</text>`:''}
-  ${growthStage(I.core)?`<text x="80" y="118" text-anchor="middle" font-size="8" fill="white" font-weight="700" opacity="0.95">${growthStage(I.core)}</text>`:''}
-  ${growthStage(I.quad)?`<text x="80" y="185" text-anchor="middle" font-size="8" fill="white" font-weight="700" opacity="0.95">${growthStage(I.quad)}</text>`:''}
-</svg>`;
-
-  // ─── 뒷면 SVG ───
-  const back = `<svg width="160" height="360" viewBox="0 0 160 360">
-  <defs>
-    <filter id="glow3"><feGaussianBlur stdDeviation="2.5" result="b"/><feComposite in="SourceGraphic" in2="b" operator="over"/></filter>
-  </defs>
-
-  <!-- 머리 뒤 -->
-  <ellipse cx="80" cy="24" rx="19" ry="23" fill="#2d2d45"/>
-  <ellipse cx="61" cy="25" rx="4" ry="6" fill="#28283e"/>
-  <ellipse cx="99" cy="25" rx="4" ry="6" fill="#28283e"/>
-  <!-- 목 뒤 -->
-  <path d="M72 45 Q80 43 88 45 L88 58 Q80 60 72 58Z" fill="#2d2d45"/>
-
-  <!-- 승모근 상부 - 마름모꼴 상단 -->
-  <path d="M65 55 Q80 49 95 55 Q90 65 80 68 Q70 65 65 55Z" fill="${mc(I.trap_upper)}" filter="url(#glow3)"/>
-  <!-- 승모근 중부 - 어깨 연결 -->
-  <path d="M50 68 Q65 64 80 68 Q95 64 110 68 L108 90 Q80 96 52 90Z" fill="${mc(I.trap_upper*0.8)}" filter="url(#glow3)"/>
-
-  <!-- 후면 삼각근 (좌) -->
-  <path d="M50 67 Q42 73 39 86 Q40 98 48 100 Q56 94 58 82 Q57 72 51 67Z" fill="${mc(I.rear_delt)}" filter="url(#glow3)"/>
-  <!-- 후면 삼각근 (우) -->
-  <path d="M110 67 Q118 73 121 86 Q120 98 112 100 Q104 94 102 82 Q103 72 109 67Z" fill="${mc(I.rear_delt)}" filter="url(#glow3)"/>
-
-  <!-- 대원근 (좌) -->
-  <path d="M52 90 Q46 98 48 108 Q52 112 58 110 Q62 102 60 92Z" fill="${mc(I.teres)}" filter="url(#glow3)"/>
-  <!-- 대원근 (우) -->
-  <path d="M108 90 Q114 98 112 108 Q108 112 102 110 Q98 102 100 92Z" fill="${mc(I.teres)}" filter="url(#glow3)"/>
-
-  <!-- 삼두근 (좌) - 3갈래 표현 -->
-  <path d="M38 98 Q31 108 30 122 Q32 132 38 134 Q44 130 46 118 Q46 106 40 98Z" fill="${mc(I.tricep)}" filter="url(#glow3)"/>
-  <path d="M40 98 Q36 108 37 120 Q40 128 44 126 Q47 118 46 108 Q44 101 41 97Z" fill="${mc(I.tricep*0.75)}"/>
-  <path d="M46 102 Q44 112 45 122 Q48 128 52 124 Q54 114 52 104Z" fill="${mc(I.tricep*0.6)}"/>
-  <!-- 삼두근 (우) -->
-  <path d="M122 98 Q129 108 130 122 Q128 132 122 134 Q116 130 114 118 Q114 106 120 98Z" fill="${mc(I.tricep)}" filter="url(#glow3)"/>
-  <path d="M120 98 Q124 108 123 120 Q120 128 116 126 Q113 118 114 108 Q116 101 119 97Z" fill="${mc(I.tricep*0.75)}"/>
-  <path d="M114 102 Q116 112 115 122 Q112 128 108 124 Q106 114 108 104Z" fill="${mc(I.tricep*0.6)}"/>
-
-  <!-- 전완 뒷면 (좌) -->
-  <path d="M30 135 Q25 148 26 165 Q30 172 36 170 Q41 163 41 149 Q40 137 35 134Z" fill="${mc(I.forearm_b)}" filter="url(#glow3)"/>
-  <!-- 전완 뒷면 (우) -->
-  <path d="M130 135 Q135 148 134 165 Q130 172 124 170 Q119 163 119 149 Q120 137 125 134Z" fill="${mc(I.forearm_b)}" filter="url(#glow3)"/>
-
-  <!-- 손목/손 -->
-  <ellipse cx="30" cy="175" rx="7" ry="5" fill="#28283e"/>
-  <ellipse cx="130" cy="175" rx="7" ry="5" fill="#28283e"/>
-
-  <!-- 광배근 (좌) - 역삼각형 특유 형태 -->
-  <path d="M52 88 Q40 100 38 124 Q40 134 48 136 Q56 132 60 118 Q64 104 64 90Z" fill="${mc(I.lat)}" filter="url(#glow3)"/>
-  <path d="M56 88 Q48 100 48 122 Q52 132 58 130 Q62 118 64 104 Q64 94 58 88Z" fill="${mc(I.lat*0.75)}"/>
-  <!-- 광배근 (우) -->
-  <path d="M108 88 Q120 100 122 124 Q120 134 112 136 Q104 132 100 118 Q96 104 96 90Z" fill="${mc(I.lat)}" filter="url(#glow3)"/>
-  <path d="M104 88 Q112 100 112 122 Q108 132 102 130 Q98 118 96 104 Q96 94 102 88Z" fill="${mc(I.lat*0.75)}"/>
-
-  <!-- 척추기립근 (좌/우) - 척추 양쪽 세로 근육 -->
-  <rect x="67" y="90" width="10" height="52" rx="5" fill="${mc(I.lower_back)}" filter="url(#glow3)"/>
-  <rect x="83" y="90" width="10" height="52" rx="5" fill="${mc(I.lower_back)}" filter="url(#glow3)"/>
-  <!-- 척추 라인 -->
-  <line x1="80" y1="58" x2="80" y2="145" stroke="${mc(I.lower_back*0.4)}" stroke-width="2"/>
-
-  <!-- 능형근 (좌) -->
-  <path d="M68 90 Q60 96 60 110 Q64 116 70 114 Q74 106 74 92Z" fill="${mc(I.rhomboid)}" filter="url(#glow3)"/>
-  <!-- 능형근 (우) -->
-  <path d="M92 90 Q100 96 100 110 Q96 116 90 114 Q86 106 86 92Z" fill="${mc(I.rhomboid)}" filter="url(#glow3)"/>
-
-  <!-- 허리 하부 -->
-  <path d="M62 142 Q80 148 98 142 L97 158 Q80 164 63 158Z" fill="${mc(I.lower_back*0.8)}"/>
-
-  <!-- 대둔근 (좌) - 둥글고 큰 형태 -->
-  <path d="M58 158 Q46 168 46 190 Q50 202 62 202 Q72 196 74 178 Q74 164 64 157Z" fill="${mc(I.glute_max)}" filter="url(#glow3)"/>
-  <path d="M54 162 Q46 174 47 192 Q52 200 60 198 Q66 188 66 172 Q62 162 55 161Z" fill="${mc(I.glute_max*0.8)}"/>
-  <!-- 대둔근 (우) -->
-  <path d="M102 158 Q114 168 114 190 Q110 202 98 202 Q88 196 86 178 Q86 164 96 157Z" fill="${mc(I.glute_max)}" filter="url(#glow3)"/>
-  <path d="M106 162 Q114 174 113 192 Q108 200 100 198 Q94 188 94 172 Q98 162 105 161Z" fill="${mc(I.glute_max*0.8)}"/>
-
-  <!-- 중둔근 (좌) - 엉덩이 측면 상부 -->
-  <path d="M46 152 Q40 158 40 170 Q44 178 52 176 Q58 168 58 156Z" fill="${mc(I.glute_med)}" filter="url(#glow3)"/>
-  <!-- 중둔근 (우) -->
-  <path d="M114 152 Q120 158 120 170 Q116 178 108 176 Q102 168 102 156Z" fill="${mc(I.glute_med)}" filter="url(#glow3)"/>
-
-  <!-- 햄스트링 대퇴이두근 (좌) -->
-  <path d="M50 200 Q43 218 44 240 Q48 250 56 248 Q62 240 62 220 Q60 206 54 200Z" fill="${mc(I.ham)}" filter="url(#glow3)"/>
-  <!-- 반건양근/반막양근 (좌) -->
-  <path d="M62 200 Q58 218 58 238 Q62 248 68 246 Q72 236 72 216 Q71 204 65 200Z" fill="${mc(I.ham*0.85)}" filter="url(#glow3)"/>
-  <!-- 햄스트링 (우) -->
-  <path d="M110 200 Q117 218 116 240 Q112 250 104 248 Q98 240 98 220 Q100 206 106 200Z" fill="${mc(I.ham)}" filter="url(#glow3)"/>
-  <!-- 반건양근 (우) -->
-  <path d="M98 200 Q102 218 102 238 Q98 248 92 246 Q88 236 88 216 Q89 204 95 200Z" fill="${mc(I.ham*0.85)}" filter="url(#glow3)"/>
-
-  <!-- 무릎 뒤 오금 -->
-  <path d="M47 248 Q55 252 70 250 L70 258 Q55 260 47 256Z" fill="#242438"/>
-  <path d="M90 248 Q98 252 113 250 L113 258 Q98 260 90 256Z" fill="#242438"/>
-
-  <!-- 비복근 (좌) - 두 갈래 특유 형태 -->
-  <path d="M47 258 Q42 272 44 292 Q48 300 56 298 Q62 290 62 272 Q60 260 52 257Z" fill="${mc(I.calf_med)}" filter="url(#glow3)"/>
-  <path d="M60 258 Q57 272 58 290 Q62 298 68 296 Q72 286 70 268 Q67 258 62 257Z" fill="${mc(I.calf_lat)}" filter="url(#glow3)"/>
-  <!-- 비복근 (우) -->
-  <path d="M113 258 Q118 272 116 292 Q112 300 104 298 Q98 290 98 272 Q100 260 108 257Z" fill="${mc(I.calf_med)}" filter="url(#glow3)"/>
-  <path d="M100 258 Q103 272 102 290 Q98 298 92 296 Q88 286 90 268 Q93 258 98 257Z" fill="${mc(I.calf_lat)}" filter="url(#glow3)"/>
-
-  <!-- 발목/발 -->
-  <ellipse cx="55" cy="306" rx="11" ry="6" fill="#242438"/>
-  <ellipse cx="105" cy="306" rx="11" ry="6" fill="#242438"/>
-  <path d="M46 307 Q55 311 64 307 L65 316 Q55 319 46 316Z" fill="#1e1e30"/>
-  <path d="M96 307 Q105 311 114 307 L115 316 Q105 319 96 316Z" fill="#1e1e30"/>
-
-  <!-- 성장 단계 텍스트 -->
-  ${growthStage(I.lat)?`<text x="80" y="118" text-anchor="middle" font-size="8" fill="white" font-weight="700" opacity="0.95">${growthStage(I.lat)}</text>`:''}
-  ${growthStage(I.glute_max)?`<text x="80" y="184" text-anchor="middle" font-size="8" fill="white" font-weight="700" opacity="0.95">${growthStage(I.glute_max)}</text>`:''}
-  ${growthStage(I.ham)?`<text x="80" y="228" text-anchor="middle" font-size="8" fill="white" font-weight="700" opacity="0.95">${growthStage(I.ham)}</text>`:''}
-</svg>`;
-
-  const totalWorkouts = Object.values(muscleMap).reduce((a,b)=>a+b,0);
-  const bodyLevel = totalWorkouts===0?0:totalWorkouts<20?1:totalWorkouts<60?2:totalWorkouts<120?3:totalWorkouts<200?4:5;
-  const levelLabels = ['시작 전','입문기','성장기','발달기','근비대기','마스터'];
-  const levelColors = ['#333','#3b82f6','#22c55e','#f59e0b','#ef4444','#dc2626'];
-  const levelPct = Math.min(100, Math.round(totalWorkouts/2));
+  const w = panel.offsetWidth || 300;
 
   panel.innerHTML = `
-    <!-- 성장 레벨 바 -->
-    <div style="margin-bottom:16px;padding:14px 16px;background:var(--surface2);border-radius:12px;">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-        <div style="font-size:13px;font-weight:700;">💪 몸 성장 레벨</div>
-        <div style="font-size:14px;font-weight:900;color:${levelColors[bodyLevel]};">${levelLabels[bodyLevel]}</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px;text-align:center;">
+      🔵 낮음 → 🟢 보통 → 🔴 높음 (누적 자극 강도)
+    </div>
+    <div style="display:flex;gap:12px;justify-content:center;align-items:flex-start;">
+      <!-- 앞면 -->
+      <div style="text-align:center;">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">앞면</div>
+        <svg width="120" height="200" viewBox="0 0 120 200">
+          <!-- 머리 -->
+          <ellipse cx="60" cy="18" rx="16" ry="18" fill="#3a3a4a" stroke="var(--border)" stroke-width="0.5"/>
+          <!-- 목 -->
+          <rect x="53" y="34" width="14" height="12" rx="3" fill="#3a3a4a"/>
+          <!-- 어깨/상체 -->
+          <path d="M25 46 Q40 42 60 42 Q80 42 95 46 L98 80 Q80 85 60 84 Q40 85 22 80 Z" fill="${col('어깨','#4a9eff')}"/>
+          <!-- 가슴 -->
+          <ellipse cx="47" cy="68" rx="14" ry="16" fill="${col('가슴')}"/>
+          <ellipse cx="73" cy="68" rx="14" ry="16" fill="${col('가슴')}"/>
+          <!-- 복근 -->
+          <rect x="48" y="84" width="24" height="8" rx="3" fill="${col('복근')}"/>
+          <rect x="48" y="94" width="11" height="8" rx="2" fill="${col('복근')}"/>
+          <rect x="61" y="94" width="11" height="8" rx="2" fill="${col('복근')}"/>
+          <rect x="48" y="104" width="11" height="8" rx="2" fill="${col('복근')}"/>
+          <rect x="61" y="104" width="11" height="8" rx="2" fill="${col('복근')}"/>
+          <!-- 팔 (위) -->
+          <rect x="16" y="48" width="14" height="34" rx="6" fill="${col('팔')}"/>
+          <rect x="90" y="48" width="14" height="34" rx="6" fill="${col('팔')}"/>
+          <!-- 팔 (아래) -->
+          <rect x="14" y="84" width="12" height="28" rx="5" fill="${col('팔')}"/>
+          <rect x="94" y="84" width="12" height="28" rx="5" fill="${col('팔')}"/>
+          <!-- 허리 -->
+          <rect x="44" y="114" width="32" height="14" rx="4" fill="${col('복근')}"/>
+          <!-- 대퇴 (앞) -->
+          <rect x="36" y="130" width="22" height="44" rx="8" fill="${col('하체')}"/>
+          <rect x="62" y="130" width="22" height="44" rx="8" fill="${col('하체')}"/>
+          <!-- 종아리 -->
+          <rect x="38" y="176" width="16" height="22" rx="6" fill="${col('하체')}"/>
+          <rect x="66" y="176" width="16" height="22" rx="6" fill="${col('하체')}"/>
+        </svg>
       </div>
-      <div style="height:8px;background:var(--border);border-radius:4px;overflow:hidden;margin-bottom:6px;">
-        <div style="height:100%;width:${levelPct}%;background:linear-gradient(90deg,#3b82f6,${levelColors[bodyLevel]});border-radius:4px;transition:width .6s;"></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:var(--mono);">
-        <span>총 누적 ${Math.round(totalWorkouts)}회</span>
-        <span>다음 단계까지 ${Math.max(0,[20,60,120,200,999][Math.min(bodyLevel,4)]-Math.round(totalWorkouts))}회</span>
+      <!-- 뒷면 -->
+      <div style="text-align:center;">
+        <div style="font-size:10px;color:var(--muted);margin-bottom:4px;">뒷면</div>
+        <svg width="120" height="200" viewBox="0 0 120 200">
+          <!-- 머리 -->
+          <ellipse cx="60" cy="18" rx="16" ry="18" fill="#3a3a4a" stroke="var(--border)" stroke-width="0.5"/>
+          <!-- 목 -->
+          <rect x="53" y="34" width="14" height="12" rx="3" fill="#3a3a4a"/>
+          <!-- 등/어깨 -->
+          <path d="M25 46 Q40 42 60 42 Q80 42 95 46 L98 80 Q80 85 60 84 Q40 85 22 80 Z" fill="${col('등')}"/>
+          <!-- 팔 (위) -->
+          <rect x="16" y="48" width="14" height="34" rx="6" fill="${col('팔')}"/>
+          <rect x="90" y="48" width="14" height="34" rx="6" fill="${col('팔')}"/>
+          <!-- 팔 (아래) -->
+          <rect x="14" y="84" width="12" height="28" rx="5" fill="${col('팔')}"/>
+          <rect x="94" y="84" width="12" height="28" rx="5" fill="${col('팔')}"/>
+          <!-- 허리 -->
+          <rect x="44" y="84" width="32" height="32" rx="4" fill="${col('등')}"/>
+          <!-- 둔근 -->
+          <ellipse cx="48" cy="128" rx="16" ry="14" fill="${col('둔근')}"/>
+          <ellipse cx="72" cy="128" rx="16" ry="14" fill="${col('둔근')}"/>
+          <!-- 햄스트링 -->
+          <rect x="36" y="140" width="22" height="36" rx="8" fill="${col('하체')}"/>
+          <rect x="62" y="140" width="22" height="36" rx="8" fill="${col('하체')}"/>
+          <!-- 종아리 -->
+          <rect x="38" y="178" width="16" height="20" rx="6" fill="${col('하체')}"/>
+          <rect x="66" y="178" width="16" height="20" rx="6" fill="${col('하체')}"/>
+        </svg>
       </div>
     </div>
     <!-- 범례 -->
-    <div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-bottom:12px;font-size:11px;color:var(--muted);">
-      <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:50%;background:#3b82f6;display:inline-block;"></span>낮음</span>→
-      <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:50%;background:#22c55e;display:inline-block;"></span>보통</span>→
-      <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:50%;background:#f59e0b;display:inline-block;"></span>높음</span>→
-      <span style="display:flex;align-items:center;gap:3px;"><span style="width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block;"></span>최고</span>
-    </div>
-    <!-- SVG 앞뒤 -->
-    <div style="display:flex;gap:4px;justify-content:center;align-items:flex-start;">
-      <div style="text-align:center;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-family:var(--mono);">앞면</div>${front}</div>
-      <div style="text-align:center;"><div style="font-size:11px;color:var(--muted);margin-bottom:4px;font-family:var(--mono);">뒷면</div>${back}</div>
-    </div>
-    <!-- 근육별 태그 -->
-    <div style="display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-top:14px;">
-      ${Object.entries({'대흉근':I.chest,'광배근':I.lat,'삼각근':I.front_delt,'이두근':I.bicep,'삼두근':I.tricep,'복직근':I.core,'대퇴사두':I.quad,'햄스트링':I.ham,'대둔근':I.glute_max,'종아리':I.calf_med}).filter(([,v])=>v>0.02).sort((a,b)=>b[1]-a[1]).map(([name,v])=>{
-        const c=mc(v); const stage=growthStage(v); const pct=Math.round(v*100);
-        return `<div style="padding:5px 11px;border-radius:20px;border:1px solid ${c};background:${c.replace('rgba','rgba').replace(/,[^,]+\)$/,',0.12)')};font-size:11px;">
-          <span style="color:${c};font-weight:700;">${name}</span>
-          <span style="color:var(--muted);font-size:10px;margin-left:3px;">${stage} ${pct}%</span>
-        </div>`;
-      }).join('')}
-    </div>
-    ${totalWorkouts===0?'<div style="text-align:center;padding:16px;color:var(--muted);font-size:13px;">운동을 기록하면 근육 성장이 표시됩니다 💪</div>':''}
-  `;
+    <div style="display:flex;gap:10px;justify-content:center;margin-top:10px;flex-wrap:wrap;">
+      ${Object.entries(muscleMap).filter(([,v])=>v>0).sort((a,b)=>b[1]-a[1]).slice(0,6)
+        .map(([m,v])=>`<span style="font-size:10px;padding:2px 8px;border-radius:10px;background:${col(m)}22;border:1px solid ${col(m)}66;color:${col(m)};">${m} ${v}회</span>`)
+        .join('')}
+    </div>`;
 }
 
 function renderStats(){
@@ -8166,28 +8047,32 @@ function goSettStep(n){
 
 function _showSettPanel(n){
   for(let i=1;i<=4;i++){
-    const panel = document.getElementById('sett-panel-'+i);
-    const btn   = document.getElementById('sstep-'+i);
-    if(panel) panel.style.display = i===n ? '' : 'none';
-    if(btn){
-      if(i===n){
-        btn.style.background='var(--accent)'; btn.style.color='#fff'; btn.style.fontWeight='700';
-      } else if(settDone[i]){
-        btn.style.background='var(--green)'; btn.style.color='#fff'; btn.style.fontWeight='700';
-      } else if(i<n){
-        btn.style.background='var(--surface2)'; btn.style.color='var(--muted)'; btn.style.fontWeight='500';
-      } else {
-        btn.style.background='none'; btn.style.color='var(--muted)'; btn.style.fontWeight='500';
-      }
+    const panel=document.getElementById('sett-panel-'+i);
+    const tab=document.getElementById('sstep-'+i);
+    if(panel) panel.style.display=i===n?'':'none';
+    if(!tab) continue;
+    const bars=tab.querySelectorAll('div');
+    const progBar=bars[0], lbl=bars[1];
+    if(i===n){
+      if(progBar){progBar.style.background='var(--accent)';progBar.style.height='5px';}
+      if(lbl){lbl.style.color='var(--accent)';lbl.style.fontWeight='700';}
+    } else if(settDone[i]){
+      if(progBar){progBar.style.background='var(--green)';progBar.style.height='4px';}
+      if(lbl){lbl.style.color='var(--green)';lbl.style.fontWeight='700';}
+    } else {
+      if(progBar){progBar.style.background='var(--border)';progBar.style.height='4px';}
+      if(lbl){lbl.style.color='var(--muted)';lbl.style.fontWeight='500';}
     }
   }
 }
 
 function markSettDone(n){
   settDone[n]=true;
-  // 상단 스텝 버튼에 ✓ 표시
-  const btn = document.getElementById('sstep-'+n);
-  if(btn){ btn.style.background='var(--green)'; btn.style.color='#fff'; }
+  const tab=document.getElementById('sstep-'+n);
+  if(!tab) return;
+  const bars=tab.querySelectorAll('div');
+  if(bars[0]) bars[0].style.background='var(--green)';
+  if(bars[1]) bars[1].style.color='var(--green)';
 }
 function initDayAssignBtns(){
   document.querySelectorAll('.day-assign-btn').forEach(btn=>{
