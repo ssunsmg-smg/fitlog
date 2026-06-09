@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- fitlog v2.6 build:20260609-1 -->
+<!-- fitlog v2.7 build:20260609-2 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -266,24 +266,63 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 .login-note{font-size:11px;color:var(--muted);margin-top:14px;line-height:1.6;}
 
 /* 온보딩 */
-.onboard{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px;}
-.ob-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:32px;width:100%;max-width:480px;}
+.onboard{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:16px;}
+.ob-card{background:var(--surface);border:1px solid var(--border);border-radius:16px;padding:28px 24px;width:100%;max-width:480px;}
 .ob-step{font-size:11px;font-family:var(--mono);color:var(--muted);margin-bottom:5px;}
-.ob-title{font-size:22px;font-weight:900;margin-bottom:5px;}
+.ob-title{font-size:24px;font-weight:900;margin-bottom:5px;line-height:1.3;}
 .ob-sub{font-size:13px;color:var(--muted);margin-bottom:20px;line-height:1.6;}
-.ob-prog{height:3px;background:var(--border);border-radius:2px;margin-bottom:24px;}
-.ob-prog-fill{height:100%;border-radius:2px;background:var(--accent);transition:width .3s;}
+.ob-prog{height:4px;background:var(--border);border-radius:2px;margin-bottom:24px;}
+.ob-prog-fill{height:100%;border-radius:2px;background:#3b82f6;transition:width .4s;}
 .ob-field{margin-bottom:14px;}
 .ob-label{font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:5px;}
 .ob-inp{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:11px 14px;font-size:14px;color:var(--text);font-family:var(--font);}
-.ob-inp:focus{outline:none;border-color:var(--accent);}
+.ob-inp:focus{outline:none;border-color:#3b82f6;}
 .ob-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;}
 .ob-opts{display:flex;flex-wrap:wrap;gap:7px;}
 .ob-opt{padding:8px 13px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);transition:all .15s;}
-.ob-opt.sel{background:#e8533a1a;border-color:var(--accent);color:var(--accent);}
+.ob-opt.sel{background:#3b82f615;border-color:#3b82f6;color:#3b82f6;}
 .ob-btns{display:flex;gap:8px;margin-top:22px;}
-.ob-next{flex:1;padding:12px;border-radius:8px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);}
-.ob-back{padding:12px 16px;border-radius:8px;border:1px solid var(--border);background:none;color:var(--muted);font-size:14px;cursor:pointer;font-family:var(--font);}
+.ob-next{flex:1;padding:14px;border-radius:10px;border:none;background:#3b82f6;color:#fff;font-size:15px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s;}
+.ob-next:active{transform:scale(.98);}
+.ob-back{padding:12px 16px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--muted);font-size:14px;cursor:pointer;font-family:var(--font);}
+/* 성별 카드 */
+.ob-gender-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:8px;}
+.ob-gender-card{border:2px solid var(--border);border-radius:14px;padding:20px 12px;text-align:center;cursor:pointer;transition:all .2s;background:var(--surface2);}
+.ob-gender-card.sel{border-color:#3b82f6;background:#3b82f615;}
+.ob-gender-label{font-size:15px;font-weight:700;margin-top:8px;}
+.ob-gender-avatar{font-size:56px;line-height:1;}
+/* 스크롤 눈금자 */
+.ob-ruler-value{font-size:52px;font-weight:900;text-align:center;font-family:var(--mono);color:var(--text);}
+.ob-ruler-unit{font-size:13px;color:var(--muted);text-align:center;margin-bottom:14px;}
+.ob-ruler-track{position:relative;height:120px;overflow:hidden;cursor:ns-resize;user-select:none;touch-action:none;}
+.ob-ruler-center{position:absolute;left:16px;right:16px;height:2px;background:#3b82f6;top:50%;transform:translateY(-50%);z-index:2;box-shadow:0 0 8px #3b82f660;}
+.ob-ruler-ticks{position:absolute;width:100%;}
+.ob-ruler-tick{display:flex;align-items:center;height:20px;}
+/* 1RM 결과 */
+.ob-1rm-result{margin-top:14px;padding:14px 16px;background:var(--surface2);border-radius:10px;border-left:3px solid #3b82f6;font-size:13px;}
+.ob-1rm-big{font-size:32px;font-weight:900;font-family:var(--mono);color:#3b82f6;}
+/* 플랜 완료 화면 */
+.ob-plan-title span{color:#3b82f6;}
+.ob-plan-chart{background:var(--surface2);border-radius:12px;padding:16px;margin:14px 0;}
+.ob-plan-info{background:var(--surface2);border-radius:10px;padding:14px;margin:10px 0;text-align:left;}
+.ob-plan-info-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);font-size:13px;}
+.ob-plan-info-row:last-child{border:none;}
+/* 목표/부위 선택 */
+.ob-goal-grid{display:grid;gap:8px;}
+.ob-goal-item{display:flex;align-items:center;gap:12px;padding:14px 16px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:all .15s;}
+.ob-goal-item.sel{border-color:#3b82f6;background:#3b82f615;}
+.ob-goal-icon{font-size:20px;width:28px;text-align:center;}
+.ob-goal-text{font-size:14px;font-weight:600;}
+.ob-body-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.ob-body-btn{padding:12px 8px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:13px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s;text-align:center;}
+.ob-body-btn.sel{border-color:#3b82f6;background:#3b82f615;color:#3b82f6;}
+/* 레벨 선택 */
+.ob-level-grid{display:grid;gap:10px;}
+.ob-level-item{display:flex;align-items:center;gap:14px;padding:16px;border-radius:12px;border:1px solid var(--border);background:var(--surface2);cursor:pointer;transition:all .15s;}
+.ob-level-item.sel{border-color:#3b82f6;background:#3b82f615;}
+.ob-level-icon{font-size:22px;}
+.ob-level-title{font-size:14px;font-weight:700;}
+.ob-level-desc{font-size:11px;color:var(--muted);margin-top:2px;}
 
 /* 메인 앱 */
 .app{display:none;}
@@ -1192,6 +1231,10 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div id="muscle-chart-wrap" style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:16px;"></div>
     <div style="margin:0 0 10px;font-size:13px;font-weight:700;">💪 중량 성장 추이</div>
     <div id="weight-history"></div>
+
+    <!-- 1RM 히스토리 바 차트 -->
+    <div style="margin:20px 0 10px;font-size:13px;font-weight:700;">🏆 주요 운동 1RM 히스토리</div>
+    <div id="orm-history-wrap"></div>
 
     <!-- 근육 부위별 시각화 -->
     <div class="level-card" style="margin-top:16px;">
@@ -2172,46 +2215,223 @@ const DAY_KR=['일','월','화','수','목','금','토'];
 // ══════════════════════════════
 // 온보딩
 // ══════════════════════════════
+// ══════════════════════════════
+// 새 온보딩 시스템 (v2 - 상용앱 스타일)
+// ══════════════════════════════
 let obStep=1;
-const obData={name:'',age:'',gender:'male',height:'',weight:'',goals:[],injuries:[],days:[],time:'60',level:'1'};
-const OB_TOTAL=6;
-const OB=[
-  {title:'안녕하세요! 👋',sub:'기본 정보를 입력해주세요.',prog:17,
-    render:()=>`<div class="ob-field"><div class="ob-label">이름 (닉네임 가능)</div><input class="ob-inp" id="ob-name" type="text" placeholder="예: 민규" value="${obData.name}"/></div>
-    <div class="ob-row"><div class="ob-field"><div class="ob-label">나이</div><input class="ob-inp" id="ob-age" type="number" placeholder="30" value="${obData.age}"/></div>
-    <div class="ob-field"><div class="ob-label">성별</div><select class="ob-inp" id="ob-gender"><option value="male" ${obData.gender==='male'?'selected':''}>남성</option><option value="female" ${obData.gender==='female'?'selected':''}>여성</option></select></div></div>
-    <div class="ob-row"><div class="ob-field"><div class="ob-label">키 (cm)</div><input class="ob-inp" id="ob-height" type="number" placeholder="170" value="${obData.height}"/></div>
-    <div class="ob-field"><div class="ob-label">몸무게 (kg)</div><input class="ob-inp" id="ob-weight" type="number" placeholder="70" value="${obData.weight}"/></div></div>`,
-    save:()=>{obData.name=document.getElementById('ob-name').value;obData.age=document.getElementById('ob-age').value;obData.gender=document.getElementById('ob-gender').value;obData.height=document.getElementById('ob-height').value;obData.weight=document.getElementById('ob-weight').value;},
-    validate:()=>{if(!document.getElementById('ob-name').value.trim()){showToast('이름을 입력해주세요','error');return false;}return true;}},
-  {title:'운동 목표 🎯',sub:'원하는 목표를 모두 선택해주세요.',prog:33,
-    render:()=>`<div class="ob-opts">${['체중 감량','근력 강화','근육량 증가','복근 만들기','하체·둔근 강화','유연성 향상','재활·회복','체력 증진','홈트레이닝','다이어트 유지','건강 관리','시니어 건강'].map(g=>`<button class="ob-opt ${obData.goals.includes(g)?'sel':''}" onclick="togGoal('${g}',this)">${g}</button>`).join('')}</div><div style="margin-top:12px;padding:10px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--muted);">💡 선택한 목표에 맞게 루틴이 자동 추천됩니다</div>`,
+const obData={name:'',age:'',gender:'male',height:170,weight:70,goals:[],focusParts:[],injuries:[],days:[],time:'60',level:'2',bench:30,benchReps:5};
+const OB_TOTAL=9;
+
+// 스크롤 눈금자 상태
+let _rulerDragging=false, _rulerStartY=0, _rulerStartVal=0, _rulerTarget='height';
+
+function renderObRuler(target, val, min, max, unit){
+  _rulerTarget=target;
+  const TICK_H=20, tickCount=max-min+1;
+  let html=`<div class="ob-ruler-value" id="ruler-val">${val}</div>
+  <div class="ob-ruler-unit">${unit}</div>
+  <div class="ob-ruler-track" id="ruler-track">
+    <div class="ob-ruler-center"></div>
+    <div class="ob-ruler-ticks" id="ruler-ticks" style="top:0;">`;
+  for(let v=min;v<=max;v++){
+    const isMajor=(v%5===0), offset=((v-min)*TICK_H);
+    html+=`<div class="ob-ruler-tick" style="position:absolute;top:${offset}px;left:0;right:0;height:${TICK_H}px;display:flex;align-items:center;gap:6px;padding:0 12px;">
+      <div style="width:${isMajor?28:16}px;height:${isMajor?2:1}px;background:${isMajor?'var(--text)':'var(--muted)'};border-radius:1px;opacity:${isMajor?0.6:0.3};"></div>
+      ${isMajor?`<span style="font-size:11px;font-family:var(--mono);color:var(--muted);opacity:0.6;">${v}</span>`:''}
+    </div>`;
+  }
+  html+='</div></div>';
+  // 초기 scroll 위치 = 현재값 중앙
+  setTimeout(()=>{
+    const track=document.getElementById('ruler-track');
+    const ticks=document.getElementById('ruler-ticks');
+    if(!track||!ticks)return;
+    const centerOffset=track.clientHeight/2 - TICK_H/2;
+    const targetTop=centerOffset - (val-min)*TICK_H;
+    ticks.style.top=targetTop+'px';
+    bindRuler(target, min, max, TICK_H);
+  },50);
+  return html;
+}
+
+function bindRuler(target, min, max, TICK_H){
+  const track=document.getElementById('ruler-track');
+  const ticks=document.getElementById('ruler-ticks');
+  if(!track||!ticks) return;
+  let startY=0, startTop=0, isDragging=false;
+  function getTop(){return parseFloat(ticks.style.top)||0;}
+  function topToVal(top){
+    const centerOffset=track.clientHeight/2 - TICK_H/2;
+    return Math.round(Math.max(min, Math.min(max, min + (centerOffset-top)/TICK_H)));
+  }
+  function setVal(v){
+    const el=document.getElementById('ruler-val');
+    if(el) el.textContent=v;
+    if(target==='height') obData.height=v;
+    else obData.weight=v;
+  }
+  function onMove(y){
+    const dy=y-startY;
+    const newTop=Math.min(track.clientHeight/2, Math.max(-(max-min)*TICK_H+track.clientHeight/2, startTop+dy));
+    ticks.style.top=newTop+'px';
+    setVal(topToVal(newTop));
+  }
+  track.addEventListener('mousedown',e=>{isDragging=true;startY=e.clientY;startTop=getTop();});
+  track.addEventListener('mousemove',e=>{if(isDragging)onMove(e.clientY);});
+  track.addEventListener('mouseup',()=>{isDragging=false;});
+  track.addEventListener('mouseleave',()=>{isDragging=false;});
+  track.addEventListener('touchstart',e=>{isDragging=true;startY=e.touches[0].clientY;startTop=getTop();},{passive:true});
+  track.addEventListener('touchmove',e=>{if(isDragging)onMove(e.touches[0].clientY);e.preventDefault();},{passive:false});
+  track.addEventListener('touchend',()=>{isDragging=false;});
+  track.addEventListener('wheel',e=>{
+    e.preventDefault();
+    const newTop=Math.min(track.clientHeight/2, Math.max(-(max-min)*TICK_H+track.clientHeight/2, getTop()-Math.sign(e.deltaY)*TICK_H));
+    ticks.style.top=newTop+'px';
+    setVal(topToVal(newTop));
+  },{passive:false});
+}
+
+function calc1RMOb(w,r){if(!w||!r||r<=0)return 0;return Math.round(w*(1+r/30)*10)/10;}
+
+const OB_STEPS=[
+  // 1. 이름
+  {title:'안녕하세요! 👋',sub:'시작 전에 이름을 알려주세요.',prog:11,
+    render:()=>`<div class="ob-field"><div class="ob-label">이름 또는 닉네임</div>
+      <input class="ob-inp" id="ob-name" type="text" placeholder="예: 민규" value="${obData.name}" style="font-size:18px;font-weight:700;text-align:center;" autofocus/>
+    </div>
+    <div style="margin-top:8px;padding:12px;background:var(--surface2);border-radius:10px;font-size:12px;color:var(--muted);text-align:center;">핏로그가 맞춤 운동 플랜을 만들어 드릴게요 💪</div>`,
+    save:()=>{obData.name=document.getElementById('ob-name')?.value||obData.name;},
+    validate:()=>{if(!document.getElementById('ob-name')?.value.trim()){showToast('이름을 입력해주세요','error');return false;}return true;}},
+  // 2. 성별
+  {title:'성별이 무엇인가요?',sub:'대사율에 따라 적절한 운동 강도를 맞춰드려요.',prog:22,
+    render:()=>`<div class="ob-gender-grid">
+      <div class="ob-gender-card ${obData.gender==='male'?'sel':''}" onclick="obSelGender('male',this)">
+        <div class="ob-gender-avatar">🧍‍♂️</div>
+        <div class="ob-gender-label">남성</div>
+      </div>
+      <div class="ob-gender-card ${obData.gender==='female'?'sel':''}" onclick="obSelGender('female',this)">
+        <div class="ob-gender-avatar">🧍‍♀️</div>
+        <div class="ob-gender-label">여성</div>
+      </div>
+    </div>`,
+    save:()=>{}},
+  // 3. 목표
+  {title:'주된 목표는 무엇인가요?',sub:'목표에 맞게 루틴의 강도와 방향을 설정해요.',prog:33,
+    render:()=>`<div class="ob-goal-grid">${[
+      {v:'체중 감량',icon:'⚖️'},{v:'근육량 늘리기',icon:'💪'},{v:'슬림하고 정의된 몸매',icon:'✨'},
+      {v:'건강과 웰빙 향상',icon:'❤️'},{v:'운동 성능 향상',icon:'🏆'},{v:'재활·회복',icon:'🩺'}
+    ].map(g=>`<div class="ob-goal-item ${obData.goals.includes(g.v)?'sel':''}" onclick="obTogGoal('${g.v}',this)">
+      <span class="ob-goal-icon">${g.icon}</span>
+      <span class="ob-goal-text">${g.v}</span>
+      ${obData.goals.includes(g.v)?'<span style="margin-left:auto;color:#3b82f6;font-size:16px;">✓</span>':''}
+    </div>`).join('')}</div>`,
     save:()=>{},
     validate:()=>{if(!obData.goals.length){showToast('목표를 하나 이상 선택해주세요','error');return false;}return true;}},
-  {title:'부상·주의 부위 ⚠️',sub:'해당하는 부위를 모두 선택해주세요.',prog:50,
-    render:()=>`<div class="ob-opts">${['무릎 (수술/재활)','허리 디스크','허리 협착증','어깨 통증','경추(목) 문제','없음'].map(i=>`<button class="ob-opt ${obData.injuries.includes(i)?'sel':''}" onclick="togInjury('${i}',this)">${i}</button>`).join('')}</div><div style="margin-top:12px;padding:10px;background:#e8533a15;border-radius:8px;font-size:12px;color:var(--accent);border-left:3px solid var(--accent);">⚠️ 부상 부위에 무리가 가는 운동은 자동으로 주의 표시됩니다</div>`,
-    save:()=>{},
-    validate:()=>{if(!obData.injuries.length){showToast('부상 부위를 선택해주세요 (없으면 없음)','error');return false;}return true;}},
-  {title:'운동 요일 📅',sub:'운동할 요일을 선택해주세요.',prog:67,
-    render:()=>`<div class="ob-opts" style="justify-content:center;">${['월','화','수','목','금','토','일'].map(d=>`<button class="ob-opt ${obData.days.includes(d)?'sel':''}" onclick="togDay('${d}',this)" style="width:44px;height:44px;border-radius:50%;text-align:center;">${d}</button>`).join('')}</div>
-    <div style="margin-top:16px;text-align:center;"><div style="font-size:24px;font-weight:900;font-family:var(--mono);color:var(--accent);" id="day-count">${obData.days.length}일 / 주</div></div>
-    <div style="margin-top:10px;padding:10px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--muted);">💡 권장: 주 3~5일 운동, 2일 이상 휴식</div>`,
-    save:()=>{},
-    validate:()=>{if(obData.days.length<2){showToast('2일 이상 선택해주세요','error');return false;}return true;}},
-  {title:'운동 시간 ⏱️',sub:'1회 운동에 투자할 시간을 선택해주세요.',prog:83,
-    render:()=>`<div style="display:grid;gap:8px;">${[{v:'30',l:'30분',d:'짧고 집중적으로'},{v:'45',l:'45분',d:'효율적인 운동량'},{v:'60',l:'60분',d:'표준 운동 시간 (권장)'},{v:'90',l:'90분',d:'충분한 운동량'},{v:'120',l:'2시간+',d:'고강도 훈련'}].map(t=>`<div onclick="selTime('${t.v}',this)" class="ob-time-item" style="padding:12px 16px;border-radius:10px;border:1px solid ${obData.time===t.v?'var(--accent)':'var(--border)'};background:${obData.time===t.v?'#e8533a15':'var(--surface2)'};cursor:pointer;display:flex;justify-content:space-between;align-items:center;"><div style="font-size:14px;font-weight:700;color:${obData.time===t.v?'var(--accent)':'var(--text)'};">${t.l}</div><div style="font-size:12px;color:var(--muted);">${t.d}</div></div>`).join('')}</div>`,
+  // 4. 집중 부위
+  {title:'집중하려는 부위를 선택하세요',sub:'복수 선택 가능합니다.',prog:44,
+    render:()=>`<div class="ob-body-grid">${['가슴','등','어깨','팔','복근','엉덩이','다리','전신'].map(p=>`
+      <div class="ob-body-btn ${obData.focusParts.includes(p)?'sel':''}" onclick="obTogPart('${p}',this)">${p}</div>`).join('')}</div>
+    <div style="margin-top:14px;text-align:center;font-size:22px;font-weight:900;color:#3b82f6;">${obData.focusParts.join(' · ')||'선택하세요'}</div>`,
     save:()=>{}},
-  {title:'운동 레벨 💪',sub:'현재 운동 수준을 선택해주세요.',prog:100,
-    render:()=>`<div style="display:grid;gap:8px;">${[{v:'1',l:'🌱 초보자',d:'운동을 거의 안 했어요',dt:'기초 체력부터 천천히'},{v:'2',l:'⚡ 중급자',d:'가끔 운동 (6개월~1년)',dt:'강도를 높여볼게요'},{v:'3',l:'🔥 고급자',d:'꾸준히 운동 (1~3년)',dt:'분할 훈련 시작'},{v:'4',l:'👑 마스터',d:'3년 이상 꾸준히',dt:'고강도 훈련'}].map(lv=>`<div onclick="selLevel('${lv.v}',this)" class="ob-lv-item" style="padding:12px 16px;border-radius:10px;border:1px solid ${obData.level===lv.v?'var(--accent)':'var(--border)'};background:${obData.level===lv.v?'#e8533a15':'var(--surface2)'};cursor:pointer;"><div style="font-size:14px;font-weight:700;color:${obData.level===lv.v?'var(--accent)':'var(--text)'};">${lv.l}</div><div style="font-size:12px;color:var(--muted);margin-top:2px;">${lv.d}</div><div style="font-size:11px;color:${obData.level===lv.v?'var(--accent)':'var(--muted)'};margin-top:1px;font-family:var(--mono);">${lv.dt}</div></div>`).join('')}</div>`,
-    save:()=>{}}
+  // 5. 키 (스크롤 눈금자)
+  {title:'키가 얼마인가요?',sub:'',prog:55,
+    render:()=>renderObRuler('height', obData.height, 140, 220, 'cm'),
+    save:()=>{}},
+  // 6. 체중 (스크롤 눈금자)
+  {title:'현재 체중은 얼마인가요?',sub:'',prog:66,
+    render:()=>{
+      const bmi=obData.height>0?(obData.weight/((obData.height/100)**2)).toFixed(1):'-';
+      const bmiMsg=bmi>30?'적극적인 운동이 도움이 돼요!':bmi>25?'건강한 체중을 향해 나아가요':bmi>18?'건강한 범위예요 💚':'체중 증가를 목표로 해봐요';
+      return renderObRuler('weight', obData.weight, 30, 200, 'kg')
+        +`<div id="bmi-info" style="margin-top:12px;padding:12px;background:var(--surface2);border-radius:10px;">
+          <div style="font-size:11px;color:var(--muted);">현재 BMI</div>
+          <div style="font-size:24px;font-weight:900;color:${bmi>30?'var(--accent)':bmi>25?'var(--accent2)':'var(--green)'};">${bmi}</div>
+          <div style="font-size:12px;color:var(--muted);">${bmiMsg}</div>
+        </div>`;},
+    save:()=>{}},
+  // 7. 운동 레벨
+  {title:'피트니스 레벨이 어떻게 되나요?',sub:'',prog:77,
+    render:()=>`<div class="ob-level-grid">${[
+      {v:'1',icon:'⚡',t:'초급',d:'6개월 미만 경험'},
+      {v:'2',icon:'⚡⚡',t:'중급',d:'6개월 이상 2년 미만'},
+      {v:'3',icon:'⚡⚡⚡',t:'상급',d:'2년 이상 경험'}
+    ].map(lv=>`<div class="ob-level-item ${obData.level===lv.v?'sel':''}" onclick="obSelLevel('${lv.v}',this)">
+      <span class="ob-level-icon">${lv.icon}</span>
+      <div><div class="ob-level-title">${lv.t}</div><div class="ob-level-desc">${lv.d}</div></div>
+      ${obData.level===lv.v?'<span style="margin-left:auto;color:#3b82f6;font-size:18px;">✓</span>':''}
+    </div>`).join('')}</div>`,
+    save:()=>{}},
+  // 8. 1RM 측정
+  {title:'1RM을 예상해 보세요',sub:'벤치프레스 기준으로 현재 체력을 측정해요.',prog:88,
+    render:()=>`
+    <div style="text-align:center;padding:12px 0;font-size:11px;color:var(--muted);">기준: 벤치프레스</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;">
+      <div>
+        <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;text-align:center;">리프트할 때 (kg)</div>
+        <input class="ob-1rm-inp" id="ob-bench-kg" type="number" placeholder="30" value="${obData.bench}" oninput="ob1rmCalc()"/>
+      </div>
+      <div>
+        <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;text-align:center;">지칠 때까지 (회)</div>
+        <input class="ob-1rm-inp" id="ob-bench-reps" type="number" placeholder="5" value="${obData.benchReps}" oninput="ob1rmCalc()"/>
+      </div>
+    </div>
+    <div class="ob-1rm-result" id="ob-1rm-result">
+      <div style="font-size:11px;color:var(--muted);margin-bottom:4px;">내 1RM (벤치프레스)</div>
+      <div class="ob-1rm-big" id="ob-1rm-val">${calc1RMOb(obData.bench,obData.benchReps)} kg</div>
+    </div>
+    <div style="margin-top:8px;text-align:center;font-size:11px;color:var(--muted);">모르시면 그냥 다음으로 넘어가세요</div>`,
+    save:()=>{
+      obData.bench=parseFloat(document.getElementById('ob-bench-kg')?.value)||obData.bench;
+      obData.benchReps=parseInt(document.getElementById('ob-bench-reps')?.value)||obData.benchReps;
+    }},
+  // 9. 운동 요일
+  {title:'운동할 요일을 선택하세요',sub:'',prog:100,
+    render:()=>`<div style="display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-bottom:16px;">
+      ${['월','화','수','목','금','토','일'].map(d=>`<button onclick="obTogDay('${d}',this)" style="aspect-ratio:1;border-radius:50%;border:2px solid ${obData.days.includes(d)?'#3b82f6':'var(--border)'};background:${obData.days.includes(d)?'#3b82f6':'none'};color:${obData.days.includes(d)?'#fff':'var(--muted)'};font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);transition:all .15s;">${d}</button>`).join('')}
+    </div>
+    <div style="text-align:center;margin:12px 0;">
+      <span id="day-count" style="font-size:32px;font-weight:900;font-family:var(--mono);color:#3b82f6;">${obData.days.length}</span>
+      <span style="font-size:16px;color:var(--muted);"> 일 / 주</span>
+    </div>
+    <div style="padding:10px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--muted);text-align:center;">💡 권장: 주 3~5일, 주 2일 이상 휴식</div>`,
+    save:()=>{},
+    validate:()=>{if(obData.days.length<2){showToast('2일 이상 선택해주세요','error');return false;}return true;}}
 ];
-function togGoal(g,el){if(obData.goals.includes(g)){obData.goals=obData.goals.filter(x=>x!==g);el.classList.remove('sel');}else{obData.goals.push(g);el.classList.add('sel');}}
-function togInjury(i,el){if(i==='없음'){obData.injuries=['없음'];document.querySelectorAll('#ob-content .ob-opt').forEach(b=>b.classList.remove('sel'));el.classList.add('sel');}else{obData.injuries=obData.injuries.filter(x=>x!=='없음');if(obData.injuries.includes(i)){obData.injuries=obData.injuries.filter(x=>x!==i);el.classList.remove('sel');}else{obData.injuries.push(i);el.classList.add('sel');}}}
-function togDay(d,el){if(obData.days.includes(d)){obData.days=obData.days.filter(x=>x!==d);el.classList.remove('sel');}else{obData.days.push(d);el.classList.add('sel');}const dc=document.getElementById('day-count');if(dc)dc.textContent=obData.days.length+'일 / 주';}
-function selTime(v,el){obData.time=v;document.querySelectorAll('.ob-time-item').forEach(d=>{d.style.borderColor='var(--border)';d.style.background='var(--surface2)';d.querySelector('div').style.color='var(--text)';});el.style.borderColor='var(--accent)';el.style.background='#e8533a15';el.querySelector('div').style.color='var(--accent)';}
-function selLevel(v,el){obData.level=v;document.querySelectorAll('.ob-lv-item').forEach(d=>{d.style.borderColor='var(--border)';d.style.background='var(--surface2)';d.querySelector('div').style.color='var(--text)';});el.style.borderColor='var(--accent)';el.style.background='#e8533a15';el.querySelector('div').style.color='var(--accent)';}
+
+function obSelGender(v,el){obData.gender=v;document.querySelectorAll('.ob-gender-card').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');}
+function obTogGoal(v,el){
+  if(obData.goals.includes(v)){obData.goals=obData.goals.filter(x=>x!==v);}
+  else{obData.goals.push(v);}
+  renderOb();
+}
+function obTogPart(v,el){
+  if(obData.focusParts.includes(v)){obData.focusParts=obData.focusParts.filter(x=>x!==v);}
+  else{obData.focusParts.push(v);}
+  renderOb();
+}
+function obSelLevel(v,el){obData.level=v;document.querySelectorAll('.ob-level-item').forEach(c=>c.classList.remove('sel'));el.classList.add('sel');el.querySelector('span:last-child') && (el.querySelector('span:last-child').textContent='✓');}
+function obTogDay(v,el){
+  if(obData.days.includes(v)){obData.days=obData.days.filter(x=>x!==v);el.style.background='none';el.style.borderColor='var(--border)';el.style.color='var(--muted)';}
+  else{obData.days.push(v);el.style.background='#3b82f6';el.style.borderColor='#3b82f6';el.style.color='#fff';}
+  const dc=document.getElementById('day-count');if(dc)dc.textContent=obData.days.length;
+}
+function ob1rmCalc(){
+  const kg=parseFloat(document.getElementById('ob-bench-kg')?.value)||0;
+  const reps=parseInt(document.getElementById('ob-bench-reps')?.value)||0;
+  const val=calc1RMOb(kg,reps);
+  const el=document.getElementById('ob-1rm-val');
+  if(el)el.textContent=val+' kg';
+  obData.bench=kg; obData.benchReps=reps;
+}
+// 이전 함수명 호환 유지
+function togGoal(g,el){obTogGoal(g,el);}
+function togInjury(i,el){}
+function togDay(d,el){obTogDay(d,el);}
+function selTime(v,el){obData.time=v;}
+function selLevel(v,el){obSelLevel(v,el);}
+
 function renderOb(){
-  const s=OB[obStep-1];
+  const s=OB_STEPS[obStep-1];
   document.getElementById('ob-step').textContent=obStep+' / '+OB_TOTAL+' 단계';
   document.getElementById('ob-title').textContent=s.title;
   document.getElementById('ob-sub').textContent=s.sub;
@@ -2222,8 +2442,9 @@ function renderOb(){
   document.getElementById('ob-next').onclick=obNext;
 }
 function obNext(){
-  OB[obStep-1].save();
-  if(OB[obStep-1].validate&&!OB[obStep-1].validate())return;
+  const s=OB_STEPS[obStep-1];
+  if(s.save) s.save();
+  if(s.validate&&!s.validate())return;
   if(obStep<OB_TOTAL){obStep++;renderOb();}else finishOb();
 }
 function obBack(){if(obStep>1){obStep--;renderOb();}}
@@ -2258,25 +2479,80 @@ function generateCustomRT(){
   return rt;
 }
 async function finishOb(){
-  showToast('맞춤 루틴 생성 중...','info');
+  // 1RM 저장
+  if(obData.bench>0){
+    const estimated=calc1RMOb(obData.bench,obData.benchReps);
+    if(estimated>0){
+      orm1RM['bench']=estimated;
+      try{localStorage.setItem('fitlog-1rm',JSON.stringify(orm1RM));}catch(e){}
+    }
+  }
+  // 루틴 생성
   const customRT=generateCustomRT();
   RT=customRT;
-  userProfile={...obData};
+  userProfile={...obData,injuries:[]};
   try{window.saveUserProfile(userProfile);}catch(e){console.warn(e);}
   try{window.saveRoutine(RT);}catch(e){console.warn(e);}
+
   const dayOrder=['월','화','수','목','금','토','일'];
   const routineKeys=['A','B','C','D','E','F'];
   const sortedDays=[...obData.days].sort((a,b)=>dayOrder.indexOf(a)-dayOrder.indexOf(b));
-  document.getElementById('ob-content').innerHTML=`<div style="text-align:center;padding:10px 0;">
-    <div style="font-size:44px;margin-bottom:12px;">🎉</div>
-    <div style="font-size:18px;font-weight:700;margin-bottom:6px;">${obData.name}님의 맞춤 루틴 완성!</div>
-    <div style="font-size:13px;color:var(--muted);line-height:1.9;margin-bottom:14px;">주 ${obData.days.length}일 · ${obData.time}분 · ${{1:'초보자',2:'중급자',3:'고급자',4:'마스터'}[parseInt(obData.level)]} 플랜</div>
-    <div style="background:var(--surface2);border-radius:10px;padding:12px;text-align:left;">
-      <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:6px;">생성된 루틴</div>
-      ${sortedDays.map((d,i)=>{const rk=d==='일'?'REST':routineKeys[i%6];return '<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);"><span style="font-family:var(--mono);color:var(--accent);">'+d+'요일</span> — '+(rk==='REST'?'완전 휴식':RT_BASE[rk].title)+'</div>';}).join('')}
+  const levelName={1:'초급',2:'중급',3:'상급'}[parseInt(obData.level)]||'중급';
+  const goalLabel=obData.goals[0]||'체중 감량';
+
+  // 8주 예상 라인 그래프 SVG
+  const w=280,h=80;
+  const pts=[];for(let i=0;i<=8;i++){const progress=i/8;pts.push({x:i*(w/8),y:h-(i<4?progress*0.4+0.05:0.45+(progress-0.5)*0.55)*h});}
+  const pathD='M'+pts.map(p=>`${p.x},${p.y}`).join(' L');
+  const midX=pts[4].x, midY=pts[4].y;
+  const endX=pts[8].x, endY=pts[8].y;
+
+  document.getElementById('ob-content').innerHTML=`
+  <div style="text-align:center;margin-bottom:8px;">
+    <div style="font-size:22px;font-weight:900;line-height:1.3;">${obData.name}님의 <span style="color:#3b82f6;">${goalLabel}</span> 계획이<br>준비되었습니다!</div>
+  </div>
+  <div style="background:var(--surface2);border-radius:12px;padding:16px;margin:12px 0;">
+    <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;">${goalLabel.includes('체중')||goalLabel.includes('감량')?'체중 변화':'근력 성장'} 예상</div>
+    <svg width="100%" viewBox="0 0 ${w} ${h+24}" style="overflow:visible;">
+      <defs>
+        <linearGradient id="lineGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#f59e0b"/>
+          <stop offset="50%" style="stop-color:#22c55e"/>
+          <stop offset="100%" style="stop-color:#22c55e"/>
+        </linearGradient>
+      </defs>
+      <path d="${pathD}" fill="none" stroke="url(#lineGrad)" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="${pts[0].x}" cy="${pts[0].y}" r="5" fill="#f59e0b"/>
+      <circle cx="${midX}" cy="${midY}" r="5" fill="#22c55e"/>
+      <circle cx="${endX}" cy="${endY}" r="5" fill="#22c55e"/>
+      <rect x="${pts[0].x-14}" y="${pts[0].y-28}" width="28" height="20" rx="4" fill="white"/>
+      <text x="${pts[0].x}" y="${pts[0].y-14}" text-anchor="middle" font-size="10" fill="#111" font-weight="700">전</text>
+      <rect x="${endX-14}" y="${endY-28}" width="28" height="20" rx="4" fill="#3b82f6"/>
+      <text x="${endX}" y="${endY-14}" text-anchor="middle" font-size="10" fill="white" font-weight="700">후</text>
+      <text x="0" y="${h+18}" font-size="10" fill="var(--muted)">오늘</text>
+      <text x="${w}" y="${h+18}" font-size="10" fill="var(--muted)" text-anchor="end">8주</text>
+    </svg>
+  </div>
+  <div style="background:var(--surface2);border-radius:10px;padding:14px;margin:10px 0;">
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:18px;">💪</span>
+      <div><div style="font-size:11px;color:var(--muted);">목표</div><div style="font-size:14px;font-weight:700;">${goalLabel}</div></div>
     </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);">
+      <span style="font-size:18px;">🏁</span>
+      <div><div style="font-size:11px;color:var(--muted);">1RM (벤치프레스)</div><div style="font-size:14px;font-weight:700;">${calc1RMOb(obData.bench,obData.benchReps)} kg</div></div>
+    </div>
+    <div style="display:flex;align-items:center;gap:10px;padding:8px 0;">
+      <span style="font-size:18px;">🎯</span>
+      <div><div style="font-size:11px;color:var(--muted);">집중 영역</div><div style="font-size:14px;font-weight:700;">${obData.focusParts.join(', ')||'전신'}</div></div>
+    </div>
+  </div>
+  <div style="background:var(--surface2);border-radius:10px;padding:12px;margin-top:8px;">
+    <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;">생성된 루틴 (주 ${obData.days.length}일 · ${levelName})</div>
+    ${sortedDays.map((d,i)=>{const rk=d==='일'?'REST':routineKeys[i%6];return`<div style="font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);">
+      <span style="font-family:var(--mono);color:#3b82f6;">${d}요일</span> — ${rk==='REST'?'완전 휴식':RT_BASE[rk].title}</div>`;}).join('')}
   </div>`;
-  document.getElementById('ob-next').textContent='운동 시작하기 →';
+  document.getElementById('ob-next').textContent='지금 시작 →';
   document.getElementById('ob-next').onclick=()=>showApp();
   document.getElementById('ob-back').style.display='none';
 }
@@ -4188,6 +4464,63 @@ function renderStats(){
     return`<div class="w-card"><div style="display:flex;justify-content:space-between;margin-bottom:3px;"><span style="font-size:12px;font-weight:500;">${ex}</span><span style="font-size:11px;font-family:var(--mono);color:${dc};">${diff>0?'+':''}${diff}kg${diff>0?'↑':diff<0?'↓':''}</span></div>
     <div style="font-size:11px;color:var(--muted);font-family:var(--mono);">최근 ${latest.weight}kg · ${latest.date}${est1rm?' · 추정1RM '+est1rm+'kg':''}</div></div>`;
   }).join(''):`<div style="color:var(--muted);font-size:13px;padding:10px;">중량 기록이 쌓이면 여기에 표시됩니다.</div>`;
+
+  // ── 1RM 히스토리 바 차트 ──
+  const ormWrap=document.getElementById('orm-history-wrap');
+  if(!ormWrap)return;
+  const ORM_KEY_MAP={'bench':'벤치프레스','squat':'바벨 스쿼트','dead':'데드리프트','ohp':'오버헤드 프레스','row':'바벨 로우','pullup':'풀업'};
+  const ormExNames={bench:['벤치프레스','시티드 체스트 프레스','덤벨 벤치프레스'],squat:['바벨 스쿼트','스미스 머신 스쿼트','레그 프레스'],dead:['데드리프트','루마니안 데드리프트'],ohp:['오버헤드 프레스','덤벨 숄더 프레스'],row:['바벨 로우','시티드 케이블 로우'],pullup:['풀업','친업','랫 풀다운']};
+  // 기록에서 날짜별 1RM 추출
+  const ormHistory={}; // {key: [{date, val}]}
+  records.forEach(rec=>{
+    if(!rec.sets)return;
+    rec.sets.forEach(s=>{
+      Object.entries(ormExNames).forEach(([key,names])=>{
+        if(names.some(n=>s.ex&&s.ex.includes(n.slice(0,4)))){
+          const v=calc1RM(parseFloat(s.weight||0),parseInt(s.reps||12));
+          if(v>0){
+            if(!ormHistory[key])ormHistory[key]=[];
+            const existing=ormHistory[key].find(x=>x.date===rec.date);
+            if(!existing||v>existing.val) {
+              if(existing)existing.val=v;
+              else ormHistory[key].push({date:rec.date,val:v});
+            }
+          }
+        }
+      });
+    });
+  });
+  const hasOrmData=Object.keys(ormHistory).length>0;
+  if(!hasOrmData){
+    ormWrap.innerHTML='<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:20px;text-align:center;color:var(--muted);font-size:13px;">운동 기록이 쌓이면 1RM 히스토리가 표시됩니다</div>';
+    return;
+  }
+  ormWrap.innerHTML=Object.entries(ormHistory).filter(([,arr])=>arr.length>0).map(([key,arr])=>{
+    const sorted=arr.sort((a,b)=>a.date.localeCompare(b.date));
+    const maxVal=Math.max(...sorted.map(x=>x.val),1);
+    const bestVal=Math.max(...sorted.map(x=>x.val));
+    const bestDate=sorted.find(x=>x.val===bestVal)?.date||'';
+    const recent=sorted.slice(-8); // 최근 8개
+    return`<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
+        <div style="background:#3b82f620;border:1px solid #3b82f640;border-radius:6px;padding:4px 10px;font-size:11px;font-family:var(--mono);color:#3b82f6;font-weight:700;">최고의 1RM</div>
+        <div style="font-size:18px;font-weight:900;font-family:var(--mono);color:#3b82f6;">${bestVal} KG</div>
+        <div style="font-size:13px;font-weight:700;margin-left:4px;">${ORM_KEY_MAP[key]||key}</div>
+      </div>
+      <div style="display:flex;align-items:flex-end;gap:3px;height:60px;margin-bottom:6px;">
+        ${recent.map(x=>{
+          const h=Math.max(4,Math.round(x.val/maxVal*50));
+          const isMax=x.val===bestVal;
+          return`<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;">
+            <div style="font-size:8px;color:var(--muted);font-family:var(--mono);">${isMax?x.val:''}</div>
+            <div style="width:100%;background:${isMax?'#f59e0b':'#3b82f6'};border-radius:3px 3px 0 0;height:${h}px;opacity:${isMax?1:0.6};"></div>
+          </div>`;}).join('')}
+      </div>
+      <div style="display:flex;gap:3px;">
+        ${recent.map(x=>`<div style="flex:1;text-align:center;font-size:8px;color:var(--muted);font-family:var(--mono);">${x.date.slice(5).replace('-','/')}</div>`).join('')}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 // ══════════════════════════════
