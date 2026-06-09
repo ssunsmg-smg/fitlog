@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- fitlog v3.1 build:20260609-6 -->
+<!-- fitlog v3.2 build:20260609-7 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -962,88 +962,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
 <!-- 온보딩 -->
 <div id="onboarding" style="display:none;">
-
-  <!-- BetterMe 스타일 나이 랜딩 페이지 -->
-  <div id="ob-landing-screen" class="ob-landing">
-    <!-- 상단 프로그레스 바 -->
-    <div style="position:fixed;top:0;left:0;right:0;height:3px;background:var(--border);z-index:999;">
-      <div style="height:100%;width:8%;background:#3b82f6;transition:width .4s;" id="ob-top-bar"></div>
-    </div>
-
-    <!-- 로고 -->
-    <div style="font-size:22px;font-weight:900;color:var(--accent);margin-bottom:28px;letter-spacing:-0.5px;">핏로그</div>
-
-    <!-- 헤드 카피 -->
-    <div class="ob-landing-title">맞춤 운동 플랜</div>
-    <div class="ob-landing-sub">나이 기준으로 최적화된 루틴을 만들어드려요</div>
-
-    <!-- 나이대 카드 4개 -->
-    <div class="ob-age-grid">
-      <div class="ob-age-card" onclick="selectAgeGroup('18-29', 18)">
-        <div class="ob-age-card-bg" style="background:linear-gradient(135deg,#1a1a2e,#16213e);">
-          <span style="filter:drop-shadow(0 2px 8px rgba(0,0,0,0.5));">🧑‍💪</span>
-        </div>
-        <div class="ob-age-card-label">
-          <span class="ob-age-card-text">나이: 18–29</span>
-          <span class="ob-age-card-arrow">›</span>
-        </div>
-      </div>
-      <div class="ob-age-card" onclick="selectAgeGroup('30-39', 30)">
-        <div class="ob-age-card-bg" style="background:linear-gradient(135deg,#1a2a1a,#162116);">
-          <span style="filter:drop-shadow(0 2px 8px rgba(0,0,0,0.5));">💪</span>
-        </div>
-        <div class="ob-age-card-label">
-          <span class="ob-age-card-text">나이: 30–39</span>
-          <span class="ob-age-card-arrow">›</span>
-        </div>
-      </div>
-      <div class="ob-age-card" onclick="selectAgeGroup('40-49', 42)">
-        <div class="ob-age-card-bg" style="background:linear-gradient(135deg,#2a1a1a,#211616);">
-          <span style="filter:drop-shadow(0 2px 8px rgba(0,0,0,0.5));">🏋️</span>
-        </div>
-        <div class="ob-age-card-label">
-          <span class="ob-age-card-text">나이: 40–49</span>
-          <span class="ob-age-card-arrow">›</span>
-        </div>
-      </div>
-      <div class="ob-age-card" onclick="selectAgeGroup('50+', 52)">
-        <div class="ob-age-card-bg" style="background:linear-gradient(135deg,#1a1a2a,#161625);">
-          <span style="filter:drop-shadow(0 2px 8px rgba(0,0,0,0.5));">🧘</span>
-        </div>
-        <div class="ob-age-card-label">
-          <span class="ob-age-card-text">나이: 50+</span>
-          <span class="ob-age-card-arrow">›</span>
-        </div>
-      </div>
-    </div>
-
-    <div class="ob-legal">
-      나이를 선택하고 계속함으로써 <span style="color:#3b82f6;">서비스 약관</span> 및<br>
-      <span style="color:#3b82f6;">개인정보 보호정책</span>에 동의하게 됩니다.
-    </div>
-  </div>
-
-  <!-- 기존 온보딩 플로우 (나이 선택 후 표시) -->
-  <div id="ob-main-screen" style="display:none;width:100%;min-height:100vh;display:none;align-items:center;justify-content:center;padding:20px;flex-direction:column;">
-    <!-- 상단 프로그레스 바 -->
-    <div style="position:fixed;top:0;left:0;right:0;height:3px;background:var(--border);z-index:999;">
-      <div style="height:100%;background:#3b82f6;transition:width .4s;" id="ob-top-bar2"></div>
-    </div>
-    <!-- 뒤로가기 -->
-    <div style="position:fixed;top:10px;left:16px;z-index:1000;">
-      <button id="ob-back" onclick="obBack()" style="display:none;width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--surface2);color:var(--text);font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;">←</button>
-    </div>
-    <div class="ob-card" style="margin-top:32px;">
-      <div class="ob-step" id="ob-step">2 / 9 단계</div>
-      <div class="ob-title" id="ob-title"></div>
-      <div class="ob-sub" id="ob-sub"></div>
+  <div class="onboard">
+    <div class="ob-card">
+      <div class="ob-step" id="ob-step">1 / 4 단계</div>
+      <div class="ob-title" id="ob-title">환영합니다! 👋</div>
+      <div class="ob-sub" id="ob-sub">처음 오셨군요! 맞춤 루틴을 위해 정보를 입력해주세요.</div>
+      <div class="ob-prog"><div class="ob-prog-fill" id="ob-prog" style="width:25%"></div></div>
       <div id="ob-content"></div>
-      <div class="ob-btns" style="margin-top:20px;">
+      <div class="ob-btns">
+        <button class="ob-back" id="ob-back" onclick="obBack()" style="display:none;">← 이전</button>
         <button class="ob-next" id="ob-next" onclick="obNext()">다음 →</button>
       </div>
     </div>
   </div>
-
 </div>
 
 <!-- 메인 앱 -->
@@ -1149,6 +1080,21 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="page" id="page-workout">
     <div id="missed-banner" style="display:none;background:#f0a5000d;border:1px solid #f0a50033;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;line-height:1.8;"></div>
     <div id="makeup-banner" style="display:none;background:#4a9eff0d;border:1px solid #4a9eff55;border-radius:8px;padding:8px 12px;margin-bottom:10px;font-size:12px;color:var(--blue);font-weight:500;"></div>
+
+    <!-- ★ 특수 모드 버튼 3개 -->
+    <div style="display:flex;gap:6px;margin-bottom:10px;">
+      <button onclick="openHangoverMode()" style="flex:1;padding:9px 6px;border-radius:10px;border:1px solid #f0a50044;background:#f0a5000d;color:#f0a500;font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);line-height:1.4;">
+        🍺 회식<br><span style="font-size:10px;font-weight:400;">회복 루틴</span>
+      </button>
+      <button onclick="openQuickMode()" style="flex:1;padding:9px 6px;border-radius:10px;border:1px solid #4a9eff44;background:#4a9eff0d;color:var(--blue);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);line-height:1.4;">
+        ⚡ 바쁜날<br><span style="font-size:10px;font-weight:400;">10분 압축</span>
+      </button>
+      <button onclick="openMyRoutineModal()" style="flex:1;padding:9px 6px;border-radius:10px;border:1px solid #9b7fe844;background:#9b7fe80d;color:var(--purple);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);line-height:1.4;">
+        ✏️ 내 루틴<br><span style="font-size:10px;font-weight:400;">직접 편집</span>
+      </button>
+    </div>
+    <!-- 특수모드 활성 배너 -->
+    <div id="special-mode-banner" style="display:none;margin-bottom:10px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;"></div>
 
     <div class="day-sel" id="day-sel"></div>
     <div class="today-meta" id="today-meta" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;"></div>
@@ -1315,31 +1261,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 
   <!-- 설정 -->
   <div class="page" id="page-settings">
-    <!-- BetterMe 스타일 상단 프로그레스 탭 -->
-    <div style="margin-bottom:24px;">
-      <div style="font-size:22px;font-weight:900;margin-bottom:16px;">나의 운동 설정</div>
-      <!-- 단계 표시 - BetterMe 스타일 점 프로그레스 -->
-      <div style="display:flex;align-items:center;gap:0;margin-bottom:4px;">
-        <div id="sstep-1" onclick="goSettStep(1)" style="flex:1;cursor:pointer;">
-          <div style="height:4px;border-radius:2px;background:var(--accent);margin-bottom:6px;transition:all .3s;"></div>
-          <div style="font-size:10px;font-weight:700;color:var(--accent);text-align:center;font-family:var(--mono);">① 신체</div>
-        </div>
-        <div style="width:6px;"></div>
-        <div id="sstep-2" onclick="goSettStep(2)" style="flex:1;cursor:pointer;">
-          <div style="height:4px;border-radius:2px;background:var(--border);margin-bottom:6px;transition:all .3s;" class="sett-prog-bar"></div>
-          <div style="font-size:10px;font-weight:500;color:var(--muted);text-align:center;font-family:var(--mono);" class="sett-tab-label">② 환경</div>
-        </div>
-        <div style="width:6px;"></div>
-        <div id="sstep-3" onclick="goSettStep(3)" style="flex:1;cursor:pointer;">
-          <div style="height:4px;border-radius:2px;background:var(--border);margin-bottom:6px;transition:all .3s;" class="sett-prog-bar"></div>
-          <div style="font-size:10px;font-weight:500;color:var(--muted);text-align:center;font-family:var(--mono);" class="sett-tab-label">③ 단계</div>
-        </div>
-        <div style="width:6px;"></div>
-        <div id="sstep-4" onclick="goSettStep(4)" style="flex:1;cursor:pointer;">
-          <div style="height:4px;border-radius:2px;background:var(--border);margin-bottom:6px;transition:all .3s;" class="sett-prog-bar"></div>
-          <div style="font-size:10px;font-weight:500;color:var(--muted);text-align:center;font-family:var(--mono);" class="sett-tab-label">④ 중량</div>
-        </div>
-      </div>
+    <div style="margin-bottom:16px;">
+      <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;">SETTINGS</div>
+      <div style="font-size:21px;font-weight:900;">⚙️ 나의 운동 설정</div>
+    </div>
+
+    <!-- 스텝 인디케이터 -->
+    <div style="display:flex;gap:0;margin-bottom:20px;border-radius:10px;overflow:hidden;border:1px solid var(--border);">
+      <button class="sett-step-btn active" id="sstep-1" onclick="goSettStep(1)" style="flex:1;padding:11px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:700;background:var(--accent);color:#fff;font-family:var(--font);border:none;">①<br>신체정보</button>
+      <button class="sett-step-btn" id="sstep-2" onclick="goSettStep(2)" style="flex:1;padding:11px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:500;background:none;color:var(--muted);font-family:var(--font);border:none;border-left:1px solid var(--border);">②<br>운동환경</button>
+      <button class="sett-step-btn" id="sstep-3" onclick="goSettStep(3)" style="flex:1;padding:11px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:500;background:none;color:var(--muted);font-family:var(--font);border:none;border-left:1px solid var(--border);">③<br>성장단계</button>
+      <button class="sett-step-btn" id="sstep-4" onclick="goSettStep(4)" style="flex:1;padding:11px 4px;text-align:center;cursor:pointer;font-size:10px;font-weight:500;background:none;color:var(--muted);font-family:var(--font);border:none;border-left:1px solid var(--border);">④<br>기준중량</button>
     </div>
 
     <!-- STEP 1: 신체 정보 -->
@@ -1594,6 +1526,71 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="modal">
     <div class="modal-title"><span>운동 수정</span><button class="modal-close" onclick="closeEdit()">✕</button></div>
     <div class="modal-field"><div class="modal-label">운동 이름</div><input class="modal-inp" id="edit-name" type="text"/></div>
+
+<!-- ════ 회식회복 모달 ════ -->
+<div class="modal-bg" id="hangover-modal">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-title"><span>🍺 회식 다음날 회복 루틴</span><button class="modal-close" onclick="document.getElementById('hangover-modal').classList.remove('open')">✕</button></div>
+    <div style="padding:4px 0 12px;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7;">어제 회식하셨나요? 무리하지 말고 몸을 깨우는 가벼운 회복 운동으로 시작해요.</div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:8px;">🍺 음주량</div>
+        <div style="display:flex;gap:8px;">
+          <button onclick="setDrinkLevel(1,this)" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);">가볍게<br><span style="font-size:10px;">맥주 1~2잔</span></button>
+          <button onclick="setDrinkLevel(2,this)" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);">적당히<br><span style="font-size:10px;">소주 반병</span></button>
+          <button onclick="setDrinkLevel(3,this)" style="flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);">많이<br><span style="font-size:10px;">소주 1병+</span></button>
+        </div>
+      </div>
+      <div id="hangover-routine-preview" style="background:var(--surface2);border-radius:10px;padding:12px;min-height:60px;font-size:12px;line-height:1.9;color:var(--muted);">위에서 음주량을 선택해주세요.</div>
+      <button onclick="applyHangoverRoutine()" style="width:100%;margin-top:12px;padding:14px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);">이 루틴으로 오늘 운동하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ 10분 압축 모달 ════ -->
+<div class="modal-bg" id="quick-modal">
+  <div class="modal" style="max-width:380px;">
+    <div class="modal-title"><span>⚡ 바쁜날 압축 루틴</span><button class="modal-close" onclick="document.getElementById('quick-modal').classList.remove('open')">✕</button></div>
+    <div style="padding:4px 0 12px;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:14px;line-height:1.7;">시간이 없을 때도 포기하지 마세요. 핵심만 압축해서 효율적으로!</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:14px;">
+        <button onclick="setQuickTime(10,this)" style="padding:12px 8px;border-radius:10px;border:2px solid var(--blue);background:#4a9eff15;color:var(--blue);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);">10분</button>
+        <button onclick="setQuickTime(15,this)" style="padding:12px 8px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--muted);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);">15분</button>
+        <button onclick="setQuickTime(20,this)" style="padding:12px 8px;border-radius:10px;border:1px solid var(--border);background:none;color:var(--muted);font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);">20분</button>
+      </div>
+      <div id="quick-routine-preview" style="background:var(--surface2);border-radius:10px;padding:12px;min-height:60px;font-size:12px;line-height:1.9;color:var(--muted);">시간을 선택해주세요.</div>
+      <button onclick="applyQuickRoutine()" style="width:100%;margin-top:12px;padding:14px;border-radius:10px;border:none;background:var(--blue);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);">이 루틴으로 시작하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ════ 내 루틴 편집 모달 ════ -->
+<div class="modal-bg" id="my-routine-modal">
+  <div style="background:var(--surface);border-radius:16px;width:100%;max-width:520px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;">
+    <div style="padding:16px 18px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;">
+      <div style="font-size:16px;font-weight:700;">✏️ 나만의 루틴 편집</div>
+      <button onclick="closeMyRoutineModal()" style="background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;">✕</button>
+    </div>
+    <!-- 저장된 루틴 목록 탭 -->
+    <div style="padding:10px 16px;border-bottom:1px solid var(--border);display:flex;gap:6px;overflow-x:auto;">
+      <button onclick="createNewMyRoutine()" style="padding:6px 14px;border-radius:20px;border:1px dashed var(--green);background:none;color:var(--green);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;">＋ 새 루틴</button>
+      <div id="my-routine-tabs" style="display:flex;gap:6px;"></div>
+    </div>
+    <!-- 현재 편집 중인 루틴 -->
+    <div style="flex:1;overflow-y:auto;padding:14px 16px;">
+      <div id="my-routine-editor">
+        <div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">
+          새 루틴을 만들거나 기존 루틴을 선택하세요
+        </div>
+      </div>
+    </div>
+    <!-- 하단 버튼 -->
+    <div style="padding:12px 16px;border-top:1px solid var(--border);display:flex;gap:8px;">
+      <button onclick="saveMyRoutine()" style="flex:2;padding:12px;border-radius:10px;border:none;background:var(--accent);color:#fff;font-size:14px;font-weight:700;cursor:pointer;font-family:var(--font);">💾 저장하기</button>
+      <button onclick="applyMyRoutineToday()" style="flex:1;padding:12px;border-radius:10px;border:1px solid var(--green);background:#4caf7d12;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">▶ 오늘 사용</button>
+    </div>
+  </div>
+</div>
     <div class="modal-field"><div class="modal-label">세트 × 횟수</div><input class="modal-inp" id="edit-detail" type="text"/></div>
     <div class="modal-field"><div class="modal-label">기본 세트 수</div><input class="modal-inp" id="edit-sets" type="number" min="0" max="10"/></div>
     <div class="modal-field"><div class="modal-label">운동 설명</div><textarea class="modal-ta" id="edit-desc"></textarea></div>
@@ -2302,31 +2299,8 @@ const DAY_KR=['일','월','화','수','목','금','토'];
 // 새 온보딩 시스템 (v2 - 상용앱 스타일)
 // ══════════════════════════════
 let obStep=1;
-const obData={name:'',age:'',gender:'male',height:170,weight:70,goals:[],focusParts:[],injuries:[],days:[],time:'60',level:'2',bench:30,benchReps:5,ageGroup:''};
+const obData={name:'',age:'',gender:'male',height:170,weight:70,goals:[],focusParts:[],injuries:[],days:[],time:'60',level:'2',bench:30,benchReps:5};
 const OB_TOTAL=9;
-
-// ── BetterMe 나이 카드 선택 ──
-function selectAgeGroup(group, age){
-  obData.ageGroup=group;
-  obData.age=age;
-  // 선택 효과
-  document.querySelectorAll('.ob-age-card').forEach(c=>c.classList.remove('sel'));
-  // 랜딩→메인 전환 (짧은 딜레이로 선택 피드백)
-  setTimeout(()=>{
-    document.getElementById('ob-landing-screen').style.display='none';
-    const main=document.getElementById('ob-main-screen');
-    main.style.display='flex';
-    obStep=1; renderOb();
-  }, 180);
-}
-
-// 상단 프로그레스 바 업데이트
-function updateTopBar(pct){
-  const b1=document.getElementById('ob-top-bar');
-  const b2=document.getElementById('ob-top-bar2');
-  if(b1) b1.style.width=pct+'%';
-  if(b2) b2.style.width=pct+'%';
-}
 
 // 스크롤 눈금자 상태
 let _rulerDragging=false, _rulerStartY=0, _rulerStartVal=0, _rulerTarget='height';
@@ -2424,19 +2398,12 @@ const OB_STEPS=[
   // 3. 목표
   {title:'주된 목표는 무엇인가요?',sub:'목표에 맞게 루틴의 강도와 방향을 설정해요.',prog:33,
     render:()=>`<div class="ob-goal-grid">${[
-      {v:'체중 감량',icon:'⚖️',d:'체지방을 줄이고 날씬한 몸매로'},
-      {v:'근육량 늘리기',icon:'💪',d:'근육을 키우고 강한 체형으로'},
-      {v:'슬림하고 정의된 몸매',icon:'✨',d:'선명한 근육선과 탄탄한 몸매'},
-      {v:'건강과 웰빙 향상',icon:'❤️',d:'전반적인 건강과 활력 증진'},
-      {v:'운동 성능 향상',icon:'🏆',d:'퍼포먼스와 지구력 강화'},
-      {v:'재활·회복',icon:'🩺',d:'부상 회복 및 기능 개선'}
-    ].map(g=>`<div class="ob-goal-item ${obData.goals.includes(g.v)?'sel':''}" onclick="obTogGoal('${g.v}',this)" style="align-items:flex-start;">
-      <span class="ob-goal-icon" style="font-size:22px;margin-top:2px;">${g.icon}</span>
-      <div style="flex:1;">
-        <div class="ob-goal-text">${g.v}</div>
-        <div style="font-size:11px;color:var(--muted);margin-top:2px;">${g.d}</div>
-      </div>
-      <span style="color:${obData.goals.includes(g.v)?'#3b82f6':'var(--muted)'};font-size:18px;margin-top:2px;">${obData.goals.includes(g.v)?'✓':'›'}</span>
+      {v:'체중 감량',icon:'⚖️'},{v:'근육량 늘리기',icon:'💪'},{v:'슬림하고 정의된 몸매',icon:'✨'},
+      {v:'건강과 웰빙 향상',icon:'❤️'},{v:'운동 성능 향상',icon:'🏆'},{v:'재활·회복',icon:'🩺'}
+    ].map(g=>`<div class="ob-goal-item ${obData.goals.includes(g.v)?'sel':''}" onclick="obTogGoal('${g.v}',this)">
+      <span class="ob-goal-icon">${g.icon}</span>
+      <span class="ob-goal-text">${g.v}</span>
+      ${obData.goals.includes(g.v)?'<span style="margin-left:auto;color:#3b82f6;font-size:16px;">✓</span>':''}
     </div>`).join('')}</div>`,
     save:()=>{},
     validate:()=>{if(!obData.goals.length){showToast('목표를 하나 이상 선택해주세요','error');return false;}return true;}},
@@ -2545,17 +2512,12 @@ function selLevel(v,el){obSelLevel(v,el);}
 
 function renderOb(){
   const s=OB_STEPS[obStep-1];
-  document.getElementById('ob-step').textContent=(obStep+1)+' / '+(OB_TOTAL+1)+' 단계';
+  document.getElementById('ob-step').textContent=obStep+' / '+OB_TOTAL+' 단계';
   document.getElementById('ob-title').textContent=s.title;
   document.getElementById('ob-sub').textContent=s.sub;
-  // ob-prog 없을 수 있으므로 체크
-  const prog=document.getElementById('ob-prog');
-  if(prog) prog.style.width=s.prog+'%';
-  // 상단 프로그레스 바
-  updateTopBar(Math.round((obStep/(OB_TOTAL+1))*100));
+  document.getElementById('ob-prog').style.width=s.prog+'%';
   document.getElementById('ob-content').innerHTML=s.render();
-  const backBtn=document.getElementById('ob-back');
-  if(backBtn) backBtn.style.display=obStep>1?'flex':'none';
+  document.getElementById('ob-back').style.display=obStep>1?'block':'none';
   document.getElementById('ob-next').textContent=obStep===OB_TOTAL?'맞춤 루틴 만들기 🚀':'다음 →';
   document.getElementById('ob-next').onclick=obNext;
 }
@@ -2565,15 +2527,7 @@ function obNext(){
   if(s.validate&&!s.validate())return;
   if(obStep<OB_TOTAL){obStep++;renderOb();}else finishOb();
 }
-function obBack(){
-  if(obStep>1){obStep--;renderOb();}
-  else{
-    // 첫 단계에서 뒤로 → 랜딩 화면으로
-    document.getElementById('ob-main-screen').style.display='none';
-    document.getElementById('ob-landing-screen').style.display='flex';
-    updateTopBar(8);
-  }
-}
+function obBack(){if(obStep>1){obStep--;renderOb();}}
 function generateCustomRT(){
   const rt=JSON.parse(JSON.stringify(RT_BASE));
   const level=parseInt(obData.level);
@@ -8047,32 +8001,28 @@ function goSettStep(n){
 
 function _showSettPanel(n){
   for(let i=1;i<=4;i++){
-    const panel=document.getElementById('sett-panel-'+i);
-    const tab=document.getElementById('sstep-'+i);
-    if(panel) panel.style.display=i===n?'':'none';
-    if(!tab) continue;
-    const bars=tab.querySelectorAll('div');
-    const progBar=bars[0], lbl=bars[1];
-    if(i===n){
-      if(progBar){progBar.style.background='var(--accent)';progBar.style.height='5px';}
-      if(lbl){lbl.style.color='var(--accent)';lbl.style.fontWeight='700';}
-    } else if(settDone[i]){
-      if(progBar){progBar.style.background='var(--green)';progBar.style.height='4px';}
-      if(lbl){lbl.style.color='var(--green)';lbl.style.fontWeight='700';}
-    } else {
-      if(progBar){progBar.style.background='var(--border)';progBar.style.height='4px';}
-      if(lbl){lbl.style.color='var(--muted)';lbl.style.fontWeight='500';}
+    const panel = document.getElementById('sett-panel-'+i);
+    const btn   = document.getElementById('sstep-'+i);
+    if(panel) panel.style.display = i===n ? '' : 'none';
+    if(btn){
+      if(i===n){
+        btn.style.background='var(--accent)'; btn.style.color='#fff'; btn.style.fontWeight='700';
+      } else if(settDone[i]){
+        btn.style.background='var(--green)'; btn.style.color='#fff'; btn.style.fontWeight='700';
+      } else if(i<n){
+        btn.style.background='var(--surface2)'; btn.style.color='var(--muted)'; btn.style.fontWeight='500';
+      } else {
+        btn.style.background='none'; btn.style.color='var(--muted)'; btn.style.fontWeight='500';
+      }
     }
   }
 }
 
 function markSettDone(n){
   settDone[n]=true;
-  const tab=document.getElementById('sstep-'+n);
-  if(!tab) return;
-  const bars=tab.querySelectorAll('div');
-  if(bars[0]) bars[0].style.background='var(--green)';
-  if(bars[1]) bars[1].style.color='var(--green)';
+  // 상단 스텝 버튼에 ✓ 표시
+  const btn = document.getElementById('sstep-'+n);
+  if(btn){ btn.style.background='var(--green)'; btn.style.color='#fff'; }
 }
 function initDayAssignBtns(){
   document.querySelectorAll('.day-assign-btn').forEach(btn=>{
@@ -9478,6 +9428,312 @@ function ovAdjTime(delta){
   _timerState.current=Math.max(5,_timerState.current+delta);
   if(!_timerState.running)_timerState.total=_timerState.current;
   ovUpdateDisplay();
-}</script>
+}
+
+// ══════════════════════════════════════════════════════
+// ★ 1. 회식 다음날 회복 루틴
+// ══════════════════════════════════════════════════════
+let _drinkLevel = 1;
+let _quickMinutes = 10;
+
+const HANGOVER_ROUTINES = {
+  1: { // 가볍게
+    label:'😊 가벼운 음주 → 일반 강도 회복',
+    exs:[
+      {n:'폼롤러 전신 스트레칭', d:'5분 · 등/허리/허벅지 위주', time:true},
+      {n:'맨몸 스쿼트',          d:'3세트 × 15회 · 가벼운 무게'},
+      {n:'푸시업',               d:'3세트 × 10회'},
+      {n:'플랭크',               d:'3세트 × 30초', time:true},
+      {n:'가벼운 유산소 워킹',   d:'15분 · 빠른 걷기', time:true},
+    ],
+    tip:'💧 물 500ml 먼저 드세요. 탈수 회복이 우선입니다!'
+  },
+  2: { // 적당히
+    label:'😅 적당한 음주 → 저강도 활성화',
+    exs:[
+      {n:'폼롤러 전신 스트레칭', d:'8분 · 전신 천천히', time:true},
+      {n:'고양이-낙타 스트레칭', d:'3세트 × 10회 · 척추 이완'},
+      {n:'레그레이즈',           d:'3세트 × 10회 · 복근 활성화'},
+      {n:'밴드 풀어파트',        d:'3세트 × 15회 · 어깨 이완'},
+      {n:'가벼운 유산소 워킹',   d:'20분 · 중강도', time:true},
+    ],
+    tip:'🍵 따뜻한 물 + 꿀 한 스푼. 오늘은 근력보단 회복에 집중!'
+  },
+  3: { // 많이
+    label:'🥵 과음 → 초저강도 회복만',
+    exs:[
+      {n:'누워서 무릎 당기기',   d:'3분 · 허리 이완', time:true},
+      {n:'고양이-낙타 스트레칭', d:'5분 · 아주 천천히', time:true},
+      {n:'목/어깨 스트레칭',     d:'5분', time:true},
+      {n:'산책',                 d:'10분 · 천천히 걷기만', time:true},
+    ],
+    tip:'⚠️ 오늘은 쉬세요. 물 많이 마시고 단백질 식사가 최고의 운동입니다.'
+  }
+};
+
+function openHangoverMode(){
+  _drinkLevel=1;
+  document.getElementById('hangover-modal').classList.add('open');
+  renderHangoverPreview();
+}
+function setDrinkLevel(lv, btn){
+  _drinkLevel=lv;
+  document.querySelectorAll('#hangover-modal button[onclick^="setDrinkLevel"]').forEach(b=>{
+    b.style.border='1px solid var(--border)';b.style.background='none';b.style.color='var(--muted)';
+  });
+  btn.style.border='2px solid var(--accent)';btn.style.background='#e8533a15';btn.style.color='var(--accent)';
+  renderHangoverPreview();
+}
+function renderHangoverPreview(){
+  const r=HANGOVER_ROUTINES[_drinkLevel];
+  const el=document.getElementById('hangover-routine-preview');
+  if(!el) return;
+  el.innerHTML=`<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">${r.label}</div>`
+    +r.exs.map(e=>`<div style="padding:4px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;">
+      <span style="color:var(--text);">${e.n}</span><span style="color:var(--muted);">${e.d}</span></div>`).join('')
+    +`<div style="margin-top:10px;padding:8px;background:#f0a5000d;border-radius:8px;font-size:11px;color:#f0a500;">${r.tip}</div>`;
+}
+function applyHangoverRoutine(){
+  const r=HANGOVER_ROUTINES[_drinkLevel];
+  const tk=DAY_SCHED[selDay]==='REST'?'A':DAY_SCHED[selDay];
+  // 임시 루틴으로 RT에 주입
+  RT['HANGOVER']={
+    label:'회식 회복',title:'🍺 회복 루틴 ('+['','가벼운','적당한','과음'][_drinkLevel]+' 음주)',
+    color:'rh-d',muscles:['전신회복','스트레칭'],
+    sections:[{n:'회복 운동',exs:r.exs.map(e=>({n:e.n,d:e.d,tags:['회복'],w:[],sets:e.time?0:3}))}]
+  };
+  DAY_SCHED[selDay]='HANGOVER';
+  document.getElementById('hangover-modal').classList.remove('open');
+  // 배너 표시
+  const banner=document.getElementById('special-mode-banner');
+  banner.style.display='block';
+  banner.style.background='#f0a5000d';banner.style.border='1px solid #f0a50044';banner.style.color='#f0a500';
+  banner.innerHTML='🍺 회식 회복 모드 · <button onclick="clearSpecialMode()" style="background:none;border:none;color:#f0a500;font-size:12px;cursor:pointer;text-decoration:underline;">원래 루틴으로</button>';
+  initSetData('HANGOVER');renderWorkout();
+  showToast('🍺 회복 루틴이 적용됐어요. 오늘은 가볍게!','success');
+}
+
+// ══════════════════════════════════════════════════════
+// ★ 2. 바쁜날 10분 압축 루틴
+// ══════════════════════════════════════════════════════
+const QUICK_ROUTINES = {
+  10:{
+    label:'⚡ 10분 압축 · 전신 3운동',
+    exs:[
+      {n:'버피테스트',   d:'3세트 × 10회 · 전신활성화',tags:['전신'],w:[],sets:3},
+      {n:'맨몸 스쿼트', d:'2세트 × 20회 · 빠른 템포',tags:['하체'],w:[],sets:2},
+      {n:'플랭크',       d:'2세트 × 45초',tags:['코어'],w:[],sets:0},
+    ]
+  },
+  15:{
+    label:'⚡ 15분 압축 · 상하체 5운동',
+    exs:[
+      {n:'푸시업',       d:'3세트 × 15회',tags:['가슴'],w:[],sets:3},
+      {n:'맨몸 스쿼트', d:'3세트 × 20회',tags:['하체'],w:[],sets:3},
+      {n:'덤벨 로우',    d:'2세트 × 12회',tags:['등'],w:[],sets:2},
+      {n:'런지',         d:'2세트 × 10회(각)',tags:['하체'],w:[],sets:2},
+      {n:'플랭크',       d:'2세트 × 45초',tags:['코어'],w:[],sets:0},
+    ]
+  },
+  20:{
+    label:'⚡ 20분 압축 · 핵심 6운동',
+    exs:[
+      {n:'푸시업',           d:'3세트 × 15회',tags:['가슴'],w:[],sets:3},
+      {n:'맨몸 스쿼트',     d:'3세트 × 20회',tags:['하체'],w:[],sets:3},
+      {n:'덤벨 로우',        d:'3세트 × 12회',tags:['등'],w:[],sets:3},
+      {n:'덤벨 숄더프레스', d:'2세트 × 12회',tags:['어깨'],w:[],sets:2},
+      {n:'런지',             d:'2세트 × 10회(각)',tags:['하체'],w:[],sets:2},
+      {n:'플랭크',           d:'3세트 × 45초',tags:['코어'],w:[],sets:0},
+    ]
+  }
+};
+function openQuickMode(){
+  _quickMinutes=10;
+  document.getElementById('quick-modal').classList.add('open');
+  renderQuickPreview();
+}
+function setQuickTime(min, btn){
+  _quickMinutes=min;
+  document.querySelectorAll('#quick-modal button[onclick^="setQuickTime"]').forEach(b=>{
+    b.style.border='1px solid var(--border)';b.style.background='none';b.style.color='var(--muted)';
+  });
+  btn.style.border='2px solid var(--blue)';btn.style.background='#4a9eff15';btn.style.color='var(--blue)';
+  renderQuickPreview();
+}
+function renderQuickPreview(){
+  const r=QUICK_ROUTINES[_quickMinutes];
+  const el=document.getElementById('quick-routine-preview');
+  if(!el) return;
+  el.innerHTML=`<div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:8px;">${r.label}</div>`
+    +r.exs.map((e,i)=>`<div style="padding:4px 0;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+      <span style="font-size:12px;color:var(--text);">${i+1}. ${e.n}</span>
+      <span style="font-size:11px;color:var(--muted);">${e.d}</span></div>`).join('');
+}
+function applyQuickRoutine(){
+  const r=QUICK_ROUTINES[_quickMinutes];
+  RT['QUICK']={
+    label:'압축 루틴',title:'⚡ '+_quickMinutes+'분 압축 루틴',
+    color:'rh-a',muscles:['전신'],
+    sections:[{n:'핵심 운동',exs:r.exs}]
+  };
+  DAY_SCHED[selDay]='QUICK';
+  document.getElementById('quick-modal').classList.remove('open');
+  const banner=document.getElementById('special-mode-banner');
+  banner.style.display='block';
+  banner.style.background='#4a9eff0d';banner.style.border='1px solid #4a9eff44';banner.style.color='var(--blue)';
+  banner.innerHTML='⚡ '+_quickMinutes+'분 압축 모드 · <button onclick="clearSpecialMode()" style="background:none;border:none;color:var(--blue);font-size:12px;cursor:pointer;text-decoration:underline;">원래 루틴으로</button>';
+  initSetData('QUICK');renderWorkout();
+  showToast('⚡ '+_quickMinutes+'분 압축 루틴 시작!','success');
+}
+function clearSpecialMode(){
+  const orig=['REST','A','B','C','D','E','F'];
+  // localStorage에서 원래 스케줄 복원
+  try{const ds=JSON.parse(localStorage.getItem('fitlog-day-sched')||'{}');if(Object.keys(ds).length>0)Object.keys(ds).forEach(k=>{DAY_SCHED[parseInt(k)]=ds[k];});}catch(e){}
+  document.getElementById('special-mode-banner').style.display='none';
+  initSetData(DAY_SCHED[selDay]);renderWorkout();
+  showToast('원래 루틴으로 복귀했어요','info');
+}
+
+// ══════════════════════════════════════════════════════
+// ★ 3. 나만의 루틴 커스터마이징
+// ══════════════════════════════════════════════════════
+let myRoutines = {}; // {id: {name, sections:[{name, exs:[{n,sets,reps}]}]}}
+let myRoutineActiveId = null;
+
+function loadMyRoutines(){
+  try{ myRoutines=JSON.parse(localStorage.getItem('fitlog-my-routines')||'{}'); }catch(e){ myRoutines={}; }
+}
+function saveMyRoutinesLocal(){
+  try{ localStorage.setItem('fitlog-my-routines',JSON.stringify(myRoutines)); }catch(e){}
+}
+
+function openMyRoutineModal(){
+  loadMyRoutines();
+  renderMyRoutineTabs();
+  document.getElementById('my-routine-modal').classList.add('open');
+}
+function closeMyRoutineModal(){
+  document.getElementById('my-routine-modal').classList.remove('open');
+}
+function renderMyRoutineTabs(){
+  const tabs=document.getElementById('my-routine-tabs');
+  tabs.innerHTML=Object.entries(myRoutines).map(([id,rt])=>
+    `<button onclick="selectMyRoutine('${id}')" style="padding:6px 14px;border-radius:20px;border:1px solid ${myRoutineActiveId===id?'var(--accent)':'var(--border)'};background:${myRoutineActiveId===id?'#e8533a15':'none'};color:${myRoutineActiveId===id?'var(--accent)':'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;">
+      ${rt.name}
+      <span onclick="event.stopPropagation();deleteMyRoutine('${id}')" style="margin-left:4px;opacity:.5;">✕</span>
+    </button>`
+  ).join('');
+}
+function createNewMyRoutine(){
+  const id='my_'+Date.now();
+  const name=prompt('루틴 이름을 입력하세요','나의 루틴 '+(Object.keys(myRoutines).length+1));
+  if(!name) return;
+  myRoutines[id]={name, sections:[{name:'섹션 1', exs:[]}]};
+  myRoutineActiveId=id;
+  saveMyRoutinesLocal();
+  renderMyRoutineTabs();
+  renderMyRoutineEditor();
+}
+function selectMyRoutine(id){
+  myRoutineActiveId=id;
+  renderMyRoutineTabs();
+  renderMyRoutineEditor();
+}
+function deleteMyRoutine(id){
+  if(!confirm('이 루틴을 삭제할까요?')) return;
+  delete myRoutines[id];
+  if(myRoutineActiveId===id) myRoutineActiveId=null;
+  saveMyRoutinesLocal();
+  renderMyRoutineTabs();
+  document.getElementById('my-routine-editor').innerHTML='<div style="text-align:center;padding:30px;color:var(--muted);font-size:13px;">루틴을 선택하거나 새로 만드세요</div>';
+}
+function renderMyRoutineEditor(){
+  const rt=myRoutines[myRoutineActiveId];
+  if(!rt){return;}
+  const ed=document.getElementById('my-routine-editor');
+  let html=`<div style="display:flex;align-items:center;gap:8px;margin-bottom:14px;">
+    <input value="${rt.name}" onchange="myRoutines['${myRoutineActiveId}'].name=this.value;renderMyRoutineTabs();"
+      style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:15px;font-weight:700;color:var(--text);font-family:var(--font);">
+    <button onclick="addMySection()" style="padding:8px 12px;border-radius:8px;border:1px dashed var(--green);background:none;color:var(--green);font-size:12px;cursor:pointer;font-family:var(--font);white-space:nowrap;">＋ 섹션</button>
+  </div>`;
+  rt.sections.forEach((sec,si)=>{
+    html+=`<div style="background:var(--surface2);border-radius:12px;padding:12px;margin-bottom:10px;border:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
+        <input value="${sec.name}" onchange="myRoutines['${myRoutineActiveId}'].sections[${si}].name=this.value;"
+          style="flex:1;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:6px 10px;font-size:13px;font-weight:700;color:var(--text);font-family:var(--font);">
+        ${si>0?`<button onclick="deleteMySection(${si})" style="background:none;border:none;color:#ff6b6b;font-size:16px;cursor:pointer;">🗑️</button>`:''}
+      </div>
+      ${sec.exs.map((ex,ei)=>`
+      <div style="display:flex;align-items:center;gap:6px;padding:6px 0;border-bottom:1px solid var(--border);" id="myex-${si}-${ei}">
+        <span style="font-size:10px;color:var(--muted);font-family:var(--mono);width:16px;">${ei+1}</span>
+        <input value="${ex.n}" placeholder="운동명" onchange="myRoutines['${myRoutineActiveId}'].sections[${si}].exs[${ei}].n=this.value;"
+          style="flex:2;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px 8px;font-size:12px;color:var(--text);font-family:var(--font);">
+        <input value="${ex.sets||3}" type="number" min="1" max="10" onchange="myRoutines['${myRoutineActiveId}'].sections[${si}].exs[${ei}].sets=parseInt(this.value);"
+          style="width:44px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px;font-size:12px;color:var(--text);font-family:var(--mono);text-align:center;">
+        <span style="font-size:10px;color:var(--muted);">세트</span>
+        <input value="${ex.reps||10}" type="number" min="1" max="100" onchange="myRoutines['${myRoutineActiveId}'].sections[${si}].exs[${ei}].reps=parseInt(this.value);"
+          style="width:44px;background:var(--surface);border:1px solid var(--border);border-radius:6px;padding:5px;font-size:12px;color:var(--text);font-family:var(--mono);text-align:center;">
+        <span style="font-size:10px;color:var(--muted);">회</span>
+        <button onclick="deleteMyEx(${si},${ei})" style="background:none;border:none;color:#ff6b6b;font-size:14px;cursor:pointer;padding:0 2px;">✕</button>
+      </div>`).join('')}
+      <button onclick="addMyEx(${si})" style="width:100%;margin-top:8px;padding:7px;border-radius:7px;border:1px dashed var(--border);background:none;color:var(--muted);font-size:12px;cursor:pointer;font-family:var(--font);">＋ 운동 추가</button>
+    </div>`;
+  });
+  ed.innerHTML=html;
+}
+function addMySection(){
+  if(!myRoutineActiveId) return;
+  const rt=myRoutines[myRoutineActiveId];
+  rt.sections.push({name:'섹션 '+(rt.sections.length+1), exs:[]});
+  renderMyRoutineEditor();
+}
+function deleteMySection(si){
+  if(!myRoutineActiveId) return;
+  myRoutines[myRoutineActiveId].sections.splice(si,1);
+  renderMyRoutineEditor();
+}
+function addMyEx(si){
+  if(!myRoutineActiveId) return;
+  myRoutines[myRoutineActiveId].sections[si].exs.push({n:'',sets:3,reps:10,tags:['커스텀'],w:[]});
+  renderMyRoutineEditor();
+}
+function deleteMyEx(si,ei){
+  if(!myRoutineActiveId) return;
+  myRoutines[myRoutineActiveId].sections[si].exs.splice(ei,1);
+  renderMyRoutineEditor();
+}
+function saveMyRoutine(){
+  if(!myRoutineActiveId){showToast('먼저 루틴을 선택하세요','error');return;}
+  saveMyRoutinesLocal();
+  showToast('✅ 루틴이 저장되었습니다!','success');
+}
+function applyMyRoutineToday(){
+  if(!myRoutineActiveId){showToast('먼저 루틴을 선택하세요','error');return;}
+  const rt=myRoutines[myRoutineActiveId];
+  if(!rt.sections[0]?.exs?.length){showToast('운동을 1개 이상 추가해주세요','error');return;}
+  saveMyRoutinesLocal();
+  // RT에 주입
+  RT['MY_ROUTINE']={
+    label:'나만의 루틴',title:'✏️ '+rt.name,
+    color:'rh-f',muscles:['커스텀'],
+    sections:rt.sections.map(sec=>({
+      n:sec.name,
+      exs:sec.exs.filter(e=>e.n.trim()).map(e=>({
+        n:e.n,d:e.sets+'세트 × '+e.reps+'회',
+        tags:e.tags||['커스텀'],w:e.w||[],sets:e.sets
+      }))
+    })).filter(sec=>sec.exs.length>0)
+  };
+  DAY_SCHED[selDay]='MY_ROUTINE';
+  closeMyRoutineModal();
+  const banner=document.getElementById('special-mode-banner');
+  banner.style.display='block';
+  banner.style.background='#9b7fe80d';banner.style.border='1px solid #9b7fe844';banner.style.color='var(--purple)';
+  banner.innerHTML='✏️ 나만의 루틴 "'+rt.name+'" 적용 중 · <button onclick="clearSpecialMode()" style="background:none;border:none;color:var(--purple);font-size:12px;cursor:pointer;text-decoration:underline;">원래 루틴으로</button>';
+  initSetData('MY_ROUTINE');renderWorkout();
+  showToast('✏️ '+rt.name+' 루틴 시작!','success');
+}
+// 앱 시작 시 저장된 내 루틴 불러오기
+document.addEventListener('DOMContentLoaded',()=>{ loadMyRoutines(); });</script>
 </body>
 </html>
