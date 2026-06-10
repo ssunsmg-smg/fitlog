@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- fitlog v3.2 build:20260609-7fix -->
+<!-- fitlog v3.3 build:20260610-1 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -1527,16 +1527,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="modal-title"><span>운동 수정</span><button class="modal-close" onclick="closeEdit()">✕</button></div>
     <div class="modal-field"><div class="modal-label">운동 이름</div><input class="modal-inp" id="edit-name" type="text"/></div>
 
-
-    <div class="modal-field"><div class="modal-label">세트 × 횟수</div><input class="modal-inp" id="edit-detail" type="text"/></div>
-    <div class="modal-field"><div class="modal-label">기본 세트 수</div><input class="modal-inp" id="edit-sets" type="number" min="0" max="10"/></div>
-    <div class="modal-field"><div class="modal-label">운동 설명</div><textarea class="modal-ta" id="edit-desc"></textarea></div>
-    <div class="modal-field"><div class="modal-label">주의사항 (쉼표 구분)</div><input class="modal-inp" id="edit-warn" type="text"/></div>
-    <div class="modal-btns"><button class="modal-cancel" onclick="closeEdit()">취소</button><button class="modal-save" onclick="saveEdit()">저장</button></div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
 <!-- ════ 회식회복 모달 ════ -->
 <div class="modal-bg" id="hangover-modal">
   <div class="modal" style="max-width:380px;">
@@ -1557,7 +1547,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </div>
 
-
 <!-- ════ 10분 압축 모달 ════ -->
 <div class="modal-bg" id="quick-modal">
   <div class="modal" style="max-width:380px;">
@@ -1574,7 +1563,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
   </div>
 </div>
-
 
 <!-- ════ 내 루틴 편집 모달 ════ -->
 <div class="modal-bg" id="my-routine-modal">
@@ -1603,6 +1591,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
   </div>
 </div>
+    <div class="modal-field"><div class="modal-label">세트 × 횟수</div><input class="modal-inp" id="edit-detail" type="text"/></div>
+    <div class="modal-field"><div class="modal-label">기본 세트 수</div><input class="modal-inp" id="edit-sets" type="number" min="0" max="10"/></div>
+    <div class="modal-field"><div class="modal-label">운동 설명</div><textarea class="modal-ta" id="edit-desc"></textarea></div>
+    <div class="modal-field"><div class="modal-label">주의사항 (쉼표 구분)</div><input class="modal-inp" id="edit-warn" type="text"/></div>
+    <div class="modal-btns"><button class="modal-cancel" onclick="closeEdit()">취소</button><button class="modal-save" onclick="saveEdit()">저장</button></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
 
  <!-- 유산소 선택 모달 -->
 <div class="modal-bg" id="cardio-modal">
@@ -3492,8 +3489,12 @@ function renderWorkout(){
     html+='<button class="add-ex-btn" data-action="lib" data-tk="'+tk+'" data-si="'+realSi+'">＋ 운동 추가</button>';
   });
   content.innerHTML=html;
-  // 이벤트 위임 등록
-  content.addEventListener('click',handleWorkoutClick);
+  // 이벤트 위임 등록 - 중복 방지
+  if(content._workoutHandler){
+    content.removeEventListener('click', content._workoutHandler);
+  }
+  content._workoutHandler = handleWorkoutClick;
+  content.addEventListener('click', content._workoutHandler);
   rt.sections.forEach((sec,si)=>sec.exs.forEach((ex,ei)=>{
     const k=exKey(si,ei);
     const isNoWt2 = typeof NO_WEIGHT_EXNAMES !== 'undefined' && NO_WEIGHT_EXNAMES.has(ex.n);
@@ -4998,7 +4999,13 @@ async function addLibEx(i){
   const {tk,si}=libTarget;
   RT[tk].sections[si].exs.push({n:ex.n,d:ex.d,tags:ex.tags,w:ex.w,sets:ex.sets});
   try{window.saveRoutine(RT);}catch(e){console.warn(e);}
-  closeLib(); initSetData(tk); renderWorkout();
+  // 기존 setData는 유지하고 새 운동 key만 추가
+  const newEi = RT[tk].sections[si].exs.length - 1;
+  const newKey = exKey(si, newEi);
+  if(ex.sets > 0){
+    setData[newKey] = Array.from({length:ex.sets},()=>({weight:'',reps:'',done:false}));
+  }
+  closeLib(); renderWorkout();
   showToast(`✅ "${ex.n}" 추가됨!`,'success');
 }
 async function addCustomEx(){
@@ -5009,7 +5016,11 @@ async function addCustomEx(){
   const {tk,si}=libTarget;
   RT[tk].sections[si].exs.push({n:name,d:detail,tags:[],w:[],sets:3});
   try{window.saveRoutine(RT);}catch(e){console.warn(e);}
-  closeLib(); initSetData(tk); renderWorkout();
+  // 기존 setData 유지, 새 운동만 추가
+  const newEi = RT[tk].sections[si].exs.length - 1;
+  const newKey = exKey(si, newEi);
+  setData[newKey] = Array.from({length:3},()=>({weight:'',reps:'',done:false}));
+  closeLib(); renderWorkout();
   showToast(`✅ "${name}" 추가됨!`,'success');
 }
 async function delEx(tk,si,ei){
@@ -6866,9 +6877,17 @@ function changeDayTo(i){
     if(!confirm('보충 운동 진행 중입니다. 다른 요일로 이동하면 보충 운동이 취소됩니다. 계속하시겠어요?')) return;
     makeupActive=null;
   }
+  // ① 이전 요일 데이터 먼저 저장
+  saveSetDataLocal();
+  saveChkLocal();
+  // ② 새 요일로 전환
   selDay=i;
-  // setData 초기화하지 않음 - 이전 요일 기록 유지
+  // ③ setData 완전 초기화 후 새 요일 루틴으로 재생성
+  setData={};
   initSetData(DAY_SCHED[i]);
+  // ④ 새 요일 로컬 데이터 불러오기
+  loadSetDataLocal();
+  loadChkLocal();
   renderWorkout();
 }
 function jumpToDay(dow){
