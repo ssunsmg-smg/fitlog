@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- fitlog v3.3 build:20260611-fix3 -->
+<!-- fitlog v3.3 build:20260611-fix4 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -9538,9 +9538,13 @@ const HANGOVER_ROUTINES = {
 };
 
 function openHangoverMode(){
-  _drinkLevel=1;
-  document.getElementById('hangover-modal').classList.add('open');
-  renderHangoverPreview();
+  try{
+    _drinkLevel=1;
+    const m=document.getElementById('hangover-modal');
+    if(!m){showToast('⚠️ hangover-modal 없음','error');return;}
+    m.classList.add('open');
+    renderHangoverPreview();
+  }catch(e){showToast('회식 오류: '+e.message,'error');console.error(e);}
 }
 function setDrinkLevel(lv, btn){
   _drinkLevel=lv;
@@ -9614,9 +9618,13 @@ const QUICK_ROUTINES = {
   }
 };
 function openQuickMode(){
-  _quickMinutes=10;
-  document.getElementById('quick-modal').classList.add('open');
-  renderQuickPreview();
+  try{
+    _quickMinutes=10;
+    const m=document.getElementById('quick-modal');
+    if(!m){showToast('⚠️ quick-modal 없음','error');return;}
+    m.classList.add('open');
+    renderQuickPreview();
+  }catch(e){showToast('바쁜날 오류: '+e.message,'error');console.error(e);}
 }
 function setQuickTime(min, btn){
   _quickMinutes=min;
@@ -9674,15 +9682,20 @@ function saveMyRoutinesLocal(){
 }
 
 function openMyRoutineModal(){
-  loadMyRoutines();
-  renderMyRoutineTabs();
-  document.getElementById('my-routine-modal').classList.add('open');
+  try{
+    loadMyRoutines();
+    renderMyRoutineTabs();
+    const m=document.getElementById('my-routine-modal');
+    if(!m){showToast('⚠️ my-routine-modal 없음','error');return;}
+    m.classList.add('open');
+  }catch(e){showToast('내루틴 오류: '+e.message,'error');console.error(e);}
 }
 function closeMyRoutineModal(){
   document.getElementById('my-routine-modal').classList.remove('open');
 }
 function renderMyRoutineTabs(){
   const tabs=document.getElementById('my-routine-tabs');
+  if(!tabs) return;
   tabs.innerHTML=Object.entries(myRoutines).map(([id,rt])=>
     `<button onclick="selectMyRoutine('${id}')" style="padding:6px 14px;border-radius:20px;border:1px solid ${myRoutineActiveId===id?'var(--accent)':'var(--border)'};background:${myRoutineActiveId===id?'#e8533a15':'none'};color:${myRoutineActiveId===id?'var(--accent)':'var(--muted)'};font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;">
       ${rt.name}
