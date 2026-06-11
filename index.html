@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- fitlog v3.3 build:20260611-fix6 -->
+<!-- fitlog v3.3 build:20260611-fix7 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -136,9 +136,16 @@
   };
   window.saveRoutine = async (rt) => {
     if (!currentUser) return;
+    // DAY_SCHED에서 임시 키(HANGOVER/QUICK)와 NaN 키 제거 후 저장
+    const validKeys = new Set(['REST','A','B','C','D','E','F']);
+    const cleanSched = {};
+    [0,1,2,3,4,5,6].forEach(i=>{
+      const v = DAY_SCHED[i];
+      cleanSched[i] = validKeys.has(v) ? v : ['REST','A','B','C','D','E','F'][i] || 'REST';
+    });
     const payload = {
       level: curLevel,
-      daySchedule: DAY_SCHED,
+      daySchedule: cleanSched,
       classType: typeof classType !== 'undefined' ? classType : '기구운동',
       purposes: typeof classPurposes !== 'undefined' ? classPurposes : [],
       savedAt: new Date().toISOString()
@@ -158,8 +165,14 @@
 
     // DAY_SCHED 복원
     if (data.daySchedule) {
+      const validKeys = new Set(['REST','A','B','C','D','E','F']);
       Object.keys(data.daySchedule).forEach(k => {
-        DAY_SCHED[parseInt(k)] = data.daySchedule[k];
+        const idx = parseInt(k);
+        if(isNaN(idx)) return; // NaN 키 무시
+        const v = data.daySchedule[k];
+        if(validKeys.has(v)){ // HANGOVER/QUICK 등 임시 키 무시
+          DAY_SCHED[idx] = v;
+        }
       });
     }
     // level 복원
