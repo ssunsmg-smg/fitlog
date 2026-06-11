@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- fitlog v3.3 build:20260611-fix7 -->
+<!-- fitlog v3.3 build:20260611-fix8 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -1539,6 +1539,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   <div class="modal">
     <div class="modal-title"><span>운동 수정</span><button class="modal-close" onclick="closeEdit()">✕</button></div>
     <div class="modal-field"><div class="modal-label">운동 이름</div><input class="modal-inp" id="edit-name" type="text"/></div>
+    <div class="modal-field"><div class="modal-label">세트 × 횟수</div><input class="modal-inp" id="edit-detail" type="text"/></div>
+    <div class="modal-field"><div class="modal-label">기본 세트 수</div><input class="modal-inp" id="edit-sets" type="number" min="0" max="10"/></div>
+    <div class="modal-field"><div class="modal-label">운동 설명</div><textarea class="modal-ta" id="edit-desc"></textarea></div>
+    <div class="modal-field"><div class="modal-label">주의사항 (쉼표 구분)</div><input class="modal-inp" id="edit-warn" type="text"/></div>
+    <div class="modal-btns"><button class="modal-cancel" onclick="closeEdit()">취소</button><button class="modal-save" onclick="saveEdit()">저장</button></div>
+  </div>
+</div>
 
 <!-- ════ 회식회복 모달 ════ -->
 <div class="modal-bg" id="hangover-modal">
@@ -1604,14 +1611,6 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
   </div>
 </div>
-    <div class="modal-field"><div class="modal-label">세트 × 횟수</div><input class="modal-inp" id="edit-detail" type="text"/></div>
-    <div class="modal-field"><div class="modal-label">기본 세트 수</div><input class="modal-inp" id="edit-sets" type="number" min="0" max="10"/></div>
-    <div class="modal-field"><div class="modal-label">운동 설명</div><textarea class="modal-ta" id="edit-desc"></textarea></div>
-    <div class="modal-field"><div class="modal-label">주의사항 (쉼표 구분)</div><input class="modal-inp" id="edit-warn" type="text"/></div>
-    <div class="modal-btns"><button class="modal-cancel" onclick="closeEdit()">취소</button><button class="modal-save" onclick="saveEdit()">저장</button></div>
-  </div>
-</div>
-
 <div class="toast" id="toast"></div>
 
  <!-- 유산소 선택 모달 -->
