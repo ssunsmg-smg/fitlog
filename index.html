@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- fitlog v3.3 build:20260611-fix -->
+<!-- fitlog v3.3 build:20260611-fix2 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -3004,7 +3004,9 @@ function renderSets(key,cId){
   sets.forEach(function(s,i){
     const pw=prevSets[i]&&prevSets[i].weight?prevSets[i].weight:'';
     const pr=prevSets[i]&&prevSets[i].reps?prevSets[i].reps:'';
-    const preLabel=nw?(pr?pr+'회':'-'):(pw||pr?(pw||'-')+'/'+(pr||'-'):'-');
+    const pd=prevSets[i]&&prevSets[i].done;
+    // preLabel: 중량운동=kg/회, 맨몸=횟수, 체크전용=✓or-
+    const preLabel=nw?(pr?pr+'회':(pd?'✓':'-')):(pw||pr?(pw||'-')+'/'+(pr||'-'):(pd?'✓':'-'));
     const hasUp=!nw&&s.weight&&pw&&parseFloat(s.weight)>parseFloat(pw);
     const hasDn=!nw&&s.weight&&pw&&parseFloat(s.weight)<parseFloat(pw);
     const repsUp=nw&&s.reps&&pr&&parseInt(s.reps)>parseInt(pr);
@@ -3013,7 +3015,7 @@ function renderSets(key,cId){
     const repsOi=buildRepsOninput(nw,key,i,cId);
     rows+='<div id="sr-'+key+'-'+i+'" style="display:grid;grid-template-columns:'+COL+';gap:4px;align-items:center;margin-bottom:4px;background:'+bg+';border-radius:6px;padding:2px;">'
       +'<div style="text-align:center;font-size:13px;font-weight:700;color:'+(s.done?'var(--green)':'var(--text)')+';">'+(i+1)+'</div>'
-      +'<div style="text-align:center;font-size:12px;font-family:var(--mono);color:'+((pw||pr)?'#f0a500':'var(--border)')+';font-weight:'+((pw||pr)?'700':'400')+';padding:6px 2px;background:var(--surface2);border-radius:6px;">'
+      +'<div style="text-align:center;font-size:12px;font-family:var(--mono);color:'+((pw||pr||pd)?'#f0a500':'var(--border)')+';font-weight:'+((pw||pr||pd)?'700':'400')+';padding:6px 2px;background:var(--surface2);border-radius:6px;">'
       +preLabel+(hasUp?'<span style="color:var(--green);font-size:9px;"> ▲</span>':'')+(hasDn?'<span style="color:#e55;font-size:9px;"> ▼</span>':'')+(repsUp?'<span style="color:var(--green);font-size:9px;"> ▲</span>':'')+'</div>'
       +kgInp
       +'<input class="set-inp '+(s.reps?'filled':'')+'" type="number" value="'+(s.reps||'')+'" placeholder="'+(pr||'회')+'" min="0" step="1" style="text-align:center;font-size:13px;" oninput="'+repsOi+'"/>'
@@ -4050,6 +4052,9 @@ function toggleExChk(si,ei){
   document.getElementById(`echk-${si}-${ei}`).classList.toggle('done');
   document.getElementById(`ec-${si}-${ei}`).classList.toggle('done');
   saveChkLocal();updateProg();
+  // ── 운동 체크 시에도 자동저장 ──
+  const anyChecked = document.querySelectorAll('.ex-chk.done').length > 0;
+  if(anyChecked){ clearTimeout(window._autoSaveTimer); window._autoSaveTimer=setTimeout(function(){ doSaveRecord(true); },1500); }
 }
 function updateProg(){
   const all=document.querySelectorAll('.ex-chk').length,done=document.querySelectorAll('.ex-chk.done').length;
@@ -4078,6 +4083,20 @@ async function doSaveRecord(silent=false){
     const rt=RT[tk];if(!rt||!rt.sections[si]||!rt.sections[si].exs[ei])return;
     const exName=rt.sections[si].exs[ei].n;
     sets.forEach((s,idx)=>{if(s.weight||s.reps)allSets.push({ex:exName,set:idx+1,weight:s.weight,reps:s.reps,done:s.done});});
+  });
+  // ── 체크만 된 운동(weight/reps 없이)도 기록에 남기기 ──
+  const checkedExNames = new Set(
+    Array.from(document.querySelectorAll('.ex-chk.done')).map(el=>{
+      const parts = el.id.replace('echk-','').split('-');
+      const si=parseInt(parts[0]),ei=parseInt(parts[1]);
+      return RT[tk]?.sections[si]?.exs[ei]?.n||'';
+    }).filter(Boolean)
+  );
+  // allSets에 없는 체크 운동을 추가
+  checkedExNames.forEach(exName=>{
+    if(!allSets.some(s=>s.ex===exName)){
+      allSets.push({ex:exName,set:1,weight:'',reps:'',done:true});
+    }
   });
   const exDone=document.querySelectorAll('.ex-chk.done').length;
   const exTotal=document.querySelectorAll('.ex-chk').length;
