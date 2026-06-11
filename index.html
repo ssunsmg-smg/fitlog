@@ -1,4 +1,28 @@
 <!DOCTYPE html>
+<!-- ████████████████████████████████████████████████████████████████
+     핏로그 (FitLog) v3.3  build:20260611-fix8
+     ────────────────────────────────────────────────────────────────
+     개요  : 바쁜 직장인을 위한 개인 헬스 트래킹 PWA
+     호스팅: GitHub Pages (ssunsmg-smg.github.io/fitlog)
+     DB    : Firebase Firestore (클라우드 자동 동기화)
+     인증  : Firebase Auth (Google OAuth / 이메일)
+     ────────────────────────────────────────────────────────────────
+     주요 기능
+       - 6분할 루틴 (A~F) 자동 배정 + 맞춤 설정
+       - 세트·중량·횟수 실시간 입력 및 클라우드 저장
+       - pre kg: 이전 운동 기록을 세트 입력칸 위에 표시
+       - 자동저장: 체크·세트 완료 시 1.5초 후 Firebase 저장
+       - 유산소 추가 모달 (칼로리·체지방 환산)
+       - 스마트 루틴 생성기 (AI 기반)
+       - 식단 기록 및 영양소 통계
+       - 운동 달력 · 기록 열람 · 통계 대시보드
+       - 회식 회복 / 바쁜날 압축 / 내 루틴 편집 모드
+     ────────────────────────────────────────────────────────────────
+     파일 구조 (단일 index.html)
+       L 1 ~  875 : CSS 스타일 (전체 디자인 시스템)
+       L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
+       L 1899~ 끝  : JavaScript (앱 로직 전체)
+     ████████████████████████████████████████████████████████████████ -->
 <!-- fitlog v3.3 build:20260611-fix8 -->
 <html lang="ko">
 <head>
@@ -10,6 +34,18 @@
 <title>핏로그 · 나만의 재활 운동 플랜</title>
 <meta name="description" content="무릎·허리·어깨 재활부터 체중감량, 근력강화까지. 내 몸에 맞는 운동 루틴을 만들어보세요.">
 
+<!-- ════════════════════════════════════════════════════════════════
+     ■ FIREBASE 초기화 블록
+     ────────────────────────────────────────────────────────────────
+     - firebase-app-compat / auth-compat / firestore-compat 로드
+     - SDK 로드 실패 시 오프라인 모드로 동작 (모든 DB함수 → noop)
+     - 로그인 방식: Google OAuth(Popup→Redirect폴백) + 이메일/비밀번호
+     - Firestore 컬렉션 구조:
+         users/{uid}/records/{id}   → 운동 기록
+         users/{uid}/diet/{date}    → 식단 기록
+         users/{uid}/settings/routine → 루틴·스케줄 설정
+         users/{uid}/profile        → 사용자 프로필
+     ════════════════════════════════════════════════════════════════ -->
 <!-- Firebase SDK (compat - 모바일 완전 호환) -->
 <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"
   onerror="document.getElementById('firebase-error-banner').style.display='block'"></script>
@@ -877,6 +913,15 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   ⚠️ 네트워크 연결 오류 — Firebase를 불러오지 못했습니다. 인터넷 연결을 확인하고 <a href="javascript:location.reload()" style="color:#fff;text-decoration:underline;">새로고침</a>해주세요.
 </div>
 
+<!-- ════════════════════════════════════════════════════════════════
+     ■ HTML 구조 시작
+     ════════════════════════════════════════════════════════════════ -->
+
+<!-- ── 로딩 화면 ─────────────────────────────────────────────────
+     앱 초기화(Firebase 인증 + 데이터 로드) 중에 표시
+     initApp() 완료 후 showApp()에서 display:none 처리
+     15초 타임아웃 안전장치 있음 (showApp 강제 호출)
+──────────────────────────────────────────────────────────────── -->
 <!-- 로딩 -->
 <div class="loading" id="loading">
   <div class="loading-logo">핏로그</div>
@@ -920,6 +965,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </div>
 
+<!-- ── 로그인 화면 ───────────────────────────────────────────────
+     Google OAuth / 이메일+비밀번호 / 이메일 회원가입 3가지 탭
+     firebase-login 이벤트 발생 시 숨김, firebase-logout 시 표시
+     switchLoginTab(tab, btn)   : Google/이메일 탭 전환
+     switchEmailMode(mode, btn) : 로그인/회원가입 모드 전환
+     doEmailAction()            : 이메일 로그인 또는 회원가입 실행
+──────────────────────────────────────────────────────────────── -->
 <!-- 로그인 화면 -->
 <div class="login-screen" id="login-screen" style="display:none;">
   <div class="login-card">
@@ -973,6 +1025,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </div>
 
+<!-- ── 온보딩 (최초 1회) ─────────────────────────────────────────
+     신규 사용자 프로필 설정 9단계 위저드
+     1단계: 이름  2단계: 나이  3단계: 성별
+     4단계: 키/몸무게  5단계: 목표  6단계: 집중 부위
+     7단계: 부상 이력  8단계: 운동 요일/시간  9단계: 현재 체력
+     finishOb() → Firebase에 프로필 저장 → showApp() 호출
+──────────────────────────────────────────────────────────────── -->
 <!-- 온보딩 -->
 <div id="onboarding" style="display:none;">
   <div class="onboard">
@@ -990,6 +1049,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </div>
 
+<!-- ════════════════════════════════════════════════════════════════
+     ■ 메인 앱 (#main-app)
+     ────────────────────────────────────────────────────────────────
+     탭 구성: 홈 | 운동 | 식단 | 캘린더 | 기록 | 통계 | 설정
+     각 탭은 .page 클래스의 div, showPage(id)로 전환
+     ════════════════════════════════════════════════════════════════ -->
 <!-- 메인 앱 -->
 <div class="app" id="main-app">
   <nav class="nav">
@@ -1534,6 +1599,19 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </div>
 
+<!-- ════════════════════════════════════════════════════════════════
+     ■ 모달 영역 (모두 .modal-bg 클래스, .open 클래스로 표시)
+     ────────────────────────────────────────────────────────────────
+     ⚠️ 모달은 반드시 #main-app 밖, <body> 직계 자식으로 존재해야 함
+        edit-modal 안에 다른 모달이 중첩되면 width:0이 됨 (기존 버그)
+     ════════════════════════════════════════════════════════════════ -->
+
+<!-- ── 운동 편집 모달 ─────────────────────────────────────────────
+     운동 카드의 ✏️수정 버튼 클릭 시 열림
+     openEdit(tk, si, ei) : 섹션/운동 인덱스로 현재값 로드
+     saveEdit()           : 수정값을 RT에 반영 + Firebase 저장
+     closeEdit()          : 모달 닫기
+──────────────────────────────────────────────────────────────── -->
 <!-- 운동 편집 모달 -->
 <div class="modal-bg" id="edit-modal">
   <div class="modal">
@@ -1547,6 +1625,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </div>
 
+<!-- ── 회식 회복 모달 ─────────────────────────────────────────────
+     홈탭 [🍺 회식] 버튼 → openHangoverMode() 호출
+     음주량(가볍게/적당히/많이) 선택 → renderHangoverPreview()
+     applyHangoverRoutine() : RT['HANGOVER'] 임시 생성 + 운동탭 전환
+     ⚠️ HANGOVER는 임시 키 → localStorage/Firebase에 저장 안 함
+──────────────────────────────────────────────────────────────── -->
 <!-- ════ 회식회복 모달 ════ -->
 <div class="modal-bg" id="hangover-modal">
   <div class="modal" style="max-width:380px;">
@@ -1567,6 +1651,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </div>
 
+<!-- ── 바쁜날 압축 루틴 모달 ─────────────────────────────────────
+     홈탭 [⚡ 바쁜날] 버튼 → openQuickMode() 호출
+     시간(10/15/20분) 선택 → renderQuickPreview()
+     applyQuickRoutine() : RT['QUICK'] 임시 생성 + 운동탭 전환
+     ⚠️ QUICK도 임시 키 → localStorage/Firebase에 저장 안 함
+──────────────────────────────────────────────────────────────── -->
 <!-- ════ 10분 압축 모달 ════ -->
 <div class="modal-bg" id="quick-modal">
   <div class="modal" style="max-width:380px;">
@@ -1584,6 +1674,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   </div>
 </div>
 
+<!-- ── 나만의 루틴 편집 모달 ──────────────────────────────────────
+     홈탭 [✏️ 내 루틴] 버튼 → openMyRoutineModal() 호출
+     localStorage 'fitlog-my-routines'에 JSON으로 저장
+     createNewMyRoutine() : 새 루틴 생성
+     saveMyRoutine()      : 현재 편집 내용 저장
+     applyMyRoutineToday(): 오늘 루틴으로 즉시 적용
+──────────────────────────────────────────────────────────────── -->
 <!-- ════ 내 루틴 편집 모달 ════ -->
 <div class="modal-bg" id="my-routine-modal">
   <div style="background:var(--surface);border-radius:16px;width:100%;max-width:520px;max-height:88vh;overflow:hidden;display:flex;flex-direction:column;">
@@ -1897,6 +1994,24 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
 </div>
 
 <script>
+// ████████████████████████████████████████████████████████████████
+// ■ 메인 앱 스크립트
+// ────────────────────────────────────────────────────────────────
+// 실행 흐름:
+//   1. firebase-login 이벤트 → initApp(user) 호출
+//   2. initApp(): 프로필·루틴·기록 Firebase에서 로드
+//   3. showApp(): 로딩화면 숨기고 메인 UI 렌더링
+//   4. 이후 탭 전환/사용자 입력마다 render* 함수 호출
+// ────────────────────────────────────────────────────────────────
+// 전역 상태 변수
+//   records   : 운동 기록 배열 (Firebase에서 로드)
+//   setData   : 오늘 세트 입력 데이터 {exKey: [{weight,reps,done}]}
+//   selDay    : 현재 선택된 요일 (0=일 ~ 6=토)
+//   selCond   : 오늘 컨디션 (1~5)
+//   RT        : 현재 루틴 객체 {A:{sections:[...]}, B:..., ...}
+//   DAY_SCHED : 요일→루틴키 매핑 {0:'REST',1:'A',...,6:'F'}
+//   makeupActive: 보충 운동 진행 중 상태 (null이면 비활성)
+// ████████████████████████████████████████████████████████████████
 // ══════════════════════════════
 // 상태
 // ══════════════════════════════
@@ -1906,6 +2021,13 @@ let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 let editTarget=null, RT={}, userProfile=null, isLoggedIn=false;
 let _wakeLock = null; // ✅ 타이머 WakeLock
 
+// ══════════════════════════════════════════════════════════════════
+// ■ EX_INFO : 운동별 설명·팁·유튜브 검색어 DB
+// ──────────────────────────────────────────────────────────────────
+// 구조: { '운동명': { desc:'자세설명', tip:'주의사항', yt:'유튜브검색어' } }
+// AI 가이드 모달(openAIGuide)에서 참조
+// 추가 시: EX_INFO['운동명'] = {desc:'...', tip:'...', yt:'...'}
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 운동 설명
 // ══════════════════════════════
@@ -2052,6 +2174,14 @@ const EX_INFO={
   },
 };
 
+// ══════════════════════════════════════════════════════════════════
+// ■ AI 운동 가이드 (사전 생성 데이터)
+// ──────────────────────────────────────────────────────────────────
+// AI_GUIDE_DATA: 운동별 상세 가이드 사전 데이터
+//   openAIGuide(exName): AI 가이드 모달 오픈
+//   - AI_GUIDE_DATA에 있으면 즉시 표시
+//   - 없으면 Claude API 실시간 호출
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // AI 사전 생성 운동 가이드
 // ══════════════════════════════
@@ -2304,6 +2434,15 @@ const DAY_SCHED={0:'REST',1:'A',2:'B',3:'C',4:'D',5:'E',6:'F'};
 const DAY_NUM_MAP={일:0,월:1,화:2,수:3,목:4,금:5,토:6};
 const DAY_KR=['일','월','화','수','목','금','토'];
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 온보딩 시스템 (최초 로그인 시 1회)
+// ──────────────────────────────────────────────────────────────────
+// renderOb()     : 현재 obStep에 맞는 UI 렌더링
+// obNext()       : 다음 단계로 (유효성 검사 포함)
+// obBack()       : 이전 단계로
+// finishOb()     : 완료 → Firebase에 프로필 저장 → showApp()
+// generateCustomRT(): 사용자 설정(목표·요일·레벨)에 맞는 루틴 생성
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 온보딩
 // ══════════════════════════════
@@ -2648,6 +2787,15 @@ async function finishOb(){
   document.getElementById('ob-next').onclick=()=>showApp();
   document.getElementById('ob-back').style.display='none';
 }
+// ══════════════════════════════════════════════════════════════════
+// ■ 로그인 / 로그아웃
+// ──────────────────────────────────────────────────────────────────
+// doLogin()         : Google OAuth 로그인 실행
+// doLogout()        : 로그아웃 + localStorage 초기화 + 로그인화면 표시
+// doEmailAction()   : 이메일 로그인 또는 회원가입 처리
+// doResetPassword() : 비밀번호 재설정 이메일 발송
+// switchLoginTab()  : Google/이메일 탭 UI 전환
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 로그인/로그아웃
 // ══════════════════════════════
@@ -2750,6 +2898,22 @@ async function doLogout(){
   showToast('로그아웃 되었습니다','info');
 }
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 앱 초기화 (initApp / showApp)
+// ──────────────────────────────────────────────────────────────────
+// initApp(user) : Firebase 로그인 성공 후 호출
+//   1) 프로필 로드 (없으면 온보딩으로)
+//   2) 루틴 로드 (Firebase → RT 복원)
+//      ⚠️ DAY_SCHED 복원 시 HANGOVER/QUICK/NaN 키 자동 필터링
+//      ⚠️ fitlog-rt-custom 복원 시 없는 키는 delete 하지 않음 (D 누락 버그 방지)
+//   3) 운동기록·식단기록 로드
+//   4) showApp() 호출
+//
+// showApp() : 실제 화면 표시
+//   - 로딩/로그인 화면 숨기고 main-app 활성화
+//   - DAY_SCHED에서 임시키(HANGOVER/QUICK/NaN) 정리
+//   - selDay = 오늘 요일, initSetData(), 전체 render* 호출
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 앱 초기화
 // ══════════════════════════════
@@ -2934,10 +3098,25 @@ function showApp(){
   applyWeeklyVariation();
 }
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 세트 관리 (입력 UI + 자동저장)
+// ──────────────────────────────────────────────────────────────────
+// renderSets(key, cId) : 세트 입력 행 HTML 생성
+//   - pre kg 칸: 이전 기록(prevSets)의 weight/reps 또는 ✓(체크전용) 표시
+//   - ⚠️ prevRec 탐색 시 오늘 날짜(selDay) 제외 (오늘 빈기록 매칭 방지)
+// toggleSetDone(k, i)  : 세트 체크 토글 → 1.5초 후 doSaveRecord(true)
+// toggleExChk(si, ei)  : 운동 체크박스 토글 → 1.5초 후 doSaveRecord(true)
+// addSet(k, cId)       : 세트 행 추가
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 세트 관리
 // ══════════════════════════════
+// exKey: setData 딕셔너리 키 생성 → "요일-섹션인덱스-운동인덱스"
 function exKey(si,ei){return`${selDay}-${si}-${ei}`;}
+// initSetData(tk): 루틴 키(tk)에 맞게 setData 초기화
+//   sets>0  → [{weight:'',reps:'',done:false}] × sets개
+//   NO_WEIGHT → [{weight:'',reps:'',done:false}] × 세트수 (d에서 파싱)
+//   그 외(타이머운동) → setData 미등록
 function initSetData(tk){
   setData={};const rt=RT[tk];if(!rt||!rt.sections)return;
   rt.sections.forEach((sec,si)=>sec.exs.forEach((ex,ei)=>{
@@ -3012,6 +3191,11 @@ function buildRepsOninput(nw, key, i, cId){
 
 function isNoWeightEx(n){ return NO_WEIGHT_EXNAMES.has(n); }
 
+// renderSets(key, cId): 세트 입력 UI 렌더링
+//   key   : exKey(si, ei) - setData 조회 키
+//   cId   : DOM 컨테이너 id
+//   pre 칸: 이전 기록(prevSets) weight/reps 또는 ✓ 표시
+//   ⚠️ prevRec 탐색 시 오늘 날짜 제외 (오늘 빈기록 오매칭 방지)
 function renderSets(key,cId){
   const sets=setData[key];if(!sets)return;
   const el=document.getElementById(cId);if(!el)return;
@@ -3119,6 +3303,15 @@ function toggleTimerSetDone(si,ei,setIdx,total){
   saveChkLocal();updateProg();
 }
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 홈 탭 (renderHome)
+// ──────────────────────────────────────────────────────────────────
+// renderHome() : 홈 화면 전체 렌더링
+//   - 오늘 루틴 요약 카드
+//   - 이번 주 미완료 루틴 배지
+//   - 특수모드 버튼 (회식/바쁜날/내루틴) → 각 모달 열기
+//   - 보충 운동 배너 (missedBanner)
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 홈
 // ══════════════════════════════
@@ -3212,6 +3405,12 @@ function startExtraWorkout(){
   showToast('➕ 추가 운동 시작! 완료 후 다시 저장하세요.','info');
 }
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 내 헬스장 기구 설정
+// ──────────────────────────────────────────────────────────────────
+// 사용자 헬스장 보유 기구 목록을 localStorage에 저장
+// 운동 라이브러리 필터링에 활용
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 내 헬스장 기구 설정
 // ══════════════════════════════
@@ -3406,9 +3605,32 @@ function goWorkout(){
   document.querySelectorAll('.nav-tab')[1].classList.add('active');
 }
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 운동 탭 (renderWorkout)
+// ──────────────────────────────────────────────────────────────────
+// renderWorkout() : 운동 탭 전체 렌더링
+//   - 오늘 루틴 헤더 (루틴명·타입·날짜)
+//   - 섹션 선택 토글 (원하는 섹션만 표시)
+//   - 운동 카드: 세트입력 UI + AI가이드 + 유튜브 + 수정 + 삭제
+//   ⚠️ RT[tk]가 없으면 (HANGOVER 저장 후 재시작 등) 자동 fallback 처리
+//
+// doSaveRecord(silent)  : Firebase에 운동기록 저장
+//   silent=true  → 자동저장 (버튼 UI 변경 없음, sync-dot만 반짝)
+//   silent=false → 수동저장 (토스트 메시지 표시)
+//   ⚠️ save-btn이 없어도(다른 탭에 있어도) null 크래시 없이 동작
+//   체크된 운동이 weight/reps 없어도 done:true로 저장 (Type D 대응)
+//
+// toggleSection(tk, si) : 섹션 표시/숨김 (localStorage 저장)
+// openEdit(tk, si, ei)  : 운동 편집 모달 열기
+// deleteEx(tk, si, ei)  : 운동 삭제
+// openLib(si)           : 운동 추가 라이브러리 모달 열기
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 운동 탭
 // ══════════════════════════════
+// renderWorkout(): 운동 탭 전체 재렌더링
+// ⚠️ RT[tk]가 undefined이면 (HANGOVER/QUICK 저장 후 재시작 등)
+//    자동으로 fallback 처리 후 재귀 호출 1회
 function renderWorkout(){
   // 보충 운동 진행 중이면 해당 루틴을 우선 사용
   const activeTk = makeupActive ? makeupActive.missedTk : DAY_SCHED[selDay];
@@ -3564,6 +3786,14 @@ function renderWorkout(){
 
 
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 스마트 루틴 생성기 (AI 기반)
+// ──────────────────────────────────────────────────────────────────
+// openSmartRoutine()       : 모달 열기
+// generateSmartRoutine()   : Claude AI API 호출 → 루틴 JSON 생성
+//   - 사용자 프로필(목표·부위·레벨·보유기구) 기반으로 프롬프트 구성
+//   - 응답을 RT에 적용 후 Firebase 저장
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 🎯 스마트 루틴 생성기
 // ══════════════════════════════
@@ -4094,6 +4324,8 @@ function toggleCard(si,ei,k,saId){
   const isOpen=area.classList.contains('open');area.classList.toggle('open',!isOpen);if(arr)arr.classList.toggle('open',!isOpen);
   if(!isOpen)renderSets(k,saId);
 }
+// toggleExChk: 운동 체크박스 토글
+//   체크 완료 시 1.5초 후 doSaveRecord(true) 자동저장 트리거
 function toggleExChk(si,ei){
   document.getElementById(`echk-${si}-${ei}`).classList.toggle('done');
   document.getElementById(`ec-${si}-${ei}`).classList.toggle('done');
@@ -4118,6 +4350,12 @@ function resetAll(){
 function setCond(v){selCond=v;document.querySelectorAll('.cond-btn').forEach((b,i)=>b.classList.toggle('active',i+1===v));}
 
 // ── 저장 (Firebase) ──
+// doSaveRecord(silent)
+//   silent=false : 수동 저장 (💾 버튼 클릭)
+//                  → 버튼 비활성화, 토스트 표시, 저장 후 UI 선택지 표시
+//   silent=true  : 자동 저장 (체크/세트 완료 1.5초 후)
+//                  → save-btn 없어도 크래시 없음, sync-dot만 반짝임
+//   ⚠️ sets:0 운동(Type D 등)은 체크만 해도 done:true로 저장됨
 async function doSaveRecord(silent=false){
   // 보충 운동 중이면 해당 루틴 키 사용
   const tk = makeupActive ? makeupActive.missedTk : DAY_SCHED[selDay];
@@ -4263,6 +4501,13 @@ async function saveEdit(){
   closeEdit();initSetData(tk);renderWorkout();showToast('✅ 수정 완료! 클라우드 저장됨','success');
 }
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 캘린더 탭 (renderCalendar)
+// ──────────────────────────────────────────────────────────────────
+// renderCalendar()   : 월별 달력 + 운동 완료 표시
+//   - records 배열에서 날짜 매칭 → 완료 표시 (초록점)
+//   - 날짜 클릭 → 해당 날짜 기록 상세 표시
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 캘린더
 // ══════════════════════════════
@@ -4379,6 +4624,15 @@ function showCalDetail(ds){
   </div>`;
 }
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 기록 탭 (renderLog)
+// ──────────────────────────────────────────────────────────────────
+// renderLog()     : 운동 기록 목록 렌더링
+//   - records 배열 역순 표시 (최신순)
+//   - 세트 기록: weight×reps 박스 표시
+//   - 세트 기록 없으면 "체크만 완료" 표시
+// deleteRecord(id): Firebase에서 기록 삭제 + records 배열 업데이트
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 기록
 // ══════════════════════════════
@@ -4438,6 +4692,15 @@ async function delRec(date){
   renderLog();renderCalendar();renderStats();renderHome();showToast('삭제 완료','info');
 }
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 통계 탭 (renderStats)
+// ──────────────────────────────────────────────────────────────────
+// renderStats()   : 운동 통계 대시보드 렌더링
+//   - 총 운동 횟수·주간 완료율·연속 달성일
+//   - 루틴별 완료 횟수 차트
+//   - 1RM 추정값 (orm1RM 객체, 주요 운동별 자동 갱신)
+//   - 근육별 운동 빈도 히트맵
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 통계
 // ══════════════════════════════
@@ -4689,9 +4952,28 @@ function renderStats(){
   }).join('');
 }
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 공유 기능
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 공유
 // ══════════════════════════════
+// ══════════════════════════════════════════════════════════════════
+// ■ 운동 라이브러리 (EX_LIB + 모달)
+// ──────────────────────────────────────────────────────────────────
+// EX_LIB : 전체 운동 DB 배열 [{n, d, tags, w, sets, type}]
+//   n    : 운동명
+//   d    : 설명 (세트×횟수 형식)
+//   tags : 주요 근육 태그 배열
+//   w    : 주의사항 배열
+//   sets : 기본 세트 수 (0=타이머/체크전용)
+//   type : 'machine'|'free'|'cable'|'home'|'both' 등
+//
+// openLib(si)        : 운동 추가 라이브러리 모달 열기
+// renderLibList()    : 필터 적용해서 운동 목록 표시
+// addLibEx(i)        : 선택 운동을 현재 루틴 섹션에 추가
+//   ⚠️ sets:0인 맨몸운동도 setData 초기화 처리 (NO_WEIGHT_EXNAMES 체크)
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 운동 라이브러리
 // ══════════════════════════════
@@ -5075,6 +5357,10 @@ function renderLibList(){
       <button class="lib-add-btn" onclick="addLibEx(${i})">+ 추가</button>
     </div>`).join('');
 }
+// addLibEx(i): 라이브러리에서 운동 선택 후 현재 섹션에 추가
+//   _libFiltered[i] → RT[tk].sections[si].exs에 push
+//   sets:0 맨몸운동도 setData 초기화 (NO_WEIGHT_EXNAMES 체크)
+//   ⚠️ 추가 후 renderWorkout() 호출로 UI 갱신
 async function addLibEx(i){
   if(!libTarget) return;
   const ex=_libFiltered[i];
@@ -5123,6 +5409,15 @@ async function delEx(tk,si,ei){
 // openLibrary → openLib 연결
 function openLibrary(tk,si){ openLib(tk,si); }
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 식단 탭 (renderDiet)
+// ──────────────────────────────────────────────────────────────────
+// renderDiet()       : 오늘 식단 + 영양소 요약 렌더링
+// openDietModal()    : 음식 추가 모달 열기
+// saveDietItem()     : 식단 항목 Firebase 저장
+// deleteDietItem()   : 식단 항목 삭제
+// AI 식단 자동 생성  : 칼로리 목표·체중·목적 기반 알고리즘 생성
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 식단 탭
 // ══════════════════════════════
@@ -5466,6 +5761,12 @@ async function loadDietData(){
     loadWeightFromStorage();
   }catch(e){console.log('식단 로드 실패',e);}
 }
+// ══════════════════════════════════════════════════════════════════
+// ■ 체중 관리
+// ──────────────────────────────────────────────────────────────────
+// 체중 기록 + BMI 계산 + 목표 체중 대비 진행률
+// localStorage에 저장 (Firebase 미사용)
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 체중 관리
 // ══════════════════════════════
@@ -5588,6 +5889,23 @@ function renderWeightCard(){
 
 
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 특수 모드 (회식 회복 / 바쁜날 압축 / 나만의 루틴)
+// ──────────────────────────────────────────────────────────────────
+// ★ 1. 회식 회복 루틴 (HANGOVER_ROUTINES)
+//   음주량 3단계 → 맞춤 회복 운동 목록
+//   applyHangoverRoutine(): RT['HANGOVER'] 임시 생성
+//   ⚠️ 페이지 리로드 시 HANGOVER 키 사라짐 → clearSpecialMode 불필요
+//
+// ★ 2. 바쁜날 압축 루틴 (QUICK_ROUTINES)
+//   10/15/20분 선택 → 핵심 3~6운동만 압축
+//   applyQuickRoutine(): RT['QUICK'] 임시 생성
+//
+// ★ 3. 나만의 루틴 (MY_ROUTINES)
+//   사용자 정의 루틴 생성·편집·삭제
+//   localStorage 'fitlog-my-routines'에 저장
+//   applyMyRoutineToday(): 오늘 DAY_SCHED에 적용
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 홈으로 이동
 // ══════════════════════════════
@@ -5940,6 +6258,15 @@ function applyAIDiet(){
   showToast('✅ AI 식단이 오늘 식단에 추가됐어요!','success');
 }
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 보충 운동 (Makeup) 시스템
+// ──────────────────────────────────────────────────────────────────
+// 이전에 빠진 운동을 휴일에 보충하는 기능
+// makeupActive = { restDay, missedDay, missedTk, missedName }
+// startMakeup(missedDow) : 보충 운동 시작 → makeupActive 설정
+// clearMakeup()          : 보충 운동 종료
+// buildMakeupCard()      : 홈/운동탭에 보충 가능 카드 렌더링
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 보충 운동 이전 기능
 // ══════════════════════════════
@@ -6054,6 +6381,14 @@ function doMakeup(restDay){
 }
 
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 성장 단계 & 운동 강도 설정
+// ──────────────────────────────────────────────────────────────────
+// curLevel : 현재 재활/운동 단계 (1=초급 ~ 3=고급)
+// SPLIT_ROUTINES[level] : 단계별 루틴 데이터
+// applyWeeklyVariation() : 주차별 점진적 과부하 적용
+//   - 4주 사이클: 기본→증량→고강도→회복
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 성장 단계 & 운동 설정
 // ══════════════════════════════
@@ -6216,6 +6551,12 @@ const POSTURE_DB = [
 
 
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 신체 정보 설정 + 건강 계산기
+// ──────────────────────────────────────────────────────────────────
+// 설정 탭에서 키·몸무게·나이 업데이트
+// BMI / BMR / TDEE / 목표 칼로리 자동 계산
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 신체 정보 설정 + 건강 계산
 // ══════════════════════════════
@@ -6459,6 +6800,15 @@ async function applyBodyToRoutine(){
   initSetData(DAY_SCHED[selDay]);
 }
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 운동 분류 + 목적별 루틴 (홈트 / 분할 / 고급)
+// ──────────────────────────────────────────────────────────────────
+// HOME_ROUTINES   : 홈트레이닝 루틴 (맨몸운동 중심)
+// SPLIT_ROUTINES  : 기구 분할 루틴 (레벨별 A~F)
+// PURPOSE_LIST    : 목적 태그 배열 (근력강화/체중감량 등)
+// classType       : 현재 운동 분류 ('기구운동'|'홈트')
+//   → localStorage 'fitlog-classtype' 저장
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 운동 분류 + 목적별 루틴
 // ══════════════════════════════
@@ -6731,6 +7081,13 @@ async function applyClassification(){
 }
 
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 유산소 추가 모달 시스템
+// ──────────────────────────────────────────────────────────────────
+// openCardioModal()          : 유산소 선택 모달 열기
+// confirmCardioSelection()   : 선택 확정 → 운동탭에 추가 + 자동저장
+//   칼로리/체지방 환산: kcal → 체지방g = kcal/7700*1000
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 유산소 루틴 설정
 // ══════════════════════════════
@@ -8422,10 +8779,20 @@ function copyLink(){
   });
 }
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 유틸리티 함수
+// ──────────────────────────────────────────────────────────────────
+// showToast(msg, type)  : 하단 토스트 메시지 표시 (success/error/info)
+// showPage(id)          : 탭 페이지 전환
+// getDateForDow(dow)    : 요일 번호 → 'YYYY-MM-DD' 날짜 문자열
+// toStr(date)           : Date → 'YYYY-MM-DD' 변환
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 유틸
 // ══════════════════════════════
 function toStr(d){return`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;}
+// getDateForDow(dow): 이번 주 특정 요일의 날짜 반환
+//   dow: 0(일)~6(토) → 'YYYY-MM-DD' 문자열
 function getDateForDow(dow){const today=new Date(),todayDow=today.getDay();let diff=dow-todayDow;if(diff>0)diff-=7;const d=new Date(today);d.setDate(today.getDate()+diff);return toStr(d);}
 function showPage(id){
   document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
@@ -8444,8 +8811,17 @@ function showPage(id){
   if(id==='settings') initSettingsTab();
 }
 let tTimer=null;
+// showToast: 하단 토스트 알림
+//   type: 'success'(초록) | 'error'(빨강) | 'info'(파랑)
+//   2.5초 후 자동 사라짐
 function showToast(msg,type='info'){const t=document.getElementById('toast');t.textContent=msg;t.className=`toast ${type} show`;if(tTimer)clearTimeout(tTimer);tTimer=setTimeout(()=>t.classList.remove('show'),3500);}
 
+// ══════════════════════════════════════════════════════════════════
+// ■ Firebase 이벤트 리스너 (앱 진입점)
+// ──────────────────────────────────────────────────────────────────
+// 'firebase-login'  이벤트 → initApp(user) 호출
+// 'firebase-logout' 이벤트 → 로그인 화면 표시
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // Firebase 이벤트 리스너
 // ══════════════════════════════
@@ -8607,6 +8983,15 @@ setTimeout(()=>{
     }, 800);
   }
 })();
+// ══════════════════════════════════════════════════════════════════
+// ■ AI 운동 가이드 (Claude API 실시간 호출)
+// ──────────────────────────────────────────────────────────────────
+// openAIGuide(exName) : 운동 카드 [AI 가이드] 버튼 클릭 시 호출
+//   1) AI_GUIDE_DATA에 있으면 즉시 표시 (API 호출 불필요)
+//   2) 없으면 Claude claude-sonnet-4-20250514 API 호출
+//      → 자세·호흡·주의사항·변형동작 생성
+//   3) AI_GUIDE_DATA에 캐시 저장 (세션 내 재사용)
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // AI 운동 가이드 (Claude API)
 // ══════════════════════════════
@@ -8830,6 +9215,15 @@ function closeAiGuide(){
 
 // ══════════════════════════════
 // 주말 유산소 선택
+// ══════════════════════════════════════════════════════════════════
+// ■ 유산소 추가 모달 (종목별 개별 시간 설정)
+// ──────────────────────────────────────────────────────────────────
+// renderCardioModalList() : 유산소 종목 목록 렌더링 (8가지)
+// changeGlobalCardioTime(delta) : 전체 시간 일괄 조정
+// toggleCardioItem(idx)   : 종목 선택/해제
+// confirmCardioSelection(): 선택 확정
+//   → 운동탭에 유산소 세션 추가 + doSaveRecord(true) 자동저장
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 유산소 추가 (종목별 개별 시간 + 기록 저장)
 // ══════════════════════════════
@@ -9273,6 +9667,14 @@ function renderCardioHistory(){
 }
 
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 타이머 시스템 (WakeLock 포함)
+// ──────────────────────────────────────────────────────────────────
+// _timerState = { running, sec, interval, key, setIdx }
+// startTimerFromKey(sec, key) : 세트별 타이머 시작
+// _requestWakeLock()          : 타이머 중 화면 꺼짐 방지
+// 타이머 오버레이 (#timer-overlay) : 전체화면 카운트다운 표시
+// ══════════════════════════════════════════════════════════════════
 // ══════════════════════════════
 // 타이머 시스템
 // ══════════════════════════════
@@ -9707,6 +10109,9 @@ function applyQuickRoutine(){
   initSetData('QUICK');renderWorkout();
   showToast('⚡ '+_quickMinutes+'분 압축 루틴 시작!','success');
 }
+// clearSpecialMode: 회식/바쁜날 임시 모드 해제
+//   RT에 없는 키(HANGOVER/QUICK)를 기본값으로 복원
+//   DAY_SCHED를 localStorage에 정제 저장
 function clearSpecialMode(){
   // HANGOVER/QUICK 등 임시 키를 원래 기본값으로 되돌림
   const defaults={0:'REST',1:'A',2:'B',3:'C',4:'D',5:'E',6:'F'};
