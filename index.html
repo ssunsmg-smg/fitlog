@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- fitlog v3.3 build:20260611-fix2 -->
+<!-- fitlog v3.3 build:20260611-fix3 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -4076,6 +4076,12 @@ async function doSaveRecord(silent=false){
   // 보충 운동 중이면 해당 루틴 키 사용
   const tk = makeupActive ? makeupActive.missedTk : DAY_SCHED[selDay];
   if(!makeupActive && tk==='REST')return;
+  // silent 자동저장: 체크된 것도 없고 setData도 비어있으면 스킵
+  if(silent){
+    const hasAnyDone = document.querySelectorAll('.ex-chk.done').length > 0 ||
+      Object.values(setData).some(arr=>Array.isArray(arr)&&arr.some(s=>s.done||s.weight||s.reps));
+    if(!hasAnyDone) return;
+  }
   const ds=getDateForDow(selDay);
   const allSets=[];
   Object.entries(setData).forEach(([k,sets])=>{
@@ -4133,10 +4139,15 @@ async function doSaveRecord(silent=false){
     localStorage.setItem('fitlog-1rm', JSON.stringify(orm1RM));
   }
 
-  const btn=document.getElementById('save-btn');btn.disabled=true;btn.textContent='저장 중...';
-  document.getElementById('sync-dot').classList.add('syncing');
+  // ── silent(자동저장) 시 save-btn/sync-dot이 없을 수 있으므로 방어 ──
+  const btn = document.getElementById('save-btn');
+  const syncDot = document.getElementById('sync-dot');
+  const memoInp = document.getElementById('memo-inp');
+  if(btn){ btn.disabled=true; btn.textContent='저장 중...'; }
+  if(syncDot) syncDot.classList.add('syncing');
 
-  const ok=await window.saveRecord(rec);
+  let ok = false;
+  try{ ok = await window.saveRecord(rec); }catch(e){ console.warn('[FitLog] saveRecord 오류:',e); }
 
   if(ok){
     records=records.filter(r=>r.date!==ds);records.unshift(rec);
@@ -4147,34 +4158,39 @@ async function doSaveRecord(silent=false){
     const ormMsg = ormUpdated ? '\n📊 1RM 추정값이 자동 갱신됐어요!' : '';
     const setCount = allSets.filter(s=>s.done).length;
     if(!silent) showToast(`✅ 저장완료 · ${exDone}/${exTotal} 운동 · ${setCount}세트${ormMsg}`,'success');
-    console.log('[FitLog] 저장 완료:', {date:ds, type:tk, exDone, exTotal, sets:allSets.length, muscles:musclesDone});
+    else {
+      // 자동저장 성공 시 sync-dot 잠깐 초록으로 표시
+      if(syncDot){ syncDot.style.background='var(--green)'; setTimeout(()=>{ syncDot.style.background=''; },1200); }
+    }
+    console.log('[FitLog] 저장 완료:', {date:ds, type:tk, exDone, exTotal, sets:allSets.length, silent});
 
-    // ── 저장 후 선택 UI: 추가 운동 or 완료 ──
-    const wrapEl = document.getElementById('save-extra-wrap');
-    if(!wrapEl){
-      const wrap = document.createElement('div');
-      wrap.id = 'save-extra-wrap';
-      wrap.style.cssText = 'margin-top:10px;display:flex;gap:8px;';
-      wrap.innerHTML = `
-        <button onclick="startExtraWorkout()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--green);
-          background:#4caf7d12;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">
-          ➕ 추가 운동하기
-        </button>
-        <button onclick="document.getElementById('save-extra-wrap').remove();renderHome();" 
-          style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);
-          background:var(--surface2);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">
-          🏠 홈으로
-        </button>`;
-      const saveBtn = document.getElementById('save-btn');
-      if(saveBtn && saveBtn.parentNode) saveBtn.parentNode.insertBefore(wrap, saveBtn.nextSibling);
+    // ── 수동 저장 후 선택 UI: 추가 운동 or 완료 ──
+    if(!silent){
+      const wrapEl = document.getElementById('save-extra-wrap');
+      if(!wrapEl){
+        const wrap = document.createElement('div');
+        wrap.id = 'save-extra-wrap';
+        wrap.style.cssText = 'margin-top:10px;display:flex;gap:8px;';
+        wrap.innerHTML = `
+          <button onclick="startExtraWorkout()" style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--green);
+            background:#4caf7d12;color:var(--green);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">
+            ➕ 추가 운동하기
+          </button>
+          <button onclick="document.getElementById('save-extra-wrap').remove();renderHome();" 
+            style="flex:1;padding:10px;border-radius:8px;border:1px solid var(--border);
+            background:var(--surface2);color:var(--muted);font-size:13px;font-weight:700;cursor:pointer;font-family:var(--font);">
+            🏠 홈으로
+          </button>`;
+        if(btn && btn.parentNode) btn.parentNode.insertBefore(wrap, btn.nextSibling);
+      }
     }
   } else {
-    showToast('⚠️ 저장 실패. 다시 시도해주세요.','error');
+    if(!silent) showToast('⚠️ 저장 실패. 다시 시도해주세요.','error');
   }
 
-  btn.disabled=false;btn.textContent='💾 저장 (클라우드 자동 동기화)';
-  document.getElementById('sync-dot').classList.remove('syncing');
-  document.getElementById('memo-inp').value='';
+  if(btn){ btn.disabled=false; btn.textContent='💾 저장 (클라우드 자동 동기화)'; }
+  if(syncDot) syncDot.classList.remove('syncing');
+  if(memoInp && !silent) memoInp.value='';
   renderHome();renderLog();renderStats();
 }
 
