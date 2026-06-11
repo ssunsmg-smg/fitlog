@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- fitlog v3.3 build:20260611-fix4 -->
+<!-- fitlog v3.3 build:20260611-fix5 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -2781,7 +2781,13 @@ async function initApp(user){
       const savedDS = localStorage.getItem('fitlog-day-sched');
       if(savedDS){
         const ds = JSON.parse(savedDS);
-        Object.keys(ds).forEach(k=>{ DAY_SCHED[parseInt(k)]=ds[k]; });
+        Object.keys(ds).forEach(k=>{
+          const v = ds[k];
+          // RT에 없는 키는 복원하지 않음 (HANGOVER/QUICK 등 임시 루틴 제외)
+          if(v==='REST' || RT[v]){
+            DAY_SCHED[parseInt(k)] = v;
+          }
+        });
       }
     }catch(e){}
 
@@ -2876,6 +2882,15 @@ function showApp(){
   }, {once:false});
 
   selDay=new Date().getDay();
+  // ── localStorage에 남아있을 수 있는 임시 루틴 키(HANGOVER/QUICK 등) 정리 ──
+  const _defaults={0:'REST',1:'A',2:'B',3:'C',4:'D',5:'E',6:'F'};
+  let _dsFixed=false;
+  [0,1,2,3,4,5,6].forEach(d=>{
+    if(DAY_SCHED[d]!=='REST' && !RT[DAY_SCHED[d]]){
+      DAY_SCHED[d]=_defaults[d]; _dsFixed=true;
+    }
+  });
+  if(_dsFixed){ try{ localStorage.setItem('fitlog-day-sched',JSON.stringify(DAY_SCHED)); }catch(e){} }
   initSetData(DAY_SCHED[selDay]);
   renderHome(); renderWorkout(); renderCalendar(); renderLog(); renderStats();
 
@@ -3427,6 +3442,21 @@ function renderWorkout(){
     bottom.style.display='none';document.getElementById('prog-txt').textContent='휴식일';document.getElementById('prog-fill').style.width='0%';return;
   }
   bottom.style.display='block';
+  // ── rt가 없으면 (루틴 키 불일치) 안전하게 처리 ──
+  if(!rt){
+    console.error('[FitLog] renderWorkout: RT에 없는 키 =', tk, '/ DAY_SCHED =', JSON.stringify(DAY_SCHED));
+    // DAY_SCHED를 기본값으로 리셋하고 재시도
+    const fallbackTk = ['A','B','C','D','E','F'].find(k=>RT[k]) || null;
+    if(fallbackTk){
+      DAY_SCHED[selDay] = fallbackTk;
+      try{ localStorage.setItem('fitlog-day-sched', JSON.stringify(DAY_SCHED)); }catch(e){}
+      showToast('⚠️ 루틴 설정이 초기화됐어요 ('+tk+'→'+fallbackTk+')','info');
+      renderWorkout(); // 재귀 1회
+    } else {
+      content.innerHTML='<div style="padding:30px;text-align:center;color:var(--muted);">루틴을 불러올 수 없습니다.<br>설정에서 루틴을 재설정해주세요.</div>';
+    }
+    return;
+  }
   let html='<div class="rh '+rt.color+'"><div class="rh-lbl">'+rt.label+'</div><div class="rh-title">'+rt.title+'</div><div class="rh-muscles">'+rt.muscles.map(m=>'<span class="mtag">'+m+'</span>').join('')+'</div></div>';
   // 섹션 필터 적용
   const activeSections = rt.sections.filter((_,si)=>{
@@ -9573,6 +9603,7 @@ function applyHangoverRoutine(){
     sections:[{n:'회복 운동',exs:r.exs.map(e=>({n:e.n,d:e.d,tags:['회복'],w:[],sets:e.time?0:3}))}]
   };
   DAY_SCHED[selDay]='HANGOVER';
+  // HANGOVER는 임시 키이므로 localStorage에 저장하지 않음
   document.getElementById('hangover-modal').classList.remove('open');
   // 배너 표시
   const banner=document.getElementById('special-mode-banner');
@@ -9651,6 +9682,7 @@ function applyQuickRoutine(){
     sections:[{n:'핵심 운동',exs:r.exs}]
   };
   DAY_SCHED[selDay]='QUICK';
+  // QUICK은 임시 키이므로 localStorage에 저장하지 않음
   document.getElementById('quick-modal').classList.remove('open');
   const banner=document.getElementById('special-mode-banner');
   banner.style.display='block';
@@ -9660,9 +9692,12 @@ function applyQuickRoutine(){
   showToast('⚡ '+_quickMinutes+'분 압축 루틴 시작!','success');
 }
 function clearSpecialMode(){
-  const orig=['REST','A','B','C','D','E','F'];
-  // localStorage에서 원래 스케줄 복원
-  try{const ds=JSON.parse(localStorage.getItem('fitlog-day-sched')||'{}');if(Object.keys(ds).length>0)Object.keys(ds).forEach(k=>{DAY_SCHED[parseInt(k)]=ds[k];});}catch(e){}
+  // HANGOVER/QUICK 등 임시 키를 원래 기본값으로 되돌림
+  const defaults={0:'REST',1:'A',2:'B',3:'C',4:'D',5:'E',6:'F'};
+  [0,1,2,3,4,5,6].forEach(d=>{
+    if(!RT[DAY_SCHED[d]]) DAY_SCHED[d]=defaults[d];
+  });
+  try{ localStorage.setItem('fitlog-day-sched', JSON.stringify(DAY_SCHED)); }catch(e){}
   document.getElementById('special-mode-banner').style.display='none';
   initSetData(DAY_SCHED[selDay]);renderWorkout();
   showToast('원래 루틴으로 복귀했어요','info');
