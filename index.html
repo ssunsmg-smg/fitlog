@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- fitlog v3.3 build:20260611-fix5 -->
+<!-- fitlog v3.3 build:20260611-fix6 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -2782,10 +2782,12 @@ async function initApp(user){
       if(savedDS){
         const ds = JSON.parse(savedDS);
         Object.keys(ds).forEach(k=>{
+          const idx = parseInt(k);
+          if(isNaN(idx)) return; // NaN 키 무시
           const v = ds[k];
           // RT에 없는 키는 복원하지 않음 (HANGOVER/QUICK 등 임시 루틴 제외)
           if(v==='REST' || RT[v]){
-            DAY_SCHED[parseInt(k)] = v;
+            DAY_SCHED[idx] = v;
           }
         });
       }
@@ -2807,8 +2809,8 @@ async function initApp(user){
       try{
         const _rtObj = JSON.parse(_rtBackup);
         if(_rtObj && Object.keys(_rtObj).length > 0){
-          ['A','B','C','D','E','F'].forEach(rk=>{ delete RT[rk]; });
-          Object.keys(_rtObj).forEach(rk=>{ RT[rk] = _rtObj[rk]; });
+          // delete 없이 커스텀 백업 키만 덮어씀 → 백업에 없는 키(D 등)는 RT_BASE 유지
+          Object.keys(_rtObj).forEach(rk=>{ if(_rtObj[rk] && _rtObj[rk].sections) RT[rk] = _rtObj[rk]; });
         }
       }catch(e){ console.warn('커스텀 루틴 복원 실패',e); }
     }
@@ -2885,6 +2887,8 @@ function showApp(){
   // ── localStorage에 남아있을 수 있는 임시 루틴 키(HANGOVER/QUICK 등) 정리 ──
   const _defaults={0:'REST',1:'A',2:'B',3:'C',4:'D',5:'E',6:'F'};
   let _dsFixed=false;
+  // NaN 키 제거
+  Object.keys(DAY_SCHED).forEach(k=>{ if(isNaN(parseInt(k))){ delete DAY_SCHED[k]; _dsFixed=true; } });
   [0,1,2,3,4,5,6].forEach(d=>{
     if(DAY_SCHED[d]!=='REST' && !RT[DAY_SCHED[d]]){
       DAY_SCHED[d]=_defaults[d]; _dsFixed=true;
