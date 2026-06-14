@@ -23,7 +23,7 @@
        L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
        L 1899~ 끝  : JavaScript (앱 로직 전체)
      ████████████████████████████████████████████████████████████████ -->
-<!-- fitlog v3.3 build:20260611-fix8 -->
+<!-- fitlog v3.3 build:20260614-fix9 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -4382,21 +4382,43 @@ async function doSaveRecord(silent=false){
       return RT[tk]?.sections[si]?.exs[ei]?.n||'';
     }).filter(Boolean)
   );
-  // allSets에 없는 체크 운동을 추가
   checkedExNames.forEach(exName=>{
     if(!allSets.some(s=>s.ex===exName)){
       allSets.push({ex:exName,set:1,weight:'',reps:'',done:true});
     }
   });
-  const exDone=document.querySelectorAll('.ex-chk.done').length;
-  const exTotal=document.querySelectorAll('.ex-chk').length;
-  const memo=document.getElementById('memo-inp').value;
-  // 운동한 근육 태그 추출 (피로도 추적)
-  const musclesDone = [...new Set(allSets.flatMap(s=>{
+
+  // ── 같은 날 기존 기록과 병합 (덮어쓰지 않고 합산) ──
+  const existingRec = records.find(r=>r.date===ds);
+  let mergedSets = [...allSets];
+  let mergedExDone = document.querySelectorAll('.ex-chk.done').length;
+  let mergedExTotal = document.querySelectorAll('.ex-chk').length;
+  if(existingRec && existingRec.sets){
+    // 기존 기록에서 이번 setData에 없는 운동만 추가 (중복 방지)
+    const currentExNames = new Set(allSets.map(s=>s.ex));
+    const prevOnlySets = existingRec.sets.filter(s=>!currentExNames.has(s.ex));
+    mergedSets = [...prevOnlySets, ...allSets];
+    // exDone/exTotal도 합산
+    const prevExNames = new Set(existingRec.sets.map(s=>s.ex));
+    const newExNames = new Set(allSets.map(s=>s.ex));
+    const totalExNames = new Set([...prevExNames, ...newExNames]);
+    mergedExTotal = Math.max(mergedExTotal, totalExNames.size);
+    mergedExDone = totalExNames.size;
+  }
+
+  const exDone = mergedExDone;
+  const exTotal = mergedExTotal;
+  // 근육 태그 추출 (병합된 세트 기준)
+  const musclesDone = [...new Set(mergedSets.flatMap(s=>{
     const ex=EX_LIB.find(e=>e.n===s.ex);
     return ex?(ex.tags||[]):[];
   }))];
-  const rec={id:Date.now(),date:ds,type:tk,exDone,exTotal,sets:allSets,muscles:musclesDone,cond:selCond,memo,phase:'phase2'};
+  // 루틴 타입: 기존 기록이 있으면 타입 합산 (예: CARDIO_TODAY + 추가운동)
+  const recType = (existingRec && existingRec.type && existingRec.type !== tk)
+    ? existingRec.type + '+' + tk
+    : tk;
+  const memo=document.getElementById('memo-inp')?.value||'';
+  const rec={id:existingRec?existingRec.id:Date.now(),date:ds,type:recType,exDone,exTotal,sets:mergedSets,muscles:musclesDone,cond:selCond,memo,phase:'phase2'};
 
   // ── 1RM 자동 갱신: 주요 운동 감지 후 추정값 업데이트 ──
   const ORM_NAME_MAP = {
@@ -4410,7 +4432,7 @@ async function doSaveRecord(silent=false){
     '바벨 컬':'curl','덤벨 컬':'curl','케이블 컬':'curl',
   };
   let ormUpdated = false;
-  allSets.forEach(s=>{
+  mergedSets.forEach(s=>{
     const key = ORM_NAME_MAP[s.ex];
     if(!key || !s.weight || !s.reps) return;
     const estimated = calc1RM(parseFloat(s.weight), parseInt(s.reps));
@@ -4440,7 +4462,7 @@ async function doSaveRecord(silent=false){
       try{localStorage.removeItem('fitlog_setData');localStorage.removeItem('fitlog_chkData');}catch(e){}
     }
     const ormMsg = ormUpdated ? '\n📊 1RM 추정값이 자동 갱신됐어요!' : '';
-    const setCount = allSets.filter(s=>s.done).length;
+    const setCount = mergedSets.filter(s=>s.done).length;
     if(!silent) showToast(`✅ 저장완료 · ${exDone}/${exTotal} 운동 · ${setCount}세트${ormMsg}`,'success');
     else {
       // 자동저장 성공 시 sync-dot 잠깐 초록으로 표시
@@ -4666,9 +4688,9 @@ function renderLog(){
     return`<div class="log-item" id="log-item-${idx}">
       <div class="log-item-hdr" onclick="toggleLogDetail(${idx})">
         <div class="log-date">${rec.date}</div>
-        <span class="log-badge b${rec.type}">Type ${rec.type}</span>
+        <span class="log-badge b${rec.type.split('+')[0]}">Type ${rec.type.includes('+')?'복합':rec.type}</span>
         <div class="log-info">
-          <div class="log-name">${RT[rec.type]?.title||rec.type}</div>
+          <div class="log-name">${rec.type.includes('+')?'복합 운동 기록':(RT[rec.type]?.title||rec.type==='CARDIO_TODAY'?'🏃 유산소 루틴':rec.type)}</div>
           <div class="log-sub">${rec.exDone}/${rec.exTotal}완료 · ${condStr}${memoStr}</div>
         </div>
         <div class="log-chevron" id="log-chev-${idx}">▼</div>
