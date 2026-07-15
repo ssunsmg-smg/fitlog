@@ -23,7 +23,7 @@
        L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
        L 1899~ 끝  : JavaScript (앱 로직 전체)
      ████████████████████████████████████████████████████████████████ -->
-<!-- fitlog v3.3 build:20260715-fix13 -->
+<!-- fitlog v3.3 build:20260618-fix11 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -3213,47 +3213,36 @@ function renderSets(key,cId){
   const prevSets=prevRec?prevRec.sets.filter(s=>s.ex===exName):[];
   const prevDate=prevRec?prevRec.date:'';
   const nw=isNoWeightEx(exName);
-  const isTimed = timerSec > 0; // 초 단위 운동 (플랭크, 사이드플랭크 등)
   let best1RM=0;
   if(!nw) sets.forEach(s=>{if(s.weight&&s.reps){const v=calc1RM(s.weight,s.reps);if(v>best1RM)best1RM=v;}});
   const rmHtml=best1RM>0?'<div class="rm-badge">추정 1RM <strong>'+best1RM+'kg</strong> · 목표 <strong>'+Math.round(best1RM*0.75*10)/10+'kg×10회</strong></div>':'';
   const COL=nw?'30px 90px 1fr 36px':'30px 90px 1fr 64px 36px';
-  // 헤더: 초 단위 운동이면 "이전 초", 맨몸이면 "이전 횟수", 중량이면 "pre kg/ea"
-  const hdrPreLabel = isTimed ? '이전 초' : (nw ? '이전 횟수' : 'pre kg/ea');
-  const hdrRepsLabel = isTimed ? '초' : '횟수';
-  const hdrPre='<div style="color:#f0a500;">'+hdrPreLabel+(prevDate?'<br><span style="font-size:9px;">'+prevDate+'</span>':'')+' </div>';
+  const hdrPre=(nw?'<div style="color:#f0a500;">이전 횟수':'<div style="color:#f0a500;">pre kg/ea')+(prevDate?'<br><span style="font-size:9px;">'+prevDate+'</span>':'')+' </div>';
   const hdrKg=nw?'':'<div>today kg</div>';
   let rows='';
   sets.forEach(function(s,i){
     const pw=prevSets[i]&&prevSets[i].weight?prevSets[i].weight:'';
     const pr=prevSets[i]&&prevSets[i].reps?prevSets[i].reps:'';
     const pd=prevSets[i]&&prevSets[i].done;
-    // preLabel: 초단위=초 표시, 맨몸=횟수, 중량=kg/회, 체크전용=✓
-    const preLabel = isTimed
-      ? (pr ? pr+'초' : (pd ? '✓' : '-'))
-      : nw
-        ? (pr ? pr+'회' : (pd ? '✓' : '-'))
-        : (pw||pr ? (pw||'-')+'/'+(pr||'-') : (pd ? '✓' : '-'));
+    // preLabel: 중량운동=kg/회, 맨몸=횟수, 체크전용=✓or-
+    const preLabel=nw?(pr?pr+'회':(pd?'✓':'-')):(pw||pr?(pw||'-')+'/'+(pr||'-'):(pd?'✓':'-'));
     const hasUp=!nw&&s.weight&&pw&&parseFloat(s.weight)>parseFloat(pw);
     const hasDn=!nw&&s.weight&&pw&&parseFloat(s.weight)<parseFloat(pw);
-    const repsUp=(nw||isTimed)&&s.reps&&pr&&parseInt(s.reps)>parseInt(pr);
+    const repsUp=nw&&s.reps&&pr&&parseInt(s.reps)>parseInt(pr);
     const bg=s.done?'#4caf7d10':'transparent';
     const kgInp=nw?'':buildKgInput(s.weight,pw,key,i,cId);
     const repsOi=buildRepsOninput(nw,key,i,cId);
-    // 초 단위 운동: placeholder를 '초'로, 기본값을 timerSec으로
-    const repsPlaceholder = isTimed ? (pr||timerSec+'') : (pr||'회');
-    const repsVal = s.reps || (isTimed && timerSec ? timerSec : '');
     rows+='<div id="sr-'+key+'-'+i+'" style="display:grid;grid-template-columns:'+COL+';gap:4px;align-items:center;margin-bottom:4px;background:'+bg+';border-radius:6px;padding:2px;">'
       +'<div style="text-align:center;font-size:13px;font-weight:700;color:'+(s.done?'var(--green)':'var(--text)')+';">'+(i+1)+'</div>'
       +'<div style="text-align:center;font-size:12px;font-family:var(--mono);color:'+((pw||pr||pd)?'#f0a500':'var(--border)')+';font-weight:'+((pw||pr||pd)?'700':'400')+';padding:6px 2px;background:var(--surface2);border-radius:6px;">'
       +preLabel+(hasUp?'<span style="color:var(--green);font-size:9px;"> ▲</span>':'')+(hasDn?'<span style="color:#e55;font-size:9px;"> ▼</span>':'')+(repsUp?'<span style="color:var(--green);font-size:9px;"> ▲</span>':'')+'</div>'
       +kgInp
-      +'<input class="set-inp '+(s.reps?'filled':'')+'" type="number" value="'+repsVal+'" placeholder="'+repsPlaceholder+'" min="0" step="1" style="text-align:center;font-size:13px;" oninput="'+repsOi+'"/>'
+      +'<input class="set-inp '+(s.reps?'filled':'')+'" type="number" value="'+(s.reps||'')+'" placeholder="'+(pr||'회')+'" min="0" step="1" style="text-align:center;font-size:13px;" oninput="'+repsOi+'"/>'
       +'<button class="set-ok '+(s.done?'done':'')+' " onclick="toggleSetDone(\'' + key + '\',' + i + ')">✓</button>'
       +(timerSec>0?'<button onclick="startTimerFromKey('+timerSec+',\'' + key + '\')" style="font-size:10px;padding:2px 6px;border-radius:6px;background:#3ecf8e22;border:1px solid #3ecf8e44;color:var(--green);cursor:pointer;">⏱</button>':'')
       +'</div>';
   });
-  el.innerHTML='<div style="display:grid;grid-template-columns:'+COL+';gap:4px;padding:7px 4px 5px;font-size:10px;color:var(--text);font-family:var(--mono);text-align:center;border-bottom:1px solid var(--border);margin-bottom:5px;"><div>회</div>'+hdrPre+hdrKg+'<div>'+hdrRepsLabel+'</div><div>체크</div></div>'+rows+rmHtml+'<button class="add-set" onclick="addSet(\'' + key + '\',\'' + cId + '\')">+ 세트 추가</button>';
+  el.innerHTML='<div style="display:grid;grid-template-columns:'+COL+';gap:4px;padding:7px 4px 5px;font-size:10px;color:var(--text);font-family:var(--mono);text-align:center;border-bottom:1px solid var(--border);margin-bottom:5px;"><div>회</div>'+hdrPre+hdrKg+'<div>횟수</div><div>체크</div></div>'+rows+rmHtml+'<button class="add-set" onclick="addSet(\'' + key + '\',\'' + cId + '\')">+ 세트 추가</button>';
 }
 
 
@@ -9754,6 +9743,7 @@ function closeTimerOverlay(){
 
 // 타이머 완료 후 "완료·운동 체크" 버튼 클릭
 function ovDoneAndClose(){
+  // 운동 체크 (이미 됐을 수 있음)
   if(_timerState.exSiEi){
     const parts=_timerState.exSiEi.split('-');
     const si=parts[0],ei=parts[1];
@@ -9762,26 +9752,15 @@ function ovDoneAndClose(){
     if(chk&&!chk.classList.contains('done')){
       chk.classList.add('done');
       if(card) card.classList.add('done');
-    }
-    const key=selDay+'-'+si+'-'+ei;
-    if(setData[key]){
-      setData[key].forEach(function(s){
-        s.done=true;
-        // 초 단위 운동이면 reps에 초값 자동 입력 (미입력 세트만)
-        if(!s.reps && setData[key]._sec>0){
-          s.reps=String(setData[key]._sec);
-        }
-      });
-      // UI 세트 체크 + 초값 업데이트
-      document.querySelectorAll('#ec-'+si+'-'+ei+' .set-ok').forEach(function(b){b.classList.add('done');});
-      if(setData[key]._sec>0){
-        const cId='sets-'+key;
-        renderSets(key, cId);
+      const key=selDay+'-'+si+'-'+ei;
+      if(setData[key]){
+        setData[key].forEach(function(s){s.done=true;});
+        document.querySelectorAll('#ec-'+si+'-'+ei+' .set-ok').forEach(function(b){b.classList.add('done');});
       }
+      saveChkLocal();saveSetDataLocal();updateProg();
+      clearTimeout(window._autoSaveTimer);
+      window._autoSaveTimer=setTimeout(function(){doSaveRecord(true);},1500);
     }
-    saveChkLocal();saveSetDataLocal();updateProg();
-    clearTimeout(window._autoSaveTimer);
-    window._autoSaveTimer=setTimeout(function(){doSaveRecord(true);},1500);
   }
   closeTimerOverlay();
 }
