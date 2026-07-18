@@ -23,7 +23,7 @@
        L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
        L 1899~ 끝  : JavaScript (앱 로직 전체)
      ████████████████████████████████████████████████████████████████ -->
-<!-- fitlog v3.3 build:20260718-fix17 -->
+<!-- fitlog v3.3 build:20260718-fix18 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -3126,8 +3126,9 @@ function exKey(si,ei){return`${selDay}-${si}-${ei}`;}
 //   NO_WEIGHT → [{weight:'',reps:'',done:false}] × 세트수 (d에서 파싱)
 //   그 외(타이머운동) → setData 미등록
 function initSetData(tk){
-  setData={};const rt=RT[tk];if(!rt||!rt.sections)return;
-  // setTimerSec: exKey → 초 수 (JSON 직렬화 안전한 별도 객체)
+  setData={};
+  window._currentSetTk = tk; // renderSets에서 사용
+  const rt=RT[tk];if(!rt||!rt.sections)return;
   window.setTimerSec = window.setTimerSec || {};
   rt.sections.forEach((sec,si)=>sec.exs.forEach((ex,ei)=>{
     const k=exKey(si,ei);
@@ -3140,7 +3141,6 @@ function initSetData(tk){
       const minMatch = ex.d&&ex.d.match(/(\d+)\s*분/);
       const secVal = secMatch?parseInt(secMatch[1]):(minMatch?parseInt(minMatch[1])*60:0);
       setData[k]=Array.from({length:cnt},()=>({weight:'',reps:'',done:false}));
-      // ✅ 배열 프로퍼티 대신 별도 Map에 저장 (JSON 직렬화 후에도 유지됨)
       if(secVal>0) window.setTimerSec[k]=secVal;
       else delete window.setTimerSec[k];
     }
@@ -3207,10 +3207,10 @@ function isNoWeightEx(n){ return NO_WEIGHT_EXNAMES.has(n); }
 function renderSets(key,cId){
   const sets=setData[key];if(!sets)return;
   const el=document.getElementById(cId);if(!el)return;
-  // key = "{dow}-{si}-{ei}" → 요일(dow)로 정확한 루틴 조회
+  // key = "{dow}-{si}-{ei}" → tk는 현재 세트데이터의 루틴키 사용
   const parts=key.split('-');
-  const keyDow=parseInt(parts[0]),si=parseInt(parts[1]),ei=parseInt(parts[2]);
-  const tk = makeupActive ? makeupActive.missedTk : DAY_SCHED[keyDow];
+  const si=parseInt(parts[1]),ei=parseInt(parts[2]);
+  const tk = makeupActive ? makeupActive.missedTk : (window._currentSetTk || DAY_SCHED[selDay]);
   const exName = RT[tk]?.sections[si]?.exs[ei]?.n || '';
   // 초 단위 운동: d 필드에서 직접 파싱 (JSON직렬화 후에도 유지)
   const exDef = RT[tk]?.sections[si]?.exs[ei];
@@ -3697,8 +3697,9 @@ function renderWorkout(){
   };
   sel.addEventListener('click', sel.clickHandler, false);
   const content=document.getElementById('routine-content'),bottom=document.getElementById('bottom-bar');
-  // 보충 운동 진행 중이면 휴일이어도 루틴 표시
-  if(tk==='REST' && !makeupActive){
+  const todayDow = new Date().getDay();
+  // 휴식화면: selDay가 오늘이고 REST인 경우만 (다른 요일 조회 중이면 그 루틴 표시)
+  if(tk==='REST' && !makeupActive && selDay===todayDow){
     content.innerHTML='<div class="rest-card"><div style="font-size:34px;margin-bottom:10px;">😴</div><div style="font-size:17px;font-weight:700;margin-bottom:7px;">오늘은 휴식일!</div><div style="font-size:13px;color:var(--muted);line-height:1.9;">근육은 쉴 때 성장합니다<br>가벼운 산책 20분 OK<br>단백질 식사 꼭 챙기기</div></div>'
       + buildMakeupCard(selDay);
     bottom.style.display='none';document.getElementById('prog-txt').textContent='휴식일';document.getElementById('prog-fill').style.width='0%';return;
