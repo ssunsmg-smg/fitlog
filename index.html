@@ -23,7 +23,7 @@
        L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
        L 1899~ 끝  : JavaScript (앱 로직 전체)
      ████████████████████████████████████████████████████████████████ -->
-<!-- fitlog v3.3 build:20260718-fix16 -->
+<!-- fitlog v3.3 build:20260718-fix17 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -3075,7 +3075,15 @@ function showApp(){
   renderHome(); renderWorkout(); renderCalendar(); renderLog(); renderStats();
 
   // 1분마다 날짜 체크
-  setInterval(()=>{const nd=new Date().getDay();if(nd!==selDay&&!makeupActive){selDay=nd;initSetData(DAY_SCHED[selDay]);renderHome();renderWorkout();}},60000);
+  // 자정 넘어 날짜 바뀔 때만 자동 갱신 (사용자가 수동으로 다른 요일 선택 중이면 건너뜀)
+  let _lastAutoDay = new Date().getDay();
+  setInterval(()=>{
+    const nd=new Date().getDay();
+    if(nd !== _lastAutoDay){ // 실제로 날짜가 바뀐 경우에만
+      _lastAutoDay = nd;
+      if(!makeupActive){ selDay=nd; initSetData(DAY_SCHED[selDay]); renderHome(); renderWorkout(); }
+    }
+  },60000);
 
   // 저장된 재활 단계 복원
   curLevel = parseInt(localStorage.getItem('fitlog-level')||'1');
@@ -3163,6 +3171,7 @@ const NO_WEIGHT_EXNAMES = new Set([
   '카프 레이즈 (맨몸)','점프 스쿼트','박스 점프',
   // ── 재활/척추/경추 ──
   '경추 강화','목 등척성 운동','목 스트레칭','맥켄지 운동','척추 이완','척추 회전 스트레칭 (누워)',
+  '친 턱 당기기 (Chin Tuck)','친턱당기기','목 등척성 운동','폼롤러 흉추 이완','누워서 무릎 당기기',
   '코어','관절 돌리기','고양이-소 스트레칭','박스 브리딩','호흡·명상','이완',
   // ── 스트레칭/쿨다운 ──
   '가슴 열기 스트레칭','어깨 가로 스트레칭','햄스트링 스트레칭 (앉아)','고관절 굴곡근 스트레칭 (런지)',
