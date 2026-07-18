@@ -23,7 +23,7 @@
        L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
        L 1899~ 끝  : JavaScript (앱 로직 전체)
      ████████████████████████████████████████████████████████████████ -->
-<!-- fitlog v3.3 build:20260715-fix14 -->
+<!-- fitlog v3.3 build:20260718-fix15 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -3198,21 +3198,23 @@ function isNoWeightEx(n){ return NO_WEIGHT_EXNAMES.has(n); }
 function renderSets(key,cId){
   const sets=setData[key];if(!sets)return;
   const el=document.getElementById(cId);if(!el)return;
-  // key 구조: "{selDay}-{si}-{ei}" → si, ei로 RT에서 운동명 조회
+  // key = "{dow}-{si}-{ei}" → 요일(dow)로 정확한 루틴 조회
   const parts=key.split('-');
-  const si=parseInt(parts[1]),ei=parseInt(parts[2]);
-  const tk = makeupActive ? makeupActive.missedTk : DAY_SCHED[selDay];
+  const keyDow=parseInt(parts[0]),si=parseInt(parts[1]),ei=parseInt(parts[2]);
+  const tk = makeupActive ? makeupActive.missedTk : DAY_SCHED[keyDow];
   const exName = RT[tk]?.sections[si]?.exs[ei]?.n || '';
-  // 초 단위 운동 판별 (setTimerSec Map에서 조회)
-  const _isTimedEx = (typeof NO_WEIGHT_EXNAMES!=='undefined'&&NO_WEIGHT_EXNAMES.has(exName)&&(window.setTimerSec||{})[key]>0);
-  const timerSec = _isTimedEx ? window.setTimerSec[key] : 0;
+  // 초 단위 운동: d 필드에서 직접 파싱 (setTimerSec 의존 없이)
+  const exDef = RT[tk]?.sections[si]?.exs[ei];
+  const _secMatch = exDef?.d && exDef.d.match(/(\d+)\s*초/);
+  const _minMatch = exDef?.d && exDef.d.match(/(\d+)\s*분/);
+  const timerSec = (_secMatch ? parseInt(_secMatch[1]) : (_minMatch ? parseInt(_minMatch[1])*60 : 0));
+  const isTimed = timerSec > 0 && isNoWeightEx(exName);
   let prevRec=null;
   const _todayDs=getDateForDow(selDay);
   for(const r of (records||[])){if(r.date===_todayDs)continue;if(r.sets){const m=r.sets.find(s=>s.ex===exName);if(m){prevRec=r;break;}}}
   const prevSets=prevRec?prevRec.sets.filter(s=>s.ex===exName):[];
   const prevDate=prevRec?prevRec.date:'';
   const nw=isNoWeightEx(exName);
-  const isTimed = timerSec > 0; // 초 단위 운동 (플랭크, 사이드플랭크 등)
   let best1RM=0;
   if(!nw) sets.forEach(s=>{if(s.weight&&s.reps){const v=calc1RM(s.weight,s.reps);if(v>best1RM)best1RM=v;}});
   const rmHtml=best1RM>0?'<div class="rm-badge">추정 1RM <strong>'+best1RM+'kg</strong> · 목표 <strong>'+Math.round(best1RM*0.75*10)/10+'kg×10회</strong></div>':'';
