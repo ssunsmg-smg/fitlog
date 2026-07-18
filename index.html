@@ -23,7 +23,7 @@
        L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
        L 1899~ 끝  : JavaScript (앱 로직 전체)
      ████████████████████████████████████████████████████████████████ -->
-<!-- fitlog v3.3 build:20260718-fix15 -->
+<!-- fitlog v3.3 build:20260718-fix16 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -2408,7 +2408,7 @@ const RT_BASE={
     sections:[
       {n:'유산소',exs:[{n:'업라이트 바이크',d:'20분 · 저강도',tags:['심폐'],w:['무릎주의'],sets:0}]},
       {n:'경추 강화',exs:[{n:'친 턱 당기기 (Chin Tuck)',d:'3세트 × 15회',tags:['경추굴곡근(주)'],w:[],sets:0},{n:'목 등척성 운동',d:'전후좌우 각 10초 × 3세트',tags:['경추안정근(주)'],w:[],sets:0}]},
-      {n:'척추 이완',exs:[{n:'폼롤러 흉추 이완',d:'등 중간 부분만',tags:['흉추가동성'],w:['허리주의'],sets:0},{n:'고양이-소 스트레칭',d:'10회',tags:['척추유연성'],w:['허리주의'],sets:0},{n:'맥켄지 운동',d:'10회',tags:['요추안정화'],w:['허리주의'],sets:0}]},
+      {n:'척추 이완',exs:[{n:'폼롤러 흉추 이완',d:'등 중간 부분만',tags:['흉추가동성'],w:['허리주의'],sets:0},{n:'고양이-소 스트레칭',d:'10회',tags:['척추유연성'],w:['허리주의'],sets:0},{n:'맥켄지 운동',d:'3세트 × 30초',tags:['요추안정화'],w:['허리주의'],sets:0}]},
       {n:'이완',exs:[{n:'피전 포즈',d:'양쪽 각 60초',tags:['대둔근이완'],w:[],sets:0},{n:'누워서 무릎 당기기',d:'양쪽 각 30초',tags:['허리압박해소'],w:['무릎주의'],sets:0},{n:'밴드 풀어파트',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:0}]}]},
   E:{label:'금요일 · TypeE',title:'전신복합 + 복근 집중',color:'rh-e',muscles:['복직근','복사근','광배근','삼각근'],
     sections:[
@@ -3075,7 +3075,7 @@ function showApp(){
   renderHome(); renderWorkout(); renderCalendar(); renderLog(); renderStats();
 
   // 1분마다 날짜 체크
-  setInterval(()=>{const nd=new Date().getDay();if(nd!==selDay){selDay=nd;initSetData(DAY_SCHED[selDay]);renderHome();renderWorkout();}},60000);
+  setInterval(()=>{const nd=new Date().getDay();if(nd!==selDay&&!makeupActive){selDay=nd;initSetData(DAY_SCHED[selDay]);renderHome();renderWorkout();}},60000);
 
   // 저장된 재활 단계 복원
   curLevel = parseInt(localStorage.getItem('fitlog-level')||'1');
@@ -3203,7 +3203,7 @@ function renderSets(key,cId){
   const keyDow=parseInt(parts[0]),si=parseInt(parts[1]),ei=parseInt(parts[2]);
   const tk = makeupActive ? makeupActive.missedTk : DAY_SCHED[keyDow];
   const exName = RT[tk]?.sections[si]?.exs[ei]?.n || '';
-  // 초 단위 운동: d 필드에서 직접 파싱 (setTimerSec 의존 없이)
+  // 초 단위 운동: d 필드에서 직접 파싱 (JSON직렬화 후에도 유지)
   const exDef = RT[tk]?.sections[si]?.exs[ei];
   const _secMatch = exDef?.d && exDef.d.match(/(\d+)\s*초/);
   const _minMatch = exDef?.d && exDef.d.match(/(\d+)\s*분/);
@@ -3397,11 +3397,10 @@ function openMissedDayPicker(){
     }
   }
   if(missed.length===0){ showToast('이번 주 모든 루틴을 완료했어요! 🎉','success'); return; }
-  // 첫 번째 미완료 루틴으로 이동
   const m = missed[0];
-  const todayDow2 = new Date().getDay();
-  DAY_SCHED[todayDow2] = m.tk;
-  selDay = todayDow2;
+  // ✅ selDay를 오늘로 유지, makeupActive로 보충 운동 추적
+  makeupActive = { restDay: todayDow, missedDay: m.dow, missedTk: m.tk, missedDate: m.ds };
+  selDay = todayDow; // 오늘 요일 유지 (저장 시 날짜는 오늘로)
   initSetData(m.tk);
   renderWorkout();
   document.querySelectorAll('.page').forEach(pg=>pg.classList.remove('active'));
@@ -5219,7 +5218,7 @@ const EX_LIB=[
   {n:'크로스컨트리 스키 머신',d:'20분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'gym'},
   // ── 재활 ──
   {n:'고양이-소 스트레칭',d:'10회',tags:['척추유연성'],w:['허리주의'],sets:0,cat:'재활',type:'both'},
-  {n:'맥켄지 운동',d:'10회',tags:['요추안정화'],w:['허리주의'],sets:0,cat:'재활',type:'both'},
+  {n:'맥켄지 운동',d:'3세트 × 30초',tags:['요추안정화'],w:['허리주의'],sets:0,cat:'재활',type:'both'},
   {n:'피전 포즈',d:'양쪽 각 60초',tags:['대둔근이완'],w:[],sets:0,cat:'재활',type:'both'},
   {n:'폼롤러 흉추 이완',d:'등 중간 부분만',tags:['흉추가동성'],w:['허리주의'],sets:0,cat:'재활',type:'both'},
   {n:'친 턱 당기기 (Chin Tuck)',d:'3세트 × 15회',tags:['경추굴곡근(주)'],w:[],sets:0,cat:'재활',type:'both'},
