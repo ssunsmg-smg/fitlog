@@ -23,7 +23,7 @@
        L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
        L 1899~ 끝  : JavaScript (앱 로직 전체)
      ████████████████████████████████████████████████████████████████ -->
-<!-- fitlog v4.1 build:20260801-abs1 · 복근 갈래별 블록 + 부위별 휴식 + 목적 우선 배분(manual-v8) -->
+<!-- fitlog v4.2 build:20260801-sync1 · 기기 간 설정 동기화(요일·시간·부상·집중부위·기구·1RM·루틴)(manual-v8) -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -179,11 +179,28 @@
       const v = DAY_SCHED[i];
       cleanSched[i] = validKeys.has(v) ? v : ['REST','A','B','C','D','E','F'][i] || 'REST';
     });
+    // ── 루틴을 만드는 데 쓰이는 값은 전부 함께 저장한다 ──
+    // 예전에는 level·daySchedule·classType·purposes 네 개만 올라가서,
+    // PC에서 45분·부상없음으로 만든 루틴과 폰에서 60분·무릎부상으로 만든 루틴이
+    // 서로 다르게 나왔다. 기기가 달라도 같은 루틴이 나와야 한다.
+    const ls = function(k, d){ try{ const v = localStorage.getItem(k); return v === null ? d : v; }catch(e){ return d; } };
+    const lj = function(k, d){ try{ return JSON.parse(localStorage.getItem(k) || 'null') || d; }catch(e){ return d; } };
     const payload = {
       level: curLevel,
       daySchedule: cleanSched,
       classType: typeof classType !== 'undefined' ? classType : '기구운동',
       purposes: typeof classPurposes !== 'undefined' ? classPurposes : [],
+      // 아래부터가 새로 함께 저장되는 값들
+      assignedDays: lj('fitlog-assigned-days', []),
+      workoutTime : parseInt(ls('fitlog-workout-time', '45')) || 45,
+      injuries    : lj('fitlog-injuries', []),
+      focusParts  : lj('fitlog-focus-parts', []),
+      myGym       : lj('fitlog-my-gym', null),
+      sessionMode : ls('fitlog-session-mode', ''),
+      rehabStage  : parseInt(ls('fitlog-rehab-stage', '2')) || 2,
+      orm1RM      : lj('fitlog-1rm', {}),
+      engineVer   : (typeof MANUAL_ENGINE_VER !== 'undefined' ? MANUAL_ENGINE_VER : ''),
+      routine     : (rt && typeof rt === 'object') ? rt : null,
       savedAt: new Date().toISOString()
     };
     // localStorage 즉시 저장 (항상 성공)
@@ -225,7 +242,38 @@
       classPurposes = data.purposes;
       localStorage.setItem('fitlog-purposes', JSON.stringify(classPurposes));
     }
-    // RT는 null 반환 → initApp에서 SPLIT_ROUTINES 기반으로 재구성
+
+    // ── 기기 간 동기화: 루틴을 만드는 값들을 전부 이 기기에 반영 ──
+    // 이 기기가 더 최신이면 덮어쓰지 않는다 (방금 바꾼 설정이 사라지면 안 되니까)
+    let localAt = '';
+    try{ localAt = (JSON.parse(localStorage.getItem('fitlog-routine-backup') || '{}') || {}).savedAt || ''; }catch(e){}
+    const remoteNewer = !localAt || !data.savedAt || data.savedAt >= localAt;
+    if (remoteNewer) {
+      const put  = function(k, v){ if(v !== undefined && v !== null) try{ localStorage.setItem(k, String(v)); }catch(e){} };
+      const putJ = function(k, v){ if(v !== undefined && v !== null) try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
+      if (Array.isArray(data.assignedDays) && data.assignedDays.length) putJ('fitlog-assigned-days', data.assignedDays);
+      if (data.workoutTime) put('fitlog-workout-time', data.workoutTime);
+      if (Array.isArray(data.injuries))   putJ('fitlog-injuries',    data.injuries);
+      if (Array.isArray(data.focusParts)) putJ('fitlog-focus-parts', data.focusParts);
+      if (data.myGym)      putJ('fitlog-my-gym', data.myGym);
+      if (data.orm1RM)     putJ('fitlog-1rm',    data.orm1RM);
+      if (data.rehabStage) put('fitlog-rehab-stage', data.rehabStage);
+      if (data.sessionMode) put('fitlog-session-mode', data.sessionMode);
+      else { try{ localStorage.removeItem('fitlog-session-mode'); }catch(e){} }
+      // 클라우드 루틴은 같은 엔진 버전일 때만 그대로 쓴다
+      if (data.routine && data.engineVer && typeof MANUAL_ENGINE_VER !== 'undefined'
+          && data.engineVer === MANUAL_ENGINE_VER) {
+        try{
+          localStorage.setItem('fitlog-rt-custom', JSON.stringify(data.routine));
+          localStorage.setItem('fitlog-rt-engine', data.engineVer);
+        }catch(e){}
+      } else {
+        // 버전이 다르면 폐기하고 이 기기에서 지금 설정으로 다시 만든다
+        try{ localStorage.removeItem('fitlog-rt-custom'); }catch(e){}
+      }
+      localStorage.setItem('fitlog-routine-backup', JSON.stringify(data));
+    }
+    // RT는 null 반환 → initApp에서 재구성 (위에서 복원한 값들이 그대로 쓰인다)
     return null;
   };
   window.saveDietRecord = async (date, dietData) => {
@@ -1604,6 +1652,13 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           box-shadow:0 4px 20px #4caf7d55;letter-spacing:.3px;">
           ✅ 모든 설정 저장 · 운동 시작하기
         </button>
+        <div style="margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);">
+          <div style="font-size:12px;font-weight:800;color:var(--blue);margin-bottom:5px;">📱 기기 간 동기화</div>
+          <div id="sync-info" style="font-size:10px;color:var(--muted);line-height:1.7;margin-bottom:8px;"></div>
+          <button id="sync-btn" onclick="m_pullSettings()" style="width:100%;padding:10px;border-radius:8px;
+            border:1px solid var(--blue);background:#4a9eff15;color:var(--blue);font-size:12px;font-weight:700;
+            cursor:pointer;font-family:var(--font);">🔄 다른 기기와 동기화</button>
+        </div>
         <div id="engine-ver-badge" style="margin-top:10px;font-size:10px;color:var(--muted);font-family:var(--mono);text-align:center;line-height:1.7;"></div>
       </div>
     </div>
@@ -3222,12 +3277,14 @@ function showApp(){
     updateTimeLabel();
   }catch(e){}
 
+  try{ m_updateSyncInfo(); }catch(e){}
+
   // ── 매뉴얼 엔진 버전 표시 + 최초 1회 업그레이드 안내 ──
   try{
     const _vb = document.getElementById('engine-ver-badge');
     if(_vb){
       const _g = window._manualGuide;
-      _vb.innerHTML = 'FitLog v4.1 · build 20260801-abs1<br>운동 처방 엔진: 매뉴얼 + 세션 모드 + 개인화 + 목적 반영 (' + MANUAL_ENGINE_VER + ')'
+      _vb.innerHTML = 'FitLog v4.2 · build 20260801-sync1<br>운동 처방 엔진: 매뉴얼 + 세션 모드 + 개인화 + 목적 반영 (' + MANUAL_ENGINE_VER + ')'
         + (_g ? '<br>현재 적용: ' + _g.name + ' · ' + _g.split + (_g.estMin ? ' · 1회 약 ' + _g.estMin + '분' : '') : '');
     }
     if(localStorage.getItem('fitlog-manual-upgraded')==='1'){
@@ -3655,6 +3712,7 @@ function updateGymAltText(){
 
 function saveMyGymSettings(){
   localStorage.setItem('fitlog-my-gym', JSON.stringify(myGymEquipment));
+  if(typeof m_syncSettings==='function') m_syncSettings();
   const missing = GYM_EQUIPMENT.filter(e=>myGymEquipment[e.id]===false);
   showToast(
     missing.length===0
@@ -4026,6 +4084,7 @@ function updateTimeLabel(){
 async function applyWorkoutTime(){
   const min = parseInt(document.getElementById('workout-time-sel')?.value || 60);
   try{ localStorage.setItem('fitlog-workout-time', String(min)); }catch(e){}
+  m_syncSettings();
   updateTimeLabel();
   const _p = JSON.parse(localStorage.getItem('fitlog-purposes') || '[]');
   const _d = JSON.parse(localStorage.getItem('fitlog-assigned-days') || 'null');
@@ -7323,7 +7382,7 @@ function selectClassType(type, btn){
   const badge = document.getElementById('class-badge');
   if(badge) badge.textContent = type;
   try{ localStorage.setItem('fitlog-classtype', classType); }catch(e){}
-  markSettingsDirty();
+  markSettingsDirty(); m_syncSettings();
   updateClassPreview();
 }
 
@@ -7368,7 +7427,7 @@ function toggleFocusPart(key){
     focusPartsSel.push(key);
   }
   localStorage.setItem('fitlog-focus-parts', JSON.stringify(focusPartsSel));
-  markSettingsDirty();
+  markSettingsDirty(); m_syncSettings();
   renderFocusBtns();
   updateDayAssignPreview();
 }
@@ -7382,7 +7441,7 @@ function togglePurpose(key, btn){
   // 즉시 저장한다. 예전에는 아래 "적용하기" 버튼을 눌러야만 저장돼서,
   // 목적을 체크해 놓고도 루틴에는 반영되지 않는 일이 있었다.
   try{ localStorage.setItem('fitlog-purposes', JSON.stringify(classPurposes)); }catch(e){}
-  markSettingsDirty();
+  markSettingsDirty(); m_syncSettings();
   renderPurposeBtns();
   updateClassPreview();
   updateDayAssignPreview(); // 목적 바뀌면 요일 미리보기도 즉시 갱신
@@ -10675,6 +10734,59 @@ function m_profileCardHtml(){
 }
 
 // ══════════════════════════════════════════════════════════════════
+// 기기 간 설정 동기화
+// ──────────────────────────────────────────────────────────────────
+// 루틴을 만드는 값(요일·시간·부상·집중부위·보유기구·1RM·모드)이 기기마다
+// 따로 놀면 PC와 폰에서 다른 루틴이 나온다. 값이 바뀔 때마다 올려둔다.
+// ══════════════════════════════════════════════════════════════════
+function m_syncSettings(){
+  try{ if(window.saveRoutine) window.saveRoutine(RT); }catch(e){ console.warn('[FitLog] 설정 동기화 실패', e); }
+}
+// 다른 기기에서 바꾼 설정을 지금 가져온다
+async function m_pullSettings(){
+  const btn = document.getElementById('sync-btn');
+  if(btn){ btn.disabled = true; btn.textContent = '⏳ 불러오는 중...'; }
+  try{
+    // 원격이 항상 이기도록 로컬 시각을 비운다
+    try{ localStorage.removeItem('fitlog-routine-backup'); }catch(e){}
+    await window.loadRoutine();
+    curLevel = parseInt(localStorage.getItem('fitlog-level') || curLevel);
+    try{ selectedInjuries = JSON.parse(localStorage.getItem('fitlog-injuries') || '[]'); }catch(e){}
+    try{ focusPartsSel  = JSON.parse(localStorage.getItem('fitlog-focus-parts') || '[]'); }catch(e){}
+    try{ myGymEquipment = JSON.parse(localStorage.getItem('fitlog-my-gym') || 'null') || myGymEquipment; }catch(e){}
+    try{ orm1RM = JSON.parse(localStorage.getItem('fitlog-1rm') || '{}'); }catch(e){}
+    try{ assignedDays = JSON.parse(localStorage.getItem('fitlog-assigned-days') || '[]'); }catch(e){}
+    const sel = document.getElementById('workout-time-sel');
+    const wt  = localStorage.getItem('fitlog-workout-time');
+    if(sel && wt) sel.value = wt;
+    await rebuildFromSettings();
+    if(typeof initInjuryBtns==='function') initInjuryBtns();
+    if(typeof renderFocusBtns==='function') renderFocusBtns();
+    if(typeof initDayAssignBtns==='function') initDayAssignBtns();
+    if(typeof initClassSettings==='function') initClassSettings();
+    if(typeof renderLevelDesc==='function') renderLevelDesc();
+    if(typeof renderMyGymList==='function') renderMyGymList();
+    if(typeof renderORMGrid==='function') renderORMGrid();
+    showToast('✅ 다른 기기의 설정을 가져와 루틴을 맞췄습니다','success');
+  }catch(e){
+    console.error('[FitLog] 동기화 실패', e);
+    showToast('동기화 실패: ' + e.message, 'error');
+  }
+  if(btn){ btn.disabled = false; btn.textContent = '🔄 다른 기기와 동기화'; }
+  m_updateSyncInfo();
+}
+function m_updateSyncInfo(){
+  const el = document.getElementById('sync-info');
+  if(!el) return;
+  let at = '';
+  try{ at = (JSON.parse(localStorage.getItem('fitlog-routine-backup') || '{}') || {}).savedAt || ''; }catch(e){}
+  el.textContent = at
+    ? ('마지막 저장 ' + at.slice(0,10) + ' ' + at.slice(11,16)
+       + ' · 요일/시간/부상/집중부위/보유기구/기준중량이 함께 저장됩니다')
+    : '아직 클라우드에 저장된 설정이 없습니다';
+}
+
+// ══════════════════════════════════════════════════════════════════
 // 목적 미반영 감지
 // ──────────────────────────────────────────────────────────────────
 // "복근 만들기"를 골랐는데 루틴에 복부 운동이 하나도 없는 상황이
@@ -10996,6 +11108,7 @@ async function saveAllSettings(){
     // ── 저장 ──
     save1RM();
     localStorage.setItem('fitlog-injuries', JSON.stringify(selectedInjuries));
+  if(typeof m_syncSettings==='function') m_syncSettings();
     try { window.saveRoutine(RT); } catch(e){ console.warn(e); }
 
     clearSettingsDirty();
@@ -11046,6 +11159,7 @@ function save1RM(){
     if(val>0) orm1RM[ex.key]=val;
   });
   localStorage.setItem('fitlog-1rm', JSON.stringify(orm1RM));
+  m_syncSettings();
   showToast('✅ 기준 중량 저장 완료!','success');
 }
 
@@ -11364,7 +11478,7 @@ function toggleDayAssign(day, btn){
     applyDayBtnStyle(btn, true);
   }
   try{ localStorage.setItem('fitlog-assigned-days', JSON.stringify(assignedDays)); }catch(e){}
-  markSettingsDirty();
+  markSettingsDirty(); m_syncSettings();
   updateDayAssignPreview();
 }
 
