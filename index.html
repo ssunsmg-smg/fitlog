@@ -23,7 +23,7 @@
        L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
        L 1899~ 끝  : JavaScript (앱 로직 전체)
      ████████████████████████████████████████████████████████████████ -->
-<!-- fitlog v3.9 build:20260801-purpose1 · 매뉴얼 + 세션모드 + 개인화 + 목적별 반영 보장/충돌 진단(manual-v6) -->
+<!-- fitlog v4.0 build:20260801-fix1 · 목적 즉시저장 + 미반영 감지/한번에 재구성(manual-v7) -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -3227,7 +3227,7 @@ function showApp(){
     const _vb = document.getElementById('engine-ver-badge');
     if(_vb){
       const _g = window._manualGuide;
-      _vb.innerHTML = 'FitLog v3.9 · build 20260801-purpose1<br>운동 처방 엔진: 매뉴얼 + 세션 모드 + 개인화 + 목적 반영 (' + MANUAL_ENGINE_VER + ')'
+      _vb.innerHTML = 'FitLog v4.0 · build 20260801-fix1<br>운동 처방 엔진: 매뉴얼 + 세션 모드 + 개인화 + 목적 반영 (' + MANUAL_ENGINE_VER + ')'
         + (_g ? '<br>현재 적용: ' + _g.name + ' · ' + _g.split + (_g.estMin ? ' · 1회 약 ' + _g.estMin + '분' : '') : '');
     }
     if(localStorage.getItem('fitlog-manual-upgraded')==='1'){
@@ -3856,7 +3856,11 @@ function renderWorkout(){
     }
     return;
   }
+  let html_cov='';
   let html='<div class="rh '+rt.color+'"><div class="rh-lbl">'+rt.label+'</div><div class="rh-title">'+rt.title+'</div><div class="rh-muscles">'+rt.muscles.map(m=>'<span class="mtag">'+(typeof m_muscleLabel==='function'?m_muscleLabel(m):m)+'</span>').join('')+'</div></div>';
+  // 선택한 목적이 루틴에 빠져 있으면 화면 맨 위에서 잡아준다
+  if(typeof m_coverageBanner==='function'){ try{ html_cov = m_coverageBanner(); }catch(e){ html_cov=''; } }
+  if(html_cov) html = html_cov + html;
   // 목표 중량은 렌더 직전에 다시 계산한다 — 주차별 종목 변동·기록 갱신이 바로 반영되도록
   if(typeof m_attachTargetWeights==='function'){ try{ m_attachTargetWeights(rt); }catch(e){} }
   // 매뉴얼 훈련 강도 기준 배너 (목적별 반복수·세트간 휴식·%1RM·템포)
@@ -7318,6 +7322,8 @@ function selectClassType(type, btn){
   });
   const badge = document.getElementById('class-badge');
   if(badge) badge.textContent = type;
+  try{ localStorage.setItem('fitlog-classtype', classType); }catch(e){}
+  markSettingsDirty();
   updateClassPreview();
 }
 
@@ -7362,6 +7368,7 @@ function toggleFocusPart(key){
     focusPartsSel.push(key);
   }
   localStorage.setItem('fitlog-focus-parts', JSON.stringify(focusPartsSel));
+  markSettingsDirty();
   renderFocusBtns();
   updateDayAssignPreview();
 }
@@ -7372,10 +7379,31 @@ function togglePurpose(key, btn){
   } else {
     classPurposes.push(key);
   }
+  // 즉시 저장한다. 예전에는 아래 "적용하기" 버튼을 눌러야만 저장돼서,
+  // 목적을 체크해 놓고도 루틴에는 반영되지 않는 일이 있었다.
+  try{ localStorage.setItem('fitlog-purposes', JSON.stringify(classPurposes)); }catch(e){}
+  markSettingsDirty();
   renderPurposeBtns();
   updateClassPreview();
   updateDayAssignPreview(); // 목적 바뀌면 요일 미리보기도 즉시 갱신
 }
+
+// ── 설정이 바뀌었는데 루틴에 아직 반영되지 않은 상태 표시 ──
+function markSettingsDirty(){
+  try{ localStorage.setItem('fitlog-settings-dirty','1'); }catch(e){}
+  const bar = document.getElementById('step2-status-txt');
+  const dot = document.getElementById('step2-status-dot');
+  if(dot) dot.style.background='var(--accent2)';
+  if(bar){ bar.style.color='var(--accent2)';
+    bar.textContent='⚠️ 변경한 설정이 아직 루틴에 반영되지 않았습니다. 아래 버튼을 눌러 적용하세요.'; }
+  const btn = document.getElementById('step2-apply-btn');
+  if(btn){
+    btn.style.background='linear-gradient(135deg,var(--accent),#ff7040)';
+    btn.style.color='#fff'; btn.style.border='none';
+    btn.innerHTML='⚠️ 변경사항 적용하기';
+  }
+}
+function clearSettingsDirty(){ try{ localStorage.removeItem('fitlog-settings-dirty'); }catch(e){} }
 
 function updateClassPreview(){
   const el = document.getElementById('class-preview');
@@ -8399,7 +8427,7 @@ function renderORMGrid(){
 // ══════════════════════════════════════════════════════════════════
 
 // 엔진 버전 — 이 값이 바뀌면 예전 방식으로 저장된 루틴 백업을 폐기하고 새로 만든다
-const MANUAL_ENGINE_VER = 'manual-v6';
+const MANUAL_ENGINE_VER = 'manual-v7';
 
 // ── ① 목적별 훈련 강도 기준 (매뉴얼 4장 각 프로그램 헤더) ──
 const M_INTENSITY = {
@@ -10611,6 +10639,113 @@ function m_profileCardHtml(){
     + '</div>';
 }
 
+// ══════════════════════════════════════════════════════════════════
+// 목적 미반영 감지
+// ──────────────────────────────────────────────────────────────────
+// "복근 만들기"를 골랐는데 루틴에 복부 운동이 하나도 없는 상황이
+// 다시는 조용히 넘어가지 않도록, 화면에서 바로 잡아낸다.
+// ══════════════════════════════════════════════════════════════════
+function m_checkPurposeCoverage(){
+  let purposes = [];
+  try{ purposes = JSON.parse(localStorage.getItem('fitlog-purposes') || '[]') || []; }catch(e){}
+  if(!purposes.length) return [];
+  const keys = ['A','B','C','D','E','F'].filter(function(k){ return RT[k]; });
+  if(!keys.length) return [];
+  const allEx = [];
+  keys.forEach(function(k){
+    (RT[k].sections || []).forEach(function(sec){
+      (sec.exs || []).forEach(function(e){ allEx.push({sec:sec.n, ex:e}); });
+    });
+  });
+  const missing = [];
+  const has = function(fn){ return allEx.some(fn); };
+
+  if(purposes.some(function(x){ return x.indexOf('복근') >= 0; })){
+    if(!has(function(x){ return x.ex.part === '복부' || /복직근|복사근|복횡근/.test((x.ex.tags||[]).join()); })){
+      missing.push({name:'복근 만들기', what:'복부 운동이 한 종목도 없습니다'});
+    }
+  }
+  if(purposes.some(function(x){ return x.indexOf('둔근') >= 0 || x.indexOf('하체') >= 0; })){
+    if(!has(function(x){ return /대둔근|중둔근/.test((x.ex.tags||[]).join()); })){
+      missing.push({name:'하체·둔근 강화', what:'둔근 운동이 없습니다'});
+    }
+  }
+  if(purposes.some(function(x){ return x.indexOf('유연') >= 0 || x.indexOf('스트레칭') >= 0; })){
+    if(!has(function(x){ return /모빌리티/.test(x.sec); })){
+      missing.push({name:'유연성·스트레칭', what:'모빌리티 섹션이 없습니다'});
+    }
+  }
+  if(purposes.some(function(x){ return x === '체중 감량' || x === '다이어트'; })){
+    const strengthWins = window._manualGuide && window._manualGuide.name && window._manualGuide.name.indexOf('근력') >= 0;
+    if(!has(function(x){ return /유산소/.test(x.sec); }) && !strengthWins){
+      missing.push({name:'체중 감량 / 다이어트', what:'유산소가 없습니다'});
+    }
+  }
+  return missing;
+}
+function m_coverageBanner(){
+  let miss = [];
+  try{ miss = m_checkPurposeCoverage(); }catch(e){ return ''; }
+  const dirty = localStorage.getItem('fitlog-settings-dirty') === '1';
+  if(!miss.length && !dirty) return '';
+  let html = '<div style="background:#e8533a12;border:1px solid #e8533a44;border-radius:10px;padding:11px 13px;margin-bottom:11px;">';
+  if(dirty){
+    html += '<div style="font-size:12px;font-weight:800;color:var(--accent);margin-bottom:5px;">⚠️ 설정이 아직 루틴에 반영되지 않았습니다</div>'
+      + '<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:7px;">설정에서 목적·요일·환경을 바꾸셨습니다. 아래 버튼을 누르면 지금 설정으로 루틴을 다시 만듭니다.</div>';
+  }
+  if(miss.length){
+    html += '<div style="font-size:12px;font-weight:800;color:var(--accent);margin-bottom:5px;">⚠️ 선택한 목적이 루틴에 빠져 있습니다</div>'
+      + miss.map(function(m){
+          return '<div style="font-size:11px;color:var(--text);line-height:1.7;">· <b>' + m.name + '</b> — ' + m.what + '</div>';
+        }).join('')
+      + '<div style="font-size:11px;color:var(--muted);line-height:1.7;margin-top:5px;">운동 시간이 짧아 밀렸거나, 설정이 저장되기 전 만들어진 루틴입니다.</div>';
+  }
+  html += '<button onclick="rebuildFromSettings()" style="margin-top:8px;width:100%;padding:9px;border-radius:8px;'
+    + 'border:none;background:linear-gradient(135deg,var(--accent),#ff7040);color:#fff;font-size:12px;font-weight:800;'
+    + 'cursor:pointer;font-family:var(--font);">🔄 지금 설정으로 루틴 다시 만들기</button></div>';
+  return html;
+}
+// 지금 저장된 설정 그대로 루틴을 다시 만든다
+async function rebuildFromSettings(){
+  try{
+    const _p = JSON.parse(localStorage.getItem('fitlog-purposes') || '[]');
+    let   _d = JSON.parse(localStorage.getItem('fitlog-assigned-days') || 'null');
+    if(!_p.length){ showToast('설정에서 운동 목적을 먼저 선택해주세요','error'); return; }
+    if(!_d || !_d.length) _d = ['월','화','목','금'];
+    const _order = ['월','화','수','목','금','토','일'];
+    const _keys  = ['A','B','C','D','E','F'];
+    const _sorted= [..._d].sort((a,b)=>_order.indexOf(a)-_order.indexOf(b));
+    const _b = buildManualPlan({
+      purposes:_p, classType:localStorage.getItem('fitlog-classtype') || '기구운동',
+      level:curLevel, days:_sorted,
+      injuries:JSON.parse(localStorage.getItem('fitlog-injuries') || '[]'),
+      stage:m_getRehabStage(), targetMin:m_getWorkoutTarget(), member:m_getMember()
+    });
+    _keys.forEach(rk=>{ delete RT[rk]; });
+    _order.forEach(d=>{ DAY_SCHED[DAY_NUM_MAP[d]] = 'REST'; });
+    _sorted.forEach((day,i)=>{
+      const rk = _keys[i % _keys.length];
+      DAY_SCHED[DAY_NUM_MAP[day]] = rk;
+      RT[rk] = JSON.parse(JSON.stringify(_b.plan[i % _b.plan.length]));
+      RT[rk].label = day + '요일 · ' + RT[rk].label;
+    });
+    localStorage.setItem('fitlog-rt-custom', JSON.stringify(RT));
+    localStorage.setItem('fitlog-rt-engine', MANUAL_ENGINE_VER);
+    clearSettingsDirty();
+    window._manualGuide = _b.guide;
+    try{ window.saveRoutine(RT); }catch(e){}
+    initSetData(DAY_SCHED[selDay]);
+    renderWorkout(); renderHome && renderHome();
+    const miss = m_checkPurposeCoverage();
+    showToast(miss.length
+      ? ('루틴을 다시 만들었지만 ' + miss.map(function(m){ return m.name; }).join('·') + '은(는) 시간이 부족해 못 들어갔어요. ⏱ 운동 시간을 늘려보세요.')
+      : '✅ 지금 설정 그대로 루틴을 다시 만들었습니다', miss.length ? 'info' : 'success');
+  }catch(e){
+    console.error('[FitLog] 재구성 실패', e);
+    showToast('오류: ' + e.message, 'error');
+  }
+}
+
 // 코치 리포트를 모달로 열기 (기존 가이드 모달 재사용)
 function openCoachReport(){
   const modal = document.getElementById('ai-guide-modal');
@@ -10828,6 +10963,7 @@ async function saveAllSettings(){
     localStorage.setItem('fitlog-injuries', JSON.stringify(selectedInjuries));
     try { window.saveRoutine(RT); } catch(e){ console.warn(e); }
 
+    clearSettingsDirty();
     // ── UI 갱신 ──
     initSetData(DAY_SCHED[selDay]);
     renderWorkout && renderWorkout();
@@ -11192,6 +11328,8 @@ function toggleDayAssign(day, btn){
     assignedDays.push(day);
     applyDayBtnStyle(btn, true);
   }
+  try{ localStorage.setItem('fitlog-assigned-days', JSON.stringify(assignedDays)); }catch(e){}
+  markSettingsDirty();
   updateDayAssignPreview();
 }
 
@@ -11336,6 +11474,7 @@ async function applyClassificationWithDays(){
   sorted.forEach(function(day, i){ DAY_SCHED[DAY_NUM_MAP[day]] = routineKeys[i % routineKeys.length]; });
 
   markSettDone(2);
+  clearSettingsDirty();
 
   // 완료 표시
   if(applyBtn){
