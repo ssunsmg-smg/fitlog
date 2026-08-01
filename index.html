@@ -23,7 +23,7 @@
        L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
        L 1899~ 끝  : JavaScript (앱 로직 전체)
      ████████████████████████████████████████████████████████████████ -->
-<!-- fitlog v4.0 build:20260801-fix1 · 목적 즉시저장 + 미반영 감지/한번에 재구성(manual-v7) -->
+<!-- fitlog v4.1 build:20260801-abs1 · 복근 갈래별 블록 + 부위별 휴식 + 목적 우선 배분(manual-v8) -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -3227,7 +3227,7 @@ function showApp(){
     const _vb = document.getElementById('engine-ver-badge');
     if(_vb){
       const _g = window._manualGuide;
-      _vb.innerHTML = 'FitLog v4.0 · build 20260801-fix1<br>운동 처방 엔진: 매뉴얼 + 세션 모드 + 개인화 + 목적 반영 (' + MANUAL_ENGINE_VER + ')'
+      _vb.innerHTML = 'FitLog v4.1 · build 20260801-abs1<br>운동 처방 엔진: 매뉴얼 + 세션 모드 + 개인화 + 목적 반영 (' + MANUAL_ENGINE_VER + ')'
         + (_g ? '<br>현재 적용: ' + _g.name + ' · ' + _g.split + (_g.estMin ? ' · 1회 약 ' + _g.estMin + '분' : '') : '');
     }
     if(localStorage.getItem('fitlog-manual-upgraded')==='1'){
@@ -8427,7 +8427,7 @@ function renderORMGrid(){
 // ══════════════════════════════════════════════════════════════════
 
 // 엔진 버전 — 이 값이 바뀌면 예전 방식으로 저장된 루틴 백업을 폐기하고 새로 만든다
-const MANUAL_ENGINE_VER = 'manual-v7';
+const MANUAL_ENGINE_VER = 'manual-v8';
 
 // ── ① 목적별 훈련 강도 기준 (매뉴얼 4장 각 프로그램 헤더) ──
 const M_INTENSITY = {
@@ -9241,7 +9241,8 @@ function m_fitToBudget(rt, targetMin, intn, mode){
     const arr = [];
     sec.exs.forEach(function(ex, ei){
       if(ex.ss && ssUnit[ex.ss]){ ssUnit[ex.ss].exs.push(ex); return; }   // 짝의 두 번째 → 기존 단위에 합류
-      const it = {si:si, ex:ex, exs:[ex], origSets:Math.max(m_exSets(ex), ex.tSets || 0), tier:ei, bonus:isBonus, keep:false};
+      const it = {si:si, ex:ex, exs:[ex], origSets:Math.max(m_exSets(ex), ex.tSets || 0),
+                  tier:ei, bonus:isBonus, goal:!!sec.goalSec, keep:false};
       if(ex.ss) ssUnit[ex.ss] = it;
       arr.push(it);
     });
@@ -9255,14 +9256,27 @@ function m_fitToBudget(rt, targetMin, intn, mode){
   // 시간이 부족하다고 목적이 통째로 사라지면 회원 입장에선 설정이 무시된 것이다.
   const goalSecs = mains.filter(function(b){ return secs[b.si] && secs[b.si].goalSec; });
   const plainSecs= mains.filter(function(b){ return !(secs[b.si] && secs[b.si].goalSec); });
+  // 자리 배분 순서
+  //   ① 그날 분할의 핵심 부위 대표 (상체면 가슴·등·어깨) — 분할의 의미를 지킨다
+  //   ② 목적 섹션 전체 (복근 3종목 등) — 목적을 고른 이유를 지킨다
+  //   ③ 나머지 부위 대표 (팔·종아리 등) — 큰 종목이 이미 관여하는 부위
+  //   ④ 각 부위의 두 번째 종목부터
+  // ①을 3개로 끊는 이유: 상체 날 팔 운동은 벤치·로우가 이미 상당 부분 자극한다.
+  const CORE_PARTS = 2;   // 그날 분할의 핵심 부위 (상체면 가슴·등)
+  const GOAL_HEAD  = 2;   // 목적 섹션에서 우선 확보할 종목 수
+  const goalHead = [], goalTail = [];
+  goalSecs.forEach(function(b){
+    b.exs.forEach(function(it, i){ (i < GOAL_HEAD ? goalHead : goalTail).push(it); });
+  });
   const tier1 = []
-    .concat(plainSecs.length ? [plainSecs[0].exs[0]] : [])
-    .concat(goalSecs.map(function(b){ return b.exs[0]; }))
-    .concat(plainSecs.slice(1).map(function(b){ return b.exs[0]; }))
+    .concat(plainSecs.slice(0, CORE_PARTS).map(function(b){ return b.exs[0]; }))  // ① 핵심 부위
+    .concat(goalHead)                                                             // ② 목적 섹션 앞 2종목
+    .concat(plainSecs.slice(CORE_PARTS).map(function(b){ return b.exs[0]; }))     // ③ 나머지 부위
+    .concat(goalTail)                                                             // ④ 목적 섹션 나머지
     .filter(Boolean);
   const rest  = [];
   for(let t = 1; t < maxT; t++){
-    plainSecs.concat(goalSecs).forEach(function(b){ if(b.exs[t]) rest.push(b.exs[t]); });
+    plainSecs.forEach(function(b){ if(b.exs[t]) rest.push(b.exs[t]); });
   }
   bonus.forEach(function(b){ b.exs.forEach(function(it){ rest.push(it); }); });
 
@@ -9287,6 +9301,14 @@ function m_fitToBudget(rt, targetMin, intn, mode){
       const c = costAt(it, Math.min(minSets, it.origSets));
       if(used + c <= budget){ it.keep = true; it.sets = Math.min(minSets, it.origSets); used += c; }
       else ok = false;
+    });
+    // ①-b 목적 섹션의 나머지 종목을 먼저 채운다.
+    //     "복근 만들기"를 골랐으면 복근 3종목이 벤치 4번째 세트보다 우선이다.
+    //     목적을 고른 이유가 그거니까.
+    rest.forEach(function(it){
+      if(!it.goal || it.keep) return;
+      const c = costAt(it, Math.min(minSets, it.origSets));
+      if(used + c <= budget){ it.keep = true; it.sets = Math.min(minSets, it.origSets); used += c; }
     });
     // ② 세트 끌어올리기 — 매뉴얼 값까지, 우선순위 순으로 한 세트씩 라운드로빈
     let changed = true;
@@ -9385,10 +9407,13 @@ function m_buildEx(id, sets, intn, isHome, injuries, used){
   const rest = isIso ? (intn.isoRest || intn.rest) : intn.rest;
   const pct  = isIso ? (intn.isoPct  || intn.pct)  : intn.pct;
   // 부위 특성에 따른 반복수 교정 (종아리·복부·전완은 지근 비율이 높아 고반복)
-  let rep2 = rep, rng2 = rng, repWhy = '';
+  let rep2 = rep, rng2 = rng, repWhy = '', rest2 = rest;
   if(typeof m_partRepRange === 'function'){
     const pr = m_partRepRange({part:e.part, n:name}, rep, rng);
-    if(pr){ rep2 = pr.rep; rng2 = pr.rng; repWhy = pr.why; }
+    if(pr){
+      if(pr.rep){ rep2 = pr.rep; rng2 = pr.rng; repWhy = pr.why; }
+      if(pr.rest) rest2 = Math.min(rest, pr.rest);
+    }
   }
   let d;
   if(e.time){
@@ -9414,7 +9439,7 @@ function m_buildEx(id, sets, intn, isHome, injuries, used){
     n:name, d:d, tags:e.t.slice(), w:warn,
     sets:(e.time ? 0 : sets),
     part:e.part, iso:(isIso ? 1 : 0),
-    rest:rest, pct:pct, rng:(e.time ? '' : rng2), tempo:intn.tempo,
+    rest:rest2, pct:pct, rng:(e.time ? '' : rng2), tempo:intn.tempo,
     repWhy:repWhy
   };
 }
@@ -9530,8 +9555,10 @@ function m_focusSections(purposes, intn, isHome, injuries, used, ctx){
     exs.forEach(function(e){ used.add(e.n); });
     if(exs.length){
       // 복근이 '목적'이면 보강이 아니라 그날의 정규 부위다 → 시간이 부족해도 남긴다
+      const zones = exs.map(function(e){ return e.zone; }).filter(Boolean);
       out.push({
-        n:'복부 (마지막에 수행)' + (core.backSafe ? ' · 항신전 위주' : ''),
+        n:'복부 (마지막에 수행)' + (core.backSafe ? ' · 항신전 위주' : '')
+          + (zones.length > 1 ? ' · ' + zones.join('+') : ''),
         exs:exs, primary:!!ctx.coreIsGoal, goalSec:!!ctx.coreIsGoal
       });
     }
@@ -9791,28 +9818,30 @@ function m_getWorkoutTarget(){
 // 근섬유 구성이 부위마다 다르다. 종아리·복부·전완은 지근(느린 수축) 비율이
 // 높아 저반복 고중량으로는 자극이 잘 오지 않고 건·관절 부담만 커진다.
 // 반대로 둔근·햄스트링·대퇴는 속근 비율이 높아 목적별 기준을 그대로 쓴다.
+// rest = 이 부위에 적절한 세트간 휴식 상한(초).
+// 복근·종아리·전완은 작고 회복이 빠른 근육이라 90초씩 쉬면 시간만 버린다.
 const M_PART_REP = {
-  '종아리':{min:12, max:20, why:'종아리는 지근 비율이 높아 저반복 고중량으로는 자극이 잘 오지 않습니다'},
-  '복부'  :{min:12, max:20, why:'복근은 자세 유지 근육이라 고반복·긴 수축 시간에 잘 반응합니다'},
-  '전완근':{min:12, max:20, why:'전완은 일상에서 늘 쓰이는 지구력 근육이라 고반복이 맞습니다'},
-  '기립근':{min:8,  max:15, why:'기립근은 척추를 지지하는 근육이라 무리한 저반복보다 중반복이 안전합니다'}
+  '종아리':{min:12, max:20, rest:60, why:'종아리는 지근 비율이 높아 저반복 고중량으로는 자극이 잘 오지 않습니다'},
+  '복부'  :{min:12, max:20, rest:45, why:'복근은 자세 유지 근육이라 고반복·짧은 휴식에 잘 반응합니다'},
+  '전완근':{min:12, max:20, rest:60, why:'전완은 일상에서 늘 쓰이는 지구력 근육이라 고반복이 맞습니다'},
+  '기립근':{min:8,  max:15, rest:90, why:'기립근은 척추를 지지하는 근육이라 무리한 저반복보다 중반복이 안전합니다'}
 };
 // 어깨 측면·후면(레터럴·리어델트)은 작은 근육이라 고중량 저반복이 위험하다
 const M_LIGHT_EX = /레터럴|리어 델트|페이스 풀|프론트 레이즈|밴드 풀어파트/;
 
 function m_partRepRange(ex, baseRep, baseRng){
   const p = M_PART_REP[ex.part];
-  let min = null, max = null, why = '';
-  if(p){ min = p.min; max = p.max; why = p.why; }
+  let min = null, max = null, why = '', rest = 0;
+  if(p){ min = p.min; max = p.max; why = p.why; rest = p.rest || 0; }
   else if(M_LIGHT_EX.test(ex.n)){
     min = 12; max = 20;
     why = '삼각근 측면·후면은 작은 근육이라 고중량 저반복이 어깨 관절에 위험합니다';
   }
   if(min === null) return null;
-  // 목적이 이미 더 높은 반복을 요구하면 그대로 둔다
+  // 목적이 이미 더 높은 반복을 요구하면 반복수는 그대로 두되 휴식만 조정한다
   const curMin = parseInt((baseRng || '').split('~')[0]) || baseRep;
-  if(curMin >= min) return null;
-  return {rep:Math.round((min + max) / 2), rng:min + '~' + max + '회', why:why};
+  if(curMin >= min) return rest ? {rest:rest} : null;
+  return {rep:Math.round((min + max) / 2), rng:min + '~' + max + '회', why:why, rest:rest};
 }
 
 // ── ② 근육 이름 병기 ──
@@ -10209,27 +10238,31 @@ function m_coreExercises(injuries, splitIndex, isGoal, intn){
   const backIssue = (injuries || []).indexOf('back') >= 0;
   // 항신전(anti-extension) 계열 — 척추를 중립으로 버티는 동작
   const SAFE = [
-    {n:'플랭크',   d:'3세트 × 45초',      tags:['복횡근(주)'], w:[],           sets:0},
-    {n:'데드버그', d:'3세트 × 12회 (좌우)', tags:['복횡근(주)'], w:[],           sets:0},
-    {n:'버드독',   d:'3세트 × 12회 (좌우)', tags:['코어','척추기립근'], w:[],    sets:0},
-    {n:'사이드 플랭크', d:'3세트 × 30초 (좌우)', tags:['외복사근(주)'], w:[],    sets:0}
+    {n:'플랭크',   d:'3세트 × 45초',      tags:['복횡근(주)'], w:[],           sets:0, zone:'코어 안정화'},
+    {n:'데드버그', d:'3세트 × 12회 (좌우)', tags:['복횡근(주)'], w:[],           sets:0, zone:'아랫배(하부)'},
+    {n:'사이드 플랭크', d:'3세트 × 30초 (좌우)', tags:['외복사근(주)'], w:[],    sets:0, zone:'옆구리(회전)'},
+    {n:'버드독',   d:'3세트 × 12회 (좌우)', tags:['코어','척추기립근'], w:[],    sets:0, zone:'척추 안정화'}
   ];
   // 굴곡·회전 계열 — 허리 이상이 없을 때만
   const FLEX = [
-    {n:'행잉 레그 레이즈', d:'3세트 × 12회', tags:['복직근하부(주)'], w:['허리주의'], sets:0},
-    {n:'ABDOMINAL CRUNCH', d:'3세트 × 15회', tags:['복직근(주)'],   w:[],           sets:3},
-    {n:'플랭크',            d:'3세트 × 45초', tags:['복횡근(주)'],   w:[],           sets:0},
-    {n:'러시안 트위스트',   d:'3세트 × 20회', tags:['복사근(주)'],   w:['허리주의'], sets:0}
+    {n:'행잉 레그 레이즈', d:'3세트 × 12회', tags:['복직근하부(주)'], w:['허리주의'], sets:0, zone:'아랫배(하부)'},
+    {n:'ABDOMINAL CRUNCH', d:'3세트 × 15회', tags:['복직근(주)'],   w:[],           sets:3, zone:'윗배(상부)'},
+    {n:'러시안 트위스트',   d:'3세트 × 20회', tags:['복사근(주)'],   w:['허리주의'], sets:0, zone:'옆구리(회전)'},
+    {n:'플랭크',            d:'3세트 × 45초', tags:['복횡근(주)'],   w:[],           sets:0, zone:'코어 안정화'}
   ];
+  // 복근은 한 근육이 아니다. 상부(굴곡)·하부(골반 후방경사)·회전(복사근)·
+  // 안정화(항신전)가 각각 다른 동작으로 자극된다. "복근 만들기"가 목적이면
+  // 한 종목으로는 부족하고, 갈래를 나눠 세 종목을 넣어야 집중이 된다.
   const pool = backIssue ? SAFE : FLEX;
-  const cnt  = isGoal ? 2 : 1;
+  const cnt  = isGoal ? 3 : 1;
   const out  = [];
   for(let i = 0; i < cnt; i++){
     // 같은 분할은 항상 같은 복근 구성 → 주차마다 루틴이 흔들리지 않는다
-    const e = JSON.parse(JSON.stringify(pool[((splitIndex || 0) * 2 + i) % pool.length]));
+    const e = JSON.parse(JSON.stringify(pool[((splitIndex || 0) + i) % pool.length]));
     e.part = '복부';                      // 집중 부위·시간 배분이 부위로 판단하므로 반드시 채운다
     if(intn){
-      e.rest  = intn.isoRest || intn.rest;
+      // 복근은 회복이 빨라 45초면 충분하다. 90초씩 쉬면 시간만 버린다.
+      e.rest  = Math.min(intn.isoRest || intn.rest, 45);
       e.tempo = intn.tempo;
       e.iso   = 1;
     }
@@ -10257,7 +10290,9 @@ const M_SAFE_SWAP = {
     {from:/^루마니안 데드리프트$/, to:{n:'레그 컬',  note:'같은 햄스트링을 쓰면서 척추 압박이 없습니다'}},
     {from:/^크런치$/,        to:{n:'데드버그',      note:'척추를 굴곡시키지 않는 항신전 운동입니다'}},
     {from:/^러시안 트위스트$/, to:{n:'사이드 플랭크', note:'회전 부하 없이 복사근을 씁니다'}},
-    {from:/^ABDOMINAL CRUNCH$/, to:{n:'버드독',    note:'척추 중립을 유지하며 코어를 씁니다'}}
+    {from:/^ABDOMINAL CRUNCH$/, to:{n:'버드독',    note:'척추 중립을 유지하며 코어를 씁니다'}},
+    {from:/^AB 롤아웃$/,       to:{n:'데드버그',   note:'요추 신전 부하 없이 같은 항신전 자극을 냅니다'}},
+    {from:/^행잉 레그 레이즈$/, to:{n:'데드버그',  note:'골반이 흔들리며 요추가 눌리는 구간을 피합니다'}}
   ],
   shoulder:[
     {from:/^오버헤드 프레스$/, to:{n:'시티드 숄더 프레스', note:'등받이 지지로 어깨 충돌 위험이 줄어듭니다'}},
@@ -12322,6 +12357,13 @@ function applyWeeklyVariation(){
 
   if(changed > 0){
     localStorage.setItem('fitlog-variation-week', weekNum.toString());
+    // 종목이 바뀌었으니 부상 안전 규칙을 다시 적용한다 (변동으로 위험 종목이 들어올 수 있다)
+    try{
+      const _mem = (typeof m_getMember === 'function') ? m_getMember() : null;
+      if(_mem && typeof m_applySafetySwaps === 'function'){
+        Object.keys(RT).forEach(function(tk){ if(tk !== 'REST' && RT[tk]) m_applySafetySwaps(RT[tk], _mem); });
+      }
+    }catch(e){}
     window.saveRoutine && window.saveRoutine(RT);
     // 변동 결과를 루틴 백업에도 반영 (반영하지 않으면 새로고침 시 변동이 사라진다)
     try{
