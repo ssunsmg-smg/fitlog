@@ -23,7 +23,7 @@
        L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
        L 1899~ 끝  : JavaScript (앱 로직 전체)
      ████████████████████████████████████████████████████████████████ -->
-<!-- fitlog v4.4 build:20260801-sync3 · 버전 불일치 자동 감지 + 강제 업데이트(manual-v9) -->
+<!-- fitlog v4.5 build:20260801-sync4 · 동기화 규칙 단순화 + 기기/클라우드 값 비교 진단(manual-v9) -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -248,9 +248,12 @@
 
     // ── 기기 간 동기화: 루틴을 만드는 값들을 전부 이 기기에 반영 ──
     // 이 기기가 더 최신이면 덮어쓰지 않는다 (방금 바꾼 설정이 사라지면 안 되니까)
-    let localAt = '';
-    try{ localAt = (JSON.parse(localStorage.getItem('fitlog-routine-backup') || '{}') || {}).savedAt || ''; }catch(e){}
-    const remoteNewer = !localAt || !data.savedAt || data.savedAt >= localAt;
+    // 규칙을 단순하게 만든다.
+    //   · 이 기기에 "아직 적용 안 한 변경"이 있으면 그 변경을 지킨다
+    //   · 그 외에는 클라우드가 이긴다
+    // savedAt 비교만으로 정하면 두 기기가 서로를 덮어쓰며 계속 어긋난다.
+    const dirtyHere = (localStorage.getItem('fitlog-settings-dirty') === '1');
+    const remoteNewer = !dirtyHere;
     if (remoteNewer) {
       const put  = function(k, v){ if(v !== undefined && v !== null) try{ localStorage.setItem(k, String(v)); }catch(e){} };
       const putJ = function(k, v){ if(v !== undefined && v !== null) try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
@@ -1664,7 +1667,17 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           <div id="sync-info" style="font-size:10px;color:var(--muted);line-height:1.7;margin-bottom:8px;"></div>
           <button id="sync-btn" onclick="m_pullSettings()" style="width:100%;padding:10px;border-radius:8px;
             border:1px solid var(--blue);background:#4a9eff15;color:var(--blue);font-size:12px;font-weight:700;
-            cursor:pointer;font-family:var(--font);">🔄 다른 기기와 동기화</button>
+            cursor:pointer;font-family:var(--font);">☁️ 클라우드 설정으로 이 기기 맞추기</button>
+          <button onclick="m_pushSettings()" style="width:100%;margin-top:6px;padding:10px;border-radius:8px;
+            border:1px solid var(--green);background:#4caf7d15;color:var(--green);font-size:12px;font-weight:700;
+            cursor:pointer;font-family:var(--font);">📤 이 기기 설정을 기준으로 올리기</button>
+          <button onclick="m_toggleDiag()" style="width:100%;margin-top:6px;padding:9px;border-radius:8px;
+            border:1px solid var(--border);background:none;color:var(--muted);font-size:11px;
+            cursor:pointer;font-family:var(--font);">🔍 이 기기 ↔ 클라우드 값 비교</button>
+          <div id="diag-panel" style="display:none;margin-top:8px;padding:10px;background:var(--surface2);border-radius:8px;"></div>
+          <button onclick="forceUpdate()" style="width:100%;margin-top:6px;padding:9px;border-radius:8px;
+            border:1px solid var(--accent);background:#e8533a12;color:var(--accent);font-size:11px;
+            cursor:pointer;font-family:var(--font);">⬇️ 앱 최신 버전 강제로 받기 (캐시 비우기)</button>
         </div>
         <div id="engine-ver-badge" style="margin-top:10px;font-size:10px;color:var(--muted);font-family:var(--mono);text-align:center;line-height:1.7;"></div>
       </div>
@@ -3297,7 +3310,7 @@ function showApp(){
     const _vb = document.getElementById('engine-ver-badge');
     if(_vb){
       const _g = window._manualGuide;
-      _vb.innerHTML = 'FitLog v4.4 · build ' + APP_BUILD + '<br>운동 처방 엔진: 매뉴얼 + 세션 모드 + 개인화 + 목적 반영 (' + MANUAL_ENGINE_VER + ')'
+      _vb.innerHTML = 'FitLog v4.5 · build ' + APP_BUILD + '<br>운동 처방 엔진: 매뉴얼 + 세션 모드 + 개인화 + 목적 반영 (' + MANUAL_ENGINE_VER + ')'
         + (_g ? '<br>현재 적용: ' + _g.name + ' · ' + _g.split + (_g.estMin ? ' · 1회 약 ' + _g.estMin + '분' : '') : '');
     }
     if(localStorage.getItem('fitlog-manual-upgraded')==='1'){
@@ -8506,7 +8519,7 @@ function renderORMGrid(){
 // (meta 태그의 no-cache는 브라우저가 거의 무시한다)
 // 그래서 서버에 있는 파일을 직접 읽어 빌드 번호를 비교한다.
 // ══════════════════════════════════════════════════════════════════
-const APP_BUILD = '20260801-sync3';
+const APP_BUILD = '20260801-sync4';
 
 async function checkAppUpdate(silent){
   try{
@@ -10842,6 +10855,67 @@ async function m_pullSettings(){
   if(btn){ btn.disabled = false; btn.textContent = '🔄 다른 기기와 동기화'; }
   m_updateSyncInfo();
 }
+// ── 진단: 이 기기와 클라우드의 값을 나란히 보여준다 ──
+function m_diagHtml(){
+  const ls = function(k, d){ try{ const v = localStorage.getItem(k); return v === null ? d : v; }catch(e){ return d; } };
+  const lj = function(k, d){ try{ return JSON.parse(localStorage.getItem(k) || 'null') || d; }catch(e){ return d; } };
+  let c = {};
+  try{ c = JSON.parse(localStorage.getItem('fitlog-routine-backup') || '{}') || {}; }catch(e){}
+  const fmt = function(v){
+    if(v === undefined || v === null) return '(없음)';
+    if(Array.isArray(v)) return v.length ? v.join(', ') : '(없음)';
+    if(typeof v === 'object') return Object.keys(v).length ? JSON.stringify(v) : '(없음)';
+    return String(v);
+  };
+  const rows = [
+    ['앱 빌드',      (typeof APP_BUILD !== 'undefined' ? APP_BUILD : '?'), c.appBuild],
+    ['엔진 버전',    (typeof MANUAL_ENGINE_VER !== 'undefined' ? MANUAL_ENGINE_VER : '?'), c.engineVer],
+    ['운동 목적',    lj('fitlog-purposes', []), c.purposes],
+    ['운동 요일',    lj('fitlog-assigned-days', []), c.assignedDays],
+    ['운동 시간',    ls('fitlog-workout-time', '') + '분', (c.workoutTime ? c.workoutTime + '분' : undefined)],
+    ['성장 단계',    ls('fitlog-level', ''), c.level],
+    ['부상 부위',    lj('fitlog-injuries', []), c.injuries],
+    ['집중 부위',    lj('fitlog-focus-parts', []), c.focusParts],
+    ['기준 중량',    lj('fitlog-1rm', {}), c.orm1RM],
+    ['세션 모드',    ls('fitlog-session-mode', '(자동)'), (c.sessionMode || '(자동)')]
+  ];
+  let html = '<div style="font-size:11px;line-height:1.7;">'
+    + '<div style="display:flex;gap:6px;font-weight:800;color:var(--muted);padding-bottom:5px;border-bottom:1px solid var(--border);">'
+    + '<div style="width:66px;flex-shrink:0;">항목</div><div style="flex:1;">이 기기</div><div style="flex:1;">클라우드</div></div>';
+  rows.forEach(function(r){
+    const a = fmt(r[1]), b = fmt(r[2]);
+    const bad = (b !== '(없음)' && a !== b);
+    html += '<div style="display:flex;gap:6px;padding:5px 0;border-bottom:1px solid var(--border);">'
+      + '<div style="width:66px;flex-shrink:0;color:var(--muted);">' + r[0] + '</div>'
+      + '<div style="flex:1;word-break:break-all;color:' + (bad ? 'var(--accent)' : 'var(--text)') + ';">' + a + '</div>'
+      + '<div style="flex:1;word-break:break-all;color:' + (bad ? 'var(--accent2)' : 'var(--muted)') + ';">' + b + '</div>'
+      + '</div>';
+  });
+  html += '<div style="margin-top:6px;color:var(--muted);">마지막 저장: '
+    + (c.savedAt ? (c.savedAt.slice(0,10) + ' ' + c.savedAt.slice(11,16) + (c.device ? ' · ' + c.device : '')) : '(없음)')
+    + '</div></div>';
+  return html;
+}
+function m_toggleDiag(){
+  const el = document.getElementById('diag-panel');
+  if(!el) return;
+  const open = el.style.display !== 'none';
+  el.style.display = open ? 'none' : 'block';
+  if(!open) el.innerHTML = m_diagHtml();
+}
+// 이 기기 설정을 모든 기기 기준으로 만든다
+async function m_pushSettings(){
+  try{
+    clearSettingsDirty();
+    await rebuildFromSettings();
+    m_syncSettings();
+    m_updateSyncInfo();
+    const el = document.getElementById('diag-panel');
+    if(el && el.style.display !== 'none') el.innerHTML = m_diagHtml();
+    showToast('📤 이 기기 설정을 기준으로 올렸습니다. 다른 기기에서 동기화를 누르세요.','success');
+  }catch(e){ showToast('오류: ' + e.message, 'error'); }
+}
+
 function m_updateSyncInfo(){
   const el = document.getElementById('sync-info');
   if(!el) return;
