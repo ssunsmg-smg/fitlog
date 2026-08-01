@@ -23,7 +23,7 @@
        L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
        L 1899~ 끝  : JavaScript (앱 로직 전체)
      ████████████████████████████████████████████████████████████████ -->
-<!-- fitlog v3.6 build:20260801-coach1 · 매뉴얼 처방 + 운동시간 예산 + 회원특성 코치 엔진(manual-v3) -->
+<!-- fitlog v3.7 build:20260801-mode1 · 매뉴얼 처방 + 세션 모드(집중/표준/완전/여유) + 회원특성 코치(manual-v4) -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -1201,6 +1201,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
 
       <div id="time-plan-bar" style="font-size:11px;color:var(--muted);padding:5px 10px;background:var(--surface2);border-radius:6px;display:none;"></div>
+      <!-- 세션 모드: 시간에 따라 훈련 방식 자체가 달라진다 -->
+      <div id="mode-chips" style="display:flex;gap:6px;margin-top:8px;"></div>
+      <div id="mode-note" style="font-size:11px;color:var(--muted);padding:7px 10px;background:var(--surface2);border-radius:6px;margin-top:6px;line-height:1.75;display:none;"></div>
     </div>
 
         <div class="prog-wrap">
@@ -3217,7 +3220,7 @@ function showApp(){
     const _vb = document.getElementById('engine-ver-badge');
     if(_vb){
       const _g = window._manualGuide;
-      _vb.innerHTML = 'FitLog v3.6 · build 20260801-coach1<br>운동 처방 엔진: 트레이너 매뉴얼 + 회원특성 코치 (' + MANUAL_ENGINE_VER + ')'
+      _vb.innerHTML = 'FitLog v3.7 · build 20260801-mode1<br>운동 처방 엔진: 매뉴얼 + 세션 모드 + 회원특성 코치 (' + MANUAL_ENGINE_VER + ')'
         + (_g ? '<br>현재 적용: ' + _g.name + ' · ' + _g.split + (_g.estMin ? ' · 1회 약 ' + _g.estMin + '분' : '') : '');
     }
     if(localStorage.getItem('fitlog-manual-upgraded')==='1'){
@@ -3849,6 +3852,8 @@ function renderWorkout(){
   let html='<div class="rh '+rt.color+'"><div class="rh-lbl">'+rt.label+'</div><div class="rh-title">'+rt.title+'</div><div class="rh-muscles">'+rt.muscles.map(m=>'<span class="mtag">'+m+'</span>').join('')+'</div></div>';
   // 매뉴얼 훈련 강도 기준 배너 (목적별 반복수·세트간 휴식·%1RM·템포)
   if(rt.guide && typeof m_guideBanner==='function') html+=m_guideBanner(rt.guide);
+  if(rt.guide && rt.guide.mode) window._manualGuide = rt.guide;
+  setTimeout(function(){ try{ renderModeChips(); }catch(e){} }, 0);
   // 섹션 필터 적용
   const activeSections = rt.sections.filter((_,si)=>{
     const key = tk+'_sec_'+si;
@@ -3873,7 +3878,7 @@ function renderWorkout(){
     // 실제 섹션 인덱스 찾기 (필터 후에도 올바른 si 유지)
     const realSi = rt.sections.indexOf(sec);
     si = realSi;
-    html+='<div class="sec-lbl">'+sec.n+'</div>';
+    html+='<div class="sec-lbl">'+sec.n+(sec.ss?' <span style="color:var(--accent);">🔗 슈퍼셋</span>':'')+'</div>';
     sec.exs.forEach((ex,ei)=>{
       const wTags=ex.w.map(w=>w.includes('허리')?'<span class="etag t-back">'+w+'</span>':w.includes('무릎')?'<span class="etag t-knee">'+w+'</span>':w.includes('어깨')?'<span class="etag t-sh">'+w+'</span>':'<span class="etag">'+w+'</span>').join('');
       const mTags=ex.tags.map(t=>'<span class="etag t-main">'+t+'</span>').join('');
@@ -3899,6 +3904,7 @@ function renderWorkout(){
         +'<div class="ex-detail">'+ex.d+'</div>'
         +'<div class="ex-tags">'+mTags+wTags+'</div>'
         +(typeof m_exChips==='function'?m_exChips(ex):'')
+        +(ex.ss?'<div style="margin-top:4px;font-size:10px;color:var(--accent);background:#e8533a12;border:1px solid #e8533a33;border-radius:6px;padding:4px 7px;line-height:1.6;">🔗 <b>슈퍼셋 '+ex.ss+'-'+ex.ssIdx+'</b> · '+(ex.ssIdx===1?'끝나면 쉬지 말고 <b>'+(ex.ssWith||'')+'</b>로':'<b>'+(ex.ssWith||'')+'</b>와 한 라운드 · 라운드 후 '+m_restLabel(Math.max(20,Math.round((ex.rest||60)/2)))+' 휴식')+'</div>':'')
         +'<div class="ex-actions">'
         +'<button class="eab ai-guide" data-action="aiguide" data-exname="'+encodeURIComponent(ex.n)+'" data-tags="'+encodeURIComponent(ex.tags.join(','))+'" data-warn="'+encodeURIComponent((ex.w||[]).join(','))+'">🤖 AI 가이드</button>'
         +'<button class="eab yt" data-action="yt" data-q="'+encodeURIComponent((info?.yt||ex.n)+' 운동 방법')+'">▶ 유튜브</button>'
@@ -4047,6 +4053,83 @@ async function applyWorkoutTime(){
     showToast(msg, 'success');
   }catch(e){
     console.error('[FitLog] 운동 시간 반영 실패', e);
+    showToast('오류: ' + e.message, 'error');
+  }
+}
+
+// ── 세션 모드 칩 ──
+function renderModeChips(){
+  const wrap = document.getElementById('mode-chips');
+  if(!wrap || typeof M_MODES === 'undefined') return;
+  const cur   = (window._manualGuide && window._manualGuide.mode) ? window._manualGuide.mode.key : null;
+  const saved = localStorage.getItem('fitlog-session-mode');
+  const recStat = (typeof m_analyzeRecords === 'function') ? m_analyzeRecords(records) : null;
+  let rec = null;
+  try{ rec = m_pickMode(m_getWorkoutTarget(), m_getMember(), recStat).key; }catch(e){}
+  wrap.innerHTML = ['focus','standard','complete','unhurried'].map(function(k){
+    const m  = M_MODES[k];
+    const on = (cur === k);
+    const isRec = (rec === k);
+    return '<button onclick="setSessionMode(\'' + k + '\')" style="flex:1;padding:8px 4px;border-radius:9px;'
+      + 'border:' + (on ? '2px solid ' + m.tone : '1px solid var(--border)') + ';'
+      + 'background:' + (on ? m.tone + '18' : 'none') + ';color:' + (on ? m.tone : 'var(--muted)') + ';'
+      + 'font-size:11px;font-weight:' + (on ? '800' : '500') + ';cursor:pointer;font-family:var(--font);line-height:1.5;">'
+      + m.icon + '<br>' + m.label + (isRec && !saved ? ' ✨' : '') + '</button>';
+  }).join('');
+
+  const note = document.getElementById('mode-note');
+  if(note && cur && M_MODES[cur]){
+    const m = M_MODES[cur];
+    const T = m_getWorkoutTarget();
+    const mismatch = (T < m.minT || T > m.maxT)
+      ? '<br><span style="color:var(--accent2);">⚠️ 설정한 ' + T + '분은 이 모드의 권장 구간(' +
+        (m.maxT >= 999 ? m.minT + '분 이상' : m.minT + '~' + m.maxT + '분') +
+        ')과 다릅니다. 시간이 상한이라 모드 효과가 절반만 납니다.</span>' : '';
+    note.style.display = 'block';
+    note.innerHTML = '<b style="color:' + m.tone + ';">' + m.icon + ' ' + m.label + ' 모드</b>'
+      + (saved ? ' <span style="color:var(--muted);">(직접 선택 · <a href="#" onclick="setSessionMode(\'auto\');return false;" style="color:var(--blue);">AI 자동으로</a>)</span>'
+               : ' <span style="color:var(--green);">✨ AI 추천</span>')
+      + '<br>' + m.desc
+      + (m.tip ? '<br><span style="color:var(--accent2);">💡 ' + m.tip + '</span>' : '')
+      + mismatch;
+  }
+}
+
+// 모드를 바꾸면 루틴을 그 방식으로 다시 만든다
+async function setSessionMode(key){
+  if(key === 'auto') localStorage.removeItem('fitlog-session-mode');
+  else localStorage.setItem('fitlog-session-mode', key);
+  const _p = JSON.parse(localStorage.getItem('fitlog-purposes') || '[]');
+  const _d = JSON.parse(localStorage.getItem('fitlog-assigned-days') || 'null');
+  if(!_p.length || !_d || !_d.length){ renderModeChips(); return; }
+  try{
+    const _order = ['월','화','수','목','금','토','일'];
+    const _keys  = ['A','B','C','D','E','F'];
+    const _sorted= [..._d].sort((a,b)=>_order.indexOf(a)-_order.indexOf(b));
+    const _b = buildManualPlan({
+      purposes:_p, classType:localStorage.getItem('fitlog-classtype') || '기구운동',
+      level:curLevel, days:_sorted,
+      injuries:JSON.parse(localStorage.getItem('fitlog-injuries') || '[]'),
+      stage:m_getRehabStage(), targetMin:m_getWorkoutTarget(), member:m_getMember()
+    });
+    _keys.forEach(rk=>{ delete RT[rk]; });
+    _order.forEach(d=>{ DAY_SCHED[DAY_NUM_MAP[d]] = 'REST'; });
+    _sorted.forEach((day,i)=>{
+      const rk = _keys[i % _keys.length];
+      DAY_SCHED[DAY_NUM_MAP[day]] = rk;
+      RT[rk] = JSON.parse(JSON.stringify(_b.plan[i % _b.plan.length]));
+      RT[rk].label = day + '요일 · ' + RT[rk].label;
+    });
+    localStorage.setItem('fitlog-rt-custom', JSON.stringify(RT));
+    localStorage.setItem('fitlog-rt-engine', MANUAL_ENGINE_VER);
+    window._manualGuide = _b.guide;
+    try{ window.saveRoutine(RT); }catch(e){}
+    initSetData(DAY_SCHED[selDay]);
+    renderWorkout(); renderModeChips(); updateTimeLabel();
+    const m = _b.guide.mode;
+    showToast(m.icon + ' ' + m.label + ' 모드로 재구성했습니다 (예상 ' + (_b.guide.estMin || '?') + '분)', 'success');
+  }catch(e){
+    console.error('[FitLog] 모드 전환 실패', e);
     showToast('오류: ' + e.message, 'error');
   }
 }
@@ -8240,7 +8323,7 @@ function renderORMGrid(){
 // ══════════════════════════════════════════════════════════════════
 
 // 엔진 버전 — 이 값이 바뀌면 예전 방식으로 저장된 루틴 백업을 폐기하고 새로 만든다
-const MANUAL_ENGINE_VER = 'manual-v3';
+const MANUAL_ENGINE_VER = 'manual-v4';
 
 // ── ① 목적별 훈련 강도 기준 (매뉴얼 4장 각 프로그램 헤더) ──
 const M_INTENSITY = {
@@ -8640,7 +8723,9 @@ function m_exSets(ex){
 }
 function m_setSeconds(ex){
   const t    = M_TEMPO_SEC[ex.tempo] || 4;
-  const rest = ex.rest || 60;
+  // 슈퍼셋은 짝 종목을 하는 동안 이 근육이 쉰다 → 벽시계 기준 휴식은 절반만 잡는다.
+  // (근육이 실제로 쉬는 시간은 '짝 종목 수행 + 라운드 휴식'이라 오히려 더 길다)
+  const rest = (ex.rest || 60) * (ex.ss ? 0.5 : 1);
   const mSec = (ex.d || '').match(/세트\s*×\s*(\d+)\s*초/);
   if(mSec) return parseInt(mSec[1]) + rest;
   const mRep = (ex.d || '').match(/세트\s*×\s*(\d+)\s*회/);
@@ -8668,6 +8753,271 @@ function m_setExSets(ex, n){
   if(ex.sets > 0) ex.sets = n;
 }
 
+// ══════════════════════════════════════════════════════════════════
+// ■ 세션 모드 (SESSION MODE)
+// ──────────────────────────────────────────────────────────────────
+// 같은 루틴을 시간에 맞춰 "잘라내기만" 하면 짧은 날은 이도저도 아니게
+// 얇아지고, 긴 날은 종목만 늘어 정신없어진다.
+// 시간에 따라 훈련 "방식" 자체를 바꾼다.
+//
+//  🎯 집중 (~35분)  : 핵심 2~3종목에 세트를 몰아준다. 길항근 슈퍼셋으로
+//                     밀도를 올리되, 근육별 실제 휴식은 매뉴얼 기준을 지킨다.
+//  ⚖️ 표준 (36~64분): 매뉴얼 표 그대로.
+//  💪 완전 (65~79분): 매뉴얼 전체 볼륨 + 보조 종목.
+//  🌿 여유 (80분~)  : 종목을 늘리지 않고 세트와 휴식을 넉넉히. 남는 시간은
+//                     약점 부위 보조 종목과 준비·회복에 쓴다.
+// ══════════════════════════════════════════════════════════════════
+const M_MODES = {
+  focus:{
+    key:'focus', label:'집중', icon:'🎯', tone:'#e8533a',
+    minT:0, maxT:35,
+    coreMax:3,            // 남길 핵심 종목 수
+    setBonus:1,           // 세트 가산
+    restMult:1.0,         // 근육별 휴식은 절대 줄이지 않는다
+    superset:true,        // 길항근 슈퍼셋 허용
+    cardio:0,
+    warmRatio:0.12, coolRatio:0.08,
+    desc:'핵심 종목만 남기고 세트를 몰아줍니다. 길항근을 짝지어 쉬는 시간을 겹치게 만들어, 근육이 쉬는 시간은 그대로 두면서 전체 시간만 줄입니다.',
+    tip:'종목 수가 적은 만큼 한 세트의 질이 결과를 좌우합니다. 마지막 반복까지 자세를 유지하세요.'
+  },
+  standard:{
+    key:'standard', label:'표준', icon:'⚖️', tone:'#4a9eff',
+    minT:36, maxT:64,
+    coreMax:99, setBonus:0, restMult:1.0, superset:false, cardio:1,
+    warmRatio:0.10, coolRatio:0.08,
+    desc:'매뉴얼 표 구성 그대로 진행합니다. 부위별 균형과 볼륨이 가장 안정적인 구간입니다.',
+    tip:''
+  },
+  complete:{
+    key:'complete', label:'완전', icon:'💪', tone:'#a78bfa',
+    minT:65, maxT:79,
+    coreMax:99, setBonus:0, restMult:1.0, superset:false, cardio:1,
+    warmRatio:0.10, coolRatio:0.09,
+    desc:'매뉴얼 전체 볼륨을 소화합니다. 보조 종목까지 들어가 부위별 자극이 가장 촘촘합니다.',
+    tip:''
+  },
+  unhurried:{
+    key:'unhurried', label:'여유', icon:'🌿', tone:'#4caf7d',
+    minT:80, maxT:999,
+    coreMax:99,
+    setBonus:2,           // 종목을 늘리지 않고 세트를 늘린다
+    restMult:1.15,        // 휴식을 매뉴얼 상한까지 넉넉히
+    superset:false, cardio:1, accessory:true,
+    warmRatio:0.12, coolRatio:0.12,
+    desc:'시간을 채우려 종목을 늘리지 않습니다. 같은 종목을 더 깊게(세트 증가), 휴식을 넉넉히 쓰고, 남는 시간은 약점 부위 보조 운동과 준비·회복에 씁니다.',
+    tip:'세트 사이에 서두르지 마세요. 완전히 회복하고 들어가야 다음 세트에서 더 좋은 수행이 나옵니다.'
+  }
+};
+
+// ── 모드 자동 선택 ──
+// 시간이 1차 기준. 회원 특성과 최근 컨디션으로 한 단계 조정한다.
+function m_pickMode(targetMin, member, recStat){
+  const order = ['focus','standard','complete','unhurried'];
+  let key = 'standard';
+  order.forEach(function(k){
+    const m = M_MODES[k];
+    if(targetMin >= m.minT && targetMin <= m.maxT) key = k;
+  });
+  const reasons = ['설정한 운동 시간 ' + targetMin + '분 기준으로 「' + M_MODES[key].label + '」 모드를 골랐습니다.'];
+
+  // 컨디션이 나쁘면 길게 끌지 않는다 — 짧고 굵게
+  if(recStat && recStat.cond <= 2.3 && key !== 'focus'){
+    const prev = key;
+    key = order[Math.max(0, order.indexOf(key) - 1)];
+    reasons.push('최근 평균 컨디션이 ' + recStat.cond + '/5로 낮아 「' + M_MODES[prev].label + '」에서 「' + M_MODES[key].label + '」으로 한 단계 낮췄습니다. 회복이 안 된 상태에서 볼륨을 밀면 다음 세션까지 무너집니다.');
+  }
+  // 계획을 못 끝내고 있으면 볼륨보다 완주가 먼저
+  else if(recStat && recStat.doneRate < 55 && key !== 'focus'){
+    const prev = key;
+    key = order[Math.max(0, order.indexOf(key) - 1)];
+    reasons.push('최근 계획 완수율이 ' + recStat.doneRate + '%입니다. 끝까지 못 하는 루틴은 효과가 없어 「' + M_MODES[prev].label + '」에서 「' + M_MODES[key].label + '」으로 낮췄습니다.');
+  }
+  return {key:key, mode:M_MODES[key], reasons:reasons, auto:true};
+}
+
+// 회원이 직접 고른 모드가 있으면 그걸 쓴다
+function m_getMode(targetMin, member, recStat){
+  const manual = localStorage.getItem('fitlog-session-mode');
+  if(manual && M_MODES[manual]){
+    return {key:manual, mode:M_MODES[manual], auto:false,
+            reasons:['회원이 직접 「' + M_MODES[manual].label + '」 모드를 선택했습니다.']};
+  }
+  return m_pickMode(targetMin, member, recStat);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 길항근 슈퍼셋 짝짓기
+// ──────────────────────────────────────────────────────────────────
+// 미는 근육과 당기는 근육을 번갈아 하면, A를 하는 동안 B가 쉰다.
+// 근육 하나가 실제로 쉬는 시간은 오히려 늘어나는데 전체 시간은 줄어든다.
+// 휴식을 잘라 밀도를 만드는 것과는 완전히 다른 방법이다.
+// ══════════════════════════════════════════════════════════════════
+const M_ANTAGONIST = [
+  ['가슴','광배'], ['어깨','광배'], ['이두','삼두'],
+  ['대퇴근','기립근'], ['복부','기립근'], ['가슴','이두'], ['어깨','이두']
+];
+function m_canPair(a, b){
+  if(!a || !b || a === b) return false;
+  return M_ANTAGONIST.some(function(p){
+    return (p[0] === a && p[1] === b) || (p[1] === a && p[0] === b);
+  });
+}
+
+// 세션 안의 종목들을 길항근끼리 묶는다.
+// 고중량 메인 리프트(근력강화의 첫 다관절)는 짝짓지 않는다 —
+// 최대중량 세트는 완전히 회복된 상태에서 들어가야 안전하다.
+function m_buildSupersets(day, intn){
+  const pool = [];
+  (day.sections || []).forEach(function(sec, si){
+    if(/워밍업|쿨다운|유산소/.test(sec.n)) return;
+    (sec.exs || []).forEach(function(ex, ei){
+      pool.push({sec:si, ex:ex, part:ex.part || '', heavy:(!ex.iso && si <= 1 && ei === 0)});
+    });
+  });
+  const groups = [];
+  const used = {};
+  let gid = 0;
+  for(let i = 0; i < pool.length; i++){
+    if(used[i]) continue;
+    const a = pool[i];
+    // 근력강화의 메인 다관절은 스트레이트 세트로 남긴다
+    if(intn.key === 'strength' && a.heavy) continue;
+    for(let j = i + 1; j < pool.length; j++){
+      if(used[j]) continue;
+      const b = pool[j];
+      if(intn.key === 'strength' && b.heavy) continue;
+      if(!m_canPair(a.part, b.part)) continue;
+      const tag = String.fromCharCode(65 + gid);   // A, B, C...
+      a.ex.ss = tag; a.ex.ssIdx = 1;
+      b.ex.ss = tag; b.ex.ssIdx = 2;
+      a.ex.ssWith = b.ex.n; b.ex.ssWith = a.ex.n;
+      // 세트 수를 맞춰야 라운드가 떨어진다
+      const n = Math.max(m_exSets(a.ex), m_exSets(b.ex));
+      a.ex.tSets = Math.max(a.ex.tSets || 0, n);
+      b.ex.tSets = Math.max(b.ex.tSets || 0, n);
+      m_setExSets(a.ex, n); m_setExSets(b.ex, n);
+      used[i] = used[j] = true;
+      groups.push({tag:tag, a:a.ex.n, b:b.ex.n});
+      gid++;
+      break;
+    }
+  }
+  return groups;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// 모드를 세션에 적용
+// ══════════════════════════════════════════════════════════════════
+function m_applyMode(day, mode, intn, member, recStat){
+  const secs = day.sections || [];
+  const isMain = function(sec){ return !/워밍업|쿨다운|유산소/.test(sec.n); };
+
+  // ── 휴식 조정 (여유 모드는 넉넉히 / 절대 줄이지는 않는다) ──
+  if(mode.restMult && mode.restMult !== 1.0){
+    secs.forEach(function(sec){
+      if(!isMain(sec)) return;
+      (sec.exs || []).forEach(function(ex){
+        if(ex.rest) ex.rest = Math.round(ex.rest * mode.restMult / 15) * 15;
+      });
+    });
+  }
+
+  // ── 집중 모드: 핵심 종목만 남기고 세트를 몰아준다 ──
+  if(mode.key === 'focus'){
+    // ① 각 부위의 대표 종목(첫 번째)을 먼저 확보 → 부위가 통째로 빠지지 않게
+    // ② 자리가 남으면 같은 순서로 두 번째·세 번째 종목을 채운다
+    //    (무분할처럼 섹션이 하나뿐인 날에도 종목이 1개로 쪼그라들지 않는다)
+    const keep = [];
+    let tier = 0, added = true;
+    while(added && keep.length < mode.coreMax){
+      added = false;
+      secs.forEach(function(sec){
+        if(!isMain(sec) || keep.length >= mode.coreMax) return;
+        const ex = sec.exs[tier];
+        if(!ex) return;
+        keep.push({sec:sec, ex:ex});
+        added = true;
+      });
+      tier++;
+    }
+    const chosen = keep.slice(0, mode.coreMax);
+    secs.forEach(function(sec){
+      if(!isMain(sec)) return;
+      sec.exs = sec.exs.filter(function(e){
+        return chosen.some(function(c){ return c.ex === e; });
+      });
+    });
+    // 남은 종목에 세트 가산 (상한 5세트) — 종목이 적은 만큼 세트로 밀도를 만든다
+    secs.forEach(function(sec){
+      if(!isMain(sec)) return;
+      (sec.exs || []).forEach(function(ex){
+        const n = Math.min(5, m_exSets(ex) + mode.setBonus);
+        ex.tSets = n;                       // 모드가 정한 목표 세트 (시간 배분이 이 값을 상한으로 쓴다)
+        m_setExSets(ex, n);
+      });
+    });
+  }
+
+  // ── 여유 모드: 종목은 그대로, 세트를 늘린다 ──
+  if(mode.key === 'unhurried'){
+    secs.forEach(function(sec){
+      if(!isMain(sec)) return;
+      (sec.exs || []).forEach(function(ex){
+        const n = Math.min(6, m_exSets(ex) + mode.setBonus);
+        ex.tSets = n;
+        m_setExSets(ex, n);
+      });
+    });
+  }
+
+  // ── 유산소 ──
+  if(mode.cardio === 0){
+    for(let i = secs.length - 1; i >= 0; i--){ if(/유산소/.test(secs[i].n)) secs.splice(i, 1); }
+  }
+
+  day.mode = mode.key;
+  return day;
+}
+
+// 슈퍼셋 구성은 종목이 확정된 뒤에 한다 (짝 한쪽만 잘려나가면 라운드가 깨진다)
+function m_finalizeSupersets(day, mode, intn){
+  day.supersets = [];
+  if(!mode.superset) return day;
+  day.supersets = m_buildSupersets(day, intn);
+  if(day.supersets.length){
+    (day.sections || []).forEach(function(sec){
+      if(!/워밍업|쿨다운|유산소/.test(sec.n) && (sec.exs || []).some(function(e){ return e.ss; })) sec.ss = true;
+    });
+  }
+  return day;
+}
+
+// ── 여유 모드 보조 종목: 기록상 약한 부위를 채운다 ──
+function m_accessoryFor(day, intn, isHome, injuries, used, recStat){
+  const PARTS = {
+    '가슴':['cableFly','dbFly'], '광배':['dbrow','cablerow'], '어깨':['reardelt','front'],
+    '대퇴근':['legext','lunge'], '이두':['hammer','cablecurl'], '삼두':['ohext','skull'],
+    '종아리':['calfSeat'], '기립근':['backext'], '전완근':['wristcurl']
+  };
+  const inDay = {};
+  (day.sections || []).forEach(function(sec){
+    (sec.exs || []).forEach(function(e){ if(e.part) inDay[e.part] = true; });
+  });
+  const cand = [];
+  Object.keys(PARTS).forEach(function(p){
+    if(!inDay[p]) return;                       // 그날 다루는 부위만 보강
+    PARTS[p].forEach(function(id){ cand.push(id); });
+  });
+  const exs = [];
+  cand.forEach(function(id){
+    if(exs.length >= 3) return;
+    const e = m_buildEx(id, 3, intn, isHome, injuries, used);
+    if(e) exs.push(e);
+  });
+  if(!exs.length) return null;
+  return {n:'보조 · 약점 보강 (여유 모드)', exs:exs, accessory:true};
+}
+
 // ── 목표 운동 시간에 맞춰 볼륨 조정 ──
 // 원칙: 매뉴얼 강도 기준(반복·휴식·%1RM)은 절대 건드리지 않는다.
 //       휴식을 줄이면 목적 자체가 달라지므로, 볼륨(종목 수·세트 수)만 줄인다.
@@ -8683,7 +9033,8 @@ function m_setExSets(ex, n){
 //    (근력·근비대에서 "5종목 2세트"는 "4종목 3세트"보다 자극이 약하다)
 // 4. 마지막으로 보조 종목 → 목적 보강 종목을 추가한다.
 // ────────────────────────────────────────────────────────────────
-function m_fitToBudget(rt, targetMin, intn){
+function m_fitToBudget(rt, targetMin, intn, mode){
+  mode = mode || M_MODES.standard;
   if(!rt || !rt.sections || !targetMin || targetMin <= 0) return rt;
 
   const secs   = rt.sections;
@@ -8692,24 +9043,31 @@ function m_fitToBudget(rt, targetMin, intn){
   const coolIx = idxOf(/쿨다운/);
   let   cardIx = idxOf(/유산소/);
   const cardioIsGoal = (intn.key === 'cardio' || intn.key === 'diet');
-  const minSets = (intn.key === 'strength' || intn.key === 'hyper') ? 3 : 2;
+  let minSets = (intn.key === 'strength' || intn.key === 'hyper') ? 3 : 2;
+  if(mode.key === 'focus')     minSets = Math.max(minSets, 3);   // 몰아주는 게 목적이라 얇아지면 안 된다
+  if(mode.key === 'unhurried') minSets = Math.max(minSets, 3);
 
   // ── 워밍업·쿨다운 ──
-  const warmMin = warmIx >= 0 ? Math.max(4, Math.min(10, Math.round(targetMin * 0.10))) : 0;
-  const coolMin = coolIx >= 0 ? Math.max(3, Math.min(8,  Math.round(targetMin * 0.08))) : 0;
+  const warmMin = warmIx >= 0 ? Math.max(3, Math.min(14, Math.round(targetMin * (mode.warmRatio || 0.10)))) : 0;
+  const coolMin = coolIx >= 0 ? Math.max(2, Math.min(14, Math.round(targetMin * (mode.coolRatio || 0.08)))) : 0;
   if(warmIx >= 0) m_scaleTimeSection(secs[warmIx], warmMin);
   if(coolIx >= 0) m_scaleTimeSection(secs[coolIx], coolMin);
 
   const manualCardio = cardIx >= 0 ? Math.round(m_secMinutes(secs[cardIx])) : 0;
 
   // ── 후보 종목: 티어(부위 내 순번) → 부위 순서, 목적 보강은 맨 뒤 ──
+  // 슈퍼셋으로 묶인 짝은 하나의 단위로 다룬다 (한쪽만 남으면 라운드가 깨진다)
   const bySec = [];
+  const ssUnit = {};
   secs.forEach(function(sec, si){
     if(si === warmIx || si === coolIx || si === cardIx) return;
-    const isBonus = /목적 보강/.test(sec.n) && !sec.primary;
+    const isBonus = (/목적 보강/.test(sec.n) && !sec.primary) || !!sec.accessory;
     const arr = [];
     sec.exs.forEach(function(ex, ei){
-      arr.push({si:si, ex:ex, origSets:m_exSets(ex), tier:ei, bonus:isBonus, keep:false});
+      if(ex.ss && ssUnit[ex.ss]){ ssUnit[ex.ss].exs.push(ex); return; }   // 짝의 두 번째 → 기존 단위에 합류
+      const it = {si:si, ex:ex, exs:[ex], origSets:Math.max(m_exSets(ex), ex.tSets || 0), tier:ei, bonus:isBonus, keep:false};
+      if(ex.ss) ssUnit[ex.ss] = it;
+      arr.push(it);
     });
     bySec.push({si:si, bonus:isBonus, exs:arr});
   });
@@ -8725,12 +9083,16 @@ function m_fitToBudget(rt, targetMin, intn){
   bonus.forEach(function(b){ b.exs.forEach(function(it){ rest.push(it); }); });
 
   const costAt = function(it, n){
-    const keepD = it.ex.d;
-    m_setExSets(it.ex, n);
-    const v = m_exMinutes(it.ex);
-    it.ex.d = keepD;
+    let v = 0;
+    it.exs.forEach(function(e){
+      const keepD = e.d;
+      m_setExSets(e, n);
+      v += m_exMinutes(e);
+      e.d = keepD;
+    });
     return v;
   };
+  const setUnit = function(it, n){ it.exs.forEach(function(e){ m_setExSets(e, n); }); };
 
   // 주어진 웨이트 예산으로 배분 시도 → {ok:모든 부위 확보 여부, used:소요 분}
   const allocate = function(budget){
@@ -8780,11 +9142,16 @@ function m_fitToBudget(rt, targetMin, intn){
 
   // ── 확정 반영 ──
   tier1.concat(rest).forEach(function(it){
-    if(it.keep) m_setExSets(it.ex, it.sets);
+    if(it.keep) setUnit(it, it.sets);
+  });
+  // 살아남은 종목을 전체 기준으로 모은다 (슈퍼셋 짝은 서로 다른 섹션에 있을 수 있다)
+  const alive = [];
+  bySec.forEach(function(b){
+    b.exs.forEach(function(it){ if(it.keep) it.exs.forEach(function(e){ alive.push(e); }); });
   });
   bySec.forEach(function(b){
     const sec = secs[b.si];
-    sec.exs = b.exs.filter(function(it){ return it.keep; }).map(function(it){ return it.ex; });
+    sec.exs = sec.exs.filter(function(e){ return alive.indexOf(e) >= 0; });
   });
 
   cardIx = secs.findIndex(function(sec){ return /유산소/.test(sec.n); });
@@ -8987,6 +9354,13 @@ function buildManualPlan(opt){
   const N        = Math.max(1, days.length);
   // 목표 운동 시간 (설정값). 지정되면 볼륨을 이 시간에 맞춘다.
   const targetMin = parseInt(opt.targetMin || m_getWorkoutTarget()) || 0;
+  // 세션 모드 — 시간에 따라 훈련 "방식" 자체가 달라진다
+  const recStat  = (typeof m_analyzeRecords === 'function' && typeof records !== 'undefined')
+                   ? m_analyzeRecords(records) : null;
+  const modeSel  = (typeof m_getMode === 'function')
+                   ? m_getMode(targetMin, opt.member || null, recStat)
+                   : {key:'standard', mode:M_MODES.standard, reasons:[], auto:true};
+  const MODE     = modeSel.mode;
 
   // ── 재활: 레벨 대신 통증 회복 단계로 진행 (매뉴얼 5장) ──
   if(ikey === 'rehab'){
@@ -9019,6 +9393,8 @@ function buildManualPlan(opt){
     }
     guide.estMin = plan.length ? plan[0].estMin : 0;
     guide.targetMin = targetMin;
+    guide.mode = M_MODES.standard;
+    guide.modeWhy = ['재활은 통증 회복 단계별 프로그램이 정해져 있어 세션 모드를 적용하지 않습니다.'];
     return {plan:plan, guide:guide, intensityKey:ikey, splitName:'무분할 (재활 ' + stage + '단계)'};
   }
 
@@ -9096,7 +9472,23 @@ function buildManualPlan(opt){
       if(_sw.length) swapLog = swapLog.concat(_sw);
     }
     day.fullMin = m_estimateMinutes(day);          // 매뉴얼 볼륨 그대로일 때의 소요 시간
-    if(targetMin > 0) m_fitToBudget(day, targetMin, intn);
+
+    // 세션 모드 적용 — 종목 수·세트·휴식·슈퍼셋이 여기서 결정된다
+    m_applyMode(day, MODE, intn, member, recStat);
+    // 여유 모드: 남는 시간에 약점 보강 종목을 넣는다 (종목을 억지로 늘리지 않고 그날 부위 안에서)
+    if(MODE.accessory && typeof m_accessoryFor === 'function'){
+      const acc = m_accessoryFor(day, intn, isHome, injuries, used, recStat);
+      if(acc){
+        const coolAt = day.sections.findIndex(function(x){ return /쿨다운/.test(x.n); });
+        if(coolAt >= 0) day.sections.splice(coolAt, 0, acc); else day.sections.push(acc);
+      }
+    }
+    if(targetMin > 0) m_fitToBudget(day, targetMin, intn, MODE);
+    // 슈퍼셋은 종목이 확정된 뒤에 묶는다 → 휴식이 겹쳐 시간이 남으면 한 번 더 채운다
+    if(MODE.superset){
+      m_finalizeSupersets(day, MODE, intn);
+      if(targetMin > 0 && day.supersets.length) m_fitToBudget(day, targetMin, intn, MODE);
+    }
     day.estMin = m_estimateMinutes(day);
     plan.push(day);
   }
@@ -9125,6 +9517,21 @@ function buildManualPlan(opt){
   guide.targetMin = targetMin;
   guide.ageNotes  = ageNotes;
   guide.corePlan  = corePlan;
+  guide.mode      = MODE;
+  // 모드가 휴식을 조정했으면 배너 표기도 맞춘다 (여유 모드는 매뉴얼 상한까지 넉넉히)
+  if(MODE.restMult && MODE.restMult !== 1.0) guide.rest = Math.round(guide.rest * MODE.restMult / 15) * 15;
+  guide.modeAuto  = modeSel.auto;
+  guide.modeWhy   = modeSel.reasons;
+  guide.supersets = (function(){
+    const seen = {}, out = [];
+    plan.forEach(function(d){
+      (d.supersets || []).forEach(function(x){
+        const k = x.a + '|' + x.b;
+        if(seen[k]) return; seen[k] = 1; out.push(x);
+      });
+    });
+    return out;
+  })();
   window._safeSwaps = swapLog;
   return {plan:plan, guide:guide, intensityKey:ikey, splitName:lvInfo.split, swaps:swapLog, corePlan:corePlan};
 }
@@ -9491,6 +9898,18 @@ function m_buildCoachReport(){
     ].filter(Boolean), 'var(--blue)');
   }
 
+  // ── 세션 모드 ──
+  if(guide && guide.mode){
+    const mm = guide.mode;
+    const ml = [mm.icon + ' ' + mm.label + ' 모드 — ' + mm.desc];
+    (guide.modeWhy || []).forEach(function(x){ ml.push(x); });
+    if((guide.supersets || []).length){
+      ml.push('슈퍼셋: ' + guide.supersets.map(function(x){ return x.a + ' ↔ ' + x.b; }).join(', ') +
+              ' — 길항근이라 서로의 휴식 시간에 겹쳐 넣을 수 있습니다. 휴식을 잘라 밀도를 만드는 것과는 다릅니다.');
+    }
+    push('⏱', '오늘의 세션 방식', ml, mm.tone);
+  }
+
   // ── 배치 근거 ──
   const place = [];
   if(window._corePlan && window._corePlan.reason) place.push('복근 — ' + window._corePlan.reason);
@@ -9650,6 +10069,7 @@ function m_guideBanner(g){
   if(g.rest) chips += chip('⏸ 휴식 ' + m_restLabel(g.rest), 'var(--green)');
   if(g.pct)  chips += chip('⚖ ' + g.pct, 'var(--accent2)');
   if(g.tempo)chips += chip('⏱ 템포 ' + g.tempo, 'var(--muted)');
+  if(g.mode) chips += chip(g.mode.icon + ' ' + g.mode.label + ' 모드', g.mode.tone);
   if(g.estMin) chips += chip('🕐 약 ' + g.estMin + '분' + (g.targetMin ? ' / 목표 ' + g.targetMin + '분' : ''),
                              (!g.targetMin || g.estMin <= g.targetMin + 5) ? 'var(--green)' : 'var(--accent)');
   return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid ' + g.tone + ';'
@@ -9661,6 +10081,12 @@ function m_guideBanner(g){
     + (g.tip ? '<div style="font-size:11px;color:var(--accent2);margin-top:6px;line-height:1.7;">💡 ' + g.tip + '</div>' : '')
     + (function(){
         const notes = [];
+        (g.modeWhy || []).forEach(function(n){ notes.push(n); });
+        if(g.mode && g.mode.key === 'focus' && (g.supersets || []).length){
+          notes.push('길항근을 짝지어 슈퍼셋으로 묶었습니다(' +
+            g.supersets.map(function(x){ return x.a + '↔' + x.b; }).join(', ') +
+            '). 한쪽을 하는 동안 다른 쪽이 쉬기 때문에, 근육이 실제로 쉬는 시간은 매뉴얼 기준보다 오히려 길어지면서 전체 시간만 줄어듭니다.');
+        }
         if(g.corePlan && g.corePlan.reason && g.corePlan.perWeek > 0){
           notes.push('복근 — ' + g.corePlan.reason);
         }
