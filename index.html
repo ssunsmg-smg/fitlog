@@ -23,7 +23,7 @@
        L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
        L 1899~ 끝  : JavaScript (앱 로직 전체)
      ████████████████████████████████████████████████████████████████ -->
-<!-- fitlog v4.2 build:20260801-sync1 · 기기 간 설정 동기화(요일·시간·부상·집중부위·기구·1RM·루틴)(manual-v8) -->
+<!-- fitlog v4.3 build:20260801-sync2 · 기기 간 동기화 + 주차변동 결정론화(중복 적용 제거)(manual-v9) -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -199,6 +199,8 @@
       sessionMode : ls('fitlog-session-mode', ''),
       rehabStage  : parseInt(ls('fitlog-rehab-stage', '2')) || 2,
       orm1RM      : lj('fitlog-1rm', {}),
+      variationWeek: parseInt(ls('fitlog-variation-week', '-1')),
+      appBuild    : 'v4.3-sync2',
       engineVer   : (typeof MANUAL_ENGINE_VER !== 'undefined' ? MANUAL_ENGINE_VER : ''),
       routine     : (rt && typeof rt === 'object') ? rt : null,
       savedAt: new Date().toISOString()
@@ -258,6 +260,7 @@
       if (data.myGym)      putJ('fitlog-my-gym', data.myGym);
       if (data.orm1RM)     putJ('fitlog-1rm',    data.orm1RM);
       if (data.rehabStage) put('fitlog-rehab-stage', data.rehabStage);
+      if (data.variationWeek !== undefined && data.variationWeek >= 0) put('fitlog-variation-week', data.variationWeek);
       if (data.sessionMode) put('fitlog-session-mode', data.sessionMode);
       else { try{ localStorage.removeItem('fitlog-session-mode'); }catch(e){} }
       // 클라우드 루틴은 같은 엔진 버전일 때만 그대로 쓴다
@@ -3284,7 +3287,7 @@ function showApp(){
     const _vb = document.getElementById('engine-ver-badge');
     if(_vb){
       const _g = window._manualGuide;
-      _vb.innerHTML = 'FitLog v4.2 · build 20260801-sync1<br>운동 처방 엔진: 매뉴얼 + 세션 모드 + 개인화 + 목적 반영 (' + MANUAL_ENGINE_VER + ')'
+      _vb.innerHTML = 'FitLog v4.3 · build 20260801-sync2<br>운동 처방 엔진: 매뉴얼 + 세션 모드 + 개인화 + 목적 반영 (' + MANUAL_ENGINE_VER + ')'
         + (_g ? '<br>현재 적용: ' + _g.name + ' · ' + _g.split + (_g.estMin ? ' · 1회 약 ' + _g.estMin + '분' : '') : '');
     }
     if(localStorage.getItem('fitlog-manual-upgraded')==='1'){
@@ -8486,7 +8489,7 @@ function renderORMGrid(){
 // ══════════════════════════════════════════════════════════════════
 
 // 엔진 버전 — 이 값이 바뀌면 예전 방식으로 저장된 루틴 백업을 폐기하고 새로 만든다
-const MANUAL_ENGINE_VER = 'manual-v8';
+const MANUAL_ENGINE_VER = 'manual-v9';
 
 // ── ① 목적별 훈련 강도 기준 (매뉴얼 4장 각 프로그램 헤더) ──
 const M_INTENSITY = {
@@ -10778,12 +10781,15 @@ async function m_pullSettings(){
 function m_updateSyncInfo(){
   const el = document.getElementById('sync-info');
   if(!el) return;
-  let at = '';
-  try{ at = (JSON.parse(localStorage.getItem('fitlog-routine-backup') || '{}') || {}).savedAt || ''; }catch(e){}
-  el.textContent = at
-    ? ('마지막 저장 ' + at.slice(0,10) + ' ' + at.slice(11,16)
-       + ' · 요일/시간/부상/집중부위/보유기구/기준중량이 함께 저장됩니다')
-    : '아직 클라우드에 저장된 설정이 없습니다';
+  let d = {};
+  try{ d = JSON.parse(localStorage.getItem('fitlog-routine-backup') || '{}') || {}; }catch(e){}
+  if(!d.savedAt){ el.innerHTML = '아직 클라우드에 저장된 설정이 없습니다'; return; }
+  const full = (d.workoutTime !== undefined && d.injuries !== undefined && d.routine !== undefined);
+  el.innerHTML = '마지막 저장 ' + d.savedAt.slice(0,10) + ' ' + d.savedAt.slice(11,16)
+    + (d.appBuild ? ' · ' + d.appBuild : '')
+    + '<br>' + (full
+      ? '<span style="color:var(--green);">✅ 요일·시간·부상·집중부위·보유기구·기준중량·루틴이 함께 저장돼 있습니다</span>'
+      : '<span style="color:var(--accent2);">⚠️ 예전 버전이 저장한 설정입니다. 다른 기기도 최신 버전으로 연 뒤 설정을 한 번 저장해야 기기 간 루틴이 같아집니다.</span>');
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -12434,43 +12440,43 @@ const EXERCISE_VARIATIONS = {
 };
 
 function applyWeeklyVariation(){
-  // 이번 주차 계산 (연 기준 몇 번째 주)
+  // ── 주차별 종목 변동 ──
+  // 예전에는 "지금 이름"을 기준으로 변형을 걸어서, 기기마다 적용 횟수가 다르면
+  // 결과가 갈렸다. (PC는 이미 바꾼 뒤 저장 → 폰은 그 위에 또 변형 → 서로 다른 종목)
+  // 이제는 원본 이름(baseN)을 기억해 두고 "원본 + 이번 주차"로만 계산한다.
+  // 몇 번을 실행하든, 어느 기기에서 실행하든 결과가 같다.
   const now = new Date();
   const startOfYear = new Date(now.getFullYear(), 0, 1);
   const weekNum = Math.floor((now - startOfYear) / (7*24*60*60*1000));
   const cycle = weekNum % 4; // 0~3 사이클
 
-  if(cycle === 0) return; // 1주차는 기본 루틴 유지
-
-  // 마지막 변동 적용 주차와 다를 때만 적용
-  const lastCycle = parseInt(localStorage.getItem('fitlog-variation-week')||'-1');
-  if(lastCycle === weekNum) return; // 이미 이번 주 적용됨
-
   let changed = 0;
-  Object.keys(RT).forEach(tk=>{
-    if(tk==='REST') return;
+  Object.keys(RT).forEach(function(tk){
+    if(tk === 'REST') return;
     const rt = RT[tk];
-    if(!rt?.sections) return;
-    rt.sections.forEach(sec=>{
-      sec.exs.forEach(ex=>{
-        const vars = EXERCISE_VARIATIONS[ex.n];
-        if(vars && vars.length>0){
-          const newName = vars[(cycle-1) % vars.length];
-          // EX_LIB에서 새 운동 정보 찾기
-          const libEx = EX_LIB.find(e=>e.n===newName);
-          if(libEx){
-            ex.n = newName;
-            if(libEx.tags) ex.tags = libEx.tags;
-            if(libEx.w) ex.w = libEx.w;
-            changed++;
-          }
+    if(!rt || !rt.sections) return;
+    rt.sections.forEach(function(sec){
+      (sec.exs || []).forEach(function(ex){
+        if(!ex.baseN) ex.baseN = ex.n;                 // 원본 이름 기억 (최초 1회)
+        let want = ex.baseN;
+        if(cycle > 0){
+          const vars = EXERCISE_VARIATIONS[ex.baseN];
+          if(vars && vars.length > 0) want = vars[(cycle - 1) % vars.length];
         }
+        if(want === ex.n) return;                      // 이미 이번 주 종목이면 그대로
+        const libEx = EX_LIB.find(function(e){ return e.n === want; });
+        if(!libEx && want !== ex.baseN) return;        // 정보를 못 찾으면 바꾸지 않는다
+        ex.n = want;
+        if(libEx){
+          if(libEx.tags) ex.tags = libEx.tags.slice();
+          if(libEx.w)    ex.w    = libEx.w.slice();
+        }
+        changed++;
       });
     });
   });
 
   if(changed > 0){
-    localStorage.setItem('fitlog-variation-week', weekNum.toString());
     // 종목이 바뀌었으니 부상 안전 규칙을 다시 적용한다 (변동으로 위험 종목이 들어올 수 있다)
     try{
       const _mem = (typeof m_getMember === 'function') ? m_getMember() : null;
@@ -12478,17 +12484,21 @@ function applyWeeklyVariation(){
         Object.keys(RT).forEach(function(tk){ if(tk !== 'REST' && RT[tk]) m_applySafetySwaps(RT[tk], _mem); });
       }
     }catch(e){}
-    window.saveRoutine && window.saveRoutine(RT);
-    // 변동 결과를 루틴 백업에도 반영 (반영하지 않으면 새로고침 시 변동이 사라진다)
     try{
       localStorage.setItem('fitlog-rt-custom', JSON.stringify(RT));
       localStorage.setItem('fitlog-rt-engine', MANUAL_ENGINE_VER);
     }catch(e){}
-    // 현재 운동 화면 갱신
+    window.saveRoutine && window.saveRoutine(RT);
     initSetData(DAY_SCHED[selDay]);
     renderWorkout();
-    const cycleNames = ['','B안 (각도 변경)','C안 (고립 강화)','D안 (복합 강화)'];
-    showToast(`🔄 이번 주 운동 변동 적용! ${cycleNames[cycle]}\n${changed}개 종목이 같은 근육의 다른 운동으로 교체됐어요.`, 'info');
+  }
+
+  // 안내 토스트는 이번 주에 한 번만
+  const lastWeek = parseInt(localStorage.getItem('fitlog-variation-week') || '-1');
+  if(cycle > 0 && changed > 0 && lastWeek !== weekNum){
+    localStorage.setItem('fitlog-variation-week', weekNum.toString());
+    const cycleNames = ['', 'B안 (각도 변경)', 'C안 (고립 강화)', 'D안 (복합 강화)'];
+    showToast('🔄 이번 주 운동 변동 적용! ' + cycleNames[cycle] + '\n' + changed + '개 종목이 같은 근육의 다른 운동으로 교체됐어요.', 'info');
   }
 }
 
