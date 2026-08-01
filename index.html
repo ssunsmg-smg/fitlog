@@ -23,7 +23,7 @@
        L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
        L 1899~ 끝  : JavaScript (앱 로직 전체)
      ████████████████████████████████████████████████████████████████ -->
-<!-- fitlog v3.4 build:20260801-manual1 · 트레이너 매뉴얼 처방 엔진(manual-v1) 적용 -->
+<!-- fitlog v3.5 build:20260801-manual2 · 트레이너 매뉴얼 처방 엔진 + 운동시간 예산 맞춤(manual-v2) -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -1183,7 +1183,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px;">
         <div style="flex:1;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:8px 12px;display:flex;align-items:center;gap:8px;">
           <span style="font-size:12px;color:var(--muted);white-space:nowrap;">⏱ 운동 시간</span>
-          <select id="workout-time-sel" onchange="updateTimeLabel()"
+          <select id="workout-time-sel" onchange="applyWorkoutTime()"
             style="flex:1;background:none;border:none;color:var(--text);font-size:14px;font-weight:700;font-family:var(--mono);cursor:pointer;outline:none;">
             <option value="20">20분</option>
             <option value="30">30분</option>
@@ -3204,13 +3204,21 @@ function showApp(){
 
   showToast(`환영합니다, ${userProfile?.name||''}님! 💪`,'success');
 
+  // ── 저장된 운동 시간 복원 ──
+  try{
+    const _wt2 = localStorage.getItem('fitlog-workout-time');
+    const _sel = document.getElementById('workout-time-sel');
+    if(_sel && _wt2){ _sel.value = _wt2; }
+    updateTimeLabel();
+  }catch(e){}
+
   // ── 매뉴얼 엔진 버전 표시 + 최초 1회 업그레이드 안내 ──
   try{
     const _vb = document.getElementById('engine-ver-badge');
     if(_vb){
       const _g = window._manualGuide;
-      _vb.innerHTML = 'FitLog v3.4 · build 20260801-manual1<br>운동 처방 엔진: 트레이너 매뉴얼 기준 (' + MANUAL_ENGINE_VER + ')'
-        + (_g ? '<br>현재 적용: ' + _g.name + ' · ' + _g.split : '');
+      _vb.innerHTML = 'FitLog v3.5 · build 20260801-manual2<br>운동 처방 엔진: 트레이너 매뉴얼 기준 (' + MANUAL_ENGINE_VER + ')'
+        + (_g ? '<br>현재 적용: ' + _g.name + ' · ' + _g.split + (_g.estMin ? ' · 1회 약 ' + _g.estMin + '분' : '') : '');
     }
     if(localStorage.getItem('fitlog-manual-upgraded')==='1'){
       localStorage.removeItem('fitlog-manual-upgraded');
@@ -3959,6 +3967,7 @@ const CAT_ORDER = ['가슴','등','어깨','팔','하체','둔근','복근','유
 // ── 운동 시간 선택 ──
 function updateTimeLabel(){
   const min = parseInt(document.getElementById('workout-time-sel')?.value || 60);
+  try{ localStorage.setItem('fitlog-workout-time', String(min)); }catch(e){}
   const bar = document.getElementById('time-plan-bar');
   if(!bar) return;
 
@@ -3977,8 +3986,69 @@ function updateTimeLabel(){
   } else {
     plan = '👑 마스터급 · 워밍업 15분 + 메인 10~12가지 + 유산소 30분 + 스트레칭 20분';
   }
-  bar.textContent = plan;
+  // 매뉴얼 엔진 기준 실제 소요 시간 안내
+  // 오늘이 휴식일이면 이번 주 웨이트 루틴 중 하나를 기준으로 안내
+  const tk0 = DAY_SCHED[selDay];
+  let est = (RT[tk0] && RT[tk0].estMin) ? RT[tk0].estMin : 0;
+  if(!est){
+    const k = ['A','B','C','D','E','F'].find(x=>RT[x] && RT[x].estMin);
+    if(k) est = RT[k].estMin;
+  }
+  bar.innerHTML = plan + (est ? '<br><span style="color:' +
+    (est <= min + 5 ? 'var(--green)' : 'var(--accent2)') +
+    ';">현재 루틴 예상 소요: 약 ' + est + '분</span>' : '');
   bar.style.display = 'block';
+}
+
+// ⏱ 운동 시간을 바꾸면 그 시간에 맞게 루틴 볼륨을 다시 맞춘다
+async function applyWorkoutTime(){
+  const min = parseInt(document.getElementById('workout-time-sel')?.value || 60);
+  try{ localStorage.setItem('fitlog-workout-time', String(min)); }catch(e){}
+  updateTimeLabel();
+  const _p = JSON.parse(localStorage.getItem('fitlog-purposes') || '[]');
+  const _d = JSON.parse(localStorage.getItem('fitlog-assigned-days') || 'null');
+  if(!_p.length || !_d || !_d.length){ return; }
+  if(!confirm(min + '분에 맞춰 루틴 볼륨을 다시 계산할까요?\n(반복수·휴식·강도는 매뉴얼 기준 그대로 유지됩니다)')){
+    return;
+  }
+  try{
+    const _order = ['월','화','수','목','금','토','일'];
+    const _keys  = ['A','B','C','D','E','F'];
+    const _sorted= [..._d].sort((a,b)=>_order.indexOf(a)-_order.indexOf(b));
+    const _b = buildManualPlan({
+      purposes : _p,
+      classType: localStorage.getItem('fitlog-classtype') || '기구운동',
+      level    : curLevel,
+      days     : _sorted,
+      injuries : JSON.parse(localStorage.getItem('fitlog-injuries') || '[]'),
+      stage    : m_getRehabStage(),
+      targetMin: min
+    });
+    _keys.forEach(rk=>{ delete RT[rk]; });
+    _order.forEach(d=>{ DAY_SCHED[DAY_NUM_MAP[d]] = 'REST'; });
+    _sorted.forEach((day,i)=>{
+      const rk = _keys[i % _keys.length];
+      DAY_SCHED[DAY_NUM_MAP[day]] = rk;
+      RT[rk] = JSON.parse(JSON.stringify(_b.plan[i % _b.plan.length]));
+      RT[rk].label = day + '요일 · ' + RT[rk].label;
+    });
+    localStorage.setItem('fitlog-rt-custom', JSON.stringify(RT));
+    localStorage.setItem('fitlog-rt-engine', MANUAL_ENGINE_VER);
+    window._manualGuide = _b.guide;
+    try{ window.saveRoutine(RT); }catch(e){}
+    initSetData(DAY_SCHED[selDay]);
+    renderWorkout();
+    updateTimeLabel();
+    const g = _b.guide;
+    let msg = '⏱ ' + min + '분에 맞춰 루틴을 조정했어요 (예상 ' + (g.estMin||min) + '분)';
+    if(g.fullMin && g.fullMin > min + 10){
+      msg += '\n매뉴얼 전체 볼륨은 ' + g.fullMin + '분 분량이라 보조 종목부터 줄였습니다.';
+    }
+    showToast(msg, 'success');
+  }catch(e){
+    console.error('[FitLog] 운동 시간 반영 실패', e);
+    showToast('오류: ' + e.message, 'error');
+  }
 }
 
 function getWorkoutMinutes(){
@@ -8170,7 +8240,7 @@ function renderORMGrid(){
 // ══════════════════════════════════════════════════════════════════
 
 // 엔진 버전 — 이 값이 바뀌면 예전 방식으로 저장된 루틴 백업을 폐기하고 새로 만든다
-const MANUAL_ENGINE_VER = 'manual-v1';
+const MANUAL_ENGINE_VER = 'manual-v2';
 
 // ── ① 목적별 훈련 강도 기준 (매뉴얼 4장 각 프로그램 헤더) ──
 const M_INTENSITY = {
@@ -8561,6 +8631,191 @@ function m_restLabel(sec){
   return m + '분' + (r ? ' ' + r + '초' : '');
 }
 
+// ── 소요 시간 추정 ──
+// 세트 1회 = (반복수 × 템포초) + 세팅·이동 12초 + 세트간 휴식
+const M_TEMPO_SEC = {'3-1-1':5, '2-1-2':5, '2-0-1':3, '2-0-2':4, '3-1-3':7};
+function m_exSets(ex){
+  const m = (ex.d || '').match(/(\d+)\s*세트/);
+  return m ? parseInt(m[1]) : (ex.sets || 0);
+}
+function m_setSeconds(ex){
+  const t    = M_TEMPO_SEC[ex.tempo] || 4;
+  const rest = ex.rest || 60;
+  const mSec = (ex.d || '').match(/세트\s*×\s*(\d+)\s*초/);
+  if(mSec) return parseInt(mSec[1]) + rest;
+  const mRep = (ex.d || '').match(/세트\s*×\s*(\d+)\s*회/);
+  const reps = mRep ? parseInt(mRep[1]) : 10;
+  return reps * t + 12 + rest;
+}
+function m_exMinutes(ex){
+  const n = m_exSets(ex);
+  if(n > 0) return (n * m_setSeconds(ex)) / 60;
+  const mMin = (ex.d || '').match(/(\d+)\s*분/);
+  if(mMin) return parseInt(mMin[1]);
+  const mSecOnly = (ex.d || '').match(/(\d+)\s*초\s*×\s*(\d+)\s*회/);
+  if(mSecOnly) return (parseInt(mSecOnly[1]) * parseInt(mSecOnly[2])) / 60;
+  return 2;
+}
+function m_secMinutes(sec){
+  return (sec.exs || []).reduce(function(a, e){ return a + m_exMinutes(e); }, 0);
+}
+function m_estimateMinutes(rt){
+  if(!rt || !rt.sections) return 0;
+  return Math.round(rt.sections.reduce(function(a, s){ return a + m_secMinutes(s); }, 0));
+}
+function m_setExSets(ex, n){
+  ex.d = (ex.d || '').replace(/^\d+\s*세트/, n + '세트');
+  if(ex.sets > 0) ex.sets = n;
+}
+
+// ── 목표 운동 시간에 맞춰 볼륨 조정 ──
+// 원칙: 매뉴얼 강도 기준(반복·휴식·%1RM)은 절대 건드리지 않는다.
+//       휴식을 줄이면 목적 자체가 달라지므로, 볼륨(종목 수·세트 수)만 줄인다.
+// 삭감 순서: 목적 보강 섹션 → 단관절 보조 → 다관절 메인 (각 섹션 뒤쪽 종목부터)
+//            메인 섹션의 첫 종목(핵심 다관절)은 최후까지 남긴다.
+// 목표 운동 시간에 맞춰 볼륨을 조정한다.
+// ── 원칙 ────────────────────────────────────────────────────────
+// 1. 매뉴얼 강도 기준(반복수·세트간 휴식·%1RM·템포)은 절대 건드리지 않는다.
+//    휴식을 줄이면 "근력강화"가 "근지구력"이 되어 목적 자체가 달라지기 때문.
+// 2. 부위 균형이 최우선. 상체 날인데 가슴만 남으면 분할의 의미가 없다.
+//    → 먼저 각 부위의 대표 종목을 최소 세트로 전부 확보한다.
+// 3. 그 다음 남는 시간으로 세트를 매뉴얼 값까지 끌어올린다.
+//    (근력·근비대에서 "5종목 2세트"는 "4종목 3세트"보다 자극이 약하다)
+// 4. 마지막으로 보조 종목 → 목적 보강 종목을 추가한다.
+// ────────────────────────────────────────────────────────────────
+function m_fitToBudget(rt, targetMin, intn){
+  if(!rt || !rt.sections || !targetMin || targetMin <= 0) return rt;
+
+  const secs   = rt.sections;
+  const idxOf  = function(re){ return secs.findIndex(function(s){ return re.test(s.n); }); };
+  const warmIx = idxOf(/워밍업/);
+  const coolIx = idxOf(/쿨다운/);
+  let   cardIx = idxOf(/유산소/);
+  const cardioIsGoal = (intn.key === 'cardio' || intn.key === 'diet');
+  const minSets = (intn.key === 'strength' || intn.key === 'hyper') ? 3 : 2;
+
+  // ── 워밍업·쿨다운 ──
+  const warmMin = warmIx >= 0 ? Math.max(4, Math.min(10, Math.round(targetMin * 0.10))) : 0;
+  const coolMin = coolIx >= 0 ? Math.max(3, Math.min(8,  Math.round(targetMin * 0.08))) : 0;
+  if(warmIx >= 0) m_scaleTimeSection(secs[warmIx], warmMin);
+  if(coolIx >= 0) m_scaleTimeSection(secs[coolIx], coolMin);
+
+  const manualCardio = cardIx >= 0 ? Math.round(m_secMinutes(secs[cardIx])) : 0;
+
+  // ── 후보 종목: 티어(부위 내 순번) → 부위 순서, 목적 보강은 맨 뒤 ──
+  const bySec = [];
+  secs.forEach(function(sec, si){
+    if(si === warmIx || si === coolIx || si === cardIx) return;
+    const isBonus = /목적 보강/.test(sec.n);
+    const arr = [];
+    sec.exs.forEach(function(ex, ei){
+      arr.push({si:si, ex:ex, origSets:m_exSets(ex), tier:ei, bonus:isBonus, keep:false});
+    });
+    bySec.push({si:si, bonus:isBonus, exs:arr});
+  });
+  const mains = bySec.filter(function(b){ return !b.bonus; });
+  const bonus = bySec.filter(function(b){ return  b.bonus; });
+  const maxT  = Math.max.apply(null, [0].concat(bySec.map(function(b){ return b.exs.length; })));
+
+  const tier1 = mains.map(function(b){ return b.exs[0]; }).filter(Boolean);
+  const rest  = [];
+  for(let t = 1; t < maxT; t++){
+    mains.forEach(function(b){ if(b.exs[t]) rest.push(b.exs[t]); });
+  }
+  bonus.forEach(function(b){ b.exs.forEach(function(it){ rest.push(it); }); });
+
+  const costAt = function(it, n){
+    const keepD = it.ex.d;
+    m_setExSets(it.ex, n);
+    const v = m_exMinutes(it.ex);
+    it.ex.d = keepD;
+    return v;
+  };
+
+  // 주어진 웨이트 예산으로 배분 시도 → {ok:모든 부위 확보 여부, used:소요 분}
+  const allocate = function(budget){
+    let used = 0, ok = true;
+    tier1.concat(rest).forEach(function(it){ it.keep = false; });
+    // ① 부위 커버리지 — 각 부위 대표 종목을 최소 세트로
+    tier1.forEach(function(it){
+      const c = costAt(it, Math.min(minSets, it.origSets));
+      if(used + c <= budget){ it.keep = true; it.sets = Math.min(minSets, it.origSets); used += c; }
+      else ok = false;
+    });
+    // ② 세트 끌어올리기 — 매뉴얼 값까지, 우선순위 순으로 한 세트씩 라운드로빈
+    let changed = true;
+    while(changed){
+      changed = false;
+      tier1.concat(rest).forEach(function(it){
+        if(!it.keep || it.sets >= it.origSets) return;
+        const add = costAt(it, it.sets + 1) - costAt(it, it.sets);
+        if(used + add <= budget){ it.sets++; used += add; changed = true; }
+      });
+      // ③ 보조·보강 종목 추가 (최소 세트로)
+      rest.forEach(function(it){
+        if(it.keep) return;
+        const c = costAt(it, Math.min(minSets, it.origSets));
+        if(used + c <= budget){ it.keep = true; it.sets = Math.min(minSets, it.origSets); used += c; changed = true; }
+      });
+    }
+    return {ok:ok, used:used};
+  };
+
+  // ── 유산소 배분 ──
+  // 매뉴얼: 근력강화·근비대는 "유산소 최소화" → 부위 커버리지가 안 되면 유산소를 먼저 포기
+  let cardioMin = 0, res;
+  if(cardioIsGoal){
+    cardioMin = Math.min(manualCardio, Math.round(targetMin * 0.45));
+    res = allocate(targetMin - warmMin - coolMin - cardioMin);
+  } else {
+    cardioMin = manualCardio;
+    res = allocate(targetMin - warmMin - coolMin - cardioMin);
+    if(!res.ok){                                   // 웨이트가 부족하면 유산소를 뺀다
+      cardioMin = 0;
+      res = allocate(targetMin - warmMin - coolMin);
+      const left = (targetMin - warmMin - coolMin) - res.used;
+      if(left >= 6) cardioMin = Math.min(manualCardio, Math.round(left));
+    }
+  }
+
+  // ── 확정 반영 ──
+  tier1.concat(rest).forEach(function(it){
+    if(it.keep) m_setExSets(it.ex, it.sets);
+  });
+  bySec.forEach(function(b){
+    const sec = secs[b.si];
+    sec.exs = b.exs.filter(function(it){ return it.keep; }).map(function(it){ return it.ex; });
+  });
+
+  cardIx = secs.findIndex(function(sec){ return /유산소/.test(sec.n); });
+  if(cardIx >= 0){
+    if(cardioMin < (cardioIsGoal ? 5 : 6)){ secs.splice(cardIx, 1); }
+    else {
+      m_scaleTimeSection(secs[cardIx], cardioMin);
+      secs[cardIx].n = '유산소' + (intn.circuit ? ' (서킷형)' : '') + ' · ' + cardioMin + '분';
+    }
+  }
+  rt.sections  = secs.filter(function(s){ return s.exs && s.exs.length; });
+  rt.estMin    = m_estimateMinutes(rt);
+  rt.targetMin = targetMin;
+  return rt;
+}
+
+// 분 단위 종목만 있는 섹션(워밍업·쿨다운·유산소)의 총 시간을 목표에 맞게 재배분
+function m_scaleTimeSection(sec, targetMin){
+  const exs = (sec.exs || []).filter(function(e){ return m_exSets(e) === 0 && /분/.test(e.d || ''); });
+  if(!exs.length) return;
+  const cur = exs.reduce(function(a, e){ return a + m_exMinutes(e); }, 0);
+  if(cur <= 0) return;
+  let left = targetMin;
+  exs.forEach(function(e, i){
+    let v;
+    if(i === exs.length - 1) v = Math.max(1, left);
+    else { v = Math.max(1, Math.round(m_exMinutes(e) / cur * targetMin)); left -= v; }
+    e.d = e.d.replace(/\d+\s*분/, v + '분');
+  });
+}
+
 // 매뉴얼 강도 기준에 맞춰 종목 1개 생성
 function m_buildEx(id, sets, intn, isHome, injuries, used){
   const e = M_EXDB[id];
@@ -8612,8 +8867,9 @@ function m_warmup(intn, isHome){
     {n:isHome ? '제자리 달리기' : '업라이트 바이크', d:'5분 · 저강도', tags:['심폐'], w:[], sets:0},
     {n:'관절 돌리기', d:'3분 · 목→어깨→손목→허리→무릎', tags:['관절가동성'], w:[], sets:0}
   ];
+  // 매뉴얼: 근력강화는 워밍업 세트 필수 (본 세트 전 신경계 준비)
   if(intn.warmupSets){
-    exs.push({n:'밴드 풀어파트', d:'2세트 × 20회', tags:['어깨안정화'], w:[], sets:0});
+    exs.push({n:'밴드 풀어파트', d:'1분 · 어깨 준비', tags:['어깨안정화'], w:[], sets:0});
   }
   return {n:'워밍업', exs:exs};
 }
@@ -8677,7 +8933,8 @@ function m_arrangeDays(N, W){
 }
 
 // 목적 보조 포커스(복근/둔근) 섹션 추가 여부
-function m_focusSections(purposes, intn, isHome, injuries, used){
+function m_focusSections(purposes, intn, isHome, injuries, used, ctx){
+  // ctx = {isLowerDay:bool, hasCore:bool, dayIndex:int}
   const p = purposes || [];
   const out = [];
   const add = function(title, ids){
@@ -8686,11 +8943,21 @@ function m_focusSections(purposes, intn, isHome, injuries, used){
     }).filter(Boolean);
     if(exs.length) out.push({n:title, exs:exs});
   };
-  if(p.some(function(x){ return x.indexOf('복근') >= 0; })){
-    add('복부 (목적 보강)', [['hangingLeg',3],['cableCrunch',3],['plank',3]]);
+
+  // ── 복부 ──
+  // 매뉴얼 다이어트 표처럼 매일 넣되 하루 1종목만 로테이션한다.
+  // (복근은 회복이 빠르지만, 매일 3종목씩 넣으면 시간만 잡아먹고 메인 볼륨을 밀어낸다)
+  if(p.some(function(x){ return x.indexOf('복근') >= 0; }) && !ctx.hasCore){
+    const rot = [['hangingLeg',3], ['cableCrunch',3], ['plank',3], ['russian',3]];
+    const pick = rot[(ctx.dayIndex || 0) % rot.length];
+    add('복부 (목적 보강)', [pick]);
   }
-  if(p.some(function(x){ return x.indexOf('둔근') >= 0 || x.indexOf('하체') >= 0; })){
-    add('하체·둔근 (목적 보강)', [['hipthrust',4],['abduction',3]]);
+
+  // ── 하체·둔근 ──
+  // 하체를 다루는 날에만 넣는다. 상체 날에 힙 쓰러스트를 넣으면
+  // 다음 하체 날의 수행능력을 갉아먹고 회복만 방해한다.
+  if(p.some(function(x){ return x.indexOf('둔근') >= 0 || x.indexOf('하체') >= 0; }) && ctx.isLowerDay){
+    add('하체·둔근 (목적 보강)', [['hipthrust',4], ['abduction',3]]);
   }
   return out;
 }
@@ -8707,6 +8974,8 @@ function buildManualPlan(opt){
   const ikey     = m_pickIntensity(purposes, level);
   const intn     = Object.assign({key:ikey}, M_INTENSITY[ikey]);
   const N        = Math.max(1, days.length);
+  // 목표 운동 시간 (설정값). 지정되면 볼륨을 이 시간에 맞춘다.
+  const targetMin = parseInt(opt.targetMin || m_getWorkoutTarget()) || 0;
 
   // ── 재활: 레벨 대신 통증 회복 단계로 진행 (매뉴얼 5장) ──
   if(ikey === 'rehab'){
@@ -8725,15 +8994,19 @@ function buildManualPlan(opt){
     };
     const plan = [];
     for(let i = 0; i < N; i++){
-      plan.push({
+      const day = {
         label:prog.label + ' ' + stage + '단계',
         title:st.name.split('·')[1] ? st.name.split('·')[1].trim() : st.name,
         color:'rh-a',
         muscles:prog.muscles.slice(),
         guide:guide,
         sections:JSON.parse(JSON.stringify(st.secs))
-      });
+      };
+      day.estMin = m_estimateMinutes(day);
+      plan.push(day);
     }
+    guide.estMin = plan.length ? plan[0].estMin : 0;
+    guide.targetMin = targetMin;
     return {plan:plan, guide:guide, intensityKey:ikey, splitName:'무분할 (재활 ' + stage + '단계)'};
   }
 
@@ -8755,10 +9028,17 @@ function buildManualPlan(opt){
     if(layout[i] === 'c'){
       const rd = m_restDay(intn, isHome, level);
       rd.guide = guide;
+      if(targetMin > 0){
+        const _cm = Math.max(10, Math.round(targetMin * 0.6));
+        m_scaleTimeSection(rd.sections[0], _cm);
+        rd.title = '유산소 / 휴식 · ' + _cm + '분';
+      }
+      rd.estMin = m_estimateMinutes(rd);
       plan.push(rd);
       continue;
     }
     const tpl = templates[ti % templates.length];
+    const dayIdx = ti;
     ti++;
     const used = new Set();               // 같은 날 종목 중복 방지
     const sections = [m_warmup(intn, isHome)];
@@ -8768,23 +9048,47 @@ function buildManualPlan(opt){
       }).filter(Boolean);
       if(exs.length) sections.push({n:sec.n + (intn.circuit ? ' · 서킷' : ''), exs:exs});
     });
-    m_focusSections(purposes, intn, isHome, injuries, used)
+    // 목적 보강은 관련 요일에만 (하체·둔근 → 하체 날 / 복부 → 하루 1종목 로테이션)
+    const ctx = {
+      isLowerDay: /하체|Leg|대퇴|전신/.test(tpl.t) || tpl.s.some(function(x){ return /대퇴근|하체|종아리/.test(x.n); }),
+      hasCore   : tpl.s.some(function(x){ return /복부/.test(x.n); }),
+      dayIndex  : dayIdx
+    };
+    m_focusSections(purposes, intn, isHome, injuries, used, ctx)
       .forEach(function(fs){ sections.push(fs); });
     const cs = m_cardioSec(cardioMin, isHome, intn.circuit);
     if(cs) sections.push(cs);
     sections.push(m_cooldown());
 
-    plan.push({
+    const day = {
       label:lvInfo.name + ' · ' + tpl.t,
       title:tpl.t + (isHome ? ' (홈트)' : ''),
       color:['rh-a','rh-b','rh-c','rh-d','rh-e','rh-f'][plan.length % 6],
       muscles:tpl.m.slice(),
       guide:guide,
       sections:sections
-    });
+    };
+    day.fullMin = m_estimateMinutes(day);          // 매뉴얼 볼륨 그대로일 때의 소요 시간
+    if(targetMin > 0) m_fitToBudget(day, targetMin, intn);
+    day.estMin = m_estimateMinutes(day);
+    plan.push(day);
   }
 
+  const _w = plan.filter(function(d){ return !/유산소 \/ 휴식/.test(d.title); });
+  guide.estMin    = _w.length ? Math.round(_w.reduce(function(a,d){ return a + (d.estMin||0); }, 0) / _w.length) : 0;
+  guide.fullMin   = _w.length ? Math.round(_w.reduce(function(a,d){ return a + (d.fullMin||d.estMin||0); }, 0) / _w.length) : 0;
+  guide.targetMin = targetMin;
   return {plan:plan, guide:guide, intensityKey:ikey, splitName:lvInfo.split};
+}
+
+// ── 목표 운동 시간 ──
+// 운동 화면 상단의 "⏱ 운동 시간" 셀렉트 값 → localStorage에 보존
+function m_getWorkoutTarget(){
+  const el = (typeof document !== 'undefined') ? document.getElementById('workout-time-sel') : null;
+  const fromEl = el ? parseInt(el.value) : 0;
+  if(fromEl > 0) return fromEl;
+  const saved = parseInt(localStorage.getItem('fitlog-workout-time') || '0');
+  return saved > 0 ? saved : 45;
 }
 
 // ── ⑩ 재활 단계 선택 UI (레벨 카드 안에서만 사용) ──
@@ -8826,6 +9130,8 @@ function m_guideBanner(g){
   if(g.rest) chips += chip('⏸ 휴식 ' + m_restLabel(g.rest), 'var(--green)');
   if(g.pct)  chips += chip('⚖ ' + g.pct, 'var(--accent2)');
   if(g.tempo)chips += chip('⏱ 템포 ' + g.tempo, 'var(--muted)');
+  if(g.estMin) chips += chip('🕐 약 ' + g.estMin + '분' + (g.targetMin ? ' / 목표 ' + g.targetMin + '분' : ''),
+                             (!g.targetMin || g.estMin <= g.targetMin + 5) ? 'var(--green)' : 'var(--accent)');
   return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid ' + g.tone + ';'
     + 'border-radius:10px;padding:11px 13px;margin-bottom:11px;">'
     + '<div style="font-size:11px;font-weight:800;color:' + g.tone + ';margin-bottom:7px;letter-spacing:.02em;">'
@@ -8833,6 +9139,11 @@ function m_guideBanner(g){
     + '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px;">' + chips + '</div>'
     + '<div style="font-size:11px;color:var(--muted);line-height:1.7;">' + g.desc + '</div>'
     + (g.tip ? '<div style="font-size:11px;color:var(--accent2);margin-top:6px;line-height:1.7;">💡 ' + g.tip + '</div>' : '')
+    + ((g.fullMin && g.targetMin && g.fullMin > g.targetMin + 10)
+        ? '<div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.7;">✂️ 매뉴얼 전체 볼륨은 약 '
+          + g.fullMin + '분 분량입니다. 설정한 ' + g.targetMin + '분에 맞춰 <b>강도는 그대로 두고</b> 보조 종목·세트부터 줄였어요. '
+          + '전체를 다 하려면 상단 ⏱ 운동 시간을 ' + (Math.ceil(g.fullMin/15)*15) + '분으로 올리세요.</div>'
+        : '')
     + '</div>';
 }
 function m_exChips(ex){
@@ -9327,7 +9638,10 @@ function updateDayAssignPreview(){
         + '<div style="font-size:11px;color:var(--muted);line-height:1.8;">'
         + '반복 <b style="color:var(--text);">'+g.rng+'</b> · 세트간 휴식 <b style="color:var(--text);">'
         + (typeof m_restLabel==='function'?m_restLabel(g.rest):g.rest+'초')+'</b> · '
-        + '<b style="color:var(--text);">'+g.pct+'</b><br>'+g.desc+'</div>';
+        + '<b style="color:var(--text);">'+g.pct+'</b>'
+        + (g.estMin ? ' · 1회 <b style="color:var(--text);">약 '+g.estMin+'분</b>'
+                      + (g.targetMin ? ' (목표 '+g.targetMin+'분)' : '') : '')
+        + '<br>'+g.desc+'</div>';
     } else {
       gBox.style.display = 'none';
     }
