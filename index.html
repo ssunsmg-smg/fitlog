@@ -23,7 +23,7 @@
        L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
        L 1899~ 끝  : JavaScript (앱 로직 전체)
      ████████████████████████████████████████████████████████████████ -->
-<!-- fitlog v3.8 build:20260801-personal1 · 매뉴얼 + 세션모드 + 개인화(집중부위·보유기구·1RM 목표중량·부위별 반복수)(manual-v5) -->
+<!-- fitlog v3.9 build:20260801-purpose1 · 매뉴얼 + 세션모드 + 개인화 + 목적별 반영 보장/충돌 진단(manual-v6) -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -3227,7 +3227,7 @@ function showApp(){
     const _vb = document.getElementById('engine-ver-badge');
     if(_vb){
       const _g = window._manualGuide;
-      _vb.innerHTML = 'FitLog v3.8 · build 20260801-personal1<br>운동 처방 엔진: 매뉴얼 + 세션 모드 + 개인화 (' + MANUAL_ENGINE_VER + ')'
+      _vb.innerHTML = 'FitLog v3.9 · build 20260801-purpose1<br>운동 처방 엔진: 매뉴얼 + 세션 모드 + 개인화 + 목적 반영 (' + MANUAL_ENGINE_VER + ')'
         + (_g ? '<br>현재 적용: ' + _g.name + ' · ' + _g.split + (_g.estMin ? ' · 1회 약 ' + _g.estMin + '분' : '') : '');
     }
     if(localStorage.getItem('fitlog-manual-upgraded')==='1'){
@@ -3856,7 +3856,7 @@ function renderWorkout(){
     }
     return;
   }
-  let html='<div class="rh '+rt.color+'"><div class="rh-lbl">'+rt.label+'</div><div class="rh-title">'+rt.title+'</div><div class="rh-muscles">'+rt.muscles.map(m=>'<span class="mtag">'+m+'</span>').join('')+'</div></div>';
+  let html='<div class="rh '+rt.color+'"><div class="rh-lbl">'+rt.label+'</div><div class="rh-title">'+rt.title+'</div><div class="rh-muscles">'+rt.muscles.map(m=>'<span class="mtag">'+(typeof m_muscleLabel==='function'?m_muscleLabel(m):m)+'</span>').join('')+'</div></div>';
   // 목표 중량은 렌더 직전에 다시 계산한다 — 주차별 종목 변동·기록 갱신이 바로 반영되도록
   if(typeof m_attachTargetWeights==='function'){ try{ m_attachTargetWeights(rt); }catch(e){} }
   // 매뉴얼 훈련 강도 기준 배너 (목적별 반복수·세트간 휴식·%1RM·템포)
@@ -7381,11 +7381,43 @@ function updateClassPreview(){
   const el = document.getElementById('class-preview');
   if(!el) return;
   if(!classPurposes.length){ el.innerHTML='<span style="color:var(--muted);">목적을 선택해주세요</span>'; return; }
-  const notes = classPurposes.map(p=>PURPOSE_PRESETS[p]?.note||p).join(' · ');
   const routineType = classType==='홈트' ? '맨몸 홈트 루틴' : '기구 헬스장 루틴';
-  el.innerHTML = `<strong style="color:var(--green);">✅ ${routineType}</strong><br>
-    목적: <span style="color:var(--accent2);">${classPurposes.join(', ')}</span><br>
-    ${notes}`;
+  const a = (typeof m_analyzePurposes === 'function') ? m_analyzePurposes(classPurposes) : null;
+  if(!a){
+    el.innerHTML = '<strong style="color:var(--green);">✅ '+routineType+'</strong><br>목적: '+classPurposes.join(', ');
+    return;
+  }
+  let html = '<strong style="color:var(--green);">✅ '+routineType+'</strong>'
+    + '<div style="font-size:11px;color:var(--muted);margin:6px 0 8px;">선택한 목적 '+classPurposes.length+'개가 각각 이렇게 반영됩니다</div>';
+
+  // 강도를 정하는 목적 — 하나만 이길 수 있다
+  a.intens.forEach(function(x, i){
+    const win = (i === 0);
+    html += '<div style="display:flex;gap:6px;padding:5px 0;font-size:11px;line-height:1.6;">'
+      + '<span style="color:'+(win?'var(--green)':'var(--accent2)')+';flex-shrink:0;">'+(win?'✔':'△')+'</span>'
+      + '<span><b style="color:var(--text);">'+x.name+'</b> — '
+      + (win ? x.label : '강도는 「'+a.winner.name+'」이 결정합니다. 이 목적은 이번 루틴의 강도에 반영되지 않습니다')
+      + '</span></div>';
+  });
+  // 구성으로 반영되는 목적 — 여러 개를 동시에 반영할 수 있다
+  a.content.concat(a.env).forEach(function(x){
+    html += '<div style="display:flex;gap:6px;padding:5px 0;font-size:11px;line-height:1.6;">'
+      + '<span style="color:var(--green);flex-shrink:0;">✔</span>'
+      + '<span><b style="color:var(--text);">'+x.name+'</b> — '+x.label+'</span></div>';
+  });
+  // 충돌 경고
+  if(a.conflicts.length){
+    html += '<div style="margin-top:8px;padding:8px 10px;background:#e8533a12;border:1px solid #e8533a33;border-radius:8px;font-size:11px;color:var(--accent);line-height:1.7;">'
+      + '⚠️ <b>서로 방해가 되는 목적이 함께 선택돼 있습니다</b><br>'
+      + a.conflicts.map(function(c){ return '· ' + c; }).join('<br>')
+      + '<br><span style="color:var(--muted);">매뉴얼은 목적 하나를 정해 8~12주 집중하도록 되어 있습니다. 강도를 정하는 목적은 하나만 남기고, 복근·둔근·유연성처럼 구성으로 들어가는 목적만 함께 고르면 전부 반영됩니다.</span></div>';
+  }
+  // 강도를 정하는 목적이 여러 개면 볼륨이 얇아진다는 안내
+  if(a.intens.length > 1 && !a.conflicts.length){
+    html += '<div style="margin-top:8px;font-size:11px;color:var(--accent2);line-height:1.7;">'
+      + '💡 강도를 정하는 목적이 '+a.intens.length+'개입니다. 실제 강도는 「'+a.winner.name+'」 기준으로만 잡힙니다.</div>';
+  }
+  el.innerHTML = html;
 }
 
 async function applyClassification(){
@@ -8367,7 +8399,7 @@ function renderORMGrid(){
 // ══════════════════════════════════════════════════════════════════
 
 // 엔진 버전 — 이 값이 바뀌면 예전 방식으로 저장된 루틴 백업을 폐기하고 새로 만든다
-const MANUAL_ENGINE_VER = 'manual-v5';
+const MANUAL_ENGINE_VER = 'manual-v6';
 
 // ── ① 목적별 훈련 강도 기준 (매뉴얼 4장 각 프로그램 헤더) ──
 const M_INTENSITY = {
@@ -8413,6 +8445,68 @@ const M_INTENSITY = {
     tip:'통증(NRS 4 이상) 발생 시 즉시 중단. 정형외과적 진단이 있으면 의료진 소견을 먼저 확인하세요.'
   }
 };
+
+// ══════════════════════════════════════════════════════════════════
+// 목적의 성격 분류
+// ──────────────────────────────────────────────────────────────────
+// 목적마다 루틴에서 하는 역할이 다르다. 이걸 구분하지 않으면
+// 여러 개를 골랐을 때 하나만 반영되고 나머지는 조용히 사라진다.
+//
+//  intensity(강도결정형) : 반복수·휴식·%1RM을 정한다. 서로 배타적 —
+//                          여러 개 고르면 하나만 이길 수밖에 없다.
+//  content(구성추가형)   : 특정 섹션을 추가한다. 강도와 무관해서
+//                          여러 개를 동시에 반영할 수 있다.
+//  env(환경형)           : 기구/맨몸 같은 환경을 정한다.
+// ══════════════════════════════════════════════════════════════════
+const M_PURPOSE_ROLE = {
+  '근력 강화':     {role:'intensity', key:'strength', label:'고중량·저반복·긴 휴식으로 강도를 정합니다'},
+  '근육량 증가':   {role:'intensity', key:'hyper',    label:'중반복·고볼륨으로 강도를 정합니다'},
+  '상체 키우기':   {role:'intensity', key:'hyper',    label:'중반복·고볼륨으로 강도를 정합니다'},
+  '체중 감량':     {role:'intensity', key:'diet',     label:'서킷·짧은 휴식 + 유산소로 강도를 정합니다'},
+  '다이어트':      {role:'intensity', key:'diet',     label:'서킷·짧은 휴식 + 유산소로 강도를 정합니다'},
+  '체중 유지':     {role:'intensity', key:'health',   label:'중간 강도로 균형 있게 정합니다'},
+  '건강 관리':     {role:'intensity', key:'health',   label:'무리 없는 강도로 정합니다'},
+  '시니어 건강':   {role:'intensity', key:'health',   label:'관절 부담을 낮춘 저강도로 정합니다'},
+  '근지구력 향상': {role:'intensity', key:'cardio',   label:'고반복·짧은 휴식으로 정합니다'},
+  '재활·회복':     {role:'intensity', key:'rehab',    label:'통증 회복 단계별 프로그램으로 진행합니다'},
+  '복근 만들기':      {role:'content', kind:'core',    label:'복부 섹션을 매 세션 마지막에 추가합니다'},
+  '하체·둔근 강화':   {role:'content', kind:'glute',   label:'하체 날에 둔근 보강 섹션을 추가합니다'},
+  '유연성·스트레칭':  {role:'content', kind:'mobility',label:'모빌리티·스트레칭 섹션을 추가합니다'},
+  '홈트레이닝':       {role:'env',     kind:'home',    label:'기구 없이 맨몸 종목으로 구성합니다'}
+};
+// 함께 고르면 서로 방해가 되는 조합
+const M_PURPOSE_CONFLICT = [
+  {a:'strength', b:'diet',  why:'근력강화는 휴식 2~3분·고중량, 다이어트는 짧은 휴식·서킷이라 훈련 방식이 정반대입니다'},
+  {a:'strength', b:'cardio',why:'근력강화는 저반복 고중량, 근지구력은 고반복 저중량이라 방향이 반대입니다'},
+  {a:'hyper',    b:'diet',  why:'근비대는 볼륨을 쌓아야 하고 다이어트는 열량을 태워야 해서 한 시즌에 둘 다는 어렵습니다'},
+  {a:'rehab',    b:'strength', why:'재활 중에는 고중량 훈련을 하지 않습니다'}
+];
+
+// 선택한 목적들을 역할별로 정리 + 충돌 진단
+function m_analyzePurposes(purposes){
+  const p = purposes || [];
+  const intens = [], content = [], env = [], unknown = [];
+  p.forEach(function(x){
+    const r = M_PURPOSE_ROLE[x];
+    if(!r){ unknown.push(x); return; }
+    if(r.role === 'intensity') intens.push({name:x, key:r.key, label:r.label});
+    else if(r.role === 'content') content.push({name:x, kind:r.kind, label:r.label});
+    else env.push({name:x, kind:r.kind, label:r.label});
+  });
+  // 강도 우선순위 (매뉴얼: 재활 > 근력 > 근비대 > 다이어트 > 유산소 > 유지)
+  const rank = {rehab:0, strength:1, hyper:2, diet:3, cardio:4, health:5};
+  intens.sort(function(a, b){ return (rank[a.key] || 9) - (rank[b.key] || 9); });
+  const winner = intens.length ? intens[0] : null;
+  const losers = intens.slice(1);
+  const conflicts = [];
+  M_PURPOSE_CONFLICT.forEach(function(c){
+    const ha = intens.some(function(x){ return x.key === c.a; });
+    const hb = intens.some(function(x){ return x.key === c.b; });
+    if(ha && hb) conflicts.push(c.why);
+  });
+  return {intens:intens, content:content, env:env, winner:winner, losers:losers,
+          conflicts:conflicts, unknown:unknown};
+}
 
 // ── ② 목적 태그 → 강도 기준 매핑 ──
 function m_pickIntensity(purposes, level){
@@ -9129,10 +9223,18 @@ function m_fitToBudget(rt, targetMin, intn, mode){
   const bonus = bySec.filter(function(b){ return  b.bonus; });
   const maxT  = Math.max.apply(null, [0].concat(bySec.map(function(b){ return b.exs.length; })));
 
-  const tier1 = mains.map(function(b){ return b.exs[0]; }).filter(Boolean);
+  // 목적으로 선택한 섹션(복근·둔근·유연성)은 "그날 첫 종목" 다음으로 자리를 확보한다.
+  // 시간이 부족하다고 목적이 통째로 사라지면 회원 입장에선 설정이 무시된 것이다.
+  const goalSecs = mains.filter(function(b){ return secs[b.si] && secs[b.si].goalSec; });
+  const plainSecs= mains.filter(function(b){ return !(secs[b.si] && secs[b.si].goalSec); });
+  const tier1 = []
+    .concat(plainSecs.length ? [plainSecs[0].exs[0]] : [])
+    .concat(goalSecs.map(function(b){ return b.exs[0]; }))
+    .concat(plainSecs.slice(1).map(function(b){ return b.exs[0]; }))
+    .filter(Boolean);
   const rest  = [];
   for(let t = 1; t < maxT; t++){
-    mains.forEach(function(b){ if(b.exs[t]) rest.push(b.exs[t]); });
+    plainSecs.concat(goalSecs).forEach(function(b){ if(b.exs[t]) rest.push(b.exs[t]); });
   }
   bonus.forEach(function(b){ b.exs.forEach(function(it){ rest.push(it); }); });
 
@@ -9373,7 +9475,22 @@ function m_focusSections(purposes, intn, isHome, injuries, used, ctx){
     const exs = [['hipthrust',4], ['abduction',3]].map(function(pair){
       return m_buildEx(pair[0], pair[1], intn, isHome, injuries, used);
     }).filter(Boolean);
-    if(exs.length) out.push({n:'하체·둔근 (목적 보강)', exs:exs});
+    if(exs.length) out.push({n:'하체·둔근 (목적 보강)', exs:exs, goalSec:true, primary:true});
+  }
+
+  // ── 유연성·스트레칭 ──
+  // 강도와 무관한 목적이라 어떤 강도 기준에서도 함께 반영할 수 있다.
+  if(p.some(function(x){ return x.indexOf('유연') >= 0 || x.indexOf('스트레칭') >= 0; })){
+    const MOB = [
+      {n:'고양이-소 스트레칭', d:'2세트 × 10회', tags:['척추 가동성'], w:[], sets:0},
+      {n:'힙 플렉서 스트레칭', d:'양쪽 각 45초', tags:['고관절'], w:[], sets:0},
+      {n:'흉추 회전 스트레칭', d:'양쪽 각 45초', tags:['흉추 가동성'], w:[], sets:0},
+      {n:'어깨 가로 스트레칭', d:'양쪽 각 40초', tags:['어깨'], w:[], sets:0}
+    ];
+    const pick = [MOB[(ctx.dayIndex || 0) % MOB.length], MOB[((ctx.dayIndex || 0) + 1) % MOB.length]]
+      .filter(function(e){ return !used.has(e.n); });
+    pick.forEach(function(e){ used.add(e.n); e.part = '유연성'; });
+    if(pick.length) out.push({n:'모빌리티 (목적 · 유연성)', exs:pick, goalSec:true, primary:true});
   }
 
   // ── 복부 ──
@@ -9387,7 +9504,7 @@ function m_focusSections(purposes, intn, isHome, injuries, used, ctx){
       // 복근이 '목적'이면 보강이 아니라 그날의 정규 부위다 → 시간이 부족해도 남긴다
       out.push({
         n:'복부 (마지막에 수행)' + (core.backSafe ? ' · 항신전 위주' : ''),
-        exs:exs, primary:!!ctx.coreIsGoal
+        exs:exs, primary:!!ctx.coreIsGoal, goalSec:!!ctx.coreIsGoal
       });
     }
   }
@@ -9451,6 +9568,7 @@ function buildManualPlan(opt){
       if(member && typeof m_applySafetySwaps === 'function') m_applySafetySwaps(day, member);
       if(typeof m_applyEquipment === 'function') m_applyEquipment(day, opt.classType, injuries);
       if(typeof m_attachTargetWeights === 'function') m_attachTargetWeights(day);
+      if(typeof m_dayMuscles === 'function') day.muscles = m_dayMuscles(day);
       day.estMin = m_estimateMinutes(day);
       plan.push(day);
     }
@@ -9566,6 +9684,7 @@ function buildManualPlan(opt){
     // 1RM·기록 기반 목표 중량 부착
     if(typeof m_attachTargetWeights === 'function') m_attachTargetWeights(day);
     day.estMin = m_estimateMinutes(day);
+    if(typeof m_dayMuscles === 'function') day.muscles = m_dayMuscles(day);
     plan.push(day);
   }
 
@@ -9612,6 +9731,7 @@ function buildManualPlan(opt){
   window._equipSwaps = equipLog;
   guide.equipSwaps = equipLog;
   guide.focusParts = focusParts;
+  guide.purposeMap = (typeof m_analyzePurposes === 'function') ? m_analyzePurposes(purposes) : null;
   guide.focusAdded = focusLog;
   return {plan:plan, guide:guide, intensityKey:ikey, splitName:lvInfo.split,
           swaps:swapLog, equipSwaps:equipLog, focusParts:focusParts, corePlan:corePlan};
@@ -9841,6 +9961,26 @@ function m_applyFocus(day, focus, intn, isHome, injuries, used){
     }
   });
   return notes;
+}
+
+// ── 그날 실제 구성에서 자극 부위 뽑기 ──
+// 템플릿에 적힌 값을 그대로 쓰면, 시간 때문에 빠진 부위까지 헤더에 남는다.
+function m_dayMuscles(day){
+  const out = [], seen = {};
+  (day.sections || []).forEach(function(sec){
+    if(/워밍업|쿨다운|유산소|모빌리티/.test(sec.n)) return;
+    (sec.exs || []).forEach(function(ex){
+      (ex.tags || []).forEach(function(t){
+        const str = String(t);
+        if(str.indexOf('(주)') < 0) return;            // 주동근만 헤더에 올린다
+        const base = str.replace('(주)','');
+        if(seen[base]) return;
+        seen[base] = 1;
+        out.push(base);
+      });
+    });
+  });
+  return out.length ? out.slice(0, 6) : (day.muscles || []);
 }
 
 // ── ⑤ 1RM 기반 목표 중량 ──
@@ -10282,6 +10422,22 @@ function m_buildCoachReport(){
     ].filter(Boolean), 'var(--blue)');
   }
 
+  // ── 목적 반영 내역 ──
+  if(guide && guide.purposeMap){
+    const pm = guide.purposeMap;
+    const pl = [];
+    pm.intens.forEach(function(x, i){
+      pl.push((i === 0 ? '✔ ' : '△ ') + x.name + ' — '
+        + (i === 0 ? x.label : '강도는 「' + pm.winner.name + '」이 결정하므로 이번 루틴에는 반영되지 않았습니다'));
+    });
+    pm.content.concat(pm.env).forEach(function(x){ pl.push('✔ ' + x.name + ' — ' + x.label); });
+    pm.conflicts.forEach(function(c){ pl.push('⚠️ ' + c); });
+    if(pm.intens.length > 1){
+      pl.push('강도를 정하는 목적은 한 번에 하나만 유효합니다. 8~12주 단위로 하나씩 집중하면 같은 시간에 부위당 볼륨이 훨씬 두꺼워집니다.');
+    }
+    push('🎯', '선택한 목적이 반영된 방식', pl, 'var(--accent2)');
+  }
+
   // ── 세션 모드 ──
   if(guide && guide.mode){
     const mm = guide.mode;
@@ -10546,6 +10702,20 @@ function m_guideBanner(g){
     + (g.tip ? '<div style="font-size:11px;color:var(--accent2);margin-top:6px;line-height:1.7;">💡 ' + g.tip + '</div>' : '')
     + (function(){
         const notes = [];
+        if(g.purposeMap){
+          const pm = g.purposeMap;
+          if(pm.winner){
+            notes.push('강도는 「' + pm.winner.name + '」 기준으로 잡았습니다'
+              + (pm.losers.length ? ' — ' + pm.losers.map(function(x){ return x.name; }).join('·') + '은(는) 강도가 서로 반대라 이번 루틴에 함께 담기지 않습니다.' : '.'));
+          }
+          if(pm.content.length){
+            notes.push('구성으로 반영된 목적: ' + pm.content.map(function(x){ return x.name; }).join(' · ')
+              + ' — 강도와 무관해서 시간이 부족해도 먼저 밀려나지 않게 자리를 확보했습니다. 그만큼 본 운동 종목이 줄어듭니다.');
+          }
+          if(pm.conflicts.length){
+            notes.push('⚠️ ' + pm.conflicts[0] + ' 목적을 하나로 좁히면 같은 시간에 볼륨이 두 배가 됩니다.');
+          }
+        }
         (g.modeWhy || []).forEach(function(n){ notes.push(n); });
         if(g.mode && g.mode.key === 'focus' && (g.supersets || []).length){
           notes.push('길항근을 짝지어 슈퍼셋으로 묶었습니다(' +
