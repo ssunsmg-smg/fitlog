@@ -23,7 +23,7 @@
        L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
        L 1899~ 끝  : JavaScript (앱 로직 전체)
      ████████████████████████████████████████████████████████████████ -->
-<!-- fitlog v3.5 build:20260801-manual2 · 트레이너 매뉴얼 처방 엔진 + 운동시간 예산 맞춤(manual-v2) -->
+<!-- fitlog v3.6 build:20260801-coach1 · 매뉴얼 처방 + 운동시간 예산 + 회원특성 코치 엔진(manual-v3) -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -1559,12 +1559,12 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           <span>📊 누적 운동 피드백</span>
           <span id="feedback-count-badge" style="font-size:10px;padding:2px 10px;border-radius:10px;background:var(--surface2);color:var(--muted);font-family:var(--mono);">0회</span>
         </div>
-        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">20회마다 운동 패턴을 분석해 루틴 조정을 제안합니다.</div>
+        <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">나이·체격·레벨·목적·부상·운동 기록을 함께 읽어 배치와 강도를 판단하고 근거까지 알려줍니다.</div>
         <div id="feedback-panel"></div>
         <button onclick="runAiCoachAnalysis()" style="width:100%;padding:11px;border-radius:8px;border:none;
           background:linear-gradient(135deg,#7c6aff,var(--accent));color:#fff;font-size:13px;font-weight:700;
           cursor:pointer;font-family:var(--font);margin-top:10px;">
-          🤖 AI 코치 분석 · 루틴 조언 받기
+          🧠 내 특성 기반 코치 분석 받기
         </button>
         <div id="ai-coach-result" style="margin-top:8px;"></div>
       </div>
@@ -3217,7 +3217,7 @@ function showApp(){
     const _vb = document.getElementById('engine-ver-badge');
     if(_vb){
       const _g = window._manualGuide;
-      _vb.innerHTML = 'FitLog v3.5 · build 20260801-manual2<br>운동 처방 엔진: 트레이너 매뉴얼 기준 (' + MANUAL_ENGINE_VER + ')'
+      _vb.innerHTML = 'FitLog v3.6 · build 20260801-coach1<br>운동 처방 엔진: 트레이너 매뉴얼 + 회원특성 코치 (' + MANUAL_ENGINE_VER + ')'
         + (_g ? '<br>현재 적용: ' + _g.name + ' · ' + _g.split + (_g.estMin ? ' · 1회 약 ' + _g.estMin + '분' : '') : '');
     }
     if(localStorage.getItem('fitlog-manual-upgraded')==='1'){
@@ -8240,7 +8240,7 @@ function renderORMGrid(){
 // ══════════════════════════════════════════════════════════════════
 
 // 엔진 버전 — 이 값이 바뀌면 예전 방식으로 저장된 루틴 백업을 폐기하고 새로 만든다
-const MANUAL_ENGINE_VER = 'manual-v2';
+const MANUAL_ENGINE_VER = 'manual-v3';
 
 // ── ① 목적별 훈련 강도 기준 (매뉴얼 4장 각 프로그램 헤더) ──
 const M_INTENSITY = {
@@ -8706,7 +8706,7 @@ function m_fitToBudget(rt, targetMin, intn){
   const bySec = [];
   secs.forEach(function(sec, si){
     if(si === warmIx || si === coolIx || si === cardIx) return;
-    const isBonus = /목적 보강/.test(sec.n);
+    const isBonus = /목적 보강/.test(sec.n) && !sec.primary;
     const arr = [];
     sec.exs.forEach(function(ex, ei){
       arr.push({si:si, ex:ex, origSets:m_exSets(ex), tier:ei, bonus:isBonus, keep:false});
@@ -8934,30 +8934,34 @@ function m_arrangeDays(N, W){
 
 // 목적 보조 포커스(복근/둔근) 섹션 추가 여부
 function m_focusSections(purposes, intn, isHome, injuries, used, ctx){
-  // ctx = {isLowerDay:bool, hasCore:bool, dayIndex:int}
+  // ctx = {isLowerDay, hasCore, dayIndex, coreToday}
   const p = purposes || [];
   const out = [];
-  const add = function(title, ids){
-    const exs = ids.map(function(pair){
+
+  // ── 하체·둔근 보강 ──
+  // 하체를 다루는 날에만. 상체 날에 힙 쓰러스트를 넣으면 다음 하체 날
+  // 수행능력만 갉아먹고 회복을 방해한다. 복근보다 "먼저" 온다.
+  if(p.some(function(x){ return x.indexOf('둔근') >= 0 || x.indexOf('하체') >= 0; }) && ctx.isLowerDay){
+    const exs = [['hipthrust',4], ['abduction',3]].map(function(pair){
       return m_buildEx(pair[0], pair[1], intn, isHome, injuries, used);
     }).filter(Boolean);
-    if(exs.length) out.push({n:title, exs:exs});
-  };
-
-  // ── 복부 ──
-  // 매뉴얼 다이어트 표처럼 매일 넣되 하루 1종목만 로테이션한다.
-  // (복근은 회복이 빠르지만, 매일 3종목씩 넣으면 시간만 잡아먹고 메인 볼륨을 밀어낸다)
-  if(p.some(function(x){ return x.indexOf('복근') >= 0; }) && !ctx.hasCore){
-    const rot = [['hangingLeg',3], ['cableCrunch',3], ['plank',3], ['russian',3]];
-    const pick = rot[(ctx.dayIndex || 0) % rot.length];
-    add('복부 (목적 보강)', [pick]);
+    if(exs.length) out.push({n:'하체·둔근 (목적 보강)', exs:exs});
   }
 
-  // ── 하체·둔근 ──
-  // 하체를 다루는 날에만 넣는다. 상체 날에 힙 쓰러스트를 넣으면
-  // 다음 하체 날의 수행능력을 갉아먹고 회복만 방해한다.
-  if(p.some(function(x){ return x.indexOf('둔근') >= 0 || x.indexOf('하체') >= 0; }) && ctx.isLowerDay){
-    add('하체·둔근 (목적 보강)', [['hipthrust',4], ['abduction',3]]);
+  // ── 복부 ──
+  // 반드시 마지막. 코어가 먼저 지치면 스쿼트·데드리프트·오버헤드 프레스에서
+  // 척추를 지지하지 못해 자세가 무너진다. 요일·빈도는 코치 엔진이 정한다.
+  if(ctx.coreToday && !ctx.hasCore){
+    const core = m_coreExercises(injuries, ctx.splitIndex, ctx.coreIsGoal, intn);
+    const exs = core.exs.filter(function(e){ return !used.has(e.n); });
+    exs.forEach(function(e){ used.add(e.n); });
+    if(exs.length){
+      // 복근이 '목적'이면 보강이 아니라 그날의 정규 부위다 → 시간이 부족해도 남긴다
+      out.push({
+        n:'복부 (마지막에 수행)' + (core.backSafe ? ' · 항신전 위주' : ''),
+        exs:exs, primary:!!ctx.coreIsGoal
+      });
+    }
   }
   return out;
 }
@@ -8972,7 +8976,14 @@ function buildManualPlan(opt){
   const injuries = opt.injuries || [];
   let   level    = (opt.level === undefined || opt.level === null) ? 2 : parseInt(opt.level);
   const ikey     = m_pickIntensity(purposes, level);
-  const intn     = Object.assign({key:ikey}, M_INTENSITY[ikey]);
+  let   intn     = Object.assign({key:ikey}, M_INTENSITY[ikey]);
+  // 회원 특성(나이·체격) 반영 — 회복 속도와 결합조직 내성에 맞춰 휴식·강도 보정
+  const member   = opt.member || (typeof m_getMember === 'function' ? m_getMember() : null);
+  let   ageNotes = [];
+  if(member && typeof m_ageAdjust === 'function'){
+    const _a = m_ageAdjust(intn, member);
+    intn = _a.intn; ageNotes = _a.notes;
+  }
   const N        = Math.max(1, days.length);
   // 목표 운동 시간 (설정값). 지정되면 볼륨을 이 시간에 맞춘다.
   const targetMin = parseInt(opt.targetMin || m_getWorkoutTarget()) || 0;
@@ -9002,6 +9013,7 @@ function buildManualPlan(opt){
         guide:guide,
         sections:JSON.parse(JSON.stringify(st.secs))
       };
+      if(member && typeof m_applySafetySwaps === 'function') m_applySafetySwaps(day, member);
       day.estMin = m_estimateMinutes(day);
       plan.push(day);
     }
@@ -9013,8 +9025,13 @@ function buildManualPlan(opt){
   if(!M_TEMPLATES[level]) level = 2;
   const lvInfo    = M_LEVEL_SPLIT[level];
   const templates = M_TEMPLATES[level];
+
   const cardioMin = m_cardioMin(ikey, level);
   const layout    = m_arrangeDays(N, lvInfo.weightDays);
+  // 복근을 어느 분할에 · 주 몇 회 넣을지 코치 엔진이 결정
+  const corePlan  = m_planCore(templates, purposes, injuries, level,
+                               layout.filter(function(x){ return x === 'w'; }).length);
+  window._corePlan = corePlan;
 
   const guide = {
     name:intn.name, split:lvInfo.split, levelName:lvInfo.name + ' (' + lvInfo.career + ')',
@@ -9024,6 +9041,7 @@ function buildManualPlan(opt){
 
   const plan = [];
   let ti = 0;
+  let swapLog = [];
   for(let i = 0; i < layout.length; i++){
     if(layout[i] === 'c'){
       const rd = m_restDay(intn, isHome, level);
@@ -9049,10 +9067,14 @@ function buildManualPlan(opt){
       if(exs.length) sections.push({n:sec.n + (intn.circuit ? ' · 서킷' : ''), exs:exs});
     });
     // 목적 보강은 관련 요일에만 (하체·둔근 → 하체 날 / 복부 → 하루 1종목 로테이션)
+    const tplIdx = (ti - 1) % templates.length;
     const ctx = {
       isLowerDay: /하체|Leg|대퇴|전신/.test(tpl.t) || tpl.s.some(function(x){ return /대퇴근|하체|종아리/.test(x.n); }),
       hasCore   : tpl.s.some(function(x){ return /복부/.test(x.n); }),
-      dayIndex  : dayIdx
+      dayIndex  : dayIdx,
+      splitIndex: tplIdx,
+      coreToday : corePlan.splitIdx.indexOf(tplIdx) >= 0,
+      coreIsGoal: corePlan.isGoal
     };
     m_focusSections(purposes, intn, isHome, injuries, used, ctx)
       .forEach(function(fs){ sections.push(fs); });
@@ -9068,27 +9090,525 @@ function buildManualPlan(opt){
       guide:guide,
       sections:sections
     };
+    // 부상·체격에 따른 안전 종목 치환 (경고 태그만으로는 부족하다)
+    if(member && typeof m_applySafetySwaps === 'function'){
+      const _sw = m_applySafetySwaps(day, member);
+      if(_sw.length) swapLog = swapLog.concat(_sw);
+    }
     day.fullMin = m_estimateMinutes(day);          // 매뉴얼 볼륨 그대로일 때의 소요 시간
     if(targetMin > 0) m_fitToBudget(day, targetMin, intn);
     day.estMin = m_estimateMinutes(day);
     plan.push(day);
   }
 
+  // 시간 예산 때문에 복부가 잘렸을 수 있으므로, 실제 결과로 배치 설명을 맞춘다
+  (function(){
+    const hit = [];
+    plan.forEach(function(d){
+      if((d.sections || []).some(function(sec){ return /복부/.test(sec.n); })) hit.push(d.title);
+    });
+    const uniq = hit.filter(function(v, i, a){ return a.indexOf(v) === i; });
+    corePlan.perWeek = hit.length;
+    if(!hit.length){
+      corePlan.reason = corePlan.isGoal
+        ? '설정한 운동 시간 안에 복근을 넣을 자리가 없었습니다. ⏱ 운동 시간을 늘리거나 목적을 줄이면 들어갑니다.'
+        : '설정한 운동 시간이 빠듯해 복근은 제외했습니다. 복근을 꼭 넣으려면 목적에 「복근 만들기」를 추가하거나 운동 시간을 늘리세요.';
+    } else {
+      corePlan.reason = uniq.map(function(t){ return '「' + t + '」'; }).join('·') +
+        ' 날 맨 마지막에 넣어 주 ' + hit.length + '회로 맞췄습니다. ' +
+        '스쿼트·데드리프트가 있는 날에 복근을 더하면 코어가 이중으로 누적돼 다음 하체 날 수행능력과 허리 안전이 떨어집니다.';
+    }
+  })();
   const _w = plan.filter(function(d){ return !/유산소 \/ 휴식/.test(d.title); });
   guide.estMin    = _w.length ? Math.round(_w.reduce(function(a,d){ return a + (d.estMin||0); }, 0) / _w.length) : 0;
   guide.fullMin   = _w.length ? Math.round(_w.reduce(function(a,d){ return a + (d.fullMin||d.estMin||0); }, 0) / _w.length) : 0;
   guide.targetMin = targetMin;
-  return {plan:plan, guide:guide, intensityKey:ikey, splitName:lvInfo.split};
+  guide.ageNotes  = ageNotes;
+  guide.corePlan  = corePlan;
+  window._safeSwaps = swapLog;
+  return {plan:plan, guide:guide, intensityKey:ikey, splitName:lvInfo.split, swaps:swapLog, corePlan:corePlan};
 }
 
 // ── 목표 운동 시간 ──
 // 운동 화면 상단의 "⏱ 운동 시간" 셀렉트 값 → localStorage에 보존
 function m_getWorkoutTarget(){
+  // 저장값이 우선 — 루틴 재구성(initApp)은 셀렉트 복원(showApp)보다 먼저 실행된다
+  const saved = parseInt(localStorage.getItem('fitlog-workout-time') || '0');
+  if(saved > 0) return saved;
   const el = (typeof document !== 'undefined') ? document.getElementById('workout-time-sel') : null;
   const fromEl = el ? parseInt(el.value) : 0;
-  if(fromEl > 0) return fromEl;
-  const saved = parseInt(localStorage.getItem('fitlog-workout-time') || '0');
-  return saved > 0 ? saved : 45;
+  return fromEl > 0 ? fromEl : 45;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ■ 회원 특성 기반 코치 엔진 (COACH ENGINE)
+// ──────────────────────────────────────────────────────────────────
+// 서버·API키 없이 앱 안에서 동작한다. 인터넷이 끊겨도, 회원이 몇 명이든
+// 비용 없이 항상 같은 판단을 내린다.
+//
+// 입력 : 나이 · 신장 · 체중(BMI) · 레벨 · 목적 · 부상 부위 ·
+//        주당 일수 · 1회 운동 시간 · 최근 운동 기록(수행률·컨디션·중량 추이)
+// 출력 : ① 운동 배치 결정 (복근 요일·빈도, 유산소 위치, 보강 배치)
+//        ② 부상별 안전 종목 치환
+//        ③ 개인 맞춤 조언 문장 (근거 포함)
+//        ④ 레벨 적합성 제안
+// ══════════════════════════════════════════════════════════════════
+
+// ── 회원 특성 읽기 ──
+function m_getMember(){
+  let prof = {};
+  try{ prof = (typeof userProfile !== 'undefined' && userProfile) ? userProfile : {}; }catch(e){}
+  const num = function(v, d){ const n = parseFloat(v); return isNaN(n) ? d : n; };
+  const age    = num(prof.age    || localStorage.getItem('fitlog-age'),    35);
+  const height = num(prof.height || localStorage.getItem('fitlog-height'), 170);
+  const weight = num(prof.weight || localStorage.getItem('fitlog-weight'), 70);
+  const bmi    = height > 0 ? weight / Math.pow(height / 100, 2) : 22;
+  let injuries = [];
+  try{ injuries = JSON.parse(localStorage.getItem('fitlog-injuries') || '[]') || []; }catch(e){}
+  let purposes = [];
+  try{ purposes = JSON.parse(localStorage.getItem('fitlog-purposes') || '[]') || []; }catch(e){}
+  let days = [];
+  try{ days = JSON.parse(localStorage.getItem('fitlog-assigned-days') || '[]') || []; }catch(e){}
+  return {
+    age:age, height:height, weight:weight, bmi:Math.round(bmi * 10) / 10,
+    gender:prof.gender || 'male',
+    level:parseInt(localStorage.getItem('fitlog-level') || '1'),
+    purposes:purposes, injuries:injuries, days:days,
+    targetMin:(typeof m_getWorkoutTarget === 'function' ? m_getWorkoutTarget() : 45)
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ① 복근 배치 결정
+// ──────────────────────────────────────────────────────────────────
+// 원칙
+//  · 복근은 반드시 그날의 "마지막". 코어가 먼저 지치면 스쿼트·데드리프트·
+//    오버헤드 프레스에서 척추를 지지하지 못해 자세가 무너진다.
+//  · 상체/하체 2분할이라면 "상체 날". 하체 날의 스쿼트·RDL·레그프레스가
+//    이미 복횡근·기립근을 강하게 동원하므로, 여기에 복근을 더하면 코어가
+//    이중으로 누적돼 다음 하체 날 수행능력과 허리 안전이 떨어진다.
+//  · 빈도는 주 2회(복근이 주 목적이면 최대 3회). 복근도 근육이라 48시간 회복이 필요.
+//  · 허리 통증자는 굴곡·회전(크런치·러시안 트위스트) 대신
+//    항신전(플랭크·데드버그·버드독) 위주로 간다.
+// ══════════════════════════════════════════════════════════════════
+function m_planCore(templates, purposes, injuries, level, weightDays){
+  const isGoal = (purposes || []).some(function(x){ return x.indexOf('복근') >= 0; });
+  const maxPerWeek = isGoal ? 3 : 2;          // 복근도 근육 — 48시간 회복이 필요하다
+  const S = templates.length;
+  const W = weightDays || S;
+
+  // 각 분할이 코어를 얼마나 쓰는지 점수화 (높을수록 복근 추가에 부적합)
+  const load = templates.map(function(tpl){
+    let sc = 0;
+    (tpl.s || []).forEach(function(sec){
+      (sec.ex || []).forEach(function(pair){
+        const e = M_EXDB[pair[0]];
+        if(!e) return;
+        if(/squat|rdl|goodmorning|lunge|legpress|backext|hipthrust/.test(pair[0])) sc += 2;
+        if(e.part === '대퇴근' || e.part === '기립근') sc += 1;
+      });
+      if(/복부/.test(sec.n)) sc += 100;       // 이미 복부가 들어 있는 분할
+    });
+    return sc;
+  });
+
+  // 분할별로 한 주에 몇 번 도는지 (2분할 주4일이면 각 2회)
+  const times = templates.map(function(_, i){
+    return Math.floor(W / S) + (i < (W % S) ? 1 : 0);
+  });
+
+  // 코어 부담이 낮은 분할부터, 주간 총 횟수가 상한을 넘지 않는 선에서 채운다
+  const order = templates.map(function(_, i){ return i; })
+    .filter(function(i){ return load[i] < 100; })
+    .sort(function(a, b){ return load[a] - load[b]; });
+
+  // 분할 자체에 복부가 들어 있는 날도 주간 횟수에 포함된다 (마스터 5분할의 '어깨+복부' 등)
+  let builtIn = 0;
+  templates.forEach(function(_, i){ if(load[i] >= 100) builtIn += times[i]; });
+
+  const picked = [];
+  let sessions = builtIn;
+  order.forEach(function(i){
+    if(sessions + times[i] <= maxPerWeek){ picked.push(i); sessions += times[i]; }
+  });
+  // 하나도 못 넣었는데 넣을 자리는 있는 경우 → 가장 부담 적은 분할 1개는 넣는다
+  if(!picked.length && !builtIn && order.length){ picked.push(order[0]); sessions = times[order[0]]; }
+
+  return {
+    isGoal:isGoal,
+    splitIdx:picked,
+    perWeek:sessions,
+    reason:(picked.length === 0)
+      ? '이미 분할 안에 복부 운동이 포함되어 있어 따로 추가하지 않습니다.'
+      : picked.map(function(i){ return '「' + templates[i].t + '」'; }).join('·') +
+        ' 날 맨 마지막에 넣어 주 ' + sessions + '회로 맞췄습니다. ' +
+        '스쿼트·데드리프트가 있는 날에 복근을 더하면 코어가 이중으로 누적돼 다음 하체 날 수행능력과 허리 안전이 떨어집니다.'
+  };
+}
+
+// 복근 종목 선택 — 허리 상태에 따라 굴곡 ↔ 항신전
+function m_coreExercises(injuries, splitIndex, isGoal, intn){
+  const backIssue = (injuries || []).indexOf('back') >= 0;
+  // 항신전(anti-extension) 계열 — 척추를 중립으로 버티는 동작
+  const SAFE = [
+    {n:'플랭크',   d:'3세트 × 45초',      tags:['복횡근(주)'], w:[],           sets:0},
+    {n:'데드버그', d:'3세트 × 12회 (좌우)', tags:['복횡근(주)'], w:[],           sets:0},
+    {n:'버드독',   d:'3세트 × 12회 (좌우)', tags:['코어','척추기립근'], w:[],    sets:0},
+    {n:'사이드 플랭크', d:'3세트 × 30초 (좌우)', tags:['외복사근(주)'], w:[],    sets:0}
+  ];
+  // 굴곡·회전 계열 — 허리 이상이 없을 때만
+  const FLEX = [
+    {n:'행잉 레그 레이즈', d:'3세트 × 12회', tags:['복직근하부(주)'], w:['허리주의'], sets:0},
+    {n:'ABDOMINAL CRUNCH', d:'3세트 × 15회', tags:['복직근(주)'],   w:[],           sets:3},
+    {n:'플랭크',            d:'3세트 × 45초', tags:['복횡근(주)'],   w:[],           sets:0},
+    {n:'러시안 트위스트',   d:'3세트 × 20회', tags:['복사근(주)'],   w:['허리주의'], sets:0}
+  ];
+  const pool = backIssue ? SAFE : FLEX;
+  const cnt  = isGoal ? 2 : 1;
+  const out  = [];
+  for(let i = 0; i < cnt; i++){
+    // 같은 분할은 항상 같은 복근 구성 → 주차마다 루틴이 흔들리지 않는다
+    const e = JSON.parse(JSON.stringify(pool[((splitIndex || 0) * 2 + i) % pool.length]));
+    if(intn){
+      e.rest  = intn.isoRest || intn.rest;
+      e.tempo = intn.tempo;
+      e.iso   = 1;
+    }
+    out.push(e);
+  }
+  return {exs:out, backSafe:backIssue};
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ② 부상별 안전 종목 치환
+// ──────────────────────────────────────────────────────────────────
+// 경고 태그만 붙이는 것으로는 부족하다. 위험한 종목은 같은 근육을 쓰되
+// 관절 부담이 낮은 종목으로 실제로 바꿔준다.
+// ══════════════════════════════════════════════════════════════════
+const M_SAFE_SWAP = {
+  knee:[
+    {from:/^바벨 스쿼트$/,   to:{n:'레그 프레스',   note:'무릎 굴곡 각도를 조절할 수 있어 슬개골 부담이 낮습니다'}},
+    {from:/^런지$/,          to:{n:'스텝업',        note:'무릎이 앞으로 밀리지 않아 슬개대퇴 압력이 적습니다'}},
+    {from:/^핵 스쿼트$/,     to:{n:'레그 프레스',   note:'무릎 전방 전단력이 적습니다'}},
+    {from:/^카프 레이즈$/,   to:{n:'씨티드 카프 레이즈', note:'무릎을 펴지 않아 체중 부하가 줄어듭니다'}}
+  ],
+  back:[
+    {from:/^바벨 로우$/,     to:{n:'체스트 서포트 로우', note:'상체를 지지해 요추 전단력이 사라집니다'}},
+    {from:/^굿모닝$/,        to:{n:'백 익스텐션',   note:'가동범위가 통제돼 요추 부담이 적습니다'}},
+    {from:/^루마니안 데드리프트$/, to:{n:'레그 컬',  note:'같은 햄스트링을 쓰면서 척추 압박이 없습니다'}},
+    {from:/^크런치$/,        to:{n:'데드버그',      note:'척추를 굴곡시키지 않는 항신전 운동입니다'}},
+    {from:/^러시안 트위스트$/, to:{n:'사이드 플랭크', note:'회전 부하 없이 복사근을 씁니다'}},
+    {from:/^ABDOMINAL CRUNCH$/, to:{n:'버드독',    note:'척추 중립을 유지하며 코어를 씁니다'}}
+  ],
+  shoulder:[
+    {from:/^오버헤드 프레스$/, to:{n:'시티드 숄더 프레스', note:'등받이 지지로 어깨 충돌 위험이 줄어듭니다'}},
+    {from:/^딥스$/,           to:{n:'클로즈그립 벤치프레스', note:'어깨 과신전 없이 삼두를 씁니다'}},
+    {from:/^사이드 레터럴 레이즈$/, to:{n:'케이블 사이드 레터럴', note:'저항이 일정해 충돌 구간 부담이 적습니다'}},
+    {from:/^풀업$/,           to:{n:'랫 풀다운',    note:'부하를 조절할 수 있어 어깨 스트레스가 낮습니다'}},
+    {from:/^덤벨 플라이$/,    to:{n:'펙덱 플라이',  note:'가동범위가 제한돼 어깨 앞쪽 부담이 적습니다'}}
+  ],
+  neck:[
+    {from:/^바벨 슈러그$/,    to:{n:'페이스 풀',    note:'상부승모근 과사용 대신 중부승모근·능형근을 씁니다'}},
+    {from:/^오버헤드 프레스$/, to:{n:'인클라인 덤벨 프레스', note:'목 신전 자세를 피합니다'}},
+    {from:/^덤벨 슈러그$/,    to:{n:'밴드 풀어파트', note:'경추 압박 없이 견갑을 안정화합니다'}}
+  ],
+  hip:[
+    {from:/^바벨 스쿼트$/,    to:{n:'박스 스쿼트',  note:'깊이를 제한해 고관절 충돌을 피합니다'}},
+    {from:/^런지$/,           to:{n:'글루트 브릿지', note:'충격 없이 둔근을 씁니다'}},
+    {from:/^수모 스쿼트$/,    to:{n:'레그 프레스',  note:'고관절 외전 각도 부담이 적습니다'}}
+  ],
+  wrist:[
+    {from:/^바벨 컬$/,        to:{n:'덤벨 컬',      note:'손목 각도를 자유롭게 둘 수 있습니다'}},
+    {from:/^바벨 로우$/,      to:{n:'시티드 케이블 로우', note:'중립 그립으로 손목 부담이 적습니다'}},
+    {from:/^바벨 리스트 컬$/, to:{n:'파머스 워크',  note:'손목을 꺾지 않고 전완을 씁니다'}},
+    {from:/^클로즈그립 벤치프레스$/, to:{n:'트라이셉 푸시다운', note:'손목 신전 부하가 없습니다'}}
+  ]
+};
+
+// BMI가 높거나 무릎 문제가 있으면 충격 유산소를 저충격으로
+const M_IMPACT_SWAP = {
+  '런닝머신':'일립티컬', '버피':'제자리 걷기', '점핑잭':'스텝 터치',
+  '제자리 달리기':'실내 사이클', '점프 로프':'일립티컬', '박스 점프':'스텝업'
+};
+
+// 루틴 전체에 안전 치환 적용 → 바뀐 내역 반환
+function m_applySafetySwaps(rt, member){
+  const changes = [];
+  const inj = member.injuries || [];
+  (rt.sections || []).forEach(function(sec){
+    (sec.exs || []).forEach(function(ex){
+      // ── 부상별 종목 치환 ──
+      for(let i = 0; i < inj.length; i++){
+        const rules = M_SAFE_SWAP[inj[i]] || [];
+        for(let j = 0; j < rules.length; j++){
+          if(rules[j].from.test(ex.n)){
+            const from = ex.n;
+            ex.n = rules[j].to.n;
+            ex.swapped = true;
+            const lib = (typeof EX_LIB !== 'undefined') ? EX_LIB.find(function(e){ return e.n === ex.n; }) : null;
+            if(lib && lib.tags) ex.tags = lib.tags.slice();
+            changes.push({from:from, to:ex.n, why:rules[j].to.note, part:inj[i]});
+            return;
+          }
+        }
+      }
+      // ── 관절 충격 낮추기 (BMI 30 이상 또는 무릎 문제) ──
+      if((member.bmi >= 30 || inj.indexOf('knee') >= 0) && M_IMPACT_SWAP[ex.n]){
+        const from = ex.n;
+        ex.n = M_IMPACT_SWAP[ex.n];
+        ex.swapped = true;
+        changes.push({
+          from:from, to:ex.n, part:'impact',
+          why:(member.bmi >= 30 ? 'BMI ' + member.bmi + ' 기준 ' : '무릎 보호를 위해 ') + '체중 충격이 적은 유산소로 바꿨습니다'
+        });
+      }
+    });
+  });
+  return changes;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ③ 나이·체격에 따른 강도 보정
+// ──────────────────────────────────────────────────────────────────
+// 나이는 회복 속도와 결합조직 내성에 직접 영향을 준다(근거가 분명한 변수).
+// 성별은 개인차가 훨씬 커서 훈련 배치에 쓰지 않고, 실제 기록으로 판단한다.
+// ══════════════════════════════════════════════════════════════════
+function m_ageAdjust(intn, member){
+  const notes = [];
+  const out = Object.assign({}, intn);
+  const r15 = function(v){ return Math.round(v / 15) * 15; };
+  if(member.age >= 60){
+    out.rest = r15(out.rest * 1.3);
+    if(out.isoRest) out.isoRest = r15(out.isoRest * 1.3);
+    notes.push(member.age + '세 기준으로 세트간 휴식을 30% 늘렸습니다. 나이가 들수록 세트 사이 회복(포스포크레아틴 재합성)이 느려져, 같은 휴식으로는 다음 세트 수행력이 떨어집니다.');
+    if(out.key === 'strength'){
+      out.rng = '5~8회'; out.rep = 6; out.pct = '목표중량의 70~80%';
+      notes.push('90% 고중량 대신 70~80%대로 낮췄습니다. 힘줄·인대는 근육보다 적응이 느려 최대중량 훈련의 부상 위험이 큽니다.');
+    }
+  } else if(member.age >= 45){
+    out.rest = r15(out.rest * 1.15);
+    if(out.isoRest) out.isoRest = r15(out.isoRest * 1.15);
+    notes.push(member.age + '세 기준으로 세트간 휴식을 15% 늘렸습니다. 회복 시간을 확보하면 같은 중량에서도 수행 세트 수가 늘어납니다.');
+  }
+  if(member.bmi >= 30){
+    notes.push('BMI ' + member.bmi + ' — 관절에 실리는 체중 부하가 커서 달리기·점프 대신 자전거·일립티컬 계열로 유산소를 구성했습니다.');
+  } else if(member.bmi > 0 && member.bmi < 18.5){
+    notes.push('BMI ' + member.bmi + ' — 저체중 구간입니다. 유산소보다 웨이트 볼륨과 섭취 열량 확보가 우선입니다.');
+  }
+  return {intn:out, notes:notes};
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ④ 기록 기반 주간 조언 · 레벨 적합성
+// ══════════════════════════════════════════════════════════════════
+function m_analyzeRecords(recs){
+  const r = (recs || []).slice(0, 20);
+  if(!r.length) return null;
+  const cond = r.reduce(function(a, x){ return a + (x.cond || 3); }, 0) / r.length;
+  const done = r.filter(function(x){ return (x.exDone || 0) >= (x.exTotal || 1) * 0.8; }).length / r.length;
+
+  // 종목별 최고 중량 추이 (오래된 것 → 최신)
+  const series = {};
+  (recs || []).slice().reverse().forEach(function(rec){
+    (rec.sets || []).forEach(function(s){
+      if(!s.ex || !s.weight) return;
+      const w = parseFloat(s.weight); if(!w) return;
+      if(!series[s.ex]) series[s.ex] = [];
+      const last = series[s.ex][series[s.ex].length - 1];
+      if(!last || last.date !== rec.date) series[s.ex].push({date:rec.date, w:w});
+      else if(w > last.w) last.w = w;
+    });
+  });
+  const stalled = [], growing = [];
+  Object.keys(series).forEach(function(k){
+    const a = series[k];
+    if(a.length < 4) return;
+    const recent = a.slice(-4);
+    const best = Math.max.apply(null, recent.map(function(x){ return x.w; }));
+    const first = recent[0].w;
+    if(best <= first) stalled.push({ex:k, w:first, n:recent.length});
+    else if(best > first) growing.push({ex:k, from:first, to:best});
+  });
+
+  // 부위 편중
+  const freq = {};
+  r.forEach(function(x){ (x.muscles || []).forEach(function(m){ freq[m] = (freq[m] || 0) + 1; }); });
+  const parts = Object.keys(freq).sort(function(a, b){ return freq[b] - freq[a]; });
+
+  return {
+    n:r.length, total:(recs || []).length,
+    cond:Math.round(cond * 10) / 10,
+    doneRate:Math.round(done * 100),
+    stalled:stalled.slice(0, 3), growing:growing.slice(0, 3),
+    topParts:parts.slice(0, 3), lowParts:parts.slice(-2)
+  };
+}
+
+// 레벨 적합성 — 입력한 1RM과 체중을 비교해 판단
+function m_levelCheck(member){
+  let orm = {};
+  try{ orm = JSON.parse(localStorage.getItem('fitlog-1rm') || '{}'); }catch(e){}
+  const bw = member.weight || 70;
+  const bench = parseFloat(orm.bench || 0);
+  const squat = parseFloat(orm.squat || 0);
+  if(!bench && !squat) return null;
+  // 매뉴얼 중급 기준: "본인 체중만큼 스쿼트·데드리프트 가능"
+  const ratio = squat ? squat / bw : (bench ? (bench * 1.3) / bw : 0);
+  let suggest = null;
+  if(ratio >= 1.75 && member.level < 3)      suggest = 3;
+  else if(ratio >= 1.0 && member.level < 2)  suggest = 2;
+  else if(ratio > 0 && ratio < 0.75 && member.level > 1) suggest = 1;
+  if(suggest === null || suggest === member.level) return null;
+  const name = {0:'재활', 1:'초급', 2:'중급', 3:'고급', 4:'마스터'};
+  return {
+    suggest:suggest,
+    text:'현재 스쿼트 1RM이 체중의 ' + (Math.round(ratio * 100) / 100) + '배입니다. ' +
+         '매뉴얼 기준으로는 ' + name[suggest] + ' 구간이라 ' +
+         (suggest > member.level ? '레벨을 올리면 분할이 세분화되어 부위별 자극이 좋아집니다.'
+                                 : '레벨을 낮춰 자세와 기본 볼륨부터 다지는 편이 안전합니다.')
+  };
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ⑤ 코치 리포트 생성
+// ══════════════════════════════════════════════════════════════════
+function m_buildCoachReport(){
+  const m    = m_getMember();
+  const guide = window._manualGuide || null;
+  const rec  = m_analyzeRecords(typeof records !== 'undefined' ? records : []);
+  const lv   = m_levelCheck(m);
+  const out  = {member:m, sections:[]};
+  const push = function(icon, title, lines, tone){
+    if(lines && lines.length) out.sections.push({icon:icon, title:title, lines:lines, tone:tone || 'var(--text)'});
+  };
+
+  // ── 프로그램 요약 ──
+  if(guide){
+    push('📐', '지금 적용된 처방', [
+      guide.name + ' · ' + guide.split + ' · ' + guide.levelName,
+      '반복 ' + guide.rng + ' · 세트간 휴식 ' + m_restLabel(guide.rest) + ' · ' + guide.pct,
+      guide.estMin ? ('1회 약 ' + guide.estMin + '분 (설정 ' + (guide.targetMin || m.targetMin) + '분)') : ''
+    ].filter(Boolean), 'var(--blue)');
+  }
+
+  // ── 배치 근거 ──
+  const place = [];
+  if(window._corePlan && window._corePlan.reason) place.push('복근 — ' + window._corePlan.reason);
+  if((m.purposes || []).some(function(x){ return x.indexOf('둔근') >= 0 || x.indexOf('하체') >= 0; })){
+    place.push('하체·둔근 보강 — 하체 날에만 넣었습니다. 상체 날에 힙 쓰러스트를 하면 다음 하체 날 수행능력만 갉아먹습니다.');
+  }
+  if(guide && guide.name && guide.name.indexOf('근력') >= 0){
+    place.push('유산소 — 매뉴얼 근력강화 기준대로 최소화했습니다. 고중량 훈련 직후의 긴 유산소는 근력 적응을 방해합니다.');
+  }
+  push('🧭', '이렇게 배치한 이유', place, 'var(--green)');
+
+  // ── 나이·체격 보정 ──
+  const adj = m_ageAdjust({key:'x', rest:60}, m);
+  push('🎂', '나이 · 체격 반영', adj.notes, 'var(--accent2)');
+
+  // ── 안전 ──
+  const safe = [];
+  if((m.injuries || []).length){
+    const label = {knee:'무릎', back:'허리', shoulder:'어깨', neck:'경추', hip:'고관절', wrist:'손목'};
+    safe.push('체크한 부위: ' + m.injuries.map(function(k){ return label[k] || k; }).join(' · '));
+    if(window._safeSwaps && window._safeSwaps.length){
+      const seen = {};
+      window._safeSwaps.forEach(function(c){
+        const k = c.from + '>' + c.to;
+        if(seen[k]) return;
+        seen[k] = 1;
+        if(Object.keys(seen).length <= 6) safe.push(c.from + ' → ' + c.to + ' : ' + c.why);
+      });
+    }
+    if(m.injuries.indexOf('back') >= 0){
+      safe.push('복근은 크런치·러시안 트위스트 같은 굴곡·회전 동작 대신 플랭크·데드버그 같은 항신전 운동으로 구성했습니다.');
+    }
+  }
+  push('🩺', '안전 조치', safe, 'var(--accent)');
+
+  // ── 기록 기반 조언 ──
+  const tips = [];
+  if(!rec){
+    tips.push('아직 기록이 없습니다. 3회 이상 기록되면 중량 추이와 컨디션을 분석해 증량·디로드 시점을 알려드립니다.');
+  } else {
+    tips.push('최근 ' + rec.n + '회 · 평균 컨디션 ' + rec.cond + '/5 · 계획 완수율 ' + rec.doneRate + '%');
+    if(rec.doneRate < 60){
+      tips.push('완수율이 낮습니다. 의지 문제가 아니라 한 세션의 볼륨이 시간에 비해 많다는 신호입니다. ⏱ 운동 시간을 실제로 쓰는 시간에 맞추면 완수율이 먼저 올라갑니다.');
+    } else if(rec.doneRate >= 90 && rec.cond >= 4){
+      tips.push('완수율과 컨디션이 모두 높습니다. 다음 주 메인 종목 중량을 상체 2.5kg · 하체 5kg 올려보세요.');
+    }
+    if(rec.cond <= 2.5){
+      tips.push('평균 컨디션이 낮습니다. 회복이 훈련을 못 따라가는 상태예요. 한 주는 세트 수를 40% 줄인 디로드로 가고 수면 7~8시간을 확보하세요.');
+    }
+    if(rec.stalled.length){
+      tips.push('정체 구간: ' + rec.stalled.map(function(x){ return x.ex + ' ' + x.w + 'kg'; }).join(', ') +
+                ' — 4회 이상 중량이 그대로입니다. 중량을 10% 낮추고 반복수를 2회 늘려 2주 쌓은 뒤 다시 올리면 대개 뚫립니다.');
+    }
+    if(rec.growing.length){
+      tips.push('성장 중: ' + rec.growing.map(function(x){ return x.ex + ' ' + x.from + '→' + x.to + 'kg'; }).join(', ') + ' — 지금 방식을 유지하세요.');
+    }
+    const lowOnly = rec.lowParts.filter(function(x){ return rec.topParts.indexOf(x) < 0; });
+    if(rec.topParts.length >= 2 && lowOnly.length){
+      tips.push('훈련 빈도가 ' + rec.topParts.slice(0,2).join('·') + '에 몰려 있습니다. ' + lowOnly.join('·') + ' 쪽이 상대적으로 적어 전후·상하 균형이 깨질 수 있습니다.');
+    }
+  }
+  if(lv) tips.push('레벨 제안 — ' + lv.text);
+  push('📈', '기록 기반 조언', tips, 'var(--purple)');
+
+  // ── 주의 ──
+  const warn = [];
+  if(m.age >= 60) warn.push('고령 회원은 첫 4주간 트레이너 감독하에 자세를 확인한 뒤 중량을 올리세요.');
+  if((m.purposes || []).length >= 3){
+    warn.push('목적을 ' + m.purposes.length + '개 선택하셨습니다. 매뉴얼은 목적 하나를 정해 처방하도록 되어 있어요. 목적이 많으면 같은 시간에 부위당 볼륨이 얇아집니다. 8~12주 단위로 하나씩 집중하는 편이 결과가 빠릅니다.');
+  }
+  if(m.days && m.days.length >= 6) warn.push('주 6일 이상입니다. 매뉴얼은 주말 완전 휴식을 권장합니다. 회복일 없이는 근육이 자라지 않습니다.');
+  push('⚠️', '점검할 점', warn, 'var(--accent)');
+
+  return out;
+}
+
+// 코치 리포트를 모달로 열기 (기존 가이드 모달 재사용)
+function openCoachReport(){
+  const modal = document.getElementById('ai-guide-modal');
+  if(!modal){ showToast('코치 화면을 찾을 수 없습니다','error'); return; }
+  modal.classList.add('open');
+  const badge = document.querySelector('#ai-guide-modal .ai-guide-badge');
+  if(badge) badge.textContent = '🧠 핏로그 코치';
+  const title = document.getElementById('ai-guide-title');
+  if(title) title.textContent = '회원 맞춤 분석 · 조언';
+  const imgw = document.getElementById('ai-guide-img-wrap');
+  if(imgw) imgw.style.display = 'none';
+  const load = document.getElementById('ai-loading');
+  if(load) load.style.display = 'none';
+  const body = document.getElementById('ai-guide-content');
+  if(body){
+    try{ body.innerHTML = m_coachReportHtml(); }
+    catch(e){ body.innerHTML = '<div class="warn-box">분석 오류: ' + e.message + '</div>'; }
+  }
+}
+
+// 리포트 → HTML
+function m_coachReportHtml(){
+  const r = m_buildCoachReport();
+  const m = r.member;
+  let html = '<div style="background:var(--surface2);border-radius:10px;padding:12px 14px;margin-bottom:10px;">'
+    + '<div style="font-size:11px;color:var(--muted);line-height:1.9;">'
+    + '👤 ' + m.age + '세 · ' + m.height + 'cm · ' + m.weight + 'kg · BMI ' + m.bmi
+    + ' · ' + (['재활','초급','중급','고급','마스터'][m.level] || '초급')
+    + ' · 주 ' + (m.days ? m.days.length : 0) + '일 · 1회 ' + m.targetMin + '분'
+    + '</div></div>';
+  r.sections.forEach(function(sec){
+    html += '<div style="margin-bottom:12px;">'
+      + '<div style="font-size:12px;font-weight:800;color:' + sec.tone + ';margin-bottom:6px;">' + sec.icon + ' ' + sec.title + '</div>'
+      + sec.lines.map(function(l){
+          return '<div style="font-size:12px;color:var(--text);line-height:1.85;padding:6px 10px;background:var(--surface2);border-radius:8px;margin-bottom:5px;border-left:2px solid ' + sec.tone + '55;">' + l + '</div>';
+        }).join('')
+      + '</div>';
+  });
+  html += '<div style="font-size:10px;color:var(--muted);text-align:center;margin-top:6px;line-height:1.7;">'
+    + '핏로그 코치 엔진 · 「헬스장 회원 목적별 운동 루틴 매뉴얼」 기준<br>'
+    + '통증이 있거나 진단 이력이 있으면 의료진 소견을 먼저 확인하세요.</div>';
+  return html;
 }
 
 // ── ⑩ 재활 단계 선택 UI (레벨 카드 안에서만 사용) ──
@@ -9139,6 +9659,27 @@ function m_guideBanner(g){
     + '<div style="display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px;">' + chips + '</div>'
     + '<div style="font-size:11px;color:var(--muted);line-height:1.7;">' + g.desc + '</div>'
     + (g.tip ? '<div style="font-size:11px;color:var(--accent2);margin-top:6px;line-height:1.7;">💡 ' + g.tip + '</div>' : '')
+    + (function(){
+        const notes = [];
+        if(g.corePlan && g.corePlan.reason && g.corePlan.perWeek > 0){
+          notes.push('복근 — ' + g.corePlan.reason);
+        }
+        (g.ageNotes || []).forEach(function(n){ notes.push(n); });
+        const sw = window._safeSwaps || [];
+        if(sw.length){
+          const uniq = [];
+          sw.forEach(function(c){ if(!uniq.some(function(u){ return u.from === c.from; })) uniq.push(c); });
+          notes.push('부상 체크에 따라 ' + uniq.slice(0,3).map(function(c){ return c.from + '→' + c.to; }).join(', ')
+                     + (uniq.length > 3 ? ' 외 ' + (uniq.length-3) + '건' : '') + '으로 대체했습니다.');
+        }
+        if(!notes.length) return '';
+        return '<div style="margin-top:8px;padding-top:8px;border-top:1px dashed var(--border);">'
+          + '<div style="font-size:11px;font-weight:800;color:var(--green);margin-bottom:4px;">🧭 코치 노트</div>'
+          + notes.map(function(n){ return '<div style="font-size:11px;color:var(--muted);line-height:1.75;margin-bottom:3px;">· ' + n + '</div>'; }).join('')
+          + '<button onclick="openCoachReport()" style="margin-top:7px;width:100%;padding:8px;border-radius:8px;'
+          + 'border:1px solid var(--green);background:#4caf7d15;color:var(--green);font-size:11px;font-weight:700;'
+          + 'cursor:pointer;font-family:var(--font);">🧠 내 특성 기반 상세 분석 보기</button></div>';
+      })()
     + ((g.fullMin && g.targetMin && g.fullMin > g.targetMin + 10)
         ? '<div style="font-size:11px;color:var(--muted);margin-top:6px;line-height:1.7;">✂️ 매뉴얼 전체 볼륨은 약 '
           + g.fullMin + '분 분량입니다. 설정한 ' + g.targetMin + '분에 맞춰 <b>강도는 그대로 두고</b> 보조 종목·세트부터 줄였어요. '
@@ -10591,90 +11132,23 @@ function applyWeeklyVariation(){
 }
 
 
-// ── AI 코치 분석 ──
+// ── 코치 분석 (앱 내장 엔진) ──
+// 이전 버전은 브라우저에서 api.anthropic.com 을 API 키 없이 직접 호출해
+// 항상 실패했다. 클라이언트 HTML에 키를 넣으면 그대로 노출되므로,
+// 회원 특성·기록을 앱 안에서 해석하는 코치 엔진으로 대체한다.
+// (인터넷·서버·키 불필요 / 회원 수와 무관하게 비용 0 / 항상 동작)
 async function runAiCoachAnalysis(){
   const result = document.getElementById('ai-coach-result');
   if(!result){ showToast('분석 패널을 찾을 수 없습니다','error'); return; }
-
-  result.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">🤖 분석 중...</div>';
-
-  const total = records.length;
-  if(total < 3){
-    result.innerHTML = '<div style="padding:10px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--muted);">3회 이상 운동 기록이 필요합니다.</div>';
-    return;
-  }
-
-  const recent = records.slice(0, Math.min(total,20));
-  const avgCond = (recent.reduce((s,r)=>s+(r.cond||3),0)/recent.length).toFixed(1);
-  const doneRate = Math.round(recent.filter(r=>(r.exDone||0)>=(r.exTotal||1)*0.8).length/recent.length*100);
-
-  const muscleFreq={};
-  recent.forEach(r=>{(r.muscles||[]).forEach(m=>{muscleFreq[m]=(muscleFreq[m]||0)+1;});});
-  const topMuscles = Object.entries(muscleFreq).sort((a,b)=>b[1]-a[1]).slice(0,5).map(([m,n])=>m+'('+n+'회)').join(', ');
-
-  const weightGrowth={};
-  records.slice().reverse().forEach(r=>{
-    (r.sets||[]).forEach(s=>{
-      if(s.weight&&s.ex){
-        if(!weightGrowth[s.ex]) weightGrowth[s.ex]={first:parseFloat(s.weight),last:parseFloat(s.weight)};
-        else weightGrowth[s.ex].last=parseFloat(s.weight);
-      }
-    });
-  });
-  const growthStr = Object.entries(weightGrowth).filter(([,v])=>v.last>v.first).slice(0,3)
-    .map(([n,v])=>n+': '+v.first+'→'+v.last+'kg').join(', ') || '아직 성장 데이터 없음';
-
-  const weight = localStorage.getItem('fitlog-weight')||'미입력';
-  const age = localStorage.getItem('fitlog-age')||'미입력';
-  const purposes = JSON.parse(localStorage.getItem('fitlog-purposes')||'[]').join(', ')||'미설정';
-  const level = ['입문','초급','중급','고급','마스터'][parseInt(localStorage.getItem('fitlog-level')||'1')-1]||'초급';
-  const nextMile = Math.ceil(total/20)*20;
-
-  const prompt = `당신은 전문 피트니스 코치입니다. 아래 데이터를 분석하고 한국어로 구체적인 조언을 해주세요.
-
-[사용자 정보]
-체중: ${weight}kg, 나이: ${age}세
-운동 목적: ${purposes}
-현재 단계: ${level}
-
-[운동 기록 (최근 ${recent.length}회 / 누적 ${total}회)]
-평균 컨디션: ${avgCond}/5
-완료율(80%이상): ${doneRate}%
-자주 훈련한 부위: ${topMuscles}
-중량 성장: ${growthStr}
-
-다음 형식으로 답변하세요:
-
-### 📊 현재 상태
-2-3줄
-
-### 💪 잘하고 있는 점
-2가지
-
-### ⚠️ 개선 필요 사항
-구체적으로 2가지
-
-### 🔄 다음 ${nextMile-total}회 루틴 방향
-중점 부위, 강도 조절, 추천 변화를 구체적으로
-
-간결하고 실용적으로 작성하세요.`;
-
-  try{
-    const resp = await fetch('https://api.anthropic.com/v1/messages',{
-      method:'POST',
-      headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:800,messages:[{role:'user',content:prompt}]})
-    });
-    const data = await resp.json();
-    const text = (data.content&&data.content[0]&&data.content[0].text) || '분석 실패';
-    const html = text
-      .replace(/### (.*)/g,'<div style="font-size:13px;font-weight:700;color:var(--accent);margin:10px 0 4px;">$1</div>')
-      .replace(/\n- /g,'<br>• ')
-      .replace(/\n/g,'<br>');
-    result.innerHTML = '<div style="background:var(--surface2);border-radius:10px;padding:14px;font-size:12px;line-height:1.8;color:var(--text);">'+html+'</div>';
-  }catch(e){
-    result.innerHTML = '<div style="padding:10px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--muted);">AI 분석 중 오류. 인터넷 연결을 확인해주세요.</div>';
-  }
+  result.innerHTML = '<div style="text-align:center;padding:20px;color:var(--muted);font-size:13px;">🧠 회원 정보·기록 분석 중...</div>';
+  setTimeout(function(){
+    try{
+      result.innerHTML = m_coachReportHtml();
+    }catch(e){
+      console.error('[FitLog] 코치 분석 오류', e);
+      result.innerHTML = '<div style="padding:10px;background:var(--surface2);border-radius:8px;font-size:12px;color:var(--muted);">분석 중 오류가 발생했습니다: ' + e.message + '</div>';
+    }
+  }, 350);
 }
 
 // ── 유산소 기록 히스토리 렌더 ──
