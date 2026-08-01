@@ -23,7 +23,7 @@
        L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
        L 1899~ 끝  : JavaScript (앱 로직 전체)
      ████████████████████████████████████████████████████████████████ -->
-<!-- fitlog v3.3 build:20260718-fix18 -->
+<!-- fitlog v3.4 build:20260801-manual1 · 트레이너 매뉴얼 처방 엔진(manual-v1) 적용 -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -1594,6 +1594,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
           box-shadow:0 4px 20px #4caf7d55;letter-spacing:.3px;">
           ✅ 모든 설정 저장 · 운동 시작하기
         </button>
+        <div id="engine-ver-badge" style="margin-top:10px;font-size:10px;color:var(--muted);font-family:var(--mono);text-align:center;line-height:1.7;"></div>
       </div>
     </div>
 
@@ -3003,18 +3004,42 @@ async function initApp(user){
     const savedLevel = localStorage.getItem('fitlog-level');
     if(savedLevel !== null) curLevel = parseInt(savedLevel);
 
-    // RT 재구성: 매뉴얼 처방 엔진 기준 (백업이 없을 때의 기본 루틴)
+    // ══════════════════════════════════════════════════════════
+    // RT 재구성 — 매뉴얼 처방 엔진 기준
+    // ──────────────────────────────────────────────────────────
+    // 이전 버전에서 저장된 루틴 백업(fitlog-rt-custom)은 매뉴얼 기준이 아니므로
+    // 엔진 버전이 다르면 폐기하고 매뉴얼 기준으로 새로 만든다.
+    // (그렇게 하지 않으면 앱을 새로 배포해도 예전 루틴이 그대로 복원된다)
+    // ══════════════════════════════════════════════════════════
     RT = JSON.parse(JSON.stringify(RT_BASE));
+
+    // ── 운동 요일 확보: 저장값이 없으면 DAY_SCHED에서 역산 ──
+    let _days = [];
+    try{ _days = JSON.parse(localStorage.getItem('fitlog-assigned-days') || 'null') || []; }catch(e){ _days = []; }
+    if(!_days.length){
+      const _kr = ['일','월','화','수','목','금','토'];
+      [1,2,3,4,5,6,0].forEach(function(i){ if(DAY_SCHED[i] && DAY_SCHED[i] !== 'REST') _days.push(_kr[i]); });
+      // 매뉴얼: 주말(토·일)은 완전 휴식 또는 가벼운 유산소 권장 → 주 5일을 넘기지 않는다
+      if(_days.length > 5) _days = _days.slice(0, 5);
+      if(!_days.length) _days = ['월','화','목','금'];
+      try{ localStorage.setItem('fitlog-assigned-days', JSON.stringify(_days)); }catch(e){}
+    }
+    // ── 운동 목적 확보 ──
+    let _purp = [];
+    try{ _purp = JSON.parse(localStorage.getItem('fitlog-purposes') || '[]') || []; }catch(e){ _purp = []; }
+    if(!_purp.length){
+      _purp = (typeof classPurposes !== 'undefined' && classPurposes.length) ? classPurposes : ['근육량 증가'];
+      try{ localStorage.setItem('fitlog-purposes', JSON.stringify(_purp)); }catch(e){}
+    }
+
     let _mBuilt = false;
     try{
-      const _p = JSON.parse(localStorage.getItem('fitlog-purposes') || '[]');
-      const _d = JSON.parse(localStorage.getItem('fitlog-assigned-days') || 'null');
-      if(typeof buildManualPlan === 'function' && _p.length && _d && _d.length){
+      if(typeof buildManualPlan === 'function'){
         const _order = ['월','화','수','목','금','토','일'];
         const _keys  = ['A','B','C','D','E','F'];
-        const _sorted= [..._d].sort((a,b)=>_order.indexOf(a)-_order.indexOf(b));
+        const _sorted= [..._days].sort((a,b)=>_order.indexOf(a)-_order.indexOf(b));
         const _b = buildManualPlan({
-          purposes : _p,
+          purposes : _purp,
           classType: localStorage.getItem('fitlog-classtype') || '기구운동',
           level    : curLevel,
           days     : _sorted,
@@ -3023,12 +3048,15 @@ async function initApp(user){
         });
         if(_b && _b.plan && _b.plan.length){
           _keys.forEach(rk=>{ delete RT[rk]; });
+          _order.forEach(function(d){ DAY_SCHED[DAY_NUM_MAP[d]] = 'REST'; });
           _sorted.forEach((day,i)=>{
             const rk = _keys[i % _keys.length];
+            DAY_SCHED[DAY_NUM_MAP[day]] = rk;
             RT[rk] = JSON.parse(JSON.stringify(_b.plan[i % _b.plan.length]));
             RT[rk].label = day + '요일 · ' + RT[rk].label;
           });
           _mBuilt = true;
+          window._manualGuide = _b.guide;
         }
       }
     }catch(e){ console.warn('[FitLog] 매뉴얼 기본 루틴 재구성 실패', e); }
@@ -3036,16 +3064,33 @@ async function initApp(user){
       const splitData = SPLIT_ROUTINES[curLevel];
       Object.keys(splitData).forEach(rk=>{ RT[rk] = JSON.parse(JSON.stringify(splitData[rk])); });
     }
-    // 커스텀 루틴 백업이 있으면 복원 (saveAllSettings가 저장한 것)
+
+    // ── 커스텀 루틴 백업 복원: 매뉴얼 엔진으로 만든 것만 ──
+    const _rtEngine = localStorage.getItem('fitlog-rt-engine');
     const _rtBackup = localStorage.getItem('fitlog-rt-custom');
-    if(_rtBackup){
+    if(_rtBackup && _rtEngine === MANUAL_ENGINE_VER){
       try{
         const _rtObj = JSON.parse(_rtBackup);
         if(_rtObj && Object.keys(_rtObj).length > 0){
-          // delete 없이 커스텀 백업 키만 덮어씀 → 백업에 없는 키(D 등)는 RT_BASE 유지
           Object.keys(_rtObj).forEach(rk=>{ if(_rtObj[rk] && _rtObj[rk].sections) RT[rk] = _rtObj[rk]; });
         }
       }catch(e){ console.warn('커스텀 루틴 복원 실패',e); }
+    } else if(_rtBackup){
+      // 구버전 루틴 백업 폐기 → 이번에 만든 매뉴얼 루틴으로 교체
+      console.info('[FitLog] 구버전 루틴 백업을 매뉴얼 기준으로 교체합니다');
+      try{
+        localStorage.removeItem('fitlog-rt-custom');
+        if(_mBuilt){
+          localStorage.setItem('fitlog-rt-custom', JSON.stringify(RT));
+          localStorage.setItem('fitlog-rt-engine', MANUAL_ENGINE_VER);
+        }
+        localStorage.setItem('fitlog-manual-upgraded','1');
+      }catch(e){}
+    } else if(_mBuilt){
+      try{
+        localStorage.setItem('fitlog-rt-custom', JSON.stringify(RT));
+        localStorage.setItem('fitlog-rt-engine', MANUAL_ENGINE_VER);
+      }catch(e){}
     }
 
     // 기록 불러오기
@@ -3158,6 +3203,22 @@ function showApp(){
   }
 
   showToast(`환영합니다, ${userProfile?.name||''}님! 💪`,'success');
+
+  // ── 매뉴얼 엔진 버전 표시 + 최초 1회 업그레이드 안내 ──
+  try{
+    const _vb = document.getElementById('engine-ver-badge');
+    if(_vb){
+      const _g = window._manualGuide;
+      _vb.innerHTML = 'FitLog v3.4 · build 20260801-manual1<br>운동 처방 엔진: 트레이너 매뉴얼 기준 (' + MANUAL_ENGINE_VER + ')'
+        + (_g ? '<br>현재 적용: ' + _g.name + ' · ' + _g.split : '');
+    }
+    if(localStorage.getItem('fitlog-manual-upgraded')==='1'){
+      localStorage.removeItem('fitlog-manual-upgraded');
+      setTimeout(function(){
+        showToast('📘 운동 루틴이 트레이너 매뉴얼 기준으로 새로 구성됐어요!','success');
+      }, 1600);
+    }
+  }catch(e){}
 
   // ── 주차별 운동 변동 적용 ──
   applyWeeklyVariation();
@@ -8108,6 +8169,9 @@ function renderORMGrid(){
 // 진입점 : buildManualPlan({purposes, classType, level, days, injuries, stage})
 // ══════════════════════════════════════════════════════════════════
 
+// 엔진 버전 — 이 값이 바뀌면 예전 방식으로 저장된 루틴 백업을 폐기하고 새로 만든다
+const MANUAL_ENGINE_VER = 'manual-v1';
+
 // ── ① 목적별 훈련 강도 기준 (매뉴얼 4장 각 프로그램 헤더) ──
 const M_INTENSITY = {
   cardio: {
@@ -8834,6 +8898,7 @@ async function saveAllSettings(){
       });
       // localStorage 백업
       localStorage.setItem('fitlog-rt-custom', JSON.stringify(RT));
+      localStorage.setItem('fitlog-rt-engine', MANUAL_ENGINE_VER);
       localStorage.setItem('fitlog-manual-guide', JSON.stringify(_guide||{}));
     } else {
       // 기본 루틴 사용
@@ -10198,6 +10263,11 @@ function applyWeeklyVariation(){
   if(changed > 0){
     localStorage.setItem('fitlog-variation-week', weekNum.toString());
     window.saveRoutine && window.saveRoutine(RT);
+    // 변동 결과를 루틴 백업에도 반영 (반영하지 않으면 새로고침 시 변동이 사라진다)
+    try{
+      localStorage.setItem('fitlog-rt-custom', JSON.stringify(RT));
+      localStorage.setItem('fitlog-rt-engine', MANUAL_ENGINE_VER);
+    }catch(e){}
     // 현재 운동 화면 갱신
     initSetData(DAY_SCHED[selDay]);
     renderWorkout();
