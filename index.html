@@ -23,7 +23,7 @@
        L 875 ~ 1899: HTML 구조 (화면 레이아웃 + 모달)
        L 1899~ 끝  : JavaScript (앱 로직 전체)
      ████████████████████████████████████████████████████████████████ -->
-<!-- fitlog v4.3 build:20260801-sync2 · 기기 간 동기화 + 주차변동 결정론화(중복 적용 제거)(manual-v9) -->
+<!-- fitlog v4.4 build:20260801-sync3 · 버전 불일치 자동 감지 + 강제 업데이트(manual-v9) -->
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
@@ -200,7 +200,8 @@
       rehabStage  : parseInt(ls('fitlog-rehab-stage', '2')) || 2,
       orm1RM      : lj('fitlog-1rm', {}),
       variationWeek: parseInt(ls('fitlog-variation-week', '-1')),
-      appBuild    : 'v4.3-sync2',
+      appBuild    : APP_BUILD,
+      device      : (function(){ try{ return /Mobi|Android|iPhone/i.test(navigator.userAgent) ? '휴대폰' : 'PC'; }catch(e){ return ''; } })(),
       engineVer   : (typeof MANUAL_ENGINE_VER !== 'undefined' ? MANUAL_ENGINE_VER : ''),
       routine     : (rt && typeof rt === 'object') ? rt : null,
       savedAt: new Date().toISOString()
@@ -1108,8 +1109,11 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
      ════════════════════════════════════════════════════════════════ -->
 <!-- 메인 앱 -->
 <div class="app" id="main-app">
+  <div id="update-bar" style="display:none;position:sticky;top:0;z-index:900;background:var(--accent);color:#fff;
+    padding:10px 14px;font-size:12px;line-height:1.7;text-align:center;font-weight:600;"></div>
   <nav class="nav">
-    <div class="nav-logo">핏로그</div>
+    <div class="nav-logo">핏로그 <span id="build-badge" onclick="checkAppUpdate(false)" title="눌러서 업데이트 확인"
+      style="font-size:9px;font-weight:400;color:var(--muted);font-family:var(--mono);cursor:pointer;"></span></div>
     <div class="nav-right">
       <div class="sync-dot" id="sync-dot" title="동기화 완료"></div>
       <img class="user-avatar" id="user-avatar" src="" style="display:none;" alt="프로필"/>
@@ -3281,13 +3285,19 @@ function showApp(){
   }catch(e){}
 
   try{ m_updateSyncInfo(); }catch(e){}
+  // 빌드 표시 + 서버 파일과 비교 (기기 간 버전이 다르면 루틴도 달라진다)
+  try{
+    const bb = document.getElementById('build-badge');
+    if(bb) bb.textContent = 'b' + APP_BUILD.slice(-5);
+    setTimeout(function(){ checkAppUpdate(true); }, 1500);
+  }catch(e){}
 
   // ── 매뉴얼 엔진 버전 표시 + 최초 1회 업그레이드 안내 ──
   try{
     const _vb = document.getElementById('engine-ver-badge');
     if(_vb){
       const _g = window._manualGuide;
-      _vb.innerHTML = 'FitLog v4.3 · build 20260801-sync2<br>운동 처방 엔진: 매뉴얼 + 세션 모드 + 개인화 + 목적 반영 (' + MANUAL_ENGINE_VER + ')'
+      _vb.innerHTML = 'FitLog v4.4 · build ' + APP_BUILD + '<br>운동 처방 엔진: 매뉴얼 + 세션 모드 + 개인화 + 목적 반영 (' + MANUAL_ENGINE_VER + ')'
         + (_g ? '<br>현재 적용: ' + _g.name + ' · ' + _g.split + (_g.estMin ? ' · 1회 약 ' + _g.estMin + '분' : '') : '');
     }
     if(localStorage.getItem('fitlog-manual-upgraded')==='1'){
@@ -8488,6 +8498,60 @@ function renderORMGrid(){
 // 진입점 : buildManualPlan({purposes, classType, level, days, injuries, stage})
 // ══════════════════════════════════════════════════════════════════
 
+// ══════════════════════════════════════════════════════════════════
+// 앱 빌드 번호 + 자동 업데이트 감지
+// ──────────────────────────────────────────────────────────────────
+// GitHub Pages는 브라우저가 HTML을 캐시한다. 한 기기만 새 파일을 받고
+// 다른 기기는 예전 파일을 계속 쓰면, 같은 계정인데도 루틴이 달라진다.
+// (meta 태그의 no-cache는 브라우저가 거의 무시한다)
+// 그래서 서버에 있는 파일을 직접 읽어 빌드 번호를 비교한다.
+// ══════════════════════════════════════════════════════════════════
+const APP_BUILD = '20260801-sync3';
+
+async function checkAppUpdate(silent){
+  try{
+    const url = location.pathname + (location.pathname.endsWith('/') ? 'index.html' : '') + '?_=' + Date.now();
+    const res = await fetch(url, {cache:'no-store'});
+    if(!res.ok) return;
+    const txt = await res.text();
+    const m = txt.match(/const APP_BUILD = '([^']+)'/);
+    if(!m) return;
+    if(m[1] === APP_BUILD){
+      if(!silent) showToast('✅ 최신 버전입니다 (build ' + APP_BUILD + ')', 'success');
+      return;
+    }
+    const bar = document.getElementById('update-bar');
+    if(bar){
+      bar.style.display = 'block';
+      bar.innerHTML = '⚠️ <b>새 버전이 있습니다</b> (이 기기 ' + APP_BUILD + ' → 서버 ' + m[1] + ')'
+        + ' — 기기마다 루틴이 다르게 보이는 원인입니다.'
+        + '<button onclick="forceUpdate()" style="margin-left:8px;padding:5px 12px;border-radius:6px;border:none;'
+        + 'background:#fff;color:var(--accent);font-size:11px;font-weight:800;cursor:pointer;font-family:var(--font);">지금 업데이트</button>';
+    } else if(!silent){
+      if(confirm('새 버전이 있습니다 (' + m[1] + '). 지금 업데이트할까요?')) forceUpdate();
+    }
+  }catch(e){ console.warn('[FitLog] 업데이트 확인 실패', e); }
+}
+
+// 캐시를 비우고 캐시 무력화 파라미터를 붙여 다시 연다
+async function forceUpdate(){
+  try{
+    if(window.caches){
+      const ks = await caches.keys();
+      await Promise.all(ks.map(function(k){ return caches.delete(k); }));
+    }
+  }catch(e){}
+  try{
+    if(navigator.serviceWorker && navigator.serviceWorker.getRegistrations){
+      const rs = await navigator.serviceWorker.getRegistrations();
+      await Promise.all(rs.map(function(r){ return r.unregister(); }));
+    }
+  }catch(e){}
+  const u = new URL(location.href);
+  u.searchParams.set('v', String(Date.now()));
+  location.replace(u.toString());
+}
+
 // 엔진 버전 — 이 값이 바뀌면 예전 방식으로 저장된 루틴 백업을 폐기하고 새로 만든다
 const MANUAL_ENGINE_VER = 'manual-v9';
 
@@ -10785,8 +10849,10 @@ function m_updateSyncInfo(){
   try{ d = JSON.parse(localStorage.getItem('fitlog-routine-backup') || '{}') || {}; }catch(e){}
   if(!d.savedAt){ el.innerHTML = '아직 클라우드에 저장된 설정이 없습니다'; return; }
   const full = (d.workoutTime !== undefined && d.injuries !== undefined && d.routine !== undefined);
+  const mismatch = (d.appBuild && typeof APP_BUILD !== 'undefined' && d.appBuild !== APP_BUILD);
   el.innerHTML = '마지막 저장 ' + d.savedAt.slice(0,10) + ' ' + d.savedAt.slice(11,16)
-    + (d.appBuild ? ' · ' + d.appBuild : '')
+    + (d.device ? ' · ' + d.device : '') + (d.appBuild ? ' · build ' + d.appBuild : '')
+    + (mismatch ? ' <span style="color:var(--accent);">(이 기기는 ' + APP_BUILD + ' — 버전이 다릅니다)</span>' : '')
     + '<br>' + (full
       ? '<span style="color:var(--green);">✅ 요일·시간·부상·집중부위·보유기구·기준중량·루틴이 함께 저장돼 있습니다</span>'
       : '<span style="color:var(--accent2);">⚠️ 예전 버전이 저장한 설정입니다. 다른 기기도 최신 버전으로 연 뒤 설정을 한 번 저장해야 기기 간 루틴이 같아집니다.</span>');
