@@ -962,6 +962,62 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
   .ai-diet-title{flex-direction:column;gap:3px;}
   .diet-sum-val{font-size:17px;}
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   ■ 신규 기능: 근육 피로도 · 미니캘린더 · 퍼포먼스 분석 · 음성코칭
+   ══════════════════════════════════════════════════════════════════ */
+/* 근육 피로도 분석 (홈) */
+.fatigue-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;}
+.fatigue-card-title{font-size:13px;font-weight:700;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:8px;}
+.fatigue-row{margin-bottom:10px;}
+.fatigue-row:last-child{margin-bottom:0;}
+.fatigue-row-hdr{display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:4px;gap:8px;}
+.fatigue-muscle{font-weight:600;white-space:nowrap;}
+.fatigue-status{font-size:10px;font-family:var(--mono);white-space:nowrap;}
+.fatigue-bar-bg{height:7px;background:var(--surface2);border-radius:4px;overflow:hidden;}
+.fatigue-bar-fill{height:100%;border-radius:4px;transition:width .4s;}
+
+/* 트레이닝 스케줄 미니 캘린더 (홈) */
+.mini-cal-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:14px;}
+.mini-cal-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px;}
+.mini-cal-title{font-size:13px;font-weight:700;}
+.mini-cal-nav{display:flex;gap:4px;}
+.mini-cal-nav-btn{width:24px;height:24px;border-radius:6px;border:1px solid var(--border);background:none;color:var(--muted);cursor:pointer;font-size:12px;font-family:var(--font);}
+.mini-cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:3px;}
+.mini-cal-dlbl{font-size:9px;color:var(--muted);text-align:center;padding-bottom:3px;}
+.mini-cal-cell{aspect-ratio:1;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:10px;color:var(--muted);background:var(--surface2);}
+.mini-cal-cell.today{border:1.5px solid var(--accent);color:var(--text);font-weight:700;}
+.mini-cal-cell.has-rec{background:#4caf7d1e;color:var(--text);}
+.mini-cal-cell.empty{background:none;}
+.mini-cal-icon{font-size:11px;line-height:1;margin-top:1px;}
+
+/* 운동별 퍼포먼스 분석 (통계) */
+.perf-ex-card{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 14px;margin-bottom:8px;}
+.perf-ex-hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;gap:8px;}
+.perf-ex-name{font-size:13px;font-weight:700;}
+.perf-ex-trend{font-size:11px;font-family:var(--mono);font-weight:700;white-space:nowrap;}
+.perf-ex-meta{font-size:11px;color:var(--muted);margin-bottom:8px;}
+.perf-spark{display:flex;align-items:flex-end;gap:3px;height:34px;}
+.perf-spark-bar{flex:1;border-radius:2px 2px 0 0;min-height:2px;transition:height .3s;}
+
+/* 부위별 퍼포먼스 분석 (통계) */
+.bp-perf-row{margin-bottom:12px;}
+.bp-perf-hdr{display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px;gap:8px;flex-wrap:wrap;}
+.bp-perf-bar-bg{height:8px;background:var(--surface2);border-radius:4px;overflow:hidden;}
+.bp-perf-bar-fill{height:100%;border-radius:4px;transition:width .4s;}
+
+/* 근육 밸런스 차트 (통계) */
+.balance-row{margin-bottom:14px;}
+.balance-row:last-child{margin-bottom:0;}
+.balance-lbls{display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px;color:var(--muted);font-weight:600;}
+.balance-track{position:relative;height:10px;background:var(--surface2);border-radius:5px;overflow:hidden;}
+.balance-fill-l{position:absolute;right:50%;top:0;height:100%;border-radius:5px 0 0 5px;}
+.balance-fill-r{position:absolute;left:50%;top:0;height:100%;border-radius:0 5px 5px 0;}
+.balance-center{position:absolute;left:50%;top:-2px;width:2px;height:14px;background:var(--text);opacity:.35;transform:translateX(-1px);}
+
+/* 음성 코칭 토글 */
+.voice-coach-btn{display:flex;align-items:center;justify-content:center;gap:6px;width:100%;padding:9px;border-radius:10px;border:1px solid var(--border);background:var(--surface2);color:var(--muted);font-size:12px;font-weight:700;cursor:pointer;font-family:var(--font);margin-bottom:10px;transition:all .15s;}
+.voice-coach-btn.active{border-color:var(--purple);background:#9b7fe81a;color:var(--purple);}
 </style>
 </head>
 <body>
@@ -1217,7 +1273,24 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="stat-box"><div class="stat-num" id="h-month">0</div><div class="stat-lbl">이번 달</div></div>
       <div class="stat-box"><div class="stat-num" id="h-streak">0</div><div class="stat-lbl">연속 출석</div></div>
     </div>
-    
+
+    <!-- 근육 피로도 분석 -->
+    <div class="fatigue-card">
+      <div class="fatigue-card-title"><span>💪 근육 피로도 분석</span><span style="font-size:10px;color:var(--muted);font-weight:400;">최근 운동 기준 회복도</span></div>
+      <div id="fatigue-panel"></div>
+    </div>
+
+    <!-- 트레이닝 스케줄 미니 캘린더 -->
+    <div class="mini-cal-card">
+      <div class="mini-cal-hdr">
+        <div class="mini-cal-title" id="mini-cal-title">🏋️ 트레이닝 스케줄</div>
+        <div class="mini-cal-nav">
+          <button class="mini-cal-nav-btn" onclick="changeMiniCalMonth(-1)">‹</button>
+          <button class="mini-cal-nav-btn" onclick="changeMiniCalMonth(1)">›</button>
+        </div>
+      </div>
+      <div class="mini-cal-grid" id="mini-cal-grid"></div>
+    </div>
 
   <!-- 운동 -->
   <div class="page" id="page-workout">
@@ -1238,6 +1311,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     </div>
     <!-- 특수모드 활성 배너 -->
     <div id="special-mode-banner" style="display:none;margin-bottom:10px;padding:10px 14px;border-radius:10px;font-size:13px;font-weight:700;"></div>
+
+    <!-- 음성 코칭 토글 -->
+    <button class="voice-coach-btn" id="voice-coach-btn" onclick="toggleVoiceCoach()">🔇 음성 코칭 OFF</button>
 
     <div class="day-sel" id="day-sel"></div>
     <div class="today-meta" id="today-meta" style="font-size:11px;color:var(--muted);font-family:var(--mono);margin-bottom:3px;"></div>
@@ -1402,6 +1478,27 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       <div class="level-card-title"><span>🏋️ 근육 부위별 자극 강도</span></div>
       <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">운동 기록에 따라 각 부위의 누적 자극이 색상으로 표시됩니다.</div>
       <div id="muscle-body-panel"></div>
+    </div>
+
+    <!-- 운동별 퍼포먼스 분석 -->
+    <div class="level-card">
+      <div class="level-card-title"><span>📊 운동별 퍼포먼스 분석</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">최근 8회 기록 기준 중량 변화 추이입니다.</div>
+      <div id="ex-performance-panel"></div>
+    </div>
+
+    <!-- 부위별 퍼포먼스 분석 -->
+    <div class="level-card">
+      <div class="level-card-title"><span>🎯 부위별 퍼포먼스 분석</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:10px;">부위별 세션·볼륨·평균 강도를 비교합니다.</div>
+      <div id="bp-performance-panel"></div>
+    </div>
+
+    <!-- 근육 밸런스 차트 -->
+    <div class="level-card">
+      <div class="level-card-title"><span>⚖️ 근육 밸런스 차트</span></div>
+      <div style="font-size:11px;color:var(--muted);margin-bottom:12px;">전면·후면, 상체·하체 균형을 확인해보세요.</div>
+      <div id="muscle-balance-panel"></div>
     </div>
   </div>
 
@@ -3273,6 +3370,7 @@ function showApp(){
   if(_dsFixed){ try{ localStorage.setItem('fitlog-day-sched',JSON.stringify(DAY_SCHED)); }catch(e){} }
   initSetData(DAY_SCHED[selDay]);
   renderHome(); renderWorkout(); renderCalendar(); renderLog(); renderStats();
+  updateVoiceCoachBtn();
 
   // 1분마다 날짜 체크
   // 자정 넘어 날짜 바뀔 때만 자동 갱신 (사용자가 수동으로 다른 요일 선택 중이면 건너뜀)
@@ -3544,6 +3642,7 @@ function toggleSetDone(k,i){
   const card=document.getElementById(`ec-${parts[1]}-${parts[2]}`),chk=document.getElementById(`echk-${parts[1]}-${parts[2]}`);
   if(card)card.classList.toggle('done',allDone);if(chk)chk.classList.toggle('done',allDone);
   saveSetDataLocal();saveChkLocal();updateProg();
+  if(setData[k][i].done && typeof voiceSetComplete==='function') voiceSetComplete(); // 🔊 음성 코칭: 세트 완료 멘트
   // ── 실시간 자동저장 ──
   const anyDone = Object.values(setData).some(arr=>arr.some(s=>s.done));
   if(anyDone){ clearTimeout(window._autoSaveTimer); window._autoSaveTimer=setTimeout(function(){ doSaveRecord(true); },1500); }
@@ -3554,6 +3653,7 @@ function toggleTimerSetDone(si,ei,setIdx,total){
   const ok=document.getElementById(`tso-${si}-${ei}-${setIdx}`);
   if(!ok)return;
   ok.classList.toggle('done');
+  if(ok.classList.contains('done') && typeof voiceSetComplete==='function') voiceSetComplete(); // 🔊 음성 코칭: 세트 완료 멘트
   // 모든 세트 완료 시 운동 카드 체크
   const allDone=Array.from({length:total},(_,i)=>document.getElementById(`tso-${si}-${ei}-${i}`)?.classList.contains('done')).every(Boolean);
   const chk=document.getElementById(`echk-${si}-${ei}`),card=document.getElementById(`ec-${si}-${ei}`);
@@ -3854,6 +3954,9 @@ function renderHome(){
   document.getElementById('h-total').textContent=total;
   document.getElementById('h-month').textContent=thisMonth;
   document.getElementById('h-streak').textContent=streak;
+
+  renderFatigue();
+  renderMiniCalendar();
 }
 
 function goWorkout(){
@@ -4725,6 +4828,11 @@ function handleWorkoutClick(e){
     area.classList.toggle('open',!isOpen);
     if(arr)arr.classList.toggle('open',!isOpen);
     if(!isOpen)renderSets(el.dataset.k,el.dataset.said);
+    // 🔊 음성 코칭: 운동 카드를 펼칠 때(=운동 시작) 이름 안내
+    if(!isOpen && typeof voiceAnnounceExercise==='function'){
+      const nameEl=card&&card.querySelector('.ex-name');
+      if(nameEl) voiceAnnounceExercise(nameEl.textContent);
+    }
   }
   else if(act==='yt'){window.open('https://www.youtube.com/results?search_query='+el.dataset.q,'_blank');}
   else if(act==='aiguide'){openAiGuide(decodeURIComponent(el.dataset.exname),decodeURIComponent(el.dataset.tags),decodeURIComponent(el.dataset.warn));}
@@ -5259,6 +5367,9 @@ function renderMuscleBodySvg(muscleMap, muscTotal){
 }
 
 function renderStats(){
+  renderExercisePerformance();
+  renderBodyPartPerformance();
+  renderMuscleBalance();
   const total=records.length,ym=new Date().toISOString().slice(0,7),thisMonth=records.filter(r=>r.date.startsWith(ym)).length;
   let streak=0;const today=new Date();
   for(let i=0;i<60;i++){const d=new Date(today);d.setDate(today.getDate()-i);if(records.find(r=>r.date===toStr(d)))streak++;else if(i>0)break;}
@@ -5390,6 +5501,325 @@ function renderStats(){
       </div>
     </div>`;
   }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ■ 근육 피로도 분석 (홈)
+// ──────────────────────────────────────────────────────────────────
+// calcMuscleFatigue() : records의 세트별 운동명을 EX_LIB tags와 매칭해
+//   부위별 마지막 운동 날짜를 구하고, 경과 시간으로 회복 상태를 판정
+//   (72h+ 회복완료/초록, 24~72h 회복중/노랑, 24h- 피로/빨강)
+//   EX_LIB에서 매칭되는 운동이 없으면 typeToMuscle 유사 폴백 사용
+// renderFatigue()     : #fatigue-panel 에 부위별 진행바 렌더링
+// ══════════════════════════════════════════════════════════════════
+const FATIGUE_MUSCLES=['가슴','등','어깨','이두','삼두','하체(대퇴)','햄스트링','둔근','종아리','복부'];
+const FATIGUE_TAG_MAP=[
+  [/대흉근/,'가슴'],
+  [/광배근|승모근|능형근|척추기립근|전거근/,'등'],
+  [/삼각근/,'어깨'],
+  [/이두근|상완근/,'이두'],
+  [/삼두근/,'삼두'],
+  [/대퇴사두근|내전근/,'하체(대퇴)'],
+  [/햄스트링/,'햄스트링'],
+  [/둔근/,'둔근'],
+  [/비복근|가자미근/,'종아리'],
+  [/복근|복직근|복사근|복횡근/,'복부'],
+];
+// 기록의 운동명이 EX_LIB에서 매칭되지 않을 때 사용하는 루틴타입 기반 폴백
+const FATIGUE_TYPE_FALLBACK={A:['가슴','어깨'],B:['등','이두','삼두'],C:['하체(대퇴)','둔근','햄스트링'],D:[],E:['복부'],F:['하체(대퇴)','둔근','종아리']};
+
+function calcMuscleFatigue(){
+  const last={}; // 부위 → 마지막 운동 날짜(YYYY-MM-DD)
+  const sorted=[...records].sort((a,b)=>a.date.localeCompare(b.date)); // 오래된 순
+  sorted.forEach(r=>{
+    let matched=false;
+    if(r.sets&&r.sets.length&&typeof EX_LIB!=='undefined'){
+      r.sets.forEach(s=>{
+        const lib=EX_LIB.find(e=>e.n===s.ex);
+        if(lib&&lib.tags){
+          lib.tags.forEach(tag=>{
+            FATIGUE_TAG_MAP.forEach(([re,m])=>{ if(re.test(tag)){ last[m]=r.date; matched=true; } });
+          });
+        }
+      });
+    }
+    if(!matched){
+      (FATIGUE_TYPE_FALLBACK[r.type]||[]).forEach(m=>{ last[m]=r.date; });
+    }
+  });
+  const now=new Date();
+  return FATIGUE_MUSCLES.map(m=>{
+    const d=last[m];
+    const hours=d?(now-new Date(d+'T12:00:00'))/36e5:Infinity;
+    const status=hours>72?'green':hours>=24?'yellow':'red';
+    const pct=Math.max(4,Math.min(100,Math.round((hours/72)*100)));
+    return {muscle:m,lastDate:d,hours,status,pct};
+  });
+}
+
+function renderFatigue(){
+  const panel=document.getElementById('fatigue-panel');
+  if(!panel)return;
+  if(!records.length){
+    panel.innerHTML='<div style="color:var(--muted);font-size:12px;text-align:center;padding:8px;">운동을 기록하면 부위별 회복 상태가 표시됩니다</div>';
+    return;
+  }
+  const data=calcMuscleFatigue();
+  const colMap={green:'var(--green)',yellow:'var(--accent2)',red:'var(--accent)'};
+  const lblMap={green:'회복 완료',yellow:'회복중',red:'피로'};
+  panel.innerHTML=data.map(d=>{
+    const timeTxt=d.lastDate?(d.hours<24?Math.round(d.hours)+'시간 전':Math.round(d.hours/24)+'일 전'):'기록 없음';
+    return `<div class="fatigue-row">
+      <div class="fatigue-row-hdr">
+        <span class="fatigue-muscle">${d.muscle}</span>
+        <span class="fatigue-status" style="color:${colMap[d.status]};">${lblMap[d.status]} · ${timeTxt}</span>
+      </div>
+      <div class="fatigue-bar-bg"><div class="fatigue-bar-fill" style="width:${d.pct}%;background:${colMap[d.status]};"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ■ 트레이닝 스케줄 미니 캘린더 (홈)
+// ──────────────────────────────────────────────────────────────────
+// 캘린더 탭의 renderCalendar()와 별개로 홈 화면에 표시되는 간이 캘린더.
+// 운동 기록이 있는 날짜에 🏋️ 아이콘을 표시한다.
+// ══════════════════════════════════════════════════════════════════
+let miniCalYear=new Date().getFullYear(), miniCalMonth=new Date().getMonth();
+function changeMiniCalMonth(dir){
+  miniCalMonth+=dir;
+  if(miniCalMonth<0){miniCalMonth=11;miniCalYear--;}
+  if(miniCalMonth>11){miniCalMonth=0;miniCalYear++;}
+  renderMiniCalendar();
+}
+function renderMiniCalendar(){
+  const grid=document.getElementById('mini-cal-grid'), title=document.getElementById('mini-cal-title');
+  if(!grid)return;
+  const mN=['1월','2월','3월','4월','5월','6월','7월','8월','9월','10월','11월','12월'];
+  if(title)title.textContent=`🏋️ ${miniCalYear}년 ${mN[miniCalMonth]}`;
+  const ts=toStr(new Date());
+  const firstDow=new Date(miniCalYear,miniCalMonth,1).getDay();
+  const dim=new Date(miniCalYear,miniCalMonth+1,0).getDate();
+  let html=DAY_KR.map(d=>`<div class="mini-cal-dlbl">${d}</div>`).join('');
+  for(let i=0;i<firstDow;i++) html+='<div class="mini-cal-cell empty"></div>';
+  for(let d=1;d<=dim;d++){
+    const ds=`${miniCalYear}-${String(miniCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const rec=records.find(r=>r.date===ds);
+    html+=`<div class="mini-cal-cell${ds===ts?' today':''}${rec?' has-rec':''}">
+      <div>${d}</div>${rec?'<div class="mini-cal-icon">🏋️</div>':''}
+    </div>`;
+  }
+  grid.innerHTML=html;
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ■ 운동별 퍼포먼스 분석 (통계)
+// ──────────────────────────────────────────────────────────────────
+// 기록된 중량 세트를 운동명별로 묶어 세션수·최고중량·최근중량·추세와
+// 최근 8회 중량 추이를 CSS 미니 스파크라인 바로 표시한다.
+// ══════════════════════════════════════════════════════════════════
+function renderExercisePerformance(){
+  const panel=document.getElementById('ex-performance-panel');
+  if(!panel)return;
+  const wMap={};
+  records.forEach(rec=>{
+    if(!rec.sets)return;
+    rec.sets.forEach(s=>{
+      const w=parseFloat(s.weight);
+      if(!s.weight||!w)return;
+      if(!wMap[s.ex])wMap[s.ex]=[];
+      wMap[s.ex].push({date:rec.date,weight:w,reps:parseInt(s.reps)||0});
+    });
+  });
+  const entries=Object.entries(wMap).sort((a,b)=>b[1].length-a[1].length).slice(0,8);
+  if(!entries.length){
+    panel.innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px;text-align:center;">중량 기록이 쌓이면 운동별 퍼포먼스가 표시됩니다</div>';
+    return;
+  }
+  panel.innerHTML=entries.map(([ex,arr])=>{
+    const sorted=[...arr].sort((a,b)=>a.date.localeCompare(b.date));
+    const sessions=sorted.length;
+    const maxW=Math.max(...sorted.map(x=>x.weight));
+    const recentW=sorted[sorted.length-1].weight;
+    const firstW=sorted[0].weight;
+    const diff=+(recentW-firstW).toFixed(1);
+    const trendCol=diff>0?'var(--green)':diff<0?'var(--accent)':'var(--muted)';
+    const trendTxt=diff>0?`▲ +${diff}kg`:diff<0?`▼ ${diff}kg`:'– 변화없음';
+    const recent8=sorted.slice(-8);
+    const sparkMax=Math.max(...recent8.map(x=>x.weight),1);
+    return `<div class="perf-ex-card">
+      <div class="perf-ex-hdr">
+        <span class="perf-ex-name">${ex}</span>
+        <span class="perf-ex-trend" style="color:${trendCol};">${trendTxt}</span>
+      </div>
+      <div class="perf-ex-meta">${sessions}회 수행 · 최고 ${maxW}kg · 최근 ${recentW}kg</div>
+      <div class="perf-spark">
+        ${recent8.map(x=>{
+          const h=Math.max(3,Math.round(x.weight/sparkMax*30));
+          const isLast=x===recent8[recent8.length-1];
+          return `<div class="perf-spark-bar" style="height:${h}px;background:${isLast?'var(--accent2)':'var(--blue)'};" title="${x.date} · ${x.weight}kg"></div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ■ 부위별 퍼포먼스 분석 (통계)
+// ──────────────────────────────────────────────────────────────────
+// EX_LIB의 cat(부위 카테고리) 기준으로 세션수·총 볼륨(중량×횟수)·
+// 평균 강도를 집계해 막대 그래프로 비교한다.
+// ══════════════════════════════════════════════════════════════════
+const BP_CAT_LIST=['가슴','등','어깨','팔','하체','둔근','복근','유산소'];
+const BP_COLORS={가슴:'var(--blue)',등:'var(--green)',어깨:'var(--accent2)',팔:'var(--purple)',하체:'var(--accent)',둔근:'#e91e8c',복근:'#3ecf8e',유산소:'#ff9800'};
+function renderBodyPartPerformance(){
+  const panel=document.getElementById('bp-performance-panel');
+  if(!panel)return;
+  const bp={}; BP_CAT_LIST.forEach(c=>bp[c]={sessions:0,volume:0,intensitySum:0,intensityCnt:0});
+  const typeToCatFallback={A:['가슴','어깨'],B:['등','팔'],C:['하체','둔근'],D:['유산소'],E:['복근'],F:['하체','둔근']};
+  records.forEach(rec=>{
+    const cats=new Set();
+    if(rec.sets&&rec.sets.length&&typeof EX_LIB!=='undefined'){
+      rec.sets.forEach(s=>{
+        const lib=EX_LIB.find(e=>e.n===s.ex);
+        const cat=lib?lib.cat:null;
+        if(cat&&bp[cat]){
+          cats.add(cat);
+          const w=parseFloat(s.weight)||0, r=parseInt(s.reps)||0;
+          bp[cat].volume+=w*r;
+          if(w>0){ bp[cat].intensitySum+=w; bp[cat].intensityCnt++; }
+        }
+      });
+    }
+    if(!cats.size){
+      (typeToCatFallback[rec.type]||[]).forEach(c=>cats.add(c));
+    }
+    cats.forEach(c=>{ if(bp[c])bp[c].sessions++; });
+  });
+  const entries=Object.entries(bp).filter(([,v])=>v.sessions>0).sort((a,b)=>b[1].volume-a[1].volume);
+  if(!entries.length){
+    panel.innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px;text-align:center;">운동 기록이 쌓이면 부위별 퍼포먼스가 표시됩니다</div>';
+    return;
+  }
+  const maxVol=Math.max(...entries.map(([,v])=>v.volume),1);
+  panel.innerHTML=entries.map(([cat,v])=>{
+    const avgInt=v.intensityCnt?Math.round(v.intensitySum/v.intensityCnt):0;
+    return `<div class="bp-perf-row">
+      <div class="bp-perf-hdr">
+        <span style="color:${BP_COLORS[cat]||'var(--text)'};font-weight:600;">${cat}</span>
+        <span style="font-family:var(--mono);color:var(--muted);">${v.sessions}회 · 볼륨 ${Math.round(v.volume).toLocaleString()} · 평균강도 ${avgInt}kg</span>
+      </div>
+      <div class="bp-perf-bar-bg"><div class="bp-perf-bar-fill" style="width:${Math.round(v.volume/maxVol*100)}%;background:${BP_COLORS[cat]||'var(--accent)'};"></div></div>
+    </div>`;
+  }).join('');
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ■ 근육 밸런스 차트 (통계)
+// ──────────────────────────────────────────────────────────────────
+// 전면/후면(가슴·등), 이두/삼두, 대퇴사두/햄스트링 및 상체/하체의
+// 세션 비율을 좌우 대칭 바 형태로 표시해 불균형을 한눈에 보여준다.
+// ══════════════════════════════════════════════════════════════════
+function renderMuscleBalance(){
+  const panel=document.getElementById('muscle-balance-panel');
+  if(!panel)return;
+  if(!records.length){
+    panel.innerHTML='<div style="color:var(--muted);font-size:13px;padding:10px;text-align:center;">운동 기록이 쌓이면 밸런스가 표시됩니다</div>';
+    return;
+  }
+  // 부위별 세션(자극) 횟수 집계 — calcMuscleFatigue와 동일한 태그 매칭 로직 재사용
+  const cnt={}; FATIGUE_MUSCLES.forEach(m=>cnt[m]=0);
+  records.forEach(r=>{
+    let matched=false;
+    if(r.sets&&r.sets.length&&typeof EX_LIB!=='undefined'){
+      r.sets.forEach(s=>{
+        const lib=EX_LIB.find(e=>e.n===s.ex);
+        if(lib&&lib.tags){
+          lib.tags.forEach(tag=>{
+            FATIGUE_TAG_MAP.forEach(([re,m])=>{ if(re.test(tag)){ cnt[m]++; matched=true; } });
+          });
+        }
+      });
+    }
+    if(!matched){ (FATIGUE_TYPE_FALLBACK[r.type]||[]).forEach(m=>{ cnt[m]++; }); }
+  });
+  function pairRow(labelL,labelR,valL,valR){
+    const total=valL+valR;
+    const pctL=total?Math.round(valL/total*100):50, pctR=100-pctL;
+    return `<div class="balance-row">
+      <div class="balance-lbls"><span>${labelL} ${pctL}%</span><span>${labelR} ${pctR}%</span></div>
+      <div class="balance-track">
+        <div class="balance-fill-l" style="width:${pctL/2}%;background:var(--blue);"></div>
+        <div class="balance-fill-r" style="width:${pctR/2}%;background:var(--accent);"></div>
+        <div class="balance-center"></div>
+      </div>
+    </div>`;
+  }
+  const upper=cnt['가슴']+cnt['등']+cnt['어깨']+cnt['이두']+cnt['삼두']+cnt['복부'];
+  const lower=cnt['하체(대퇴)']+cnt['햄스트링']+cnt['둔근']+cnt['종아리'];
+  panel.innerHTML=
+    pairRow('가슴','등',cnt['가슴'],cnt['등'])+
+    pairRow('이두','삼두',cnt['이두'],cnt['삼두'])+
+    pairRow('대퇴사두','햄스트링',cnt['하체(대퇴)'],cnt['햄스트링'])+
+    pairRow('상체','하체',upper,lower);
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ■ 음성 코칭 시스템 (Web Speech API)
+// ──────────────────────────────────────────────────────────────────
+// voiceCoachOn        : 활성화 여부, localStorage 'fitlog-voice-coach'에 저장
+// speak(text)         : speechSynthesis로 한국어 음성 출력 (비활성 시 무시)
+// toggleVoiceCoach()  : 운동 탭 상단 토글 버튼 클릭 핸들러
+// voiceAnnounceExercise(name) : 운동 시작 시 이름 안내
+// voiceCountdownTick(sec)     : 휴식 타이머 마지막 5초 카운트다운
+// voiceRestDone()              : 휴식 종료 "시작!" 안내
+// voiceSetComplete()           : 세트 완료 시 격려 멘트
+// ══════════════════════════════════════════════════════════════════
+let voiceCoachOn = (localStorage.getItem('fitlog-voice-coach')==='1');
+let _voiceLastCountSec = null;
+const VOICE_MOTIVATIONS=['좋아요! 다음 세트 준비하세요','잘하고 있어요! 계속 가봐요','조금만 더 힘내요','자세 유지하면서 천천히','한 세트 더, 할 수 있어요'];
+
+function speak(text){
+  if(!voiceCoachOn) return;
+  if(!('speechSynthesis' in window)) return;
+  try{
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang='ko-KR'; u.rate=1.05; u.pitch=1;
+    window.speechSynthesis.speak(u);
+  }catch(e){}
+}
+function toggleVoiceCoach(){
+  voiceCoachOn=!voiceCoachOn;
+  try{ localStorage.setItem('fitlog-voice-coach', voiceCoachOn?'1':'0'); }catch(e){}
+  updateVoiceCoachBtn();
+  if(voiceCoachOn){ speak('음성 코칭을 시작합니다'); }
+  else if('speechSynthesis' in window){ try{ window.speechSynthesis.cancel(); }catch(e){} }
+}
+function updateVoiceCoachBtn(){
+  const btn=document.getElementById('voice-coach-btn');
+  if(!btn)return;
+  btn.classList.toggle('active',voiceCoachOn);
+  btn.textContent=voiceCoachOn?'🔊 음성 코칭 ON':'🔇 음성 코칭 OFF';
+}
+function voiceAnnounceExercise(name){
+  if(!voiceCoachOn||!name)return;
+  speak(name+' 시작합니다');
+}
+function voiceSetComplete(){
+  if(!voiceCoachOn)return;
+  speak(VOICE_MOTIVATIONS[Math.floor(Math.random()*VOICE_MOTIVATIONS.length)]);
+}
+function voiceCountdownTick(sec){
+  if(!voiceCoachOn)return;
+  if(sec<=5&&sec>0&&sec!==_voiceLastCountSec){
+    _voiceLastCountSec=sec;
+    speak(String(sec));
+  }
+}
+function voiceRestDone(){
+  if(!voiceCoachOn)return;
+  _voiceLastCountSec=null;
+  speak('시작!');
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -8537,7 +8967,7 @@ function renderORMGrid(){
 // (meta 태그의 no-cache는 브라우저가 거의 무시한다)
 // 그래서 서버에 있는 파일을 직접 읽어 빌드 번호를 비교한다.
 // ══════════════════════════════════════════════════════════════════
-const APP_BUILD = '20260801-core2';
+const APP_BUILD = '20260802-pro1';
 // 화면이 뜨자마자 빌드를 보여준다 — 어느 기기가 옛 파일인지 3초 만에 알 수 있게
 (function(){
   const paint = function(){
@@ -12941,6 +13371,7 @@ function openTimerOverlay(name,sec,si,ei){
   if(doneBtn) doneBtn.style.display='none';
   if(startBtn) startBtn.style.display='';
   ovUpdateDisplay();
+  if(typeof voiceAnnounceExercise==='function') voiceAnnounceExercise(name); // 🔊 음성 코칭: 타이머 시작 시 운동명 안내
 }
 function closeTimerOverlay(){
   clearInterval(_timerState.interval);_timerState.running=false;
@@ -13039,6 +13470,7 @@ function ovToggle(){
   if(_timerState.current <= 0){ ovReset(); return; }
 
   _timerState.running = true;
+  _voiceLastCountSec = null; // 🔊 음성 코칭: 새 카운트다운 시작 시 초기화
   // WakeLock - async이므로 별도로 비동기 처리 (블로킹 없이)
   if('wakeLock' in navigator){
     navigator.wakeLock.request('screen').then(wl=>{ _wakeLock=wl; }).catch(()=>{});
@@ -13055,6 +13487,7 @@ function ovToggle(){
     const remaining = _startSec - elapsed;
     _timerState.current = remaining > 0 ? remaining : 0;
     ovUpdateDisplay();
+    if(typeof voiceCountdownTick==='function') voiceCountdownTick(_timerState.current); // 🔊 음성 코칭: 마지막 5초 카운트다운
 
     if(_timerState.current <= 0){
       clearInterval(_timerState.interval);
@@ -13090,10 +13523,11 @@ function ovToggle(){
           console.log('진동 발송');
         }
       } catch(e){ console.log('진동 오류:', e); }
-      
+
       // 알림음 재생
       playTimerAlarm();
-      
+      if(typeof voiceRestDone==='function') voiceRestDone(); // 🔊 음성 코칭: 휴식 종료 "시작!" 안내
+
       // 시각적 알림 강화
       const timeEl = document.getElementById('timer-ov-time');
       const overlayEl = document.getElementById('timer-overlay');
