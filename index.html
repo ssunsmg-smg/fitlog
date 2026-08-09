@@ -4120,6 +4120,8 @@ function renderWorkout(){
         +(typeof m_exChips==='function'?m_exChips(ex):'')
         +(ex.repWhy?'<div style="margin-top:4px;font-size:10px;color:var(--muted);line-height:1.6;">📎 '+ex.repWhy+'</div>':'')
         +(ex.equipSwap?'<div style="margin-top:4px;font-size:10px;color:var(--blue);line-height:1.6;">🔧 보유 기구에 맞춰 대체된 종목입니다</div>':'')
+        +(ex.stallSwap?'<div style="margin-top:4px;font-size:10px;color:var(--accent);line-height:1.6;">🤖 정체 구간 감지 — 자극 각도를 바꾼 AI 추천 종목입니다</div>':'')
+        +(ex.excludedSwap?'<div style="margin-top:4px;font-size:10px;color:var(--muted);line-height:1.6;">🚫 제외한 종목 대신 AI가 회원님 체형·레벨에 맞춰 고른 종목입니다</div>':'')
         +(ex.targetSrc==='record'?'<div style="margin-top:4px;font-size:10px;color:var(--muted);line-height:1.6;">📈 최근 기록 기준 목표 중량입니다</div>':'')
         +(ex.ss?'<div style="margin-top:4px;font-size:10px;color:var(--accent);background:#e8533a12;border:1px solid #e8533a33;border-radius:6px;padding:4px 7px;line-height:1.6;">🔗 <b>슈퍼셋 '+ex.ss+'-'+ex.ssIdx+'</b> · '+(ex.ssIdx===1?'끝나면 쉬지 말고 <b>'+(ex.ssWith||'')+'</b>로':'<b>'+(ex.ssWith||'')+'</b>와 한 라운드 · 라운드 후 '+m_restLabel(Math.max(20,Math.round((ex.rest||60)/2)))+' 휴식')+'</div>':'')
         +'<div class="ex-actions">'
@@ -5849,342 +5851,342 @@ function voiceRestDone(){
 // ══════════════════════════════
 const EX_LIB=[
   // ── 가슴 ──
-  {n:'벤치프레스',d:'4세트 × 10회',tags:['대흉근(주)'],w:[],sets:4,cat:'가슴',type:'both'},
-  {n:'인클라인 벤치프레스',d:'3세트 × 12회',tags:['대흉근상부(주)'],w:[],sets:3,cat:'가슴',type:'both'},
-  {n:'디클라인 벤치프레스',d:'3세트 × 12회',tags:['대흉근하부(주)'],w:[],sets:3,cat:'가슴',type:'both'},
-  {n:'덤벨 벤치프레스',d:'4세트 × 12회',tags:['대흉근(주)'],w:[],sets:4,cat:'가슴',type:'both'},
-  {n:'인클라인 덤벨 벤치프레스',d:'3세트 × 12회',tags:['대흉근상부(주)'],w:[],sets:3,cat:'가슴',type:'both'},
-  {n:'디클라인 덤벨 벤치프레스',d:'3세트 × 12회',tags:['대흉근하부(주)'],w:[],sets:3,cat:'가슴',type:'both'},
-  {n:'시티드 체스트 프레스',d:'4세트 × 12회',tags:['대흉근(주)'],w:[],sets:4,cat:'가슴',type:'gym'},
-  {n:'체스트 프레스 머신',d:'3세트 × 12회',tags:['대흉근(주)'],w:[],sets:3,cat:'가슴',type:'gym'},
-  {n:'스미스 머신 벤치프레스',d:'4세트 × 10회',tags:['대흉근(주)'],w:[],sets:4,cat:'가슴',type:'gym'},
-  {n:'케이블 체스트 플라이',d:'3세트 × 15회',tags:['대흉근(주)'],w:[],sets:3,cat:'가슴',type:'gym'},
-  {n:'로우 케이블 크로스오버',d:'3세트 × 15회',tags:['대흉근상부(주)'],w:[],sets:3,cat:'가슴',type:'gym'},
-  {n:'하이 케이블 크로스오버',d:'3세트 × 15회',tags:['대흉근하부(주)'],w:[],sets:3,cat:'가슴',type:'gym'},
-  {n:'펙덱 플라이',d:'3세트 × 15회',tags:['대흉근(주)'],w:[],sets:3,cat:'가슴',type:'gym'},
-  {n:'덤벨 플라이',d:'3세트 × 15회',tags:['대흉근(주)'],w:['어깨주의'],sets:3,cat:'가슴',type:'both'},
-  {n:'덤벨 풀오버',d:'3세트 × 12회',tags:['대흉근(주)','광배근'],w:['어깨주의'],sets:3,cat:'가슴',type:'both'},
-  {n:'푸시업',d:'3세트 × 최대',tags:['대흉근(주)'],w:[],sets:0,cat:'가슴',type:'home'},
-  {n:'와이드 푸시업',d:'3세트 × 최대',tags:['대흉근(주)'],w:[],sets:0,cat:'가슴',type:'home'},
-  {n:'딥스',d:'3세트 × 10회',tags:['대흉근하부(주)','삼두근'],w:['어깨주의'],sets:0,cat:'가슴',type:'both'},
-  {n:'케이블 벤치프레스',d:'3세트 × 12회',tags:['대흉근(주)'],w:[],sets:3,cat:'가슴',type:'gym'},
-  {n:'밴드 체스트 프레스',d:'3세트 × 15회',tags:['대흉근(주)'],w:[],sets:0,cat:'가슴',type:'home'},
+  {n:'벤치프레스',d:'4세트 × 10회',tags:['대흉근(주)'],w:[],sets:4,cat:'가슴',type:'both',impact:'mid',lvl:2},
+  {n:'인클라인 벤치프레스',d:'3세트 × 12회',tags:['대흉근상부(주)'],w:[],sets:3,cat:'가슴',type:'both',impact:'mid',lvl:2},
+  {n:'디클라인 벤치프레스',d:'3세트 × 12회',tags:['대흉근하부(주)'],w:[],sets:3,cat:'가슴',type:'both',impact:'mid',lvl:2},
+  {n:'덤벨 벤치프레스',d:'4세트 × 12회',tags:['대흉근(주)'],w:[],sets:4,cat:'가슴',type:'both',impact:'mid',lvl:2},
+  {n:'인클라인 덤벨 벤치프레스',d:'3세트 × 12회',tags:['대흉근상부(주)'],w:[],sets:3,cat:'가슴',type:'both',impact:'mid',lvl:2},
+  {n:'디클라인 덤벨 벤치프레스',d:'3세트 × 12회',tags:['대흉근하부(주)'],w:[],sets:3,cat:'가슴',type:'both',impact:'mid',lvl:2},
+  {n:'시티드 체스트 프레스',d:'4세트 × 12회',tags:['대흉근(주)'],w:[],sets:4,cat:'가슴',type:'gym',impact:'low',lvl:1},
+  {n:'체스트 프레스 머신',d:'3세트 × 12회',tags:['대흉근(주)'],w:[],sets:3,cat:'가슴',type:'gym',impact:'low',lvl:1},
+  {n:'스미스 머신 벤치프레스',d:'4세트 × 10회',tags:['대흉근(주)'],w:[],sets:4,cat:'가슴',type:'gym',impact:'low',lvl:1},
+  {n:'케이블 체스트 플라이',d:'3세트 × 15회',tags:['대흉근(주)'],w:[],sets:3,cat:'가슴',type:'gym',impact:'low',lvl:1},
+  {n:'로우 케이블 크로스오버',d:'3세트 × 15회',tags:['대흉근상부(주)'],w:[],sets:3,cat:'가슴',type:'gym',impact:'low',lvl:1},
+  {n:'하이 케이블 크로스오버',d:'3세트 × 15회',tags:['대흉근하부(주)'],w:[],sets:3,cat:'가슴',type:'gym',impact:'low',lvl:1},
+  {n:'펙덱 플라이',d:'3세트 × 15회',tags:['대흉근(주)'],w:[],sets:3,cat:'가슴',type:'gym',impact:'mid',lvl:2},
+  {n:'덤벨 플라이',d:'3세트 × 15회',tags:['대흉근(주)'],w:['어깨주의'],sets:3,cat:'가슴',type:'both',impact:'mid',lvl:2},
+  {n:'덤벨 풀오버',d:'3세트 × 12회',tags:['대흉근(주)','광배근'],w:['어깨주의'],sets:3,cat:'가슴',type:'both',impact:'mid',lvl:2},
+  {n:'푸시업',d:'3세트 × 최대',tags:['대흉근(주)'],w:[],sets:0,cat:'가슴',type:'home',impact:'mid',lvl:1},
+  {n:'와이드 푸시업',d:'3세트 × 최대',tags:['대흉근(주)'],w:[],sets:0,cat:'가슴',type:'home',impact:'mid',lvl:1},
+  {n:'딥스',d:'3세트 × 10회',tags:['대흉근하부(주)','삼두근'],w:['어깨주의'],sets:0,cat:'가슴',type:'both',impact:'mid',lvl:3},
+  {n:'케이블 벤치프레스',d:'3세트 × 12회',tags:['대흉근(주)'],w:[],sets:3,cat:'가슴',type:'gym',impact:'low',lvl:1},
+  {n:'밴드 체스트 프레스',d:'3세트 × 15회',tags:['대흉근(주)'],w:[],sets:0,cat:'가슴',type:'home',impact:'low',lvl:1},
   // ── 등 ──
-  {n:'풀업',d:'3세트 × 최대',tags:['광배근(주)'],w:['어깨주의'],sets:0,cat:'등',type:'home'},
-  {n:'친업',d:'3세트 × 최대',tags:['광배근(주)','이두근'],w:['어깨주의'],sets:0,cat:'등',type:'home'},
-  {n:'랫 풀다운',d:'4세트 × 12회',tags:['광배근(주)'],w:['어깨주의'],sets:4,cat:'등',type:'gym'},
-  {n:'언더핸드 랫 풀다운',d:'3세트 × 12회',tags:['광배근(주)','이두근'],w:['어깨주의'],sets:3,cat:'등',type:'gym'},
-  {n:'와이드그립 랫 풀다운',d:'3세트 × 12회',tags:['광배근(주)'],w:['어깨주의'],sets:3,cat:'등',type:'gym'},
-  {n:'백 랫 풀다운',d:'3세트 × 12회',tags:['광배근(주)'],w:['어깨주의'],sets:3,cat:'등',type:'gym'},
-  {n:'시티드 케이블 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3,cat:'등',type:'gym'},
-  {n:'하이 케이블 로우',d:'3세트 × 12회',tags:['광배근(주)','후면삼각근'],w:['어깨주의'],sets:3,cat:'등',type:'gym'},
-  {n:'바벨 로우',d:'4세트 × 10회',tags:['광배근(주)'],w:['허리주의'],sets:4,cat:'등',type:'gym'},
-  {n:'언더핸드 바벨 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3,cat:'등',type:'gym'},
-  {n:'원암 덤벨 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3,cat:'등',type:'both'},
-  {n:'인클라인 덤벨 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3,cat:'등',type:'both'},
-  {n:'덤벨 데드리프트',d:'4세트 × 10회',tags:['척추기립근(주)','광배근'],w:['허리주의'],sets:4,cat:'등',type:'both'},
-  {n:'루마니안 데드리프트',d:'4세트 × 10회',tags:['햄스트링(주)','척추기립근'],w:['허리주의'],sets:4,cat:'등',type:'both'},
-  {n:'백 익스텐션',d:'3세트 × 15회',tags:['척추기립근(주)'],w:['허리주의'],sets:3,cat:'등',type:'both'},
-  {n:'굿모닝',d:'3세트 × 12회',tags:['척추기립근(주)','햄스트링'],w:['허리주의'],sets:3,cat:'등',type:'gym'},
-  {n:'시티드 케이블 로우 (머신)',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3,cat:'등',type:'gym'},
-  {n:'티 바 로우',d:'4세트 × 10회',tags:['광배근(주)'],w:['허리주의'],sets:4,cat:'등',type:'gym'},
-  {n:'체스트 서포트 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:[],sets:3,cat:'등',type:'gym'},
-  {n:'시티드 리어 델트 플라이',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:3,cat:'등',type:'both'},
-  {n:'리버스 펙덱 플라이',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:3,cat:'등',type:'gym'},
-  {n:'페이스 풀',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:3,cat:'등',type:'gym'},
-  {n:'밴드 풀어파트',d:'3세트 × 20회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:0,cat:'등',type:'home'},
-  {n:'인버티드 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:[],sets:0,cat:'등',type:'home'},
+  {n:'풀업',d:'3세트 × 최대',tags:['광배근(주)'],w:['어깨주의'],sets:0,cat:'등',type:'home',impact:'mid',lvl:3},
+  {n:'친업',d:'3세트 × 최대',tags:['광배근(주)','이두근'],w:['어깨주의'],sets:0,cat:'등',type:'home',impact:'mid',lvl:3},
+  {n:'랫 풀다운',d:'4세트 × 12회',tags:['광배근(주)'],w:['어깨주의'],sets:4,cat:'등',type:'gym',impact:'mid',lvl:2},
+  {n:'언더핸드 랫 풀다운',d:'3세트 × 12회',tags:['광배근(주)','이두근'],w:['어깨주의'],sets:3,cat:'등',type:'gym',impact:'mid',lvl:2},
+  {n:'와이드그립 랫 풀다운',d:'3세트 × 12회',tags:['광배근(주)'],w:['어깨주의'],sets:3,cat:'등',type:'gym',impact:'mid',lvl:2},
+  {n:'백 랫 풀다운',d:'3세트 × 12회',tags:['광배근(주)'],w:['어깨주의'],sets:3,cat:'등',type:'gym',impact:'mid',lvl:2},
+  {n:'시티드 케이블 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3,cat:'등',type:'gym',impact:'low',lvl:1},
+  {n:'하이 케이블 로우',d:'3세트 × 12회',tags:['광배근(주)','후면삼각근'],w:['어깨주의'],sets:3,cat:'등',type:'gym',impact:'low',lvl:1},
+  {n:'바벨 로우',d:'4세트 × 10회',tags:['광배근(주)'],w:['허리주의'],sets:4,cat:'등',type:'gym',impact:'mid',lvl:3},
+  {n:'언더핸드 바벨 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3,cat:'등',type:'gym',impact:'mid',lvl:3},
+  {n:'원암 덤벨 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3,cat:'등',type:'both',impact:'mid',lvl:2},
+  {n:'인클라인 덤벨 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3,cat:'등',type:'both',impact:'mid',lvl:2},
+  {n:'덤벨 데드리프트',d:'4세트 × 10회',tags:['척추기립근(주)','광배근'],w:['허리주의'],sets:4,cat:'등',type:'both',impact:'high',lvl:3},
+  {n:'루마니안 데드리프트',d:'4세트 × 10회',tags:['햄스트링(주)','척추기립근'],w:['허리주의'],sets:4,cat:'등',type:'both',impact:'high',lvl:3},
+  {n:'백 익스텐션',d:'3세트 × 15회',tags:['척추기립근(주)'],w:['허리주의'],sets:3,cat:'등',type:'both',impact:'mid',lvl:2},
+  {n:'굿모닝',d:'3세트 × 12회',tags:['척추기립근(주)','햄스트링'],w:['허리주의'],sets:3,cat:'등',type:'gym',impact:'mid',lvl:2},
+  {n:'시티드 케이블 로우 (머신)',d:'3세트 × 12회',tags:['광배근(주)'],w:['허리주의'],sets:3,cat:'등',type:'gym',impact:'low',lvl:1},
+  {n:'티 바 로우',d:'4세트 × 10회',tags:['광배근(주)'],w:['허리주의'],sets:4,cat:'등',type:'gym',impact:'mid',lvl:2},
+  {n:'체스트 서포트 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:[],sets:3,cat:'등',type:'gym',impact:'mid',lvl:2},
+  {n:'시티드 리어 델트 플라이',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:3,cat:'등',type:'both',impact:'low',lvl:1},
+  {n:'리버스 펙덱 플라이',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:3,cat:'등',type:'gym',impact:'mid',lvl:2},
+  {n:'페이스 풀',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:3,cat:'등',type:'gym',impact:'mid',lvl:2},
+  {n:'밴드 풀어파트',d:'3세트 × 20회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:0,cat:'등',type:'home',impact:'low',lvl:1},
+  {n:'인버티드 로우',d:'3세트 × 12회',tags:['광배근(주)'],w:[],sets:0,cat:'등',type:'home',impact:'mid',lvl:2},
   // ── 어깨 ──
-  {n:'오버헤드 프레스',d:'4세트 × 10회',tags:['삼각근(주)'],w:['어깨주의'],sets:4,cat:'어깨',type:'gym'},
-  {n:'시티드 숄더 프레스',d:'3세트 × 12회',tags:['삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym'},
-  {n:'덤벨 숄더 프레스',d:'3세트 × 12회',tags:['삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'both'},
-  {n:'아놀드 프레스',d:'3세트 × 12회',tags:['삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'both'},
-  {n:'스미스 머신 오버헤드 프레스',d:'3세트 × 12회',tags:['삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym'},
-  {n:'숄더 프레스 머신',d:'3세트 × 12회',tags:['삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym'},
-  {n:'사이드 레터럴 레이즈',d:'3세트 × 15회',tags:['측면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'both'},
-  {n:'케이블 사이드 레터럴',d:'3세트 × 15회',tags:['측면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym'},
-  {n:'레터럴 레이즈 머신',d:'3세트 × 15회',tags:['측면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym'},
-  {n:'프론트 레이즈',d:'3세트 × 12회',tags:['전면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'both'},
-  {n:'바벨 프론트 레이즈',d:'3세트 × 12회',tags:['전면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym'},
-  {n:'케이블 프론트 레이즈',d:'3세트 × 12회',tags:['전면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym'},
-  {n:'벤트 오버 레터럴 레이즈',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'both'},
-  {n:'케이블 리어 델트 플라이',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym'},
-  {n:'바벨 업라이트 로우',d:'3세트 × 12회',tags:['삼각근(주)','승모근'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym'},
-  {n:'바벨 슈러그',d:'4세트 × 15회',tags:['승모근(주)'],w:[],sets:4,cat:'어깨',type:'gym'},
-  {n:'덤벨 슈러그',d:'3세트 × 15회',tags:['승모근(주)'],w:[],sets:3,cat:'어깨',type:'both'},
-  {n:'리버스 케이블 플라이',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym'},
-  {n:'플레이트 프론트 레이즈',d:'3세트 × 12회',tags:['전면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'both'},
+  {n:'오버헤드 프레스',d:'4세트 × 10회',tags:['삼각근(주)'],w:['어깨주의'],sets:4,cat:'어깨',type:'gym',impact:'mid',lvl:3},
+  {n:'시티드 숄더 프레스',d:'3세트 × 12회',tags:['삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym',impact:'low',lvl:1},
+  {n:'덤벨 숄더 프레스',d:'3세트 × 12회',tags:['삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'both',impact:'mid',lvl:2},
+  {n:'아놀드 프레스',d:'3세트 × 12회',tags:['삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'both',impact:'mid',lvl:2},
+  {n:'스미스 머신 오버헤드 프레스',d:'3세트 × 12회',tags:['삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym',impact:'low',lvl:1},
+  {n:'숄더 프레스 머신',d:'3세트 × 12회',tags:['삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym',impact:'low',lvl:1},
+  {n:'사이드 레터럴 레이즈',d:'3세트 × 15회',tags:['측면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'both',impact:'mid',lvl:2},
+  {n:'케이블 사이드 레터럴',d:'3세트 × 15회',tags:['측면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym',impact:'low',lvl:1},
+  {n:'레터럴 레이즈 머신',d:'3세트 × 15회',tags:['측면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym',impact:'low',lvl:1},
+  {n:'프론트 레이즈',d:'3세트 × 12회',tags:['전면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'both',impact:'mid',lvl:2},
+  {n:'바벨 프론트 레이즈',d:'3세트 × 12회',tags:['전면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym',impact:'mid',lvl:3},
+  {n:'케이블 프론트 레이즈',d:'3세트 × 12회',tags:['전면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym',impact:'low',lvl:1},
+  {n:'벤트 오버 레터럴 레이즈',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'both',impact:'mid',lvl:2},
+  {n:'케이블 리어 델트 플라이',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym',impact:'low',lvl:1},
+  {n:'바벨 업라이트 로우',d:'3세트 × 12회',tags:['삼각근(주)','승모근'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym',impact:'mid',lvl:3},
+  {n:'바벨 슈러그',d:'4세트 × 15회',tags:['승모근(주)'],w:[],sets:4,cat:'어깨',type:'gym',impact:'mid',lvl:3},
+  {n:'덤벨 슈러그',d:'3세트 × 15회',tags:['승모근(주)'],w:[],sets:3,cat:'어깨',type:'both',impact:'mid',lvl:2},
+  {n:'리버스 케이블 플라이',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'gym',impact:'low',lvl:1},
+  {n:'플레이트 프론트 레이즈',d:'3세트 × 12회',tags:['전면삼각근(주)'],w:['어깨주의'],sets:3,cat:'어깨',type:'both',impact:'mid',lvl:2},
   // ── 팔 ──
-  {n:'바벨 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔',type:'gym'},
-  {n:'덤벨 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔',type:'both'},
-  {n:'시티드 덤벨 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔',type:'both'},
-  {n:'해머 컬',d:'3세트 × 12회',tags:['이두근(주)','상완근'],w:[],sets:3,cat:'팔',type:'both'},
-  {n:'인클라인 덤벨 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔',type:'both'},
-  {n:'케이블 컬',d:'3세트 × 15회',tags:['이두근(주)'],w:[],sets:3,cat:'팔',type:'gym'},
-  {n:'케이블 해머 컬',d:'3세트 × 12회',tags:['이두근(주)','상완근'],w:[],sets:3,cat:'팔',type:'gym'},
-  {n:'프리처 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔',type:'gym'},
-  {n:'컨센트레이션 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔',type:'both'},
-  {n:'리버스 컬',d:'3세트 × 12회',tags:['상완근(주)','전완근'],w:[],sets:3,cat:'팔',type:'both'},
-  {n:'바벨 리스트 컬',d:'3세트 × 20회',tags:['전완근(주)'],w:[],sets:3,cat:'팔',type:'gym'},
-  {n:'트라이셉 푸시다운',d:'3세트 × 15회',tags:['삼두근(주)'],w:[],sets:3,cat:'팔',type:'gym'},
-  {n:'로프 푸시다운',d:'3세트 × 15회',tags:['삼두근(주)'],w:[],sets:3,cat:'팔',type:'gym'},
-  {n:'오버헤드 트라이셉 익스텐션',d:'3세트 × 12회',tags:['삼두근(주)'],w:['어깨주의'],sets:3,cat:'팔',type:'gym'},
-  {n:'덤벨 오버헤드 익스텐션',d:'3세트 × 12회',tags:['삼두근(주)'],w:['어깨주의'],sets:3,cat:'팔',type:'both'},
-  {n:'스컬크러셔',d:'3세트 × 12회',tags:['삼두근(주)'],w:[],sets:3,cat:'팔',type:'both'},
-  {n:'클로즈그립 벤치프레스',d:'3세트 × 12회',tags:['삼두근(주)','대흉근'],w:[],sets:3,cat:'팔',type:'gym'},
-  {n:'케이블 오버헤드 트라이셉',d:'3세트 × 12회',tags:['삼두근(주)'],w:['어깨주의'],sets:3,cat:'팔',type:'gym'},
-  {n:'다이아몬드 푸시업',d:'3세트 × 최대',tags:['삼두근(주)'],w:[],sets:0,cat:'팔',type:'home'},
-  {n:'킥백',d:'3세트 × 15회',tags:['삼두근(주)'],w:[],sets:3,cat:'팔',type:'both'},
+  {n:'바벨 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔',type:'gym',impact:'mid',lvl:3},
+  {n:'덤벨 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔',type:'both',impact:'mid',lvl:2},
+  {n:'시티드 덤벨 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔',type:'both',impact:'low',lvl:1},
+  {n:'해머 컬',d:'3세트 × 12회',tags:['이두근(주)','상완근'],w:[],sets:3,cat:'팔',type:'both',impact:'mid',lvl:2},
+  {n:'인클라인 덤벨 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔',type:'both',impact:'mid',lvl:2},
+  {n:'케이블 컬',d:'3세트 × 15회',tags:['이두근(주)'],w:[],sets:3,cat:'팔',type:'gym',impact:'low',lvl:1},
+  {n:'케이블 해머 컬',d:'3세트 × 12회',tags:['이두근(주)','상완근'],w:[],sets:3,cat:'팔',type:'gym',impact:'low',lvl:1},
+  {n:'프리처 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔',type:'gym',impact:'mid',lvl:2},
+  {n:'컨센트레이션 컬',d:'3세트 × 12회',tags:['이두근(주)'],w:[],sets:3,cat:'팔',type:'both',impact:'mid',lvl:2},
+  {n:'리버스 컬',d:'3세트 × 12회',tags:['상완근(주)','전완근'],w:[],sets:3,cat:'팔',type:'both',impact:'mid',lvl:2},
+  {n:'바벨 리스트 컬',d:'3세트 × 20회',tags:['전완근(주)'],w:[],sets:3,cat:'팔',type:'gym',impact:'mid',lvl:3},
+  {n:'트라이셉 푸시다운',d:'3세트 × 15회',tags:['삼두근(주)'],w:[],sets:3,cat:'팔',type:'gym',impact:'mid',lvl:2},
+  {n:'로프 푸시다운',d:'3세트 × 15회',tags:['삼두근(주)'],w:[],sets:3,cat:'팔',type:'gym',impact:'mid',lvl:2},
+  {n:'오버헤드 트라이셉 익스텐션',d:'3세트 × 12회',tags:['삼두근(주)'],w:['어깨주의'],sets:3,cat:'팔',type:'gym',impact:'mid',lvl:2},
+  {n:'덤벨 오버헤드 익스텐션',d:'3세트 × 12회',tags:['삼두근(주)'],w:['어깨주의'],sets:3,cat:'팔',type:'both',impact:'mid',lvl:2},
+  {n:'스컬크러셔',d:'3세트 × 12회',tags:['삼두근(주)'],w:[],sets:3,cat:'팔',type:'both',impact:'mid',lvl:2},
+  {n:'클로즈그립 벤치프레스',d:'3세트 × 12회',tags:['삼두근(주)','대흉근'],w:[],sets:3,cat:'팔',type:'gym',impact:'mid',lvl:2},
+  {n:'케이블 오버헤드 트라이셉',d:'3세트 × 12회',tags:['삼두근(주)'],w:['어깨주의'],sets:3,cat:'팔',type:'gym',impact:'low',lvl:1},
+  {n:'다이아몬드 푸시업',d:'3세트 × 최대',tags:['삼두근(주)'],w:[],sets:0,cat:'팔',type:'home',impact:'mid',lvl:1},
+  {n:'킥백',d:'3세트 × 15회',tags:['삼두근(주)'],w:[],sets:3,cat:'팔',type:'both',impact:'mid',lvl:2},
   // ── 하체 ──
-  {n:'바벨 스쿼트',d:'4세트 × 10회',tags:['대퇴사두근(주)','둔근'],w:['무릎주의','허리주의'],sets:4,cat:'하체',type:'gym'},
-  {n:'덤벨 스쿼트',d:'3세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3,cat:'하체',type:'both'},
-  {n:'고블릿 스쿼트',d:'3세트 × 15회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3,cat:'하체',type:'both'},
-  {n:'스미스 머신 스쿼트',d:'4세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:4,cat:'하체',type:'gym'},
-  {n:'레그 프레스',d:'4세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:4,cat:'하체',type:'gym'},
-  {n:'시티드 레그 프레스(초경량)',d:'3세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3,cat:'하체',type:'gym'},
-  {n:'런지',d:'3세트 × 12회(각)',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:0,cat:'하체',type:'both'},
-  {n:'워킹 런지',d:'3세트 × 20걸음',tags:['대퇴사두근(주)','둔근'],w:['무릎주의'],sets:0,cat:'하체',type:'home'},
-  {n:'리버스 런지',d:'3세트 × 12회(각)',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:0,cat:'하체',type:'home'},
-  {n:'사이드 런지',d:'3세트 × 12회(각)',tags:['대퇴사두근(주)','내전근'],w:['무릎주의'],sets:0,cat:'하체',type:'home'},
-  {n:'불가리안 스플릿 스쿼트',d:'3세트 × 10회(각)',tags:['대퇴사두근(주)','둔근'],w:['무릎주의'],sets:3,cat:'하체',type:'both'},
-  {n:'레그 익스텐션',d:'3세트 × 15회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3,cat:'하체',type:'gym'},
-  {n:'레그 컬',d:'3세트 × 15회',tags:['햄스트링(주)'],w:[],sets:3,cat:'하체',type:'gym'},
-  {n:'시티드 레그 컬',d:'3세트 × 15회',tags:['햄스트링(주)'],w:[],sets:3,cat:'하체',type:'gym'},
-  {n:'루마니안 데드리프트',d:'4세트 × 10회',tags:['햄스트링(주)','척추기립근'],w:['허리주의'],sets:4,cat:'하체',type:'both'},
-  {n:'스티프레그 데드리프트',d:'3세트 × 12회',tags:['햄스트링(주)'],w:['허리주의'],sets:3,cat:'하체',type:'gym'},
-  {n:'카프 레이즈',d:'4세트 × 20회',tags:['비복근(주)'],w:[],sets:0,cat:'하체',type:'both'},
-  {n:'씨티드 카프 레이즈',d:'4세트 × 20회',tags:['가자미근(주)'],w:[],sets:4,cat:'하체',type:'gym'},
-  {n:'월 싯',d:'3세트 × 45초',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:0,cat:'하체',type:'home'},
-  {n:'스텝업',d:'3세트 × 12회(각)',tags:['대퇴사두근(주)','둔근'],w:['무릎주의'],sets:3,cat:'하체',type:'both'},
-  {n:'박스 스쿼트',d:'4세트 × 10회',tags:['대퇴사두근(주)','둔근'],w:['무릎주의'],sets:4,cat:'하체',type:'gym'},
-  {n:'수모 스쿼트',d:'3세트 × 12회',tags:['대퇴사두근(주)','내전근'],w:['무릎주의'],sets:3,cat:'하체',type:'both'},
-  {n:'수모 데드리프트',d:'4세트 × 10회',tags:['대퇴사두근(주)','대둔근'],w:['무릎주의','허리주의'],sets:4,cat:'하체',type:'gym'},
-  {n:'힙 어덕션 (기계)',d:'3세트 × 15회',tags:['내전근(주)'],w:[],sets:3,cat:'하체',type:'gym'},
+  {n:'바벨 스쿼트',d:'4세트 × 10회',tags:['대퇴사두근(주)','둔근'],w:['무릎주의','허리주의'],sets:4,cat:'하체',type:'gym',impact:'high',lvl:3},
+  {n:'덤벨 스쿼트',d:'3세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3,cat:'하체',type:'both',impact:'high',lvl:3},
+  {n:'고블릿 스쿼트',d:'3세트 × 15회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3,cat:'하체',type:'both',impact:'high',lvl:3},
+  {n:'스미스 머신 스쿼트',d:'4세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:4,cat:'하체',type:'gym',impact:'low',lvl:1},
+  {n:'레그 프레스',d:'4세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:4,cat:'하체',type:'gym',impact:'low',lvl:1},
+  {n:'시티드 레그 프레스(초경량)',d:'3세트 × 12회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3,cat:'하체',type:'gym',impact:'low',lvl:1},
+  {n:'런지',d:'3세트 × 12회(각)',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:0,cat:'하체',type:'both',impact:'high',lvl:3},
+  {n:'워킹 런지',d:'3세트 × 20걸음',tags:['대퇴사두근(주)','둔근'],w:['무릎주의'],sets:0,cat:'하체',type:'home',impact:'high',lvl:1},
+  {n:'리버스 런지',d:'3세트 × 12회(각)',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:0,cat:'하체',type:'home',impact:'high',lvl:3},
+  {n:'사이드 런지',d:'3세트 × 12회(각)',tags:['대퇴사두근(주)','내전근'],w:['무릎주의'],sets:0,cat:'하체',type:'home',impact:'high',lvl:3},
+  {n:'불가리안 스플릿 스쿼트',d:'3세트 × 10회(각)',tags:['대퇴사두근(주)','둔근'],w:['무릎주의'],sets:3,cat:'하체',type:'both',impact:'high',lvl:3},
+  {n:'레그 익스텐션',d:'3세트 × 15회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3,cat:'하체',type:'gym',impact:'mid',lvl:2},
+  {n:'레그 컬',d:'3세트 × 15회',tags:['햄스트링(주)'],w:[],sets:3,cat:'하체',type:'gym',impact:'mid',lvl:2},
+  {n:'시티드 레그 컬',d:'3세트 × 15회',tags:['햄스트링(주)'],w:[],sets:3,cat:'하체',type:'gym',impact:'low',lvl:1},
+  {n:'루마니안 데드리프트',d:'4세트 × 10회',tags:['햄스트링(주)','척추기립근'],w:['허리주의'],sets:4,cat:'하체',type:'both',impact:'high',lvl:3},
+  {n:'스티프레그 데드리프트',d:'3세트 × 12회',tags:['햄스트링(주)'],w:['허리주의'],sets:3,cat:'하체',type:'gym',impact:'high',lvl:3},
+  {n:'카프 레이즈',d:'4세트 × 20회',tags:['비복근(주)'],w:[],sets:0,cat:'하체',type:'both',impact:'mid',lvl:2},
+  {n:'씨티드 카프 레이즈',d:'4세트 × 20회',tags:['가자미근(주)'],w:[],sets:4,cat:'하체',type:'gym',impact:'mid',lvl:2},
+  {n:'월 싯',d:'3세트 × 45초',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:0,cat:'하체',type:'home',impact:'mid',lvl:2},
+  {n:'스텝업',d:'3세트 × 12회(각)',tags:['대퇴사두근(주)','둔근'],w:['무릎주의'],sets:3,cat:'하체',type:'both',impact:'mid',lvl:1},
+  {n:'박스 스쿼트',d:'4세트 × 10회',tags:['대퇴사두근(주)','둔근'],w:['무릎주의'],sets:4,cat:'하체',type:'gym',impact:'high',lvl:3},
+  {n:'수모 스쿼트',d:'3세트 × 12회',tags:['대퇴사두근(주)','내전근'],w:['무릎주의'],sets:3,cat:'하체',type:'both',impact:'high',lvl:3},
+  {n:'수모 데드리프트',d:'4세트 × 10회',tags:['대퇴사두근(주)','대둔근'],w:['무릎주의','허리주의'],sets:4,cat:'하체',type:'gym',impact:'high',lvl:3},
+  {n:'힙 어덕션 (기계)',d:'3세트 × 15회',tags:['내전근(주)'],w:[],sets:3,cat:'하체',type:'gym',impact:'mid',lvl:2},
   // ── 둔근 ──
-  {n:'힙 쓰러스트',d:'4세트 × 12회',tags:['대둔근(주)'],w:['허리주의'],sets:4,cat:'둔근',type:'both'},
-  {n:'바벨 힙 쓰러스트',d:'4세트 × 10회',tags:['대둔근(주)'],w:['허리주의'],sets:4,cat:'둔근',type:'gym'},
-  {n:'힙 어브덕션 (기계)',d:'4세트 × 15회',tags:['중둔근(주)'],w:['무릎주의'],sets:4,cat:'둔근',type:'gym'},
-  {n:'누워서 브릿지',d:'4세트 × 20회',tags:['대둔근(주)'],w:['허리주의'],sets:0,cat:'둔근',type:'home'},
-  {n:'싱글레그 브릿지',d:'3세트 × 15회(각)',tags:['대둔근(주)'],w:['허리주의'],sets:0,cat:'둔근',type:'home'},
-  {n:'클램쉘 (밴드)',d:'3세트 × 20회',tags:['중둔근(주)'],w:[],sets:0,cat:'둔근',type:'home'},
-  {n:'케이블 킥백',d:'3세트 × 15회',tags:['대둔근(주)'],w:['허리주의'],sets:3,cat:'둔근',type:'gym'},
-  {n:'사이드 라잉 레그 레이즈',d:'3세트 × 15회',tags:['중둔근(주)'],w:[],sets:0,cat:'둔근',type:'home'},
-  {n:'케이블 힙 어브덕션',d:'3세트 × 15회',tags:['중둔근(주)'],w:[],sets:3,cat:'둔근',type:'gym'},
-  {n:'밴드 사이드 워크',d:'3세트 × 20걸음',tags:['중둔근(주)'],w:[],sets:0,cat:'둔근',type:'home'},
-  {n:'파이어 하이드런트',d:'3세트 × 20회',tags:['중둔근(주)'],w:[],sets:0,cat:'둔근',type:'home'},
-  {n:'도너키 킥',d:'3세트 × 15회(각)',tags:['대둔근(주)'],w:['허리주의'],sets:0,cat:'둔근',type:'home'},
-  {n:'스모 스쿼트',d:'3세트 × 15회',tags:['대둔근(주)','내전근'],w:['무릎주의'],sets:3,cat:'둔근',type:'both'},
-  {n:'케이블 글루트 킥백',d:'3세트 × 15회',tags:['대둔근(주)'],w:['허리주의'],sets:3,cat:'둔근',type:'gym'},
-  {n:'힙 어브덕션 (밴드)',d:'3세트 × 20회',tags:['중둔근(주)'],w:[],sets:0,cat:'둔근',type:'home'},
+  {n:'힙 쓰러스트',d:'4세트 × 12회',tags:['대둔근(주)'],w:['허리주의'],sets:4,cat:'둔근',type:'both',impact:'mid',lvl:2},
+  {n:'바벨 힙 쓰러스트',d:'4세트 × 10회',tags:['대둔근(주)'],w:['허리주의'],sets:4,cat:'둔근',type:'gym',impact:'mid',lvl:3},
+  {n:'힙 어브덕션 (기계)',d:'4세트 × 15회',tags:['중둔근(주)'],w:['무릎주의'],sets:4,cat:'둔근',type:'gym',impact:'mid',lvl:2},
+  {n:'누워서 브릿지',d:'4세트 × 20회',tags:['대둔근(주)'],w:['허리주의'],sets:0,cat:'둔근',type:'home',impact:'mid',lvl:2},
+  {n:'싱글레그 브릿지',d:'3세트 × 15회(각)',tags:['대둔근(주)'],w:['허리주의'],sets:0,cat:'둔근',type:'home',impact:'mid',lvl:2},
+  {n:'클램쉘 (밴드)',d:'3세트 × 20회',tags:['중둔근(주)'],w:[],sets:0,cat:'둔근',type:'home',impact:'low',lvl:1},
+  {n:'케이블 킥백',d:'3세트 × 15회',tags:['대둔근(주)'],w:['허리주의'],sets:3,cat:'둔근',type:'gym',impact:'low',lvl:1},
+  {n:'사이드 라잉 레그 레이즈',d:'3세트 × 15회',tags:['중둔근(주)'],w:[],sets:0,cat:'둔근',type:'home',impact:'mid',lvl:2},
+  {n:'케이블 힙 어브덕션',d:'3세트 × 15회',tags:['중둔근(주)'],w:[],sets:3,cat:'둔근',type:'gym',impact:'low',lvl:1},
+  {n:'밴드 사이드 워크',d:'3세트 × 20걸음',tags:['중둔근(주)'],w:[],sets:0,cat:'둔근',type:'home',impact:'low',lvl:1},
+  {n:'파이어 하이드런트',d:'3세트 × 20회',tags:['중둔근(주)'],w:[],sets:0,cat:'둔근',type:'home',impact:'mid',lvl:2},
+  {n:'도너키 킥',d:'3세트 × 15회(각)',tags:['대둔근(주)'],w:['허리주의'],sets:0,cat:'둔근',type:'home',impact:'mid',lvl:2},
+  {n:'스모 스쿼트',d:'3세트 × 15회',tags:['대둔근(주)','내전근'],w:['무릎주의'],sets:3,cat:'둔근',type:'both',impact:'high',lvl:3},
+  {n:'케이블 글루트 킥백',d:'3세트 × 15회',tags:['대둔근(주)'],w:['허리주의'],sets:3,cat:'둔근',type:'gym',impact:'low',lvl:1},
+  {n:'힙 어브덕션 (밴드)',d:'3세트 × 20회',tags:['중둔근(주)'],w:[],sets:0,cat:'둔근',type:'home',impact:'low',lvl:1},
   // ── 복근 ──
-  {n:'크런치',d:'3세트 × 20회',tags:['복직근(주)'],w:[],sets:3,cat:'복근',type:'home'},
-  {n:'리버스 크런치',d:'3세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:3,cat:'복근',type:'home'},
-  {n:'바이시클 크런치',d:'3세트 × 30회',tags:['복사근(주)'],w:[],sets:0,cat:'복근',type:'home'},
-  {n:'레그 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:3,cat:'복근',type:'home'},
-  {n:'행잉 레그 레이즈',d:'3세트 × 12회',tags:['복직근하부(주)'],w:[],sets:3,cat:'복근',type:'gym'},
-  {n:'행잉 니 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:[],sets:0,cat:'복근',type:'home'},
-  {n:'플랭크',d:'3세트 × 45초',tags:['복횡근(주)'],w:[],sets:0,cat:'복근',type:'home'},
-  {n:'사이드 플랭크',d:'2세트 × 30초',tags:['외복사근(주)'],w:['허리주의'],sets:0,cat:'복근',type:'home'},
-  {n:'ABDOMINAL CRUNCH',d:'4세트 × 20회',tags:['복직근(주)'],w:['허리주의'],sets:4,cat:'복근',type:'home'},
-  {n:'데드버그',d:'3세트 × 10회',tags:['복횡근(주)'],w:['허리주의'],sets:3,cat:'복근',type:'home'},
-  {n:'브이업',d:'3세트 × 15회',tags:['복직근(주)'],w:['허리주의'],sets:0,cat:'복근',type:'home'},
-  {n:'러시안 트위스트',d:'3세트 × 20회',tags:['복사근(주)'],w:['허리주의'],sets:3,cat:'복근',type:'home'},
-  {n:'우드초퍼',d:'3세트 × 15회(각)',tags:['복사근(주)'],w:['허리주의'],sets:3,cat:'복근',type:'gym'},
-  {n:'마운틴 클라이머',d:'3세트 × 30초',tags:['복횡근(주)','심폐'],w:[],sets:0,cat:'복근',type:'home'},
-  {n:'케이블 크런치',d:'3세트 × 15회',tags:['복직근(주)'],w:[],sets:3,cat:'복근',type:'gym'},
-  {n:'토 터치',d:'3세트 × 20회',tags:['복직근(주)'],w:[],sets:0,cat:'복근',type:'home'},
-  {n:'씨저스',d:'3세트 × 20회',tags:['복직근하부(주)'],w:['허리주의'],sets:0,cat:'복근',type:'home'},
-  {n:'힐 터치',d:'3세트 × 20회',tags:['복사근(주)'],w:[],sets:0,cat:'복근',type:'home'},
-  {n:'플러터 킥',d:'3세트 × 30초',tags:['복직근하부(주)'],w:['허리주의'],sets:0,cat:'복근',type:'home'},
-  {n:'에어 바이크',d:'3세트 × 30초',tags:['복사근(주)'],w:[],sets:0,cat:'복근',type:'home'},
+  {n:'크런치',d:'3세트 × 20회',tags:['복직근(주)'],w:[],sets:3,cat:'복근',type:'home',impact:'mid',lvl:1},
+  {n:'리버스 크런치',d:'3세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:3,cat:'복근',type:'home',impact:'mid',lvl:1},
+  {n:'바이시클 크런치',d:'3세트 × 30회',tags:['복사근(주)'],w:[],sets:0,cat:'복근',type:'home',impact:'mid',lvl:1},
+  {n:'레그 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:['허리주의'],sets:3,cat:'복근',type:'home',impact:'mid',lvl:2},
+  {n:'행잉 레그 레이즈',d:'3세트 × 12회',tags:['복직근하부(주)'],w:[],sets:3,cat:'복근',type:'gym',impact:'mid',lvl:2},
+  {n:'행잉 니 레이즈',d:'3세트 × 15회',tags:['복직근하부(주)'],w:[],sets:0,cat:'복근',type:'home',impact:'mid',lvl:2},
+  {n:'플랭크',d:'3세트 × 45초',tags:['복횡근(주)'],w:[],sets:0,cat:'복근',type:'home',impact:'low',lvl:1},
+  {n:'사이드 플랭크',d:'2세트 × 30초',tags:['외복사근(주)'],w:['허리주의'],sets:0,cat:'복근',type:'home',impact:'low',lvl:1},
+  {n:'ABDOMINAL CRUNCH',d:'4세트 × 20회',tags:['복직근(주)'],w:['허리주의'],sets:4,cat:'복근',type:'home',impact:'mid',lvl:2},
+  {n:'데드버그',d:'3세트 × 10회',tags:['복횡근(주)'],w:['허리주의'],sets:3,cat:'복근',type:'home',impact:'low',lvl:1},
+  {n:'브이업',d:'3세트 × 15회',tags:['복직근(주)'],w:['허리주의'],sets:0,cat:'복근',type:'home',impact:'mid',lvl:2},
+  {n:'러시안 트위스트',d:'3세트 × 20회',tags:['복사근(주)'],w:['허리주의'],sets:3,cat:'복근',type:'home',impact:'mid',lvl:2},
+  {n:'우드초퍼',d:'3세트 × 15회(각)',tags:['복사근(주)'],w:['허리주의'],sets:3,cat:'복근',type:'gym',impact:'mid',lvl:2},
+  {n:'마운틴 클라이머',d:'3세트 × 30초',tags:['복횡근(주)','심폐'],w:[],sets:0,cat:'복근',type:'home',impact:'mid',lvl:2},
+  {n:'케이블 크런치',d:'3세트 × 15회',tags:['복직근(주)'],w:[],sets:3,cat:'복근',type:'gym',impact:'low',lvl:1},
+  {n:'토 터치',d:'3세트 × 20회',tags:['복직근(주)'],w:[],sets:0,cat:'복근',type:'home',impact:'mid',lvl:2},
+  {n:'씨저스',d:'3세트 × 20회',tags:['복직근하부(주)'],w:['허리주의'],sets:0,cat:'복근',type:'home',impact:'mid',lvl:2},
+  {n:'힐 터치',d:'3세트 × 20회',tags:['복사근(주)'],w:[],sets:0,cat:'복근',type:'home',impact:'mid',lvl:2},
+  {n:'플러터 킥',d:'3세트 × 30초',tags:['복직근하부(주)'],w:['허리주의'],sets:0,cat:'복근',type:'home',impact:'mid',lvl:2},
+  {n:'에어 바이크',d:'3세트 × 30초',tags:['복사근(주)'],w:[],sets:0,cat:'복근',type:'home',impact:'mid',lvl:2},
   // ── 유산소 ──
-  {n:'업라이트 바이크',d:'20분',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소',type:'gym'},
-  {n:'런닝머신',d:'20분 · 중강도',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소',type:'gym'},
-  {n:'인클라인 트레드밀',d:'15분 · 경사 8~12도',tags:['심폐','둔근'],w:['무릎주의'],sets:0,cat:'유산소',type:'gym'},
-  {n:'일립티컬',d:'20분',tags:['심폐'],w:[],sets:0,cat:'유산소',type:'gym'},
-  {n:'로잉머신',d:'15분',tags:['심폐','등'],w:['허리주의'],sets:0,cat:'유산소',type:'gym'},
-  {n:'스텝퍼',d:'15분',tags:['심폐','둔근'],w:['무릎주의'],sets:0,cat:'유산소',type:'gym'},
-  {n:'버피',d:'3세트 × 10회',tags:['심폐','전신'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'점프 로프',d:'10분',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'스타트레이너',d:'20분',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소',type:'gym'},
-  {n:'수영',d:'30분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'home'},
-  {n:'실내 사이클',d:'30분 · 중강도',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'gym'},
-  {n:'스핀 바이크',d:'20분 · 고강도 인터벌',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'gym'},
-  {n:'걷기 (실외)',d:'30~60분 · 빠른 걸음',tags:['심폐'],w:[],sets:0,cat:'유산소',type:'home'},
-  {n:'파워워킹',d:'30분 · 시속 6km 이상',tags:['심폐'],w:[],sets:0,cat:'유산소',type:'home'},
-  {n:'조깅',d:'20~30분 · 가벼운 달리기',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'인터벌 달리기',d:'20분 · 1분 전력+1분 회복 반복',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'계단 오르기',d:'15분',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'크로스트레이너',d:'25분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'gym'},
-  {n:'케틀벨 스윙',d:'4세트 × 20회',tags:['심폐','둔근','등'],w:['허리주의'],sets:4,cat:'유산소',type:'both'},
-  {n:'배틀로프',d:'4세트 × 30초',tags:['심폐','상체'],w:['어깨주의'],sets:0,cat:'유산소',type:'gym'},
-  {n:'마운틴 클라이머',d:'3세트 × 30초',tags:['심폐','복근'],w:['허리주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'하이니즈',d:'3세트 × 30초',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'점핑잭',d:'3세트 × 30초',tags:['심폐'],w:[],sets:0,cat:'유산소',type:'home'},
-  {n:'박스 점프',d:'3세트 × 10회',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'제자리 달리기',d:'3세트 × 1분',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'댄스 유산소',d:'30분 줌바 등',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'home'},
-  {n:'인클라인 워크',d:'20분 · 경사 10도 · 시속 5km',tags:['심폐','둔근'],w:['무릎주의'],sets:0,cat:'유산소',type:'both'},
-  {n:'저강도 유산소 LISS',d:'40분 · 최대심박의 60~65%',tags:['심폐','지방연소'],w:[],sets:0,cat:'유산소',type:'both'},
-  {n:'고강도 인터벌 HIIT',d:'20분 · 20초 전력+10초 휴식',tags:['심폐','전신'],w:['무릎주의'],sets:0,cat:'유산소',type:'both'},
-  {n:'아쿠아로빅',d:'30분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'home'},
+  {n:'업라이트 바이크',d:'20분',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소',type:'gym',impact:'mid',lvl:2},
+  {n:'런닝머신',d:'20분 · 중강도',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소',type:'gym',impact:'low',lvl:1},
+  {n:'인클라인 트레드밀',d:'15분 · 경사 8~12도',tags:['심폐','둔근'],w:['무릎주의'],sets:0,cat:'유산소',type:'gym',impact:'mid',lvl:2},
+  {n:'일립티컬',d:'20분',tags:['심폐'],w:[],sets:0,cat:'유산소',type:'gym',impact:'mid',lvl:2},
+  {n:'로잉머신',d:'15분',tags:['심폐','등'],w:['허리주의'],sets:0,cat:'유산소',type:'gym',impact:'low',lvl:1},
+  {n:'스텝퍼',d:'15분',tags:['심폐','둔근'],w:['무릎주의'],sets:0,cat:'유산소',type:'gym',impact:'mid',lvl:2},
+  {n:'버피',d:'3세트 × 10회',tags:['심폐','전신'],w:['무릎주의'],sets:0,cat:'유산소',type:'home',impact:'high',lvl:2},
+  {n:'점프 로프',d:'10분',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소',type:'home',impact:'high',lvl:2},
+  {n:'스타트레이너',d:'20분',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소',type:'gym',impact:'mid',lvl:2},
+  {n:'수영',d:'30분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'실내 사이클',d:'30분 · 중강도',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'gym',impact:'mid',lvl:2},
+  {n:'스핀 바이크',d:'20분 · 고강도 인터벌',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'gym',impact:'mid',lvl:2},
+  {n:'걷기 (실외)',d:'30~60분 · 빠른 걸음',tags:['심폐'],w:[],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'파워워킹',d:'30분 · 시속 6km 이상',tags:['심폐'],w:[],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:1},
+  {n:'조깅',d:'20~30분 · 가벼운 달리기',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'인터벌 달리기',d:'20분 · 1분 전력+1분 회복 반복',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소',type:'home',impact:'high',lvl:2},
+  {n:'계단 오르기',d:'15분',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'크로스트레이너',d:'25분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'gym',impact:'mid',lvl:2},
+  {n:'케틀벨 스윙',d:'4세트 × 20회',tags:['심폐','둔근','등'],w:['허리주의'],sets:4,cat:'유산소',type:'both',impact:'mid',lvl:2},
+  {n:'배틀로프',d:'4세트 × 30초',tags:['심폐','상체'],w:['어깨주의'],sets:0,cat:'유산소',type:'gym',impact:'mid',lvl:2},
+  {n:'마운틴 클라이머',d:'3세트 × 30초',tags:['심폐','복근'],w:['허리주의'],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'하이니즈',d:'3세트 × 30초',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'점핑잭',d:'3세트 × 30초',tags:['심폐'],w:[],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'박스 점프',d:'3세트 × 10회',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'home',impact:'high',lvl:4},
+  {n:'제자리 달리기',d:'3세트 × 1분',tags:['심폐'],w:['무릎주의'],sets:0,cat:'유산소',type:'home',impact:'high',lvl:2},
+  {n:'댄스 유산소',d:'30분 줌바 등',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'인클라인 워크',d:'20분 · 경사 10도 · 시속 5km',tags:['심폐','둔근'],w:['무릎주의'],sets:0,cat:'유산소',type:'both',impact:'mid',lvl:2},
+  {n:'저강도 유산소 LISS',d:'40분 · 최대심박의 60~65%',tags:['심폐','지방연소'],w:[],sets:0,cat:'유산소',type:'both',impact:'mid',lvl:2},
+  {n:'고강도 인터벌 HIIT',d:'20분 · 20초 전력+10초 휴식',tags:['심폐','전신'],w:['무릎주의'],sets:0,cat:'유산소',type:'both',impact:'mid',lvl:2},
+  {n:'아쿠아로빅',d:'30분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
   // ── 유산소 추가 2차 ──
-  {n:'노르딕 워킹',d:'30분 · 폴 사용 전신 걷기',tags:['심폐','상체'],w:[],sets:0,cat:'유산소',type:'home'},
-  {n:'트램폴린',d:'15분 · 미니 트램폴린',tags:['심폐','균형'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'섀도우 복싱',d:'3세트 × 3분',tags:['심폐','상체'],w:['어깨주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'사이클링 (실외)',d:'30~60분',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'등산',d:'60~120분',tags:['심폐','하체','둔근'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'수중 걷기',d:'30분',tags:['심폐'],w:[],sets:0,cat:'유산소',type:'home'},
-  {n:'줄넘기 더블언더',d:'3세트 × 30회',tags:['심폐','협응'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'태보',d:'30분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'home'},
-  {n:'파워 요가',d:'45분',tags:['심폐','유연성'],w:['허리주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'서킷 트레이닝',d:'4라운드 · 6동작',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'home'},
-  {n:'에어로빅',d:'30분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'home'},
-  {n:'탭댄스 유산소',d:'20분',tags:['심폐','협응'],w:[],sets:0,cat:'유산소',type:'home'},
-  {n:'킥스쿼트',d:'3세트 × 15회',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'버피 스러스터',d:'3세트 × 10회',tags:['심폐','전신'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'스키 에르고',d:'10분',tags:['심폐','전신'],w:['허리주의'],sets:0,cat:'유산소',type:'gym'},
-  {n:'암 사이클',d:'10분',tags:['심폐','상체'],w:['어깨주의'],sets:0,cat:'유산소',type:'gym'},
-  {n:'댄스 피트니스',d:'45분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'home'},
-  {n:'플라이오메트릭',d:'4세트 · 점프 동작 위주',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'인터벌 사이클',d:'20분 · 30초 전력+30초 회복',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'home'},
-  {n:'크로스컨트리 스키 머신',d:'20분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'gym'},
+  {n:'노르딕 워킹',d:'30분 · 폴 사용 전신 걷기',tags:['심폐','상체'],w:[],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:1},
+  {n:'트램폴린',d:'15분 · 미니 트램폴린',tags:['심폐','균형'],w:['무릎주의'],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'섀도우 복싱',d:'3세트 × 3분',tags:['심폐','상체'],w:['어깨주의'],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'사이클링 (실외)',d:'30~60분',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'등산',d:'60~120분',tags:['심폐','하체','둔근'],w:['무릎주의'],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'수중 걷기',d:'30분',tags:['심폐'],w:[],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'줄넘기 더블언더',d:'3세트 × 30회',tags:['심폐','협응'],w:['무릎주의'],sets:0,cat:'유산소',type:'home',impact:'high',lvl:2},
+  {n:'태보',d:'30분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'파워 요가',d:'45분',tags:['심폐','유연성'],w:['허리주의'],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'서킷 트레이닝',d:'4라운드 · 6동작',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'에어로빅',d:'30분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'탭댄스 유산소',d:'20분',tags:['심폐','협응'],w:[],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'킥스쿼트',d:'3세트 × 15회',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'home',impact:'high',lvl:3},
+  {n:'버피 스러스터',d:'3세트 × 10회',tags:['심폐','전신'],w:['무릎주의'],sets:0,cat:'유산소',type:'home',impact:'high',lvl:2},
+  {n:'스키 에르고',d:'10분',tags:['심폐','전신'],w:['허리주의'],sets:0,cat:'유산소',type:'gym',impact:'mid',lvl:2},
+  {n:'암 사이클',d:'10분',tags:['심폐','상체'],w:['어깨주의'],sets:0,cat:'유산소',type:'gym',impact:'mid',lvl:2},
+  {n:'댄스 피트니스',d:'45분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'플라이오메트릭',d:'4세트 · 점프 동작 위주',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'home',impact:'high',lvl:4},
+  {n:'인터벌 사이클',d:'20분 · 30초 전력+30초 회복',tags:['심폐','하체'],w:['무릎주의'],sets:0,cat:'유산소',type:'home',impact:'mid',lvl:2},
+  {n:'크로스컨트리 스키 머신',d:'20분',tags:['심폐','전신'],w:[],sets:0,cat:'유산소',type:'gym',impact:'low',lvl:1},
   // ── 재활 ──
-  {n:'고양이-소 스트레칭',d:'10회',tags:['척추유연성'],w:['허리주의'],sets:0,cat:'재활',type:'both'},
-  {n:'맥켄지 운동',d:'3세트 × 30초',tags:['요추안정화'],w:['허리주의'],sets:0,cat:'재활',type:'both'},
-  {n:'피전 포즈',d:'양쪽 각 60초',tags:['대둔근이완'],w:[],sets:0,cat:'재활',type:'both'},
-  {n:'폼롤러 흉추 이완',d:'등 중간 부분만',tags:['흉추가동성'],w:['허리주의'],sets:0,cat:'재활',type:'both'},
-  {n:'친 턱 당기기 (Chin Tuck)',d:'3세트 × 15회',tags:['경추굴곡근(주)'],w:[],sets:0,cat:'재활',type:'both'},
-  {n:'밴드 풀어파트',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:0,cat:'재활',type:'both'},
-  {n:'누워서 무릎 당기기',d:'양쪽 각 30초',tags:['허리압박해소'],w:['무릎주의'],sets:0,cat:'재활',type:'both'},
-  {n:'클램쉘 (밴드)',d:'3세트 × 20회',tags:['중둔근(주)'],w:[],sets:0,cat:'재활',type:'both'},
-  {n:'사이드 라잉 레그 레이즈',d:'3세트 × 15회',tags:['중둔근(주)'],w:[],sets:0,cat:'재활',type:'both'},
-  {n:'목 등척성 운동',d:'전후좌우 각 10초 × 3세트',tags:['경추안정근(주)'],w:[],sets:0,cat:'재활',type:'both'},
-  {n:'폼롤러 IT밴드 이완',d:'각 1분',tags:['장경인대이완'],w:['무릎주의'],sets:0,cat:'재활',type:'both'},
-  {n:'발목 돌리기',d:'양쪽 각 20회',tags:['발목가동성'],w:[],sets:0,cat:'재활',type:'both'},
-  {n:'힙 플렉서 스트레칭',d:'양쪽 각 30초',tags:['장요근이완'],w:[],sets:0,cat:'재활',type:'both'},
-  {n:'햄스트링 스트레칭',d:'양쪽 각 30초',tags:['햄스트링이완'],w:[],sets:0,cat:'재활',type:'both'},
-  {n:'흉추 회전 스트레칭',d:'양쪽 각 10회',tags:['흉추가동성'],w:['허리주의'],sets:0,cat:'재활',type:'both'},
-  {n:'어깨 가로 스트레칭',d:'양쪽 각 30초',tags:['후면삼각근이완'],w:['어깨주의'],sets:0,cat:'재활',type:'both'},
-  {n:'월 슬라이드',d:'3세트 × 10회',tags:['회전근개(주)'],w:['어깨주의'],sets:0,cat:'재활',type:'both'},
-  {n:'밴드 외회전',d:'3세트 × 15회',tags:['회전근개(주)'],w:['어깨주의'],sets:0,cat:'재활',type:'both'},
-  {n:'싱글레그 스탠드',d:'양쪽 각 30초',tags:['균형·고유감각'],w:['무릎주의'],sets:0,cat:'재활',type:'both'},
-  {n:'터미널 니 익스텐션 (밴드)',d:'3세트 × 15회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:0,cat:'재활',type:'both'},
+  {n:'고양이-소 스트레칭',d:'10회',tags:['척추유연성'],w:['허리주의'],sets:0,cat:'재활',type:'both',impact:'low',lvl:1},
+  {n:'맥켄지 운동',d:'3세트 × 30초',tags:['요추안정화'],w:['허리주의'],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'피전 포즈',d:'양쪽 각 60초',tags:['대둔근이완'],w:[],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'폼롤러 흉추 이완',d:'등 중간 부분만',tags:['흉추가동성'],w:['허리주의'],sets:0,cat:'재활',type:'both',impact:'low',lvl:1},
+  {n:'친 턱 당기기 (Chin Tuck)',d:'3세트 × 15회',tags:['경추굴곡근(주)'],w:[],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'밴드 풀어파트',d:'3세트 × 15회',tags:['후면삼각근(주)'],w:['어깨주의'],sets:0,cat:'재활',type:'both',impact:'low',lvl:1},
+  {n:'누워서 무릎 당기기',d:'양쪽 각 30초',tags:['허리압박해소'],w:['무릎주의'],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'클램쉘 (밴드)',d:'3세트 × 20회',tags:['중둔근(주)'],w:[],sets:0,cat:'재활',type:'both',impact:'low',lvl:1},
+  {n:'사이드 라잉 레그 레이즈',d:'3세트 × 15회',tags:['중둔근(주)'],w:[],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'목 등척성 운동',d:'전후좌우 각 10초 × 3세트',tags:['경추안정근(주)'],w:[],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'폼롤러 IT밴드 이완',d:'각 1분',tags:['장경인대이완'],w:['무릎주의'],sets:0,cat:'재활',type:'both',impact:'low',lvl:1},
+  {n:'발목 돌리기',d:'양쪽 각 20회',tags:['발목가동성'],w:[],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'힙 플렉서 스트레칭',d:'양쪽 각 30초',tags:['장요근이완'],w:[],sets:0,cat:'재활',type:'both',impact:'low',lvl:1},
+  {n:'햄스트링 스트레칭',d:'양쪽 각 30초',tags:['햄스트링이완'],w:[],sets:0,cat:'재활',type:'both',impact:'low',lvl:1},
+  {n:'흉추 회전 스트레칭',d:'양쪽 각 10회',tags:['흉추가동성'],w:['허리주의'],sets:0,cat:'재활',type:'both',impact:'low',lvl:1},
+  {n:'어깨 가로 스트레칭',d:'양쪽 각 30초',tags:['후면삼각근이완'],w:['어깨주의'],sets:0,cat:'재활',type:'both',impact:'low',lvl:1},
+  {n:'월 슬라이드',d:'3세트 × 10회',tags:['회전근개(주)'],w:['어깨주의'],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'밴드 외회전',d:'3세트 × 15회',tags:['회전근개(주)'],w:['어깨주의'],sets:0,cat:'재활',type:'both',impact:'low',lvl:1},
+  {n:'싱글레그 스탠드',d:'양쪽 각 30초',tags:['균형·고유감각'],w:['무릎주의'],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'터미널 니 익스텐션 (밴드)',d:'3세트 × 15회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:0,cat:'재활',type:'both',impact:'low',lvl:1},
   // ── 재활 추가 2차 ──
   // 무릎 재활
-  {n:'쿼드셋 (대퇴사두 등척성)',d:'10초 × 10회 반복',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:0,cat:'재활',type:'both'},
-  {n:'힐슬라이드',d:'양쪽 각 10회',tags:['햄스트링·무릎'],w:['무릎주의'],sets:0,cat:'재활',type:'both'},
-  {n:'앉아서 발목 굴곡',d:'3세트 × 20회',tags:['발목·하퇴'],w:[],sets:0,cat:'재활',type:'both'},
-  {n:'무릎 굴곡 스트레칭 (벽)',d:'양쪽 각 30초',tags:['무릎굴곡'],w:['무릎주의'],sets:0,cat:'재활',type:'both'},
-  {n:'얼음찜질 후 무릎 ROM 운동',d:'10~0도 범위 천천히',tags:['무릎가동'],w:['무릎주의'],sets:0,cat:'재활',type:'both'},
-  {n:'미니 스쿼트 (0~30도)',d:'3세트 × 15회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3,cat:'재활',type:'both'},
-  {n:'레그 스윙',d:'앞뒤·옆 각 10회',tags:['고관절가동성'],w:['무릎주의'],sets:0,cat:'재활',type:'both'},
-  {n:'사이드 스텝 (밴드)',d:'3세트 × 15회',tags:['중둔근(주)'],w:['무릎주의'],sets:0,cat:'재활',type:'both'},
-  {n:'수건 발뒤꿈치 들기',d:'3세트 × 20회',tags:['비복근(주)'],w:[],sets:0,cat:'재활',type:'both'},
+  {n:'쿼드셋 (대퇴사두 등척성)',d:'10초 × 10회 반복',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'힐슬라이드',d:'양쪽 각 10회',tags:['햄스트링·무릎'],w:['무릎주의'],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'앉아서 발목 굴곡',d:'3세트 × 20회',tags:['발목·하퇴'],w:[],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'무릎 굴곡 스트레칭 (벽)',d:'양쪽 각 30초',tags:['무릎굴곡'],w:['무릎주의'],sets:0,cat:'재활',type:'both',impact:'low',lvl:1},
+  {n:'얼음찜질 후 무릎 ROM 운동',d:'10~0도 범위 천천히',tags:['무릎가동'],w:['무릎주의'],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'미니 스쿼트 (0~30도)',d:'3세트 × 15회',tags:['대퇴사두근(주)'],w:['무릎주의'],sets:3,cat:'재활',type:'both',impact:'high',lvl:3},
+  {n:'레그 스윙',d:'앞뒤·옆 각 10회',tags:['고관절가동성'],w:['무릎주의'],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'사이드 스텝 (밴드)',d:'3세트 × 15회',tags:['중둔근(주)'],w:['무릎주의'],sets:0,cat:'재활',type:'both',impact:'low',lvl:1},
+  {n:'수건 발뒤꿈치 들기',d:'3세트 × 20회',tags:['비복근(주)'],w:[],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
   // 허리 재활
-  {n:'버드독',d:'3세트 × 10회(각)',tags:['요추안정화'],w:['허리주의'],sets:3,cat:'재활',type:'both'},
-  {n:'데드버그 (응용)',d:'3세트 × 8회',tags:['복횡근(주)'],w:['허리주의'],sets:3,cat:'재활',type:'both'},
-  {n:'팔다리 들기 (슈퍼맨)',d:'3세트 × 12회',tags:['척추기립근(주)'],w:['허리주의'],sets:3,cat:'재활',type:'both'},
-  {n:'코어 브레이싱',d:'10초 × 10회',tags:['복횡근·요추'],w:[],sets:0,cat:'재활',type:'both'},
-  {n:'플랫백 스트레칭',d:'양쪽 각 30초',tags:['요추유연성'],w:['허리주의'],sets:0,cat:'재활',type:'both'},
-  {n:'골반 기울이기',d:'3세트 × 15회',tags:['요추안정화'],w:['허리주의'],sets:0,cat:'재활',type:'both'},
-  {n:'니 투 체스트 스트레칭',d:'양쪽 각 30초',tags:['요추이완'],w:['허리주의'],sets:0,cat:'재활',type:'both'},
+  {n:'버드독',d:'3세트 × 10회(각)',tags:['요추안정화'],w:['허리주의'],sets:3,cat:'재활',type:'both',impact:'low',lvl:1},
+  {n:'데드버그 (응용)',d:'3세트 × 8회',tags:['복횡근(주)'],w:['허리주의'],sets:3,cat:'재활',type:'both',impact:'low',lvl:1},
+  {n:'팔다리 들기 (슈퍼맨)',d:'3세트 × 12회',tags:['척추기립근(주)'],w:['허리주의'],sets:3,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'코어 브레이싱',d:'10초 × 10회',tags:['복횡근·요추'],w:[],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'플랫백 스트레칭',d:'양쪽 각 30초',tags:['요추유연성'],w:['허리주의'],sets:0,cat:'재활',type:'both',impact:'low',lvl:1},
+  {n:'골반 기울이기',d:'3세트 × 15회',tags:['요추안정화'],w:['허리주의'],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'니 투 체스트 스트레칭',d:'양쪽 각 30초',tags:['요추이완'],w:['허리주의'],sets:0,cat:'재활',type:'both',impact:'low',lvl:1},
   // 어깨 재활
-  {n:'어깨 시계 운동',d:'양쪽 각 10회',tags:['회전근개'],w:['어깨주의'],sets:0,cat:'재활',type:'both'},
-  {n:'월 슬라이드',d:'3세트 × 12회',tags:['전거근(주)'],w:['어깨주의'],sets:0,cat:'재활',type:'both'},
-  {n:'밴드 내회전',d:'3세트 × 15회',tags:['회전근개(주)'],w:['어깨주의'],sets:0,cat:'재활',type:'both'},
-  {n:'펜듈럼 운동',d:'각 방향 30초',tags:['어깨관절이완'],w:['어깨주의'],sets:0,cat:'재활',type:'both'},
-  {n:'숄더 CARS',d:'양쪽 각 5회 천천히',tags:['어깨가동성'],w:['어깨주의'],sets:0,cat:'재활',type:'both'},
+  {n:'어깨 시계 운동',d:'양쪽 각 10회',tags:['회전근개'],w:['어깨주의'],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'월 슬라이드',d:'3세트 × 12회',tags:['전거근(주)'],w:['어깨주의'],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'밴드 내회전',d:'3세트 × 15회',tags:['회전근개(주)'],w:['어깨주의'],sets:0,cat:'재활',type:'both',impact:'low',lvl:1},
+  {n:'펜듈럼 운동',d:'각 방향 30초',tags:['어깨관절이완'],w:['어깨주의'],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'숄더 CARS',d:'양쪽 각 5회 천천히',tags:['어깨가동성'],w:['어깨주의'],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
   // 발목·균형
-  {n:'발목 알파벳 쓰기',d:'양쪽 각 1회',tags:['발목가동성'],w:[],sets:0,cat:'재활',type:'both'},
-  {n:'외발 균형 (눈감기)',d:'양쪽 각 20초',tags:['균형·고유감각'],w:['무릎주의'],sets:0,cat:'재활',type:'both'},
-  {n:'발가락 굴곡 타월 집기',d:'10회',tags:['족저근막'],w:[],sets:0,cat:'재활',type:'both'},
-  {n:'발뒤꿈치 걷기',d:'20m × 3회',tags:['발목·하퇴'],w:[],sets:0,cat:'재활',type:'both'},
-  {n:'발끝 걷기',d:'20m × 3회',tags:['비복근·균형'],w:['무릎주의'],sets:0,cat:'재활',type:'both'},
+  {n:'발목 알파벳 쓰기',d:'양쪽 각 1회',tags:['발목가동성'],w:[],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'외발 균형 (눈감기)',d:'양쪽 각 20초',tags:['균형·고유감각'],w:['무릎주의'],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'발가락 굴곡 타월 집기',d:'10회',tags:['족저근막'],w:[],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'발뒤꿈치 걷기',d:'20m × 3회',tags:['발목·하퇴'],w:[],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'발끝 걷기',d:'20m × 3회',tags:['비복근·균형'],w:['무릎주의'],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
   // 호흡·전신
-  {n:'횡격막 호흡',d:'5분 · 복식호흡',tags:['코어·호흡'],w:[],sets:0,cat:'재활',type:'both'},
-  {n:'박스 브리딩',d:'4-4-4-4초 × 5회',tags:['자율신경·호흡'],w:[],sets:0,cat:'재활',type:'both'},
-  {n:'폼롤러 흉추 이완 (응용)',d:'각 분절 30초',tags:['흉추가동성'],w:['허리주의'],sets:0,cat:'재활',type:'both'},
+  {n:'횡격막 호흡',d:'5분 · 복식호흡',tags:['코어·호흡'],w:[],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'박스 브리딩',d:'4-4-4-4초 × 5회',tags:['자율신경·호흡'],w:[],sets:0,cat:'재활',type:'both',impact:'mid',lvl:2},
+  {n:'폼롤러 흉추 이완 (응용)',d:'각 분절 30초',tags:['흉추가동성'],w:['허리주의'],sets:0,cat:'재활',type:'both',impact:'low',lvl:1},
   // ── 스트레칭 ──
   // 상체
-  {n:'목 좌우 스트레칭',d:'양쪽 각 30초',tags:['경추'],w:[],sets:0,cat:'스트레칭',type:'both'},
-  {n:'목 전후 스트레칭',d:'앞뒤 각 20초',tags:['경추'],w:[],sets:0,cat:'스트레칭',type:'both'},
-  {n:'어깨 가로 스트레칭',d:'양쪽 각 30초',tags:['후면삼각근'],w:['어깨주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'어깨 위로 들기 스트레칭',d:'양쪽 각 30초',tags:['어깨'],w:['어깨주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'삼두 오버헤드 스트레칭',d:'양쪽 각 30초',tags:['삼두근'],w:['어깨주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'이두 스트레칭 (벽)',d:'양쪽 각 30초',tags:['이두근·흉근'],w:['어깨주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'가슴 열기 스트레칭',d:'30초 × 2회',tags:['대흉근'],w:['어깨주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'손목 굴곡 스트레칭',d:'양쪽 각 20초',tags:['전완근'],w:[],sets:0,cat:'스트레칭',type:'both'},
-  {n:'손목 신전 스트레칭',d:'양쪽 각 20초',tags:['전완근'],w:[],sets:0,cat:'스트레칭',type:'both'},
-  {n:'등 상부 스트레칭 (깍지)',d:'30초',tags:['승모근·능형근'],w:[],sets:0,cat:'스트레칭',type:'both'},
-  {n:'광배근 스트레칭 (옆으로)',d:'양쪽 각 30초',tags:['광배근'],w:['어깨주의'],sets:0,cat:'스트레칭',type:'both'},
+  {n:'목 좌우 스트레칭',d:'양쪽 각 30초',tags:['경추'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'목 전후 스트레칭',d:'앞뒤 각 20초',tags:['경추'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'어깨 가로 스트레칭',d:'양쪽 각 30초',tags:['후면삼각근'],w:['어깨주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'어깨 위로 들기 스트레칭',d:'양쪽 각 30초',tags:['어깨'],w:['어깨주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'삼두 오버헤드 스트레칭',d:'양쪽 각 30초',tags:['삼두근'],w:['어깨주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'이두 스트레칭 (벽)',d:'양쪽 각 30초',tags:['이두근·흉근'],w:['어깨주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'가슴 열기 스트레칭',d:'30초 × 2회',tags:['대흉근'],w:['어깨주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'손목 굴곡 스트레칭',d:'양쪽 각 20초',tags:['전완근'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'손목 신전 스트레칭',d:'양쪽 각 20초',tags:['전완근'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'등 상부 스트레칭 (깍지)',d:'30초',tags:['승모근·능형근'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'광배근 스트레칭 (옆으로)',d:'양쪽 각 30초',tags:['광배근'],w:['어깨주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
   // 코어·허리
-  {n:'아이 포즈 (차일드 포즈)',d:'60초',tags:['척추·고관절'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'코브라 포즈',d:'20초 × 3회',tags:['요추신전'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'척추 회전 스트레칭 (누워)',d:'양쪽 각 30초',tags:['척추·요추'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'옆구리 스트레칭',d:'양쪽 각 30초',tags:['외복사근·요방형근'],w:[],sets:0,cat:'스트레칭',type:'both'},
-  {n:'고양이-소 스트레칭',d:'10회 천천히',tags:['척추유연성'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'쓰레드 더 니들',d:'양쪽 각 30초',tags:['흉추·어깨'],w:['어깨주의'],sets:0,cat:'스트레칭',type:'both'},
+  {n:'아이 포즈 (차일드 포즈)',d:'60초',tags:['척추·고관절'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both',impact:'mid',lvl:2},
+  {n:'코브라 포즈',d:'20초 × 3회',tags:['요추신전'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both',impact:'mid',lvl:2},
+  {n:'척추 회전 스트레칭 (누워)',d:'양쪽 각 30초',tags:['척추·요추'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'옆구리 스트레칭',d:'양쪽 각 30초',tags:['외복사근·요방형근'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'고양이-소 스트레칭',d:'10회 천천히',tags:['척추유연성'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'쓰레드 더 니들',d:'양쪽 각 30초',tags:['흉추·어깨'],w:['어깨주의'],sets:0,cat:'스트레칭',type:'both',impact:'mid',lvl:2},
   // 하체
-  {n:'고관절 굴곡근 스트레칭 (런지)',d:'양쪽 각 45초',tags:['장요근(주)'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'햄스트링 스트레칭 (앉아)',d:'양쪽 각 45초',tags:['햄스트링'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'햄스트링 스트레칭 (누워)',d:'양쪽 각 30초',tags:['햄스트링'],w:[],sets:0,cat:'스트레칭',type:'both'},
-  {n:'대퇴사두 스트레칭 (서서)',d:'양쪽 각 30초',tags:['대퇴사두근'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'대퇴사두 스트레칭 (누워)',d:'양쪽 각 30초',tags:['대퇴사두근'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'IT밴드 스트레칭',d:'양쪽 각 30초',tags:['장경인대'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'종아리 스트레칭 (벽)',d:'양쪽 각 30초',tags:['비복근·가자미근'],w:[],sets:0,cat:'스트레칭',type:'both'},
-  {n:'아킬레스건 스트레칭',d:'양쪽 각 30초',tags:['아킬레스건'],w:[],sets:0,cat:'스트레칭',type:'both'},
-  {n:'내전근 스트레칭 (나비)',d:'60초',tags:['내전근'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'내전근 스트레칭 (서서)',d:'양쪽 각 30초',tags:['내전근'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'둔근 스트레칭 (누워 4자)',d:'양쪽 각 45초',tags:['대둔근·이상근'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'피전 포즈',d:'양쪽 각 60초',tags:['대둔근·고관절'],w:[],sets:0,cat:'스트레칭',type:'both'},
-  {n:'도마뱀 스트레칭',d:'양쪽 각 45초',tags:['고관절굴곡근'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'발바닥 스트레칭',d:'양쪽 각 30초',tags:['족저근막'],w:[],sets:0,cat:'스트레칭',type:'both'},
+  {n:'고관절 굴곡근 스트레칭 (런지)',d:'양쪽 각 45초',tags:['장요근(주)'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'햄스트링 스트레칭 (앉아)',d:'양쪽 각 45초',tags:['햄스트링'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'햄스트링 스트레칭 (누워)',d:'양쪽 각 30초',tags:['햄스트링'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'대퇴사두 스트레칭 (서서)',d:'양쪽 각 30초',tags:['대퇴사두근'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'대퇴사두 스트레칭 (누워)',d:'양쪽 각 30초',tags:['대퇴사두근'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'IT밴드 스트레칭',d:'양쪽 각 30초',tags:['장경인대'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'종아리 스트레칭 (벽)',d:'양쪽 각 30초',tags:['비복근·가자미근'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'아킬레스건 스트레칭',d:'양쪽 각 30초',tags:['아킬레스건'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'내전근 스트레칭 (나비)',d:'60초',tags:['내전근'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'내전근 스트레칭 (서서)',d:'양쪽 각 30초',tags:['내전근'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'둔근 스트레칭 (누워 4자)',d:'양쪽 각 45초',tags:['대둔근·이상근'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'피전 포즈',d:'양쪽 각 60초',tags:['대둔근·고관절'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'mid',lvl:2},
+  {n:'도마뱀 스트레칭',d:'양쪽 각 45초',tags:['고관절굴곡근'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'발바닥 스트레칭',d:'양쪽 각 30초',tags:['족저근막'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
   // 전신·마무리
-  {n:'전신 스트레칭 루틴',d:'10분 전신 순서대로',tags:['전신'],w:[],sets:0,cat:'스트레칭',type:'both'},
-  {n:'폼롤러 전신 이완',d:'15분 전신 롤링',tags:['전신'],w:[],sets:0,cat:'스트레칭',type:'both'},
-  {n:'폼롤러 허벅지 앞',d:'양쪽 각 1분',tags:['대퇴사두근'],w:[],sets:0,cat:'스트레칭',type:'both'},
-  {n:'폼롤러 허벅지 옆 (IT밴드)',d:'양쪽 각 1분',tags:['장경인대'],w:[],sets:0,cat:'스트레칭',type:'both'},
-  {n:'폼롤러 종아리',d:'양쪽 각 1분',tags:['비복근'],w:[],sets:0,cat:'스트레칭',type:'both'},
-  {n:'폼롤러 등 상부',d:'1~2분',tags:['흉추·승모근'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'폼롤러 둔근',d:'양쪽 각 1분',tags:['대둔근'],w:[],sets:0,cat:'스트레칭',type:'both'},
-  {n:'요가 태양경배 A',d:'5회',tags:['전신유연성'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'하향견 포즈',d:'30초 × 3회',tags:['전신이완'],w:['어깨주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'워리어 1 포즈',d:'양쪽 각 30초',tags:['고관절굴곡근·어깨'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'워리어 2 포즈',d:'양쪽 각 30초',tags:['내전근·어깨'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'삼각 포즈',d:'양쪽 각 30초',tags:['햄스트링·옆구리'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'앉아서 전굴',d:'30초 × 3회',tags:['햄스트링·척추'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'브릿지 스트레칭',d:'20초 × 3회',tags:['척추신전·고관절'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both'},
-  {n:'사바사나 (이완)',d:'5분',tags:['전신이완·호흡'],w:[],sets:0,cat:'스트레칭',type:'both'},
+  {n:'전신 스트레칭 루틴',d:'10분 전신 순서대로',tags:['전신'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'폼롤러 전신 이완',d:'15분 전신 롤링',tags:['전신'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'폼롤러 허벅지 앞',d:'양쪽 각 1분',tags:['대퇴사두근'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'폼롤러 허벅지 옆 (IT밴드)',d:'양쪽 각 1분',tags:['장경인대'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'폼롤러 종아리',d:'양쪽 각 1분',tags:['비복근'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'폼롤러 등 상부',d:'1~2분',tags:['흉추·승모근'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'폼롤러 둔근',d:'양쪽 각 1분',tags:['대둔근'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'요가 태양경배 A',d:'5회',tags:['전신유연성'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both',impact:'mid',lvl:2},
+  {n:'하향견 포즈',d:'30초 × 3회',tags:['전신이완'],w:['어깨주의'],sets:0,cat:'스트레칭',type:'both',impact:'mid',lvl:2},
+  {n:'워리어 1 포즈',d:'양쪽 각 30초',tags:['고관절굴곡근·어깨'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both',impact:'mid',lvl:2},
+  {n:'워리어 2 포즈',d:'양쪽 각 30초',tags:['내전근·어깨'],w:['무릎주의'],sets:0,cat:'스트레칭',type:'both',impact:'mid',lvl:2},
+  {n:'삼각 포즈',d:'양쪽 각 30초',tags:['햄스트링·옆구리'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both',impact:'mid',lvl:2},
+  {n:'앉아서 전굴',d:'30초 × 3회',tags:['햄스트링·척추'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both',impact:'mid',lvl:2},
+  {n:'브릿지 스트레칭',d:'20초 × 3회',tags:['척추신전·고관절'],w:['허리주의'],sets:0,cat:'스트레칭',type:'both',impact:'low',lvl:1},
+  {n:'사바사나 (이완)',d:'5분',tags:['전신이완·호흡'],w:[],sets:0,cat:'스트레칭',type:'both',impact:'mid',lvl:2},
 
   // ── 2025.05.27 추가: 헬스장 기구 보완 ──
 
   // [가슴] 해머 스트렝스
-  {n:'해머 스트렝스 와이드 체스트',d:'4세트 × 10회',tags:['대흉근(주)','전면삼각근'],w:['어깨주의'],sets:4,cat:'가슴',type:'gym'},
+  {n:'해머 스트렝스 와이드 체스트',d:'4세트 × 10회',tags:['대흉근(주)','전면삼각근'],w:['어깨주의'],sets:4,cat:'가슴',type:'gym',impact:'mid',lvl:2},
 
   // [등] 암 풀 다운
-  {n:'암 풀 다운',d:'4세트 × 12회',tags:['광배근(주)','이두근'],w:[],sets:4,cat:'등',type:'gym'},
+  {n:'암 풀 다운',d:'4세트 × 12회',tags:['광배근(주)','이두근'],w:[],sets:4,cat:'등',type:'gym',impact:'mid',lvl:2},
 
   // [하체] 핵 스쿼트
-  {n:'핵 스쿼트',d:'4세트 × 10회',tags:['대퇴사두근(주)','대둔근'],w:['무릎주의'],sets:4,cat:'하체',type:'gym'},
+  {n:'핵 스쿼트',d:'4세트 × 10회',tags:['대퇴사두근(주)','대둔근'],w:['무릎주의'],sets:4,cat:'하체',type:'gym',impact:'high',lvl:3},
   // [하체] 파워 레그 프레스
-  {n:'파워 레그 프레스',d:'4세트 × 12회',tags:['대퇴사두근(주)','대둔근','햄스트링'],w:['무릎주의','허리주의'],sets:4,cat:'하체',type:'gym'},
+  {n:'파워 레그 프레스',d:'4세트 × 12회',tags:['대퇴사두근(주)','대둔근','햄스트링'],w:['무릎주의','허리주의'],sets:4,cat:'하체',type:'gym',impact:'low',lvl:1},
   // [하체] 브이 스쿼트
-  {n:'브이 스쿼트',d:'4세트 × 12회',tags:['대퇴사두근(주)','대둔근'],w:['무릎주의'],sets:4,cat:'하체',type:'gym'},
+  {n:'브이 스쿼트',d:'4세트 × 12회',tags:['대퇴사두근(주)','대둔근'],w:['무릎주의'],sets:4,cat:'하체',type:'gym',impact:'high',lvl:3},
   // [하체] 벨트 스쿼트
-  {n:'벨트 스쿼트',d:'4세트 × 12회',tags:['대퇴사두근(주)','대둔근'],w:['허리 부담 최소'],sets:4,cat:'하체',type:'gym'},
+  {n:'벨트 스쿼트',d:'4세트 × 12회',tags:['대퇴사두근(주)','대둔근'],w:['허리 부담 최소'],sets:4,cat:'하체',type:'gym',impact:'low',lvl:3},
   // [하체] 글루트 드라이브
-  {n:'글루트 드라이브',d:'4세트 × 15회',tags:['대둔근(주)','햄스트링'],w:[],sets:4,cat:'하체',type:'gym'},
+  {n:'글루트 드라이브',d:'4세트 × 15회',tags:['대둔근(주)','햄스트링'],w:[],sets:4,cat:'하체',type:'gym',impact:'mid',lvl:2},
 
   // [어깨&팔] 암 컬 머신
-  {n:'암 컬 머신',d:'3세트 × 15회',tags:['이두근(주)','상완근'],w:['손목주의'],sets:3,cat:'팔',type:'gym'},
+  {n:'암 컬 머신',d:'3세트 × 15회',tags:['이두근(주)','상완근'],w:['손목주의'],sets:3,cat:'팔',type:'gym',impact:'low',lvl:1},
 
   // [유산소/기타] 기능성 도구
-  {n:'메디신 볼 슬램',d:'3세트 × 15회',tags:['전신·폭발력','코어'],w:['허리주의'],sets:3,cat:'유산소',type:'both'},
-  {n:'보수 볼 스쿼트',d:'3세트 × 12회',tags:['하체·균형감각','코어'],w:['발목주의'],sets:3,cat:'재활',type:'both'},
-  {n:'파워 플레이트 진동 스쿼트',d:'3분 × 3회',tags:['전신진동·혈액순환'],w:['임산부 금지'],sets:0,cat:'재활',type:'gym'},
-  {n:'거꾸리 (인버젼 테이블)',d:'3분 × 2회',tags:['척추감압·혈액순환'],w:['혈압주의','녹내장주의'],sets:0,cat:'재활',type:'gym'},
-  {n:'벨트 마사지 (덜덜이)',d:'5분',tags:['근육이완·혈액순환'],w:[],sets:0,cat:'재활',type:'gym'},
+  {n:'메디신 볼 슬램',d:'3세트 × 15회',tags:['전신·폭발력','코어'],w:['허리주의'],sets:3,cat:'유산소',type:'both',impact:'mid',lvl:2},
+  {n:'보수 볼 스쿼트',d:'3세트 × 12회',tags:['하체·균형감각','코어'],w:['발목주의'],sets:3,cat:'재활',type:'both',impact:'low',lvl:1},
+  {n:'파워 플레이트 진동 스쿼트',d:'3분 × 3회',tags:['전신진동·혈액순환'],w:['임산부 금지'],sets:0,cat:'재활',type:'gym',impact:'low',lvl:1},
+  {n:'거꾸리 (인버젼 테이블)',d:'3분 × 2회',tags:['척추감압·혈액순환'],w:['혈압주의','녹내장주의'],sets:0,cat:'재활',type:'gym',impact:'low',lvl:1},
+  {n:'벨트 마사지 (덜덜이)',d:'5분',tags:['근육이완·혈액순환'],w:[],sets:0,cat:'재활',type:'gym',impact:'low',lvl:1},
 ];
 const LIB_CATS=['전체','가슴','등','어깨','팔','하체','둔근','복근','유산소','재활','스트레칭'];
 let libTarget=null, libCat='전체', libKw='';
@@ -8967,7 +8969,7 @@ function renderORMGrid(){
 // (meta 태그의 no-cache는 브라우저가 거의 무시한다)
 // 그래서 서버에 있는 파일을 직접 읽어 빌드 번호를 비교한다.
 // ══════════════════════════════════════════════════════════════════
-const APP_BUILD = '20260802-pro1';
+const APP_BUILD = '20260810-ai1';
 // 화면이 뜨자마자 빌드를 보여준다 — 어느 기기가 옛 파일인지 3초 만에 알 수 있게
 (function(){
   const paint = function(){
@@ -9027,7 +9029,7 @@ async function forceUpdate(){
 }
 
 // 엔진 버전 — 이 값이 바뀌면 예전 방식으로 저장된 루틴 백업을 폐기하고 새로 만든다
-const MANUAL_ENGINE_VER = 'manual-v9';
+const MANUAL_ENGINE_VER = 'manual-v10';
 
 // ── ① 목적별 훈련 강도 기준 (매뉴얼 4장 각 프로그램 헤더) ──
 const M_INTENSITY = {
@@ -10254,7 +10256,8 @@ function buildManualPlan(opt){
 
   const plan = [];
   let ti = 0;
-  let swapLog = [], equipLog = [], focusLog = [];
+  let swapLog = [], equipLog = [], focusLog = [], stallLog = [];
+  const bodyType = m_bodyType(member);
   const focusParts = (typeof m_getFocusParts === 'function') ? m_getFocusParts() : [];
   for(let i = 0; i < layout.length; i++){
     if(layout[i] === 'c'){
@@ -10309,6 +10312,15 @@ function buildManualPlan(opt){
       const _sw = m_applySafetySwaps(day, member);
       if(_sw.length) swapLog = swapLog.concat(_sw);
     }
+    // 저체중(BMI 18.5 미만) — 지금까지는 안내 문구만 있었고 실제 루틴은 그대로였다.
+    // 복합관절(다관절) 종목의 세트를 1개씩 늘려 볼륨을 실제로 확보한다.
+    if(member && member.bmi > 0 && member.bmi < 18.5){
+      (day.sections || []).forEach(function(sec){
+        (sec.exs || []).forEach(function(ex){
+          if(!ex.iso && ex.sets && ex.sets > 0) ex.sets = Math.min(5, ex.sets + 1);
+        });
+      });
+    }
     day.fullMin = m_estimateMinutes(day);          // 매뉴얼 볼륨 그대로일 때의 소요 시간
 
     // 집중 부위 반영 — 선택한 부위의 세트를 올리고 보강 종목을 추가
@@ -10341,6 +10353,11 @@ function buildManualPlan(opt){
     if(typeof m_applyExclusions === 'function'){
       const exc = m_applyExclusions(day, {injuries:injuries, isHome:isHome});
       if(exc.length) equipLog = equipLog.concat(exc);
+    }
+    // 정체 구간(4세션 이상 중량 제자리) 종목은 자극 각도를 바꿔본다
+    if(typeof m_applyStallBreak === 'function'){
+      const stb = m_applyStallBreak(day, recStat, {injuries:injuries, isHome:isHome});
+      if(stb.length) stallLog = stallLog.concat(stb);
     }
     // 1RM·기록 기반 목표 중량 부착
     if(typeof m_attachTargetWeights === 'function') m_attachTargetWeights(day);
@@ -10390,12 +10407,16 @@ function buildManualPlan(opt){
   })();
   window._safeSwaps  = swapLog;
   window._equipSwaps = equipLog;
+  window._stallSwaps = stallLog;
   guide.equipSwaps = equipLog;
+  guide.stallSwaps = stallLog;
+  guide.bodyType = bodyType;
   guide.focusParts = focusParts;
   guide.purposeMap = (typeof m_analyzePurposes === 'function') ? m_analyzePurposes(purposes) : null;
   guide.focusAdded = focusLog;
   return {plan:plan, guide:guide, intensityKey:ikey, splitName:lvInfo.split,
-          swaps:swapLog, equipSwaps:equipLog, focusParts:focusParts, corePlan:corePlan};
+          swaps:swapLog, equipSwaps:equipLog, stallSwaps:stallLog, bodyType:bodyType,
+          focusParts:focusParts, corePlan:corePlan};
 }
 
 // ── 목표 운동 시간 ──
@@ -10769,6 +10790,61 @@ function m_getMember(){
     purposes:purposes, injuries:injuries, days:days,
     targetMin:(typeof m_getWorkoutTarget === 'function' ? m_getWorkoutTarget() : 45)
   };
+}
+
+// ══════════════════════════════════════════════════════════════════
+// ⓪ 체질(체형) 분류 + AI 종목 추천 엔진
+// ──────────────────────────────────────────────────────────────────
+// EX_LIB 각 종목에 impact(관절충격: low/mid/high) · lvl(권장 난이도 1~4)를
+// 붙여 두었다(라이브러리 정의부 참고). 이 엔진은 그 값과 회원의 체형(BMI)·
+// 레벨·최근 수행 이력을 함께 점수화해서, 대체 종목이 필요할 때 매번
+// 같은 종목(배열 첫 번째)이 아니라 "이 회원에게 맞는" 종목을 고른다.
+// ══════════════════════════════════════════════════════════════════
+function m_bodyType(member){
+  const bmi = (member && member.bmi) || 22;
+  if(bmi < 18.5) return {cat:'저체중', impactPref:'high', tone:'복합관절 위주로 근육량을 늘리는 것이 우선입니다'};
+  if(bmi < 23)   return {cat:'표준',   impactPref:'mid',  tone:'관절 충격에 특별한 제약이 없습니다'};
+  if(bmi < 25)   return {cat:'과체중', impactPref:'low',  tone:'관절 부담이 적은 종목을 우선합니다'};
+  return              {cat:'비만',   impactPref:'low',  tone:'체중 부하가 적은 종목을 최우선합니다'};
+}
+
+// 최근 N세션 동안 실제로 수행한 종목명 (같은 종목 반복 배치를 피해 다양성을 준다)
+function m_recentExerciseNames(n){
+  const names = new Set();
+  try{
+    if(typeof records === 'undefined') return names;
+    records.slice(0, n || 6).forEach(function(r){
+      (r.sets || []).forEach(function(s){ if(s.ex) names.add(s.ex); });
+    });
+  }catch(e){}
+  return names;
+}
+
+// 후보 종목 하나를 회원 특성에 맞춰 점수화한다 (높을수록 적합)
+function m_scoreCandidate(c, ctx){
+  let score = 10;
+  const lvlGap = Math.abs((c.lvl || 2) - (ctx.level || 2));
+  score -= lvlGap * 2;                                   // 회원 레벨과 난이도 차이가 클수록 감점
+  if(ctx.impactPref === 'low'){
+    if(c.impact === 'high') score -= 6;
+    else if(c.impact === 'low') score += 4;
+  } else if(ctx.impactPref === 'high'){
+    if(c.impact === 'high' || c.impact === 'mid') score += 3;  // 저체중 → 복합관절 종목 선호
+  }
+  if(ctx.recent && ctx.recent.has(c.n)) score -= 8;       // 최근에 이미 한 종목 → 다양성을 위해 감점
+  score += Math.random() * 2;                             // 동점일 때 매번 똑같은 종목만 나오지 않도록
+  return score;
+}
+
+// 후보 풀에서 회원 특성에 가장 맞는 종목을 고른다
+function m_pickBestVariant(pool, ctx){
+  if(!pool || !pool.length) return null;
+  let best = null, bestScore = -Infinity;
+  pool.forEach(function(c){
+    const sc = m_scoreCandidate(c, ctx);
+    if(sc > bestScore){ bestScore = sc; best = c; }
+  });
+  return best;
 }
 
 // ══════════════════════════════════════════════════════════════════
@@ -11265,6 +11341,15 @@ function m_profileCardHtml(){
   row('📅','주당 일수 · 분할', (m.days ? m.days.length : 0) + '일 · ' + (g.split || '-'),
       (['재활','초급','중급','고급','마스터'][m.level] || '') + ' 레벨 기준 분할');
 
+  const bt = m_bodyType(m);
+  row('🧬','체형(체질)', bt.cat + ' (BMI ' + m.bmi + ')', bt.tone + ' — 대체 종목을 고를 때마다 이 기준으로 점수를 매겨 선택합니다');
+
+  const stalls = (window._stallSwaps || []).filter(function(c,i,a){ return a.findIndex(function(x){ return x.from===c.from; })===i; });
+  row('🤖','AI 정체 구간 대응', stalls.length ? (stalls.length + '개 종목 자동 교체') : '해당 없음',
+      stalls.length ? stalls.slice(0,3).map(function(c){ return c.from + '→' + c.to; }).join(', ')
+                    : '4세션 이상 중량이 제자리인 종목이 생기면 자동으로 다른 종목으로 바꿔드립니다',
+      true);
+
   return '<div style="background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;margin-bottom:12px;">'
     + '<div style="font-size:12px;font-weight:800;color:var(--accent2);margin-bottom:8px;">👤 내 설정이 루틴에 반영된 내역</div>'
     + rows.map(function(r){
@@ -11333,9 +11418,42 @@ function m_findReplacement(ex, dayNames, opt){
   if(cat) pool = EX_LIB.filter(function(c){ return c.cat === cat && ok(c); });
   if(mainTag){
     const exact = pool.filter(function(c){ return (c.tags || []).indexOf(mainTag) >= 0; });
-    if(exact.length) return exact[0];
+    if(exact.length) pool = exact;
   }
-  return pool.length ? pool[0] : null;
+  if(!pool.length) return null;
+  // ── AI 추천: 배열 순서대로 첫 종목을 고르지 않고, 회원의 체형(BMI)·레벨·
+  //    최근 수행 이력을 점수화해서 가장 잘 맞는 종목을 고른다 ──
+  const member = (typeof m_getMember === 'function') ? m_getMember() : null;
+  const bt = m_bodyType(member);
+  const ctx = {level:member ? member.level : 2, impactPref:bt.impactPref, recent:m_recentExerciseNames(6)};
+  return m_pickBestVariant(pool, ctx) || pool[0];
+}
+
+// ── 정체(플래토) 자동 대응 ──
+// m_analyzeRecords가 "4세션 이상 중량이 그대로"라고 판단한 종목을, 같은 근육을
+// 쓰는 다른 종목(AI 추천 엔진 재사용)으로 바꿔 자극 각도를 바꿔준다.
+// 지금까지는 이 정보가 통계 탭의 문구로만 쓰였고 실제 루틴에는 반영되지 않았다.
+function m_applyStallBreak(rt, recStat, opt){
+  if(!recStat || !recStat.stalled || !recStat.stalled.length) return [];
+  const changes = [];
+  const names = [];
+  (rt.sections || []).forEach(function(sec){ (sec.exs || []).forEach(function(e){ names.push(e.n); }); });
+  const stalledNames = recStat.stalled.map(function(s){ return s.ex; });
+  (rt.sections || []).forEach(function(sec){
+    (sec.exs || []).forEach(function(ex){
+      if(stalledNames.indexOf(ex.n) < 0) return;
+      const rep = m_findReplacement(ex, names, opt);
+      if(!rep) return;
+      const from = ex.n;
+      ex.n = rep.n; ex.baseN = rep.n; ex.stallSwap = true;
+      if(rep.tags) ex.tags = rep.tags.slice();
+      if(rep.w) ex.w = rep.w.slice();
+      const idx = names.indexOf(from);
+      if(idx >= 0) names[idx] = rep.n; else names.push(rep.n);
+      changes.push({from:from, to:rep.n, why:'「' + from + '」 중량이 4세션 이상 제자리라 자극 각도를 바꿔봤습니다 (정체 구간 대응)'});
+    });
+  });
+  return changes;
 }
 
 // 루틴에서 제외 종목을 대체한다 → 바뀐 내역 반환
