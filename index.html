@@ -200,6 +200,7 @@
       rehabStage  : parseInt(ls('fitlog-rehab-stage', '2')) || 2,
       orm1RM      : lj('fitlog-1rm', {}),
       excludedEx  : lj('fitlog-excluded-ex', []),
+      cardioHistory: lj('fitlog-cardio-history', []).slice(0, 90),
       variationWeek: parseInt(ls('fitlog-variation-week', '-1')),
       appBuild    : APP_BUILD,
       device      : (function(){ try{ return /Mobi|Android|iPhone/i.test(navigator.userAgent) ? '휴대폰' : 'PC'; }catch(e){ return ''; } })(),
@@ -263,8 +264,31 @@
       if (Array.isArray(data.injuries))   putJ('fitlog-injuries',    data.injuries);
       if (Array.isArray(data.focusParts)) putJ('fitlog-focus-parts', data.focusParts);
       if (data.myGym)      putJ('fitlog-my-gym', data.myGym);
-      if (data.orm1RM)     putJ('fitlog-1rm',    data.orm1RM);
+      // orm1RM 은 병합: 클라우드 값과 로컬 값 중 큰 쪽을 보존한다
+      if (data.orm1RM && typeof data.orm1RM === 'object') {
+        try {
+          const _local1RM = JSON.parse(localStorage.getItem('fitlog-1rm') || '{}');
+          const _merged = Object.assign({}, _local1RM);
+          Object.keys(data.orm1RM).forEach(function(k){
+            const cv = parseFloat(data.orm1RM[k]) || 0;
+            const lv = parseFloat(_merged[k]) || 0;
+            if(cv > 0) _merged[k] = Math.max(cv, lv);
+          });
+          localStorage.setItem('fitlog-1rm', JSON.stringify(_merged));
+        } catch(e){ /* 기존 동작 폴백 */ putJ('fitlog-1rm', data.orm1RM); }
+      }
       if (data.rehabStage) put('fitlog-rehab-stage', data.rehabStage);
+      // 유산소 기록 병합 (날짜 기준으로 로컬+클라우드 합치기)
+      if (Array.isArray(data.cardioHistory) && data.cardioHistory.length) {
+        try {
+          const _localCH = JSON.parse(localStorage.getItem('fitlog-cardio-history') || '[]');
+          const _dateMap = {};
+          _localCH.forEach(function(h){ if(h.date) _dateMap[h.date] = h; });
+          data.cardioHistory.forEach(function(h){ if(h.date && !_dateMap[h.date]) _dateMap[h.date] = h; });
+          const _merged = Object.values(_dateMap).sort(function(a,b){ return b.date > a.date ? 1 : -1; }).slice(0, 90);
+          localStorage.setItem('fitlog-cardio-history', JSON.stringify(_merged));
+        } catch(e){}
+      }
       if (Array.isArray(data.excludedEx)) putJ('fitlog-excluded-ex', data.excludedEx);
       if (data.variationWeek !== undefined && data.variationWeek >= 0) put('fitlog-variation-week', data.variationWeek);
       if (data.sessionMode) put('fitlog-session-mode', data.sessionMode);
@@ -1342,9 +1366,9 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
       </div>
 
       <div id="time-plan-bar" style="font-size:11px;color:var(--muted);padding:5px 10px;background:var(--surface2);border-radius:6px;display:none;"></div>
-      <!-- 세션 모드: 시간에 따라 훈련 방식 자체가 달라진다 -->
-      <div id="mode-chips" style="display:flex;gap:6px;margin-top:8px;"></div>
-      <div id="mode-note" style="font-size:11px;color:var(--muted);padding:7px 10px;background:var(--surface2);border-radius:6px;margin-top:6px;line-height:1.75;display:none;"></div>
+      <!-- 세션 모드: 내부적으로만 자동 적용 (UI 숨김) -->
+      <div id="mode-chips" style="display:none;"></div>
+      <div id="mode-note" style="display:none;"></div>
     </div>
 
         <div class="prog-wrap">
@@ -3385,7 +3409,12 @@ function showApp(){
 
   // 저장된 재활 단계 복원
   curLevel = parseInt(localStorage.getItem('fitlog-level')||'1');
-  orm1RM = JSON.parse(localStorage.getItem('fitlog-1rm')||'{}');
+  // orm1RM 병합 로드: 기존 메모리 값도 보존 (loadRoutine에서 이미 설정된 값 유지)
+  try{
+    const _prevORM = JSON.parse(JSON.stringify(orm1RM));
+    orm1RM = JSON.parse(localStorage.getItem('fitlog-1rm')||'{}');
+    Object.keys(_prevORM).forEach(function(k){ if(_prevORM[k]>0 && !(orm1RM[k]>0)) orm1RM[k]=_prevORM[k]; });
+  }catch(e){ orm1RM = JSON.parse(localStorage.getItem('fitlog-1rm')||'{}'); }
 
   // 저장된 요일 배정 복원 → DAY_SCHED 재적용
   const savedDays = JSON.parse(localStorage.getItem('fitlog-assigned-days')||'null');
@@ -4279,42 +4308,9 @@ async function applyWorkoutTime(){
   }
 }
 
-// ── 세션 모드 칩 ──
+// ── 세션 모드 칩 (UI 숨김 — 내부 자동 적용만) ──
 function renderModeChips(){
-  const wrap = document.getElementById('mode-chips');
-  if(!wrap || typeof M_MODES === 'undefined') return;
-  const cur   = (window._manualGuide && window._manualGuide.mode) ? window._manualGuide.mode.key : null;
-  const saved = localStorage.getItem('fitlog-session-mode');
-  const recStat = (typeof m_analyzeRecords === 'function') ? m_analyzeRecords(records) : null;
-  let rec = null;
-  try{ rec = m_pickMode(m_getWorkoutTarget(), m_getMember(), recStat).key; }catch(e){}
-  wrap.innerHTML = ['focus','standard','complete','unhurried'].map(function(k){
-    const m  = M_MODES[k];
-    const on = (cur === k);
-    const isRec = (rec === k);
-    return '<button onclick="setSessionMode(\'' + k + '\')" style="flex:1;padding:8px 4px;border-radius:9px;'
-      + 'border:' + (on ? '2px solid ' + m.tone : '1px solid var(--border)') + ';'
-      + 'background:' + (on ? m.tone + '18' : 'none') + ';color:' + (on ? m.tone : 'var(--muted)') + ';'
-      + 'font-size:11px;font-weight:' + (on ? '800' : '500') + ';cursor:pointer;font-family:var(--font);line-height:1.5;">'
-      + m.icon + '<br>' + m.label + (isRec && !saved ? ' ✨' : '') + '</button>';
-  }).join('');
-
-  const note = document.getElementById('mode-note');
-  if(note && cur && M_MODES[cur]){
-    const m = M_MODES[cur];
-    const T = m_getWorkoutTarget();
-    const mismatch = (T < m.minT || T > m.maxT)
-      ? '<br><span style="color:var(--accent2);">⚠️ 설정한 ' + T + '분은 이 모드의 권장 구간(' +
-        (m.maxT >= 999 ? m.minT + '분 이상' : m.minT + '~' + m.maxT + '분') +
-        ')과 다릅니다. 시간이 상한이라 모드 효과가 절반만 납니다.</span>' : '';
-    note.style.display = 'block';
-    note.innerHTML = '<b style="color:' + m.tone + ';">' + m.icon + ' ' + m.label + ' 모드</b>'
-      + (saved ? ' <span style="color:var(--muted);">(직접 선택 · <a href="#" onclick="setSessionMode(\'auto\');return false;" style="color:var(--blue);">AI 자동으로</a>)</span>'
-               : ' <span style="color:var(--green);">✨ AI 추천</span>')
-      + '<br>' + m.desc
-      + (m.tip ? '<br><span style="color:var(--accent2);">💡 ' + m.tip + '</span>' : '')
-      + mismatch;
-  }
+  // 모드는 내부적으로 자동 결정되므로 UI 표시하지 않음
 }
 
 // 모드를 바꾸면 루틴을 그 방식으로 다시 만든다
@@ -5080,24 +5076,24 @@ function renderCalendar(){
   // 빈 칸
   for(let i=0;i<firstDow;i++) html+=`<div class="cal-cell empty"></div>`;
 
-  // 체중 기록 로드 (여러 키 시도)
-  let wHistory=[];
+  // 체중 기록 로드
+  let wMap={};
   try{
-    const raw = localStorage.getItem('fitlog-weight-log')
-             || localStorage.getItem('fitlog-weight-history')
-             || localStorage.getItem('fitlog-weight-records')
-             || '[]';
-    wHistory = JSON.parse(raw);
-    if(!Array.isArray(wHistory)) wHistory=[];
-  }catch(e){ wHistory=[]; }
-  const wMap={};
-  wHistory.forEach(w=>{
-    if(!w) return;
-    // {date, weight} 또는 {d, w} 등 다양한 구조 대응
-    const d = w.date || w.d;
-    const wt = w.weight || w.w || w.kg;
-    if(d && wt) wMap[d] = wt;
-  });
+    const raw = localStorage.getItem('fitlog-weight-log') || '{}';
+    const parsed = JSON.parse(raw);
+    if(parsed && typeof parsed === 'object' && !Array.isArray(parsed)){
+      wMap = parsed; // { 'YYYY-MM-DD': kg }
+    } else if(Array.isArray(parsed)){
+      parsed.forEach(w=>{ if(w){ const d=w.date||w.d; const wt=w.weight||w.w||w.kg; if(d&&wt) wMap[d]=wt; } });
+    }
+  }catch(e){ wMap={}; }
+
+  // 유산소 기록 로드
+  let chMap={};
+  try{
+    const ch=JSON.parse(localStorage.getItem('fitlog-cardio-history')||'[]');
+    ch.forEach(function(h){ if(h.date) chMap[h.date]=h; });
+  }catch(e){}
 
   // 날짜 칸 생성
   for(let d=1;d<=dim;d++){
@@ -5106,18 +5102,27 @@ function renderCalendar(){
     // DAY_SCHED 초기화 전 방어
     const tk = (typeof DAY_SCHED !== 'undefined' && DAY_SCHED) ? (DAY_SCHED[dow]||'') : '';
     const rec=records&&records.find(r=>r.date===ds);
+    const cardioRec=chMap[ds];
     const isRest=tk==='REST';
     const isCardioOnly=rec&&(rec.type==='CARDIO_TODAY'||rec.type==='유산소');
     const dispType=isCardioOnly?'유산소':(isRest?'휴':(tk||''));
     const dispClass=isCardioOnly?'cardio-only':(isRest?'':tk);
     const wt=wMap[ds];
-    // 루틴 색상 (A~F)
+    // 체중이 있으면 체중 우선 표시, 유산소 기록이 있으면 유산소 표시, 없으면 루틴타입 표시
     const typeColor={A:'var(--blue)',B:'var(--green)',C:'var(--purple)',D:'var(--accent2)',E:'var(--accent)',F:'var(--purple)'}[tk]||'';
-    html+=`<div class="cal-cell${ds===ts?' today':''}${rec?' has-rec':''}${isRest&&!rec?' rest-day':''}" onclick="showCalDetail('${ds}')">
+    let mainLabel;
+    if(wt){
+      mainLabel = `<div style="font-size:10px;color:#4a9eff;font-family:var(--mono);font-weight:700;line-height:1.3;">${wt}<span style="font-size:7px;">kg</span></div>`;
+    } else if(cardioRec && !rec){
+      mainLabel = `<div style="font-size:9px;color:var(--green);font-weight:700;line-height:1.3;">🏃${cardioRec.totalMin}분</div>`;
+    } else {
+      mainLabel = `<div class="cal-type ${dispClass}" style="${typeColor?'color:'+typeColor+';':''}${isCardioOnly?'color:var(--green);font-size:9px;':''}">${dispType}</div>`;
+    }
+    const hasDot = rec || cardioRec;
+    html+=`<div class="cal-cell${ds===ts?' today':''}${rec||cardioRec?' has-rec':''}${isRest&&!rec&&!cardioRec?' rest-day':''}" onclick="showCalDetail('${ds}')">
       <div class="cal-date">${d}</div>
-      <div class="cal-type ${dispClass}" style="${typeColor?'color:'+typeColor+';':''}${isCardioOnly?'color:var(--green);font-size:9px;':''}">${dispType}</div>
-      ${rec?'<div class="cal-dot"></div>':''}
-      ${wt?`<div style="font-size:8px;color:#4a9eff;font-family:var(--mono);line-height:1.2;margin-top:1px;">${wt}kg</div>`:''}
+      ${mainLabel}
+      ${hasDot?'<div class="cal-dot"'+(cardioRec&&!rec?' style="background:var(--green);"':'')+'></div>':''}
     </div>`;
   }
   calGrid.innerHTML=html;
@@ -5133,20 +5138,47 @@ function showCalDetail(ds){
   if(!detail) return;
 
   // 체중 기록 로드
-  let wHistory=[];
+  let wt='';
   try{
-    const raw=localStorage.getItem('fitlog-weight-log')
-           ||localStorage.getItem('fitlog-weight-history')||'[]';
-    wHistory=JSON.parse(raw);
-    if(!Array.isArray(wHistory)) wHistory=[];
-  }catch(e){wHistory=[];}
-  const wEntry=wHistory.find(w=>(w.date||w.d)===ds);
-  const wt=wEntry?(wEntry.weight||wEntry.w||wEntry.kg):'';
+    const raw=localStorage.getItem('fitlog-weight-log')||'{}';
+    const parsed=JSON.parse(raw);
+    if(parsed && typeof parsed === 'object' && !Array.isArray(parsed)){
+      wt = parsed[ds] || '';
+    } else if(Array.isArray(parsed)){
+      const wEntry=parsed.find(w=>(w.date||w.d)===ds);
+      wt=wEntry?(wEntry.weight||wEntry.w||wEntry.kg):'';
+    }
+  }catch(e){}
 
-  if(!rec){
+  // 유산소 기록
+  let cardioRec=null;
+  try{
+    const ch=JSON.parse(localStorage.getItem('fitlog-cardio-history')||'[]');
+    cardioRec=ch.find(function(h){return h.date===ds;});
+  }catch(e){}
+
+  if(!rec && !cardioRec){
     detail.innerHTML=`<div class="cal-detail" style="color:var(--muted);font-size:13px;">
       ${ds} (${DAY_KR[dow]}) — ${tk==='REST'?'휴식일':'기록 없음'}
       ${wt?`<span style="margin-left:10px;color:#4a9eff;font-weight:700;">⚖️ ${wt}kg</span>`:''}
+    </div>`;
+    return;
+  }
+
+  if(!rec && cardioRec){
+    const cItems = (cardioRec.items||[]).map(function(it){
+      return '<span style="font-size:11px;padding:2px 8px;border-radius:8px;background:var(--surface);border:1px solid var(--border);">'
+        +(it.icon||'🏃')+' '+it.n+' '+it.min+'분 · '+it.kcal+'kcal</span>';
+    }).join(' ');
+    detail.innerHTML=`<div class="cal-detail">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+        <div style="font-size:11px;font-family:var(--mono);color:var(--muted);">${ds} (${DAY_KR[dow]})</div>
+        ${wt?'<div style="font-size:13px;font-weight:700;color:#4a9eff;">⚖️ '+wt+'kg</div>':''}
+      </div>
+      <div style="margin-bottom:6px;"><span style="font-size:12px;font-weight:700;color:var(--green);">🏃 유산소 ${cardioRec.totalMin}분</span>
+        <span style="font-size:11px;color:var(--accent);margin-left:8px;">🔥 ${cardioRec.totalKcal}kcal</span>
+        <span style="font-size:11px;color:var(--green);margin-left:8px;">체지방 ${cardioRec.fatG}g↓</span></div>
+      <div style="display:flex;flex-wrap:wrap;gap:5px;">${cItems}</div>
     </div>`;
     return;
   }
@@ -5606,11 +5638,16 @@ function renderMiniCalendar(){
   const dim=new Date(miniCalYear,miniCalMonth+1,0).getDate();
   let html=DAY_KR.map(d=>`<div class="mini-cal-dlbl">${d}</div>`).join('');
   for(let i=0;i<firstDow;i++) html+='<div class="mini-cal-cell empty"></div>';
+  // 유산소 기록
+  let _chMap2={};
+  try{ JSON.parse(localStorage.getItem('fitlog-cardio-history')||'[]').forEach(function(h){if(h.date)_chMap2[h.date]=h;}); }catch(e){}
   for(let d=1;d<=dim;d++){
     const ds=`${miniCalYear}-${String(miniCalMonth+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
     const rec=records.find(r=>r.date===ds);
-    html+=`<div class="mini-cal-cell${ds===ts?' today':''}${rec?' has-rec':''}">
-      <div>${d}</div>${rec?'<div class="mini-cal-icon">🏋️</div>':''}
+    const cRec=_chMap2[ds];
+    const icon=rec?'🏋️':(cRec?'🏃':'');
+    html+=`<div class="mini-cal-cell${ds===ts?' today':''}${rec||cRec?' has-rec':''}">
+      <div>${d}</div>${icon?'<div class="mini-cal-icon">'+icon+'</div>':''}
     </div>`;
   }
   grid.innerHTML=html;
@@ -8971,7 +9008,7 @@ function renderORMGrid(){
 // (meta 태그의 no-cache는 브라우저가 거의 무시한다)
 // 그래서 서버에 있는 파일을 직접 읽어 빌드 번호를 비교한다.
 // ══════════════════════════════════════════════════════════════════
-const APP_BUILD = '20260817-ux1';
+const APP_BUILD = '20260824-ux2';
 // 화면이 뜨자마자 빌드를 보여준다 — 어느 기기가 옛 파일인지 3초 만에 알 수 있게
 (function(){
   const paint = function(){
@@ -10085,20 +10122,19 @@ function m_cooldown(){
 
 // 유산소·휴식 요일 (매뉴얼: 초급 주2일 / 중급 주1일)
 function m_restDay(intn, isHome, level){
-  // 매뉴얼: 주말·휴식일은 완전 휴식 또는 가벼운 유산소·스트레칭 (최대 40분)
-  const min = Math.min(40, Math.max(20, m_cardioMin(intn.key, level) + 10));
+  // 유산소 루틴: 자전거 15분 + 경사도 런닝머신 걷기 30분 + 천국의 계단 5분 = 50분
   return {
     label:'유산소 · 회복',
-    title:'유산소 / 휴식 · ' + min + '분',
+    title:'유산소 루틴 · 50분',
     color:'rh-d',
     muscles:['심폐','전신회복'],
     sections:[
       {n:'유산소', exs:[
-        {n:isHome ? '제자리 달리기' : '런닝머신', d:min + '분 · 중강도', tags:['심폐'], w:['무릎주의'], sets:0},
-        {n:isHome ? '점핑잭' : '업라이트 바이크', d:'10분 · 저강도', tags:['심폐'], w:[], sets:0}
+        {n:isHome ? '제자리 달리기' : '업라이트 바이크', d:'15분 · 중강도', tags:['심폐','하체'], w:[], sets:0, cardioMin:15},
+        {n:isHome ? '점핑잭' : '런닝머신 (경사 걷기)', d:'30분 · 경사도 8~12% · 속도 5~6km/h', tags:['심폐','하체','둔근'], w:['무릎주의'], sets:0, cardioMin:30},
+        {n:isHome ? '마운틴 클라이머' : '천국의 계단', d:'5분 · 중고강도', tags:['심폐','하체','둔근'], w:[], sets:0, cardioMin:5}
       ]},
-      {n:'코어·스트레칭', exs:[
-        {n:'플랭크', d:'3세트 × 40초', tags:['복횡근(주)'], w:[], sets:0},
+      {n:'스트레칭', exs:[
         {n:'고양이-소 스트레칭', d:'10회', tags:['척추 가동성'], w:[], sets:0},
         {n:'폼롤러 전신 이완', d:'10분', tags:['근막이완'], w:[], sets:0}
       ]}
@@ -11431,7 +11467,12 @@ async function m_pullSettings(){
     try{ selectedInjuries = JSON.parse(localStorage.getItem('fitlog-injuries') || '[]'); }catch(e){}
     try{ focusPartsSel  = JSON.parse(localStorage.getItem('fitlog-focus-parts') || '[]'); }catch(e){}
     try{ myGymEquipment = JSON.parse(localStorage.getItem('fitlog-my-gym') || 'null') || myGymEquipment; }catch(e){}
-    try{ orm1RM = JSON.parse(localStorage.getItem('fitlog-1rm') || '{}'); }catch(e){}
+    // orm1RM 병합 로드: 기존 메모리 값도 보존
+    try{
+      const _prev = JSON.parse(JSON.stringify(orm1RM));
+      orm1RM = JSON.parse(localStorage.getItem('fitlog-1rm') || '{}');
+      Object.keys(_prev).forEach(function(k){ if(_prev[k]>0 && !(orm1RM[k]>0)) orm1RM[k]=_prev[k]; });
+    }catch(e){}
     try{ assignedDays = JSON.parse(localStorage.getItem('fitlog-assigned-days') || '[]'); }catch(e){}
     const sel = document.getElementById('workout-time-sel');
     const wt  = localStorage.getItem('fitlog-workout-time');
@@ -11721,7 +11762,6 @@ function m_guideBanner(g){
   if(g.rest) chips += chip('⏸ 휴식 ' + m_restLabel(g.rest), 'var(--green)');
   if(g.pct)  chips += chip('⚖ ' + g.pct, 'var(--accent2)');
   if(g.tempo)chips += chip('⏱ 템포 ' + g.tempo, 'var(--muted)');
-  if(g.mode) chips += chip(g.mode.icon + ' ' + g.mode.label + ' 모드', g.mode.tone);
   if(g.estMin) chips += chip('🕐 약 ' + g.estMin + '분' + (g.targetMin ? ' / 목표 ' + g.targetMin + '분' : ''),
                              (!g.targetMin || g.estMin <= g.targetMin + 5) ? 'var(--green)' : 'var(--accent)');
   return '<div style="background:var(--surface);border:1px solid var(--border);border-left:3px solid ' + g.tone + ';'
@@ -11844,9 +11884,8 @@ async function saveAllSettings(){
     }
 
     // ── 저장 ──
-    save1RM();
+    save1RM(true); // silent — 토스트 없이 저장
     localStorage.setItem('fitlog-injuries', JSON.stringify(selectedInjuries));
-  if(typeof m_syncSettings==='function') m_syncSettings();
     try { window.saveRoutine(RT); } catch(e){ console.warn(e); }
 
     clearSettingsDirty();
@@ -11892,14 +11931,23 @@ function updateORMCalc(key){
   } else { el.innerHTML=''; }
 }
 
-function save1RM(){
+function save1RM(silent){
+  // 기존 값을 절대 잃지 않도록 스냅샷 보존
+  const _backup = JSON.parse(JSON.stringify(orm1RM));
   ORM_EXERCISES.forEach(ex=>{
-    const val = parseFloat(document.getElementById('orm-'+ex.key)?.value)||0;
+    const el = document.getElementById('orm-'+ex.key);
+    if(!el) return; // DOM에 없으면 기존 값 유지
+    const val = parseFloat(el.value)||0;
     if(val>0) orm1RM[ex.key]=val;
   });
+  // 백업에 있던 값이 사라지지 않도록 복원
+  Object.keys(_backup).forEach(k=>{
+    if(_backup[k]>0 && !(orm1RM[k]>0)) orm1RM[k]=_backup[k];
+  });
   localStorage.setItem('fitlog-1rm', JSON.stringify(orm1RM));
-  m_syncSettings();
-  showToast('✅ 기준 중량 저장 완료!','success');
+  if(!silent){
+    showToast('✅ 기준 중량 저장 완료!','success');
+  }
 }
 
 // ── 운동별 조정 ──
@@ -13101,6 +13149,8 @@ function saveCardioHistory(items){
   history=history.filter(h=>h.date!==today);
   history.unshift({date:today,items:items.map(c=>({n:c.n,icon:c.icon,min:c.min,kcal:c.kcal})),totalKcal,totalMin,fatG,weight});
   localStorage.setItem('fitlog-cardio-history',JSON.stringify(history.slice(0,90)));
+  // Firebase 동기화
+  try{ if(typeof m_syncSettings==='function') m_syncSettings(); }catch(e){}
 }
 
 function confirmCardioSelection(){
