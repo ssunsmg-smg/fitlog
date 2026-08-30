@@ -5139,6 +5139,14 @@ function renderCalendar(){
       let best='';
       for(const k in wMap){ if(k<=ds && k>best) best=k; }
       if(best) wtShow=wMap[best];
+      if(!wtShow){
+        // 체중 기록이 아직 없으면 신체정보(설정 ①)의 몸무게로 대체
+        try{
+          const pw = parseFloat((typeof userProfile !== 'undefined' && userProfile && userProfile.weight)
+                     || localStorage.getItem('fitlog-weight') || '');
+          if(pw > 0) wtShow = pw;
+        }catch(e){}
+      }
     }
     const typeColor={A:'var(--blue)',B:'var(--green)',C:'var(--purple)',D:'var(--accent2)',E:'var(--accent)',F:'var(--purple)'}[tk]||'';
     let mainLabel;
@@ -9202,7 +9210,7 @@ function renderORMGrid(){
 // (meta 태그의 no-cache는 브라우저가 거의 무시한다)
 // 그래서 서버에 있는 파일을 직접 읽어 빌드 번호를 비교한다.
 // ══════════════════════════════════════════════════════════════════
-const APP_BUILD = '20260830-gcal';
+const APP_BUILD = '20260830-gcal2';
 // 화면이 뜨자마자 빌드를 보여준다 — 어느 기기가 옛 파일인지 3초 만에 알 수 있게
 (function(){
   const paint = function(){
