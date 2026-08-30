@@ -2265,6 +2265,8 @@ let makeupActive=null; // {restDay, missedDay, missedTk, missedName} — 보충 
 let calYear=new Date().getFullYear(), calMonth=new Date().getMonth();
 let editTarget=null, RT={}, userProfile=null, isLoggedIn=false;
 let _wakeLock = null; // ✅ 타이머 WakeLock
+// 운동 요일 — 예전에는 선언 없이 쓰여서 초기화 순서에 따라 오류가 날 수 있었다
+var assignedDays = [];
 
 // ══════════════════════════════════════════════════════════════════
 // ■ EX_INFO : 운동별 설명·팁·유튜브 검색어 DB
@@ -3156,11 +3158,76 @@ async function doLogin(){
     showToast('로그인 실패. 다시 시도해주세요.','error');
   }
 }
+// ══════════════════════════════════════════════════════════════════
+// ■ 회원 분리 (여러 사람이 한 기기를 쓰는 경우)
+// ──────────────────────────────────────────────────────────────────
+// 클라우드(Firestore)는 users/{uid} 로 계정마다 완전히 분리된다.
+// 하지만 localStorage 는 "기기" 단위라 계정을 바꿔도 그대로 남는다.
+// 헬스장 공용 PC·태블릿에서 A회원이 로그아웃하고 B회원이 로그인하면
+//   · B가 A의 성장단계·목적·부상·체중기록을 그대로 물려받고
+//   · 1RM 은 큰 값 우선 병합이라 A의 기록이 B 계정에 영구히 박힌다
+// 그래서 "계정이 바뀌면 기기에 남은 이전 회원 데이터를 전부 비운다".
+// ══════════════════════════════════════════════════════════════════
+const FITLOG_DEVICE_KEYS = ['fitlog-uid']; // 기기 소유자 식별용 — 비우지 않는다
+
+// 기기에 남은 회원 데이터(localStorage + 메모리)를 전부 초기화
+function clearLocalUserData(){
+  // 1) localStorage 의 fitlog-* 전부 삭제
+  try{
+    const del = [];
+    for(let i = 0; i < localStorage.length; i++){
+      const k = localStorage.key(i);
+      if(k && k.indexOf('fitlog-') === 0 && FITLOG_DEVICE_KEYS.indexOf(k) < 0) del.push(k);
+    }
+    del.forEach(function(k){ try{ localStorage.removeItem(k); }catch(e){} });
+  }catch(e){ console.warn('[FitLog] 로컬 데이터 정리 실패', e); }
+
+  // 2) 메모리 상태 초기화
+  //    이걸 안 하면 다음 저장 때 이전 회원 값이 새 회원 계정으로 올라간다
+  try{
+    records = []; setData = {}; makeupActive = null;
+    orm1RM = {}; weightLog = {}; dietRecords = {};
+    userProfile = null;
+    curLevel = 1;
+    classType = '기구운동';
+    classPurposes = ['근력 강화'];
+    selectedInjuries = [];
+    assignedDays = [];
+    RT = JSON.parse(JSON.stringify(RT_BASE));
+    const _defSched = {0:'REST',1:'A',2:'B',3:'C',4:'D',5:'E',6:'F'};
+    Object.keys(_defSched).forEach(function(k){ DAY_SCHED[k] = _defSched[k]; });
+    settDone = {1:false, 2:false, 3:false, 4:false};
+    window._manualGuide = null;
+    window._corePlan = null;
+  }catch(e){ console.warn('[FitLog] 메모리 상태 초기화 실패', e); }
+}
+window.clearLocalUserData = clearLocalUserData;
+
+// 로그인한 계정이 이 기기에 마지막으로 저장된 계정과 다르면 정리한다
+// 반환: true = 다른 회원이라 초기화함
+function ensureAccountScope(uid){
+  if(!uid) return false;
+  let prev = null;
+  try{ prev = localStorage.getItem('fitlog-uid'); }catch(e){}
+  if(prev && prev !== uid){
+    console.info('[FitLog] 다른 회원 로그인 감지 → 이 기기의 이전 회원 데이터를 정리합니다');
+    clearLocalUserData();
+    try{ localStorage.setItem('fitlog-uid', uid); }catch(e){}
+    return true;
+  }
+  try{ localStorage.setItem('fitlog-uid', uid); }catch(e){}
+  return false;
+}
+
 async function doLogout(){
-  if(!confirm('로그아웃 할까요?'))return;
+  if(!confirm('로그아웃 할까요?\n(이 기기에 저장된 내 설정·기록은 지워지고, 다시 로그인하면 클라우드에서 불러옵니다)'))return;
   try{
     await window.firebaseLogout();
   }catch(e){}
+  // 공용 기기 대비: 로그아웃하면 이 기기에 남은 내 데이터를 지운다
+  // (클라우드에는 그대로 있으므로 다시 로그인하면 전부 복구된다)
+  clearLocalUserData();
+  try{ localStorage.removeItem('fitlog-uid'); }catch(e){}
   // 페이지 리로드 없이 직접 초기화 (reload하면 onAuthStateChanged 타이밍 꼬임)
   _appStarted = false;
   isLoggedIn  = false;
@@ -3193,6 +3260,10 @@ async function doLogout(){
 // ══════════════════════════════
 async function initApp(user){
   isLoggedIn=true;
+  // ⚠️ 반드시 맨 먼저 — 이 기기에 다른 회원의 데이터가 남아 있으면 지운다.
+  //    아래에서 localStorage 를 읽기 시작하므로 그 전에 정리해야 한다.
+  var _switched = false;
+  try{ _switched = ensureAccountScope(user && user.uid); }catch(e){}
   // 15초 안전장치 - 어떤 오류가 나도 반드시 화면 표시
   var _t = setTimeout(function(){
     console.warn('[FitLog] initApp timeout - 강제 showApp');
@@ -9210,7 +9281,7 @@ function renderORMGrid(){
 // (meta 태그의 no-cache는 브라우저가 거의 무시한다)
 // 그래서 서버에 있는 파일을 직접 읽어 빌드 번호를 비교한다.
 // ══════════════════════════════════════════════════════════════════
-const APP_BUILD = '20260830-gcal2';
+const APP_BUILD = '20260830-multi';
 // 화면이 뜨자마자 빌드를 보여준다 — 어느 기기가 옛 파일인지 3초 만에 알 수 있게
 (function(){
   const paint = function(){
@@ -12890,6 +12961,14 @@ window.addEventListener('firebase-login', async(e)=>{
 
 
 window.addEventListener('firebase-logout', ()=>{
+  // 다른 탭에서 로그아웃했거나 세션이 만료된 경우도 여기로 들어온다.
+  // 공용 기기에서 다음 사람이 이전 회원 데이터를 보지 않도록 함께 정리한다.
+  // ⚠️ 단, "로그인한 적이 있을 때"만. 앱을 처음 열어 세션을 확인하는 중에도
+  //    이 이벤트가 null 로 한 번 올 수 있는데, 그때 지우면 멀쩡한 백업이 날아간다.
+  if(isLoggedIn){
+    try{ if(typeof clearLocalUserData === 'function') clearLocalUserData(); }catch(e){}
+    try{ localStorage.removeItem('fitlog-uid'); }catch(e){}
+  }
   // 상태 완전 초기화 (재로그인 대비)
   _appStarted = false;
   isLoggedIn  = false;
@@ -13349,7 +13428,7 @@ function _renderCardioList(){
   const list=document.getElementById('cardio-modal-list');
   if(!list) return;
   const typeFilter=classType==='홈트'?['home','both']:['gym','both','home'];
-  const weight=parseFloat(localStorage.getItem('fitlog-weight')||'90');
+  const weight=parseFloat(localStorage.getItem('fitlog-weight')||'70'); // 미입력 시 기준값(칼로리 식이 /70 정규화)
 
   list.innerHTML=WEEKEND_CARDIO
     .filter(c=>typeFilter.includes(c.type))
@@ -13410,7 +13489,7 @@ function toggleCardioItem(i){
 function _updateCardioResult(){
   const btn=document.getElementById('cardio-confirm-btn');
   const panel=document.getElementById('cardio-result-panel');
-  const weight=parseFloat(localStorage.getItem('fitlog-weight')||'90');
+  const weight=parseFloat(localStorage.getItem('fitlog-weight')||'70'); // 미입력 시 기준값(칼로리 식이 /70 정규화)
   const cnt=_cardioMinMap.size;
   if(cnt>0){
     let totalKcal=0,totalMin=0;
@@ -13443,7 +13522,7 @@ function saveCardioHistory(items){
   const totalKcal=items.reduce((s,c)=>s+c.kcal,0);
   const totalMin =items.reduce((s,c)=>s+c.min,0);
   const fatG=+(totalKcal/7700*1000).toFixed(1);
-  const weight=parseFloat(localStorage.getItem('fitlog-weight')||'90');
+  const weight=parseFloat(localStorage.getItem('fitlog-weight')||'70'); // 미입력 시 기준값(칼로리 식이 /70 정규화)
   let history=JSON.parse(localStorage.getItem('fitlog-cardio-history')||'[]');
   history=history.filter(h=>h.date!==today);
   history.unshift({date:today,items:items.map(c=>({n:c.n,icon:c.icon,min:c.min,kcal:c.kcal})),totalKcal,totalMin,fatG,weight});
@@ -13457,7 +13536,7 @@ function confirmCardioSelection(){
   closeCardioModal();
   const todayDow=selDay??new Date().getDay();
   const tk=DAY_SCHED[todayDow];
-  const weight=parseFloat(localStorage.getItem('fitlog-weight')||'90');
+  const weight=parseFloat(localStorage.getItem('fitlog-weight')||'70'); // 미입력 시 기준값(칼로리 식이 /70 정규화)
   const selectedItems=[..._cardioMinMap.entries()].map(([i,min])=>({
     ...WEEKEND_CARDIO[i],min,kcal:Math.round(WEEKEND_CARDIO[i].kcalPerMin*min*(weight/70))
   }));
