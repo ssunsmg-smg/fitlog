@@ -201,6 +201,7 @@
       orm1RM      : lj('fitlog-1rm', {}),
       excludedEx  : lj('fitlog-excluded-ex', []),
       cardioHistory: lj('fitlog-cardio-history', []).slice(0, 90),
+      weightLog   : lj('fitlog-weight-log', {}),
       variationWeek: parseInt(ls('fitlog-variation-week', '-1')),
       appBuild    : APP_BUILD,
       device      : (function(){ try{ return /Mobi|Android|iPhone/i.test(navigator.userAgent) ? '휴대폰' : 'PC'; }catch(e){ return ''; } })(),
@@ -289,6 +290,16 @@
           data.cardioHistory.forEach(function(h){ if(h.date && !_dateMap[h.date]) _dateMap[h.date] = h; });
           const _merged = Object.values(_dateMap).sort(function(a,b){ return b.date > a.date ? 1 : -1; }).slice(0, 90);
           localStorage.setItem('fitlog-cardio-history', JSON.stringify(_merged));
+        } catch(e){}
+      }
+      // 체중 기록 병합 (날짜 기준 — 로컬에 없는 날짜만 클라우드 값 채움)
+      if (data.weightLog && typeof data.weightLog === 'object' && !Array.isArray(data.weightLog)) {
+        try {
+          const _localW = JSON.parse(localStorage.getItem('fitlog-weight-log') || '{}');
+          Object.keys(data.weightLog).forEach(function(d){
+            if(_localW[d] === undefined && data.weightLog[d]) _localW[d] = data.weightLog[d];
+          });
+          localStorage.setItem('fitlog-weight-log', JSON.stringify(_localW));
         } catch(e){}
       }
       if (Array.isArray(data.excludedEx)) putJ('fitlog-excluded-ex', data.excludedEx);
@@ -1471,6 +1482,16 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:1
     <div class="cal-hdr"><div class="cal-title" id="cal-title"></div><div class="cal-navs"><button class="cal-nav-btn" onclick="changeMonth(-1)">‹</button><button class="cal-nav-btn" onclick="changeMonth(1)">›</button></div></div>
     <div class="cal-grid" id="cal-grid"></div>
     <div id="cal-detail"></div>
+
+    <!-- 구글 캘린더 연동 -->
+    <div class="level-card" style="margin-top:14px;">
+      <div class="level-card-title"><span>📅 구글 캘린더 연동</span></div>
+      <div style="font-size:11px;color:var(--muted);line-height:1.7;margin-bottom:10px;">
+        운동 요일을 구글 캘린더에 <b>매주 반복 일정</b>으로 추가합니다.
+        시작 시간을 정하고 요일별로 추가하거나, .ics 파일로 한 번에 가져오세요.
+      </div>
+      <div id="gcal-sync-body"></div>
+    </div>
   </div>
 
   <!-- 기록 -->
@@ -5110,28 +5131,186 @@ function renderCalendar(){
     const dispType=isCardioOnly?'유산소':(isRest?'휴':(tk||''));
     const dispClass=isCardioOnly?'cardio-only':(isRest?'':tk);
     const wt=wMap[ds];
-    // 체중이 있으면 체중 우선 표시, 유산소 기록이 있으면 유산소 표시, 없으면 루틴타입 표시
+    const hasRecAny = !!(rec || cardioRec);
+    // 운동한 날에 표시할 체중: 그날 기록이 우선, 없으면 그날 이전 가장 최근 체중(흐리게)
+    let wtShow='', wtExact=false;
+    if(wt){ wtShow=wt; wtExact=true; }
+    else if(hasRecAny){
+      let best='';
+      for(const k in wMap){ if(k<=ds && k>best) best=k; }
+      if(best) wtShow=wMap[best];
+    }
     const typeColor={A:'var(--blue)',B:'var(--green)',C:'var(--purple)',D:'var(--accent2)',E:'var(--accent)',F:'var(--purple)'}[tk]||'';
     let mainLabel;
-    if(wt){
-      mainLabel = `<div style="font-size:10px;color:#4a9eff;font-family:var(--mono);font-weight:700;line-height:1.3;">${wt}<span style="font-size:7px;">kg</span></div>`;
-    } else if(cardioRec && !rec){
+    if(cardioRec && !rec){
       mainLabel = `<div style="font-size:9px;color:var(--green);font-weight:700;line-height:1.3;">🏃${cardioRec.totalMin}분</div>`;
+    } else if(wt && !hasRecAny){
+      // 운동 안 한 날은 기존처럼 체중만 크게
+      mainLabel = `<div style="font-size:10px;color:#4a9eff;font-family:var(--mono);font-weight:700;line-height:1.3;">${wt}<span style="font-size:7px;">kg</span></div>`;
     } else {
       mainLabel = `<div class="cal-type ${dispClass}" style="${typeColor?'color:'+typeColor+';':''}${isCardioOnly?'color:var(--green);font-size:9px;':''}">${dispType}</div>`;
+    }
+    // 운동한 날 보조 라인: 루틴 표시 아래에 체중을 함께 보여준다
+    let wtLine='';
+    if(hasRecAny && wtShow){
+      wtLine = wtExact
+        ? `<div style="font-size:9px;color:#4a9eff;font-family:var(--mono);font-weight:700;line-height:1.2;">${wtShow}<span style="font-size:6px;">kg</span></div>`
+        : `<div style="font-size:9px;color:#4a9eff88;font-family:var(--mono);line-height:1.2;">${wtShow}<span style="font-size:6px;">kg</span></div>`;
     }
     const hasDot = rec || cardioRec;
     html+=`<div class="cal-cell${ds===ts?' today':''}${rec||cardioRec?' has-rec':''}${isRest&&!rec&&!cardioRec?' rest-day':''}" onclick="showCalDetail('${ds}')">
       <div class="cal-date">${d}</div>
       ${mainLabel}
+      ${wtLine}
       ${hasDot?'<div class="cal-dot"'+(cardioRec&&!rec?' style="background:var(--green);"':'')+'></div>':''}
     </div>`;
   }
   calGrid.innerHTML=html;
   const detail=document.getElementById('cal-detail');
   if(detail) detail.innerHTML='';
+  try{ renderGcalSync(); }catch(e){}
 }
 function changeMonth(dir){calMonth+=dir;if(calMonth<0){calMonth=11;calYear--;}if(calMonth>11){calMonth=0;calYear++;}renderCalendar();}
+
+// ══════════════════════════════
+// 구글 캘린더 연동
+// ── 앱에 백엔드 서버가 없으므로 OAuth 자동 동기화 대신
+//    ① 요일별 "구글 캘린더에 추가" 링크 (매주 반복 일정 자동 채움)
+//    ② .ics 파일 다운로드 (구글/삼성/애플 캘린더 공통 가져오기)
+//    두 가지 방식을 제공한다.
+// ══════════════════════════════
+const GCAL_BYDAY = ['SU','MO','TU','WE','TH','FR','SA'];
+
+function gcalGetTime(){ return localStorage.getItem('fitlog-gcal-time') || '19:00'; }
+function gcalSetTime(v){
+  if(/^\d{2}:\d{2}$/.test(v)) localStorage.setItem('fitlog-gcal-time', v);
+  renderGcalSync();
+}
+function gcalDurMin(){
+  return parseInt(localStorage.getItem('fitlog-workout-time') || '60') || 60;
+}
+// 해당 요일(0=일)의 다음 날짜 (오늘 포함)
+function gcalNextDate(dow){
+  const now = new Date();
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  d.setDate(d.getDate() + ((dow - d.getDay()) + 7) % 7);
+  return d;
+}
+// 운동 요일 목록: [{dow, kr, tk, title}]
+function gcalDayInfo(){
+  const out = [];
+  if(typeof DAY_SCHED === 'undefined' || !DAY_SCHED) return out;
+  const kr = ['일','월','화','수','목','금','토'];
+  for(let dow = 0; dow < 7; dow++){
+    const tk = DAY_SCHED[dow];
+    if(!tk || tk === 'REST') continue;
+    const rt = (typeof RT !== 'undefined' && RT[tk]) ? RT[tk] : null;
+    out.push({dow:dow, kr:kr[dow], tk:tk, title:(rt && rt.title) ? rt.title : '운동'});
+  }
+  return out;
+}
+function gcalFmtLocal(d, hhmm){
+  const p = function(n){ return String(n).padStart(2,'0'); };
+  const hm = (hhmm || '19:00').split(':');
+  return '' + d.getFullYear() + p(d.getMonth()+1) + p(d.getDate()) + 'T' + p(hm[0]) + p(hm[1]) + '00';
+}
+function gcalAddMin(hhmm, min){
+  const hm = (hhmm || '19:00').split(':');
+  let t = parseInt(hm[0]) * 60 + parseInt(hm[1]) + min;
+  t = t % 1440;
+  return String(Math.floor(t/60)).padStart(2,'0') + ':' + String(t%60).padStart(2,'0');
+}
+// 요일 1개 → 구글 캘린더 반복 일정 추가 링크 열기
+function gcalOpen(dow){
+  const info = gcalDayInfo().find(function(x){ return x.dow === dow; });
+  if(!info){ showToast('해당 요일에 배정된 운동이 없습니다','error'); return; }
+  const t0 = gcalGetTime();
+  const t1 = gcalAddMin(t0, gcalDurMin());
+  const d  = gcalNextDate(dow);
+  const d2 = new Date(d); // 종료가 자정을 넘으면 다음날로
+  if(t1 <= t0) d2.setDate(d2.getDate() + 1);
+  let tz = 'Asia/Seoul';
+  try{ tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; }catch(e){}
+  const url = 'https://calendar.google.com/calendar/render?action=TEMPLATE'
+    + '&text=' + encodeURIComponent('🏋️ FitLog · ' + info.title)
+    + '&dates=' + gcalFmtLocal(d, t0) + '/' + gcalFmtLocal(d2, t1)
+    + '&ctz=' + encodeURIComponent(tz)
+    + '&recur=' + encodeURIComponent('RRULE:FREQ=WEEKLY;BYDAY=' + GCAL_BYDAY[dow])
+    + '&details=' + encodeURIComponent('FitLog 주간 운동 루틴 (' + info.kr + '요일)\n앱에서 오늘의 루틴을 확인하세요.');
+  window.open(url, '_blank');
+}
+// 전체 요일 → .ics 파일 다운로드 (구글 캘린더 설정 > 가져오기)
+function gcalDownloadIcs(){
+  const days = gcalDayInfo();
+  if(!days.length){ showToast('배정된 운동 요일이 없습니다. 설정에서 요일을 먼저 정해주세요.','error'); return; }
+  const t0 = gcalGetTime();
+  const t1 = gcalAddMin(t0, gcalDurMin());
+  let tz = 'Asia/Seoul';
+  try{ tz = Intl.DateTimeFormat().resolvedOptions().timeZone || tz; }catch(e){}
+  const esc = function(s){ return String(s).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,'); };
+  const p = function(n){ return String(n).padStart(2,'0'); };
+  const now = new Date();
+  const stamp = '' + now.getUTCFullYear() + p(now.getUTCMonth()+1) + p(now.getUTCDate())
+    + 'T' + p(now.getUTCHours()) + p(now.getUTCMinutes()) + p(now.getUTCSeconds()) + 'Z';
+  let ics = 'BEGIN:VCALENDAR\r\nVERSION:2.0\r\nPRODID:-//FitLog//Workout Schedule//KR\r\nCALSCALE:GREGORIAN\r\n';
+  days.forEach(function(info){
+    const d  = gcalNextDate(info.dow);
+    const d2 = new Date(d);
+    if(t1 <= t0) d2.setDate(d2.getDate() + 1);
+    ics += 'BEGIN:VEVENT\r\n'
+      + 'UID:fitlog-' + GCAL_BYDAY[info.dow].toLowerCase() + '-' + info.tk + '@fitlog\r\n'
+      + 'DTSTAMP:' + stamp + '\r\n'
+      + 'DTSTART;TZID=' + tz + ':' + gcalFmtLocal(d, t0) + '\r\n'
+      + 'DTEND;TZID=' + tz + ':' + gcalFmtLocal(d2, t1) + '\r\n'
+      + 'RRULE:FREQ=WEEKLY;BYDAY=' + GCAL_BYDAY[info.dow] + '\r\n'
+      + 'SUMMARY:' + esc('🏋️ FitLog · ' + info.title) + '\r\n'
+      + 'DESCRIPTION:' + esc('FitLog 주간 운동 루틴 (' + info.kr + '요일)') + '\r\n'
+      + 'END:VEVENT\r\n';
+  });
+  ics += 'END:VCALENDAR\r\n';
+  try{
+    const blob = new Blob([ics], {type:'text/calendar;charset=utf-8'});
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'fitlog-workout-schedule.ics';
+    document.body.appendChild(a); a.click();
+    setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+    showToast('📥 .ics 저장! 구글 캘린더 설정 → 가져오기에서 업로드하세요.','success');
+  }catch(e){ showToast('다운로드 실패: ' + e.message, 'error'); }
+}
+function renderGcalSync(){
+  const el = document.getElementById('gcal-sync-body');
+  if(!el) return;
+  const days = gcalDayInfo();
+  const t0 = gcalGetTime();
+  const t1 = gcalAddMin(t0, gcalDurMin());
+  let html = '<div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap;">'
+    + '<span style="font-size:11px;color:var(--muted);">시작 시간</span>'
+    + '<input type="time" value="' + t0 + '" onchange="gcalSetTime(this.value)" '
+    + 'style="background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);padding:6px 8px;font-family:var(--mono);font-size:12px;"/>'
+    + '<span style="font-size:11px;color:var(--muted);">~ ' + t1 + ' (운동 시간 ' + gcalDurMin() + '분 기준)</span>'
+    + '</div>';
+  if(!days.length){
+    html += '<div style="font-size:12px;color:var(--muted);padding:8px;">배정된 운동 요일이 없습니다. 설정 ②에서 요일을 정해주세요.</div>';
+  } else {
+    html += days.map(function(info){
+      return '<div style="display:flex;align-items:center;gap:8px;padding:7px 4px;border-bottom:1px dashed var(--border);">'
+        + '<span style="font-size:12px;font-weight:800;width:22px;color:var(--accent2);">' + info.kr + '</span>'
+        + '<span style="flex:1;font-size:11px;color:var(--text);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">' + info.title + '</span>'
+        + '<button onclick="gcalOpen(' + info.dow + ')" style="padding:5px 10px;border-radius:7px;border:1px solid var(--blue);'
+        + 'background:#4a9eff15;color:var(--blue);font-size:11px;font-weight:700;cursor:pointer;font-family:var(--font);white-space:nowrap;">+ 구글 캘린더</button>'
+        + '</div>';
+    }).join('');
+    html += '<button onclick="gcalDownloadIcs()" style="margin-top:10px;width:100%;padding:10px;border-radius:9px;border:none;'
+      + 'background:linear-gradient(135deg,var(--blue),#2563eb);color:#fff;font-size:12px;font-weight:800;cursor:pointer;font-family:var(--font);">'
+      + '📥 전체 일정 .ics 다운로드 (한 번에 가져오기)</button>'
+      + '<div style="font-size:10px;color:var(--muted);line-height:1.7;margin-top:7px;">'
+      + '· <b>+ 구글 캘린더</b> : 구글 캘린더가 열리며 매주 반복 일정이 채워집니다 → 저장만 누르세요.<br>'
+      + '· <b>.ics 파일</b> : <a href="https://calendar.google.com/calendar/u/0/r/settings/export" target="_blank" style="color:var(--blue);">구글 캘린더 설정 → 가져오기</a>에 업로드하면 전체 요일이 한 번에 등록됩니다.<br>'
+      + '· 루틴·요일을 바꾼 경우 캘린더의 기존 일정은 직접 삭제 후 다시 추가해주세요.</div>';
+  }
+  el.innerHTML = html;
+}
 function showCalDetail(ds){
   const rec=records.find(r=>r.date===ds);
   const dow=new Date(ds+'T12:00:00').getDay();
@@ -6705,6 +6884,8 @@ function deleteWeight(date){
 
 function saveWeightToStorage(){
   localStorage.setItem('fitlog-weight-log', JSON.stringify(weightLog));
+  // 클라우드에도 백그라운드 저장 → 다른 기기 캘린더에도 체중이 보인다
+  try{ if(typeof window.saveRoutine === 'function' && typeof RT !== 'undefined') window.saveRoutine(RT); }catch(e){}
 }
 
 function loadWeightFromStorage(){
@@ -9021,7 +9202,7 @@ function renderORMGrid(){
 // (meta 태그의 no-cache는 브라우저가 거의 무시한다)
 // 그래서 서버에 있는 파일을 직접 읽어 빌드 번호를 비교한다.
 // ══════════════════════════════════════════════════════════════════
-const APP_BUILD = '20260830-sync2';
+const APP_BUILD = '20260830-gcal';
 // 화면이 뜨자마자 빌드를 보여준다 — 어느 기기가 옛 파일인지 3초 만에 알 수 있게
 (function(){
   const paint = function(){
