@@ -7727,18 +7727,20 @@ let classType = localStorage.getItem('fitlog-classtype') || '기구운동';
 let classPurposes = JSON.parse(localStorage.getItem('fitlog-purposes') || '["근력 강화"]');
 
 const PURPOSE_LIST = [
-  {key:'근력 강화',    icon:'💪', color:'var(--accent)'},
-  {key:'체중 감량',    icon:'🔥', color:'var(--accent2)'},
-  {key:'체중 유지',    icon:'⚖️', color:'var(--green)'},
-  {key:'근육량 증가',  icon:'📈', color:'var(--blue)'},
-  {key:'하체·둔근 강화',icon:'🦵',color:'var(--purple)'},
-  {key:'다이어트',     icon:'🥗', color:'#ff6b35'},
+  // ── 매뉴얼 5대 목적 (대분류) ──
+  {key:'유산소·체력향상',icon:'🫁', color:'#4a9eff', manual:'①'},
+  {key:'다이어트',     icon:'🔥', color:'#ff6b35',  manual:'②'},
+  {key:'근력 강화',    icon:'💪', color:'var(--accent)', manual:'③'},
+  {key:'근육량 증가',  icon:'📈', color:'var(--blue)',   manual:'④'},
+  {key:'재활·회복',    icon:'🏥', color:'var(--muted)',  manual:'⑤'},
+  // ── 보조 목적 ──
+  {key:'체중 감량',    icon:'🥗', color:'var(--accent2)'},
   {key:'건강 관리',    icon:'❤️', color:'var(--green)'},
+  {key:'하체·둔근 강화',icon:'🦵',color:'var(--purple)'},
   {key:'홈트레이닝',   icon:'🏠', color:'var(--blue)'},
   {key:'시니어 건강',  icon:'🌿', color:'var(--green)'},
   {key:'유연성·스트레칭',icon:'🧘',color:'var(--purple)'},
   {key:'복근 만들기',  icon:'🎯', color:'var(--accent)'},
-  {key:'재활·회복',    icon:'🏥', color:'var(--muted)'},
 ];
 
 // ── 홈트 루틴 DB ──
@@ -9008,7 +9010,7 @@ function renderORMGrid(){
 // (meta 태그의 no-cache는 브라우저가 거의 무시한다)
 // 그래서 서버에 있는 파일을 직접 읽어 빌드 번호를 비교한다.
 // ══════════════════════════════════════════════════════════════════
-const APP_BUILD = '20260824-ux2';
+const APP_BUILD = '20260830-manual';
 // 화면이 뜨자마자 빌드를 보여준다 — 어느 기기가 옛 파일인지 3초 만에 알 수 있게
 (function(){
   const paint = function(){
@@ -9068,37 +9070,37 @@ async function forceUpdate(){
 }
 
 // 엔진 버전 — 이 값이 바뀌면 예전 방식으로 저장된 루틴 백업을 폐기하고 새로 만든다
-const MANUAL_ENGINE_VER = 'manual-v9';
+const MANUAL_ENGINE_VER = 'manual-v10';
 
 // ── ① 목적별 훈련 강도 기준 (매뉴얼 4장 각 프로그램 헤더) ──
 const M_INTENSITY = {
   cardio: {
-    name:'유산소·체력 향상', short:'유산소', tone:'#4a9eff',
+    name:'① 유산소·체력(심폐지구력) 향상', short:'유산소', tone:'#4a9eff', manualNo:'①',
     rng:'15~20회', rep:18, rest:40,  pct:'목표중량의 50~60%', tempo:'2-0-1',
     isoRng:'18~22회', isoRep:20, isoRest:30,
-    desc:'심폐지구력과 전신 체력 증진이 목적. 웨이트는 보조 수단으로 쓰고 유산소 비중을 가장 높게 배분합니다.',
-    tip:'세트간 휴식을 40초 안쪽으로 지켜야 심박수가 유지됩니다. 중량보다 리듬이 우선.'
+    desc:'심폐지구력 향상과 전신 체력 증진이 목적. 웨이트는 보조 수단으로 사용하고 유산소 비중을 가장 높게 배분합니다.',
+    tip:'반복 15~20회 · 세트간 휴식 30~45초 · 목표중량의 50~60% 강도. 중량보다 리듬이 우선.'
   },
   diet: {
-    name:'다이어트·체중감량', short:'체지방 감소', tone:'#ff6b35',
+    name:'② 다이어트·체중감량(살빼기)', short:'체지방 감소', tone:'#ff6b35', manualNo:'②',
     rng:'12~15회', rep:14, rest:50,  pct:'목표중량의 60~70%', tempo:'2-0-1', circuit:true,
     isoRng:'15~20회', isoRep:16, isoRest:40,
     desc:'체지방 감소가 목표. 웨이트 서킷 + 유산소 병행이 핵심이며 세트간 휴식을 최소화합니다.',
-    tip:'같은 섹션 안의 종목은 쉬지 않고 이어서 → 한 바퀴 끝나면 60초 휴식(서킷형).'
+    tip:'반복 12~15회 · 세트간 휴식 45~60초 · 서킷 형태(휴식 최소화) · 목표중량의 60~70% 강도.'
   },
   strength: {
-    name:'근력강화 (힘·파워)', short:'근력', tone:'#e8533a',
+    name:'③ 근력강화(힘·파워 향상)', short:'근력', tone:'#e8533a', manualNo:'③',
     rng:'3~6회', rep:5, rest:150, pct:'목표중량의 80~90%', tempo:'3-1-1', warmupSets:true,
     isoRng:'8~10회', isoRep:9, isoRest:90, isoPct:'목표중량의 65~75%',
     desc:'절대 근력과 파워 향상이 목표. 저반복·고중량·긴 휴식으로 신경계 적응을 극대화합니다.',
-    tip:'워밍업 세트 필수 — 메인 중량의 40%×8회 → 60%×5회 → 80%×3회 후 본 세트 진입.'
+    tip:'반복 3~6회 · 세트간 휴식 2~3분 · 목표중량의 80~90% · 워밍업 세트 필수.'
   },
   hyper: {
-    name:'근육증가 (벌크업)', short:'근비대', tone:'#a78bfa',
+    name:'④ 근육증가(벌크업·근비대)', short:'근비대', tone:'#a78bfa', manualNo:'④',
     rng:'8~12회', rep:10, rest:75, pct:'목표중량의 70~80%', tempo:'2-1-2', toFailure:true,
     isoRng:'10~15회', isoRep:12, isoRest:60, isoPct:'목표중량의 60~70%',
     desc:'근육량 증가(근비대)가 목표. 중반복·높은 훈련량으로 근육에 충분한 자극을 줍니다.',
-    tip:'마지막 세트는 실패지점 1~2회 앞(RIR 1~2)까지. 내리는 동작(네거티브) 2초 이상 유지.'
+    tip:'반복 8~12회 · 세트간 휴식 60~90초 · 목표중량의 70~80% · 세트당 실패지점 근접.'
   },
   health: {
     name:'건강 관리·체중 유지', short:'컨디셔닝', tone:'#4caf7d',
@@ -9108,7 +9110,7 @@ const M_INTENSITY = {
     tip:'통증이 아니라 "적당한 뻐근함"에서 멈추세요. 주 3회 이상 빈도가 강도보다 중요합니다.'
   },
   rehab: {
-    name:'재활·회복', short:'재활', tone:'#ff9500',
+    name:'⑤ 재활·회복', short:'재활', tone:'#ff9500', manualNo:'⑤',
     rng:'12~15회', rep:13, rest:75, pct:'통증 없는 초경량 (30~40%)', tempo:'3-1-3', painFree:true,
     desc:'통증 없는 가동범위(Pain-Free ROM) 확보가 최우선. 움직임의 질 > 중량 > 횟수 순서로 진행합니다.',
     tip:'통증(NRS 4 이상) 발생 시 즉시 중단. 정형외과적 진단이 있으면 의료진 소견을 먼저 확인하세요.'
@@ -9128,16 +9130,17 @@ const M_INTENSITY = {
 //  env(환경형)           : 기구/맨몸 같은 환경을 정한다.
 // ══════════════════════════════════════════════════════════════════
 const M_PURPOSE_ROLE = {
-  '근력 강화':     {role:'intensity', key:'strength', label:'고중량·저반복·긴 휴식으로 강도를 정합니다'},
-  '근육량 증가':   {role:'intensity', key:'hyper',    label:'중반복·고볼륨으로 강도를 정합니다'},
-  '상체 키우기':   {role:'intensity', key:'hyper',    label:'중반복·고볼륨으로 강도를 정합니다'},
-  '체중 감량':     {role:'intensity', key:'diet',     label:'서킷·짧은 휴식 + 유산소로 강도를 정합니다'},
-  '다이어트':      {role:'intensity', key:'diet',     label:'서킷·짧은 휴식 + 유산소로 강도를 정합니다'},
+  '유산소·체력향상':{role:'intensity', key:'cardio',   label:'① 고반복·짧은 휴식 · 유산소 비중 최대'},
+  '근력 강화':     {role:'intensity', key:'strength', label:'③ 저반복·고중량·긴 휴식으로 신경계 적응 극대화'},
+  '근육량 증가':   {role:'intensity', key:'hyper',    label:'④ 중반복·고볼륨 · 실패지점 근접'},
+  '상체 키우기':   {role:'intensity', key:'hyper',    label:'④ 중반복·고볼륨으로 강도를 정합니다'},
+  '체중 감량':     {role:'intensity', key:'diet',     label:'② 서킷·짧은 휴식 + 유산소 병행'},
+  '다이어트':      {role:'intensity', key:'diet',     label:'② 서킷·짧은 휴식 + 유산소 병행'},
   '체중 유지':     {role:'intensity', key:'health',   label:'중간 강도로 균형 있게 정합니다'},
   '건강 관리':     {role:'intensity', key:'health',   label:'무리 없는 강도로 정합니다'},
   '시니어 건강':   {role:'intensity', key:'health',   label:'관절 부담을 낮춘 저강도로 정합니다'},
-  '근지구력 향상': {role:'intensity', key:'cardio',   label:'고반복·짧은 휴식으로 정합니다'},
-  '재활·회복':     {role:'intensity', key:'rehab',    label:'통증 회복 단계별 프로그램으로 진행합니다'},
+  '근지구력 향상': {role:'intensity', key:'cardio',   label:'① 고반복·짧은 휴식으로 정합니다'},
+  '재활·회복':     {role:'intensity', key:'rehab',    label:'⑤ 통증 회복 단계별 프로그램으로 진행합니다'},
   '복근 만들기':      {role:'content', kind:'core',    label:'복부 섹션을 매 세션 마지막에 추가합니다'},
   '하체·둔근 강화':   {role:'content', kind:'glute',   label:'하체 날에 둔근 보강 섹션을 추가합니다'},
   '유연성·스트레칭':  {role:'content', kind:'mobility',label:'모빌리티·스트레칭 섹션을 추가합니다'},
@@ -9186,7 +9189,7 @@ function m_pickIntensity(purposes, level){
   if(has('근력')) return 'strength';
   if(has('근육량') || has('벌크') || has('상체 키우기')) return 'hyper';
   if(has('감량') || has('다이어트')) return 'diet';
-  if(has('유산소') || has('근지구력')) return 'cardio';
+  if(has('유산소') || has('체력향상') || has('근지구력')) return 'cardio';
   if(has('유지') || has('건강') || has('유연')) return 'health';
   return 'hyper';
 }
@@ -9499,13 +9502,17 @@ const M_REHAB = {
   }
 };
 
-// ── ⑦ 목적 × 레벨 → 유산소 배분 (매뉴얼 4장 '유산소·비고' 열) ──
+// ── ⑦ 목적 × 레벨 → 유산소 배분 (매뉴얼 4장 '유산소·비고' 열 정밀 반영) ──
+// ① 유산소: 초급=휴식일30분, 중급=휴식일40분, 고급=웨이트후20~25분, 마스터=웨이트후25~30분
+// ② 다이어트: 초급=휴식일30~40분, 중급=휴식일40분+서킷, 고급=웨이트후20~30분서킷, 마스터=웨이트후25~30분서킷
+// ③ 근력강화: 초급=가벼운 스트레칭·유산소15분선택, 중급=가벼운 유산소15분, 고급=최소화, 마스터=이동성훈련위주
+// ④ 근육증가: 초급=가벼운 유산소15~20분, 중급=유산소20분디로드, 고급=선택적 주2회20분, 마스터=선택적 주2회20분
 function m_cardioMin(ikey, level){
   const table = {
-    cardio:  {1:30, 2:40, 3:25, 4:30},
-    diet:    {1:35, 2:40, 3:28, 4:30},
-    strength:{1:10, 2:12, 3:10, 4:10},
-    hyper:   {1:15, 2:15, 3:20, 4:20},
+    cardio:  {1:30, 2:40, 3:23, 4:28},   // 매뉴얼 ① — 고급:20~25평균23, 마스터:25~30평균28
+    diet:    {1:35, 2:40, 3:25, 4:28},   // 매뉴얼 ② — 고급:20~30평균25서킷형, 마스터:25~30평균28서킷형
+    strength:{1:15, 2:15, 3:0,  4:0},    // 매뉴얼 ③ — 초급:15분선택, 중급:15분, 고급:최소화, 마스터:이동성만
+    hyper:   {1:18, 2:20, 3:20, 4:20},   // 매뉴얼 ④ — 초급:15~20평균18, 중급:20분디로드, 고급/마스터:주2회20분
     health:  {1:25, 2:25, 3:20, 4:20},
     rehab:   {1:12, 2:12, 3:12, 4:12}
   };
@@ -10120,25 +10127,106 @@ function m_cooldown(){
   ]};
 }
 
-// 유산소·휴식 요일 (매뉴얼: 초급 주2일 / 중급 주1일)
+// 유산소·휴식 요일 — 매뉴얼 목적별 차등 (초급 주2일 / 중급 주1일)
+// ① 유산소: 유산소 30분 + 코어 스트레칭 10분
+// ② 다이어트: 유산소 30~40분 + 가벼운 코어 + 서킷
+// ③ 근력강화: 가벼운 스트레칭 + 선택적 유산소 15분
+// ④ 근비대: 휴식 또는 가벼운 유산소 15~20분
+// ⑤ 재활: 관절 가동성 + 가벼운 걷기 10~15분
 function m_restDay(intn, isHome, level){
-  // 유산소 루틴: 자전거 15분 + 경사도 런닝머신 걷기 30분 + 천국의 계단 5분 = 50분
-  return {
-    label:'유산소 · 회복',
-    title:'유산소 루틴 · 50분',
-    color:'rh-d',
-    muscles:['심폐','전신회복'],
-    sections:[
-      {n:'유산소', exs:[
-        {n:isHome ? '제자리 달리기' : '업라이트 바이크', d:'15분 · 중강도', tags:['심폐','하체'], w:[], sets:0, cardioMin:15},
-        {n:isHome ? '점핑잭' : '런닝머신 (경사 걷기)', d:'30분 · 경사도 8~12% · 속도 5~6km/h', tags:['심폐','하체','둔근'], w:['무릎주의'], sets:0, cardioMin:30},
-        {n:isHome ? '마운틴 클라이머' : '천국의 계단', d:'5분 · 중고강도', tags:['심폐','하체','둔근'], w:[], sets:0, cardioMin:5}
+  var ikey = (intn && intn.key) || (typeof intn === 'string' ? intn : 'hyper');
+
+  // ── 공통 워밍업: 가벼운 걷기 또는 자전거 ──
+  var warmup = {n:isHome ? '가벼운 제자리 걷기' : '가벼운 걷기 또는 자전거', d:'5분 · 저강도', tags:['심폐'], w:[], sets:0, cardioMin:5};
+
+  // ── 코어 스트레칭 블록 (10분) ──
+  var coreStretch = [
+    {n:'고양이-소 스트레칭', d:'10회', tags:['척추 가동성'], w:[], sets:0},
+    {n:'힙 플렉서 스트레칭', d:'양쪽 각 30초', tags:['고관절'], w:[], sets:0},
+    {n:'폼롤러 전신 이완', d:'5분', tags:['근막이완'], w:[], sets:0}
+  ];
+
+  var sections, label, title, totalMin, muscles;
+
+  if(ikey === 'cardio'){
+    // ① 유산소·체력향상: 유산소 30분 + 코어 스트레칭 10분 = ~45분
+    totalMin = 45;
+    label = '① 유산소 · 회복';
+    muscles = ['심폐','전신회복'];
+    sections = [
+      {n:'유산소 (30분)', exs:[
+        warmup,
+        {n:isHome ? '제자리 달리기' : '업라이트 바이크', d:'10분 · 중강도', tags:['심폐','하체'], w:[], sets:0, cardioMin:10},
+        {n:isHome ? '점핑잭' : '런닝머신 (경사 걷기)', d:'15분 · 경사도 6~8% · 속도 5km/h', tags:['심폐','하체','둔근'], w:['무릎주의'], sets:0, cardioMin:15}
       ]},
-      {n:'스트레칭', exs:[
-        {n:'고양이-소 스트레칭', d:'10회', tags:['척추 가동성'], w:[], sets:0},
-        {n:'폼롤러 전신 이완', d:'10분', tags:['근막이완'], w:[], sets:0}
+      {n:'코어 스트레칭 (10분)', exs:coreStretch}
+    ];
+  } else if(ikey === 'diet'){
+    // ② 다이어트: 유산소 30~40분 + 가벼운 코어 + 서킷 = ~55분
+    totalMin = 55;
+    label = '② 유산소 · 코어 서킷';
+    muscles = ['심폐','코어','전신'];
+    sections = [
+      {n:'유산소 (35분)', exs:[
+        warmup,
+        {n:isHome ? '제자리 달리기' : '런닝머신 (경사 걷기)', d:'20분 · 경사도 8~12% · 속도 5~6km/h', tags:['심폐','하체','둔근'], w:['무릎주의'], sets:0, cardioMin:20},
+        {n:isHome ? '점핑잭' : '업라이트 바이크', d:'10분 · 중강도', tags:['심폐','하체'], w:[], sets:0, cardioMin:10}
+      ]},
+      {n:'가벼운 코어 서킷', exs:[
+        {n:'플랭크', d:'30초 × 3세트', tags:['코어'], w:[], sets:3},
+        {n:'바이시클 크런치', d:'15회 × 2세트', tags:['코어','복사근'], w:[], sets:2},
+        {n:'버드독', d:'양쪽 각 8회 × 2세트', tags:['코어','밸런스'], w:[], sets:2}
+      ]},
+      {n:'코어 스트레칭 (10분)', exs:coreStretch}
+    ];
+  } else if(ikey === 'strength'){
+    // ③ 근력강화: 가벼운 스트레칭 + 선택적 유산소 15분 = ~30분
+    totalMin = 30;
+    label = '③ 회복 · 가벼운 유산소';
+    muscles = ['전신회복'];
+    sections = [
+      {n:'코어 스트레칭 (10분)', exs:coreStretch},
+      {n:'선택적 유산소 (15분)', exs:[
+        warmup,
+        {n:isHome ? '가벼운 제자리 걷기' : '런닝머신 (저속 걷기)', d:'10분 · 저강도 · 속도 4~5km/h', tags:['심폐'], w:[], sets:0, cardioMin:10}
       ]}
-    ]
+    ];
+  } else if(ikey === 'rehab'){
+    // ⑤ 재활: 관절 가동성 + 가벼운 걷기 10~15분 = ~25분
+    totalMin = 25;
+    label = '⑤ 관절 회복 · 가벼운 걷기';
+    muscles = ['관절','전신회복'];
+    sections = [
+      {n:'관절 가동성 운동', exs:[
+        {n:'고양이-소 스트레칭', d:'10회', tags:['척추 가동성'], w:[], sets:0},
+        {n:'앵클 서클', d:'양쪽 각 10회', tags:['발목 가동성'], w:[], sets:0},
+        {n:'힙 서클', d:'양쪽 각 10회', tags:['고관절 가동성'], w:[], sets:0},
+        {n:'폼롤러 전신 이완', d:'5분', tags:['근막이완'], w:[], sets:0}
+      ]},
+      {n:'가벼운 걷기 (10~15분)', exs:[
+        {n:isHome ? '가벼운 제자리 걷기' : '가벼운 걷기', d:'10~15분 · 저강도', tags:['심폐'], w:[], sets:0, cardioMin:12}
+      ]}
+    ];
+  } else {
+    // ④ 근비대(hyper) 기본값: 휴식 또는 가벼운 유산소 15~20분 = ~30분
+    totalMin = 30;
+    label = '④ 회복 · 가벼운 유산소';
+    muscles = ['심폐','전신회복'];
+    sections = [
+      {n:'코어 스트레칭 (10분)', exs:coreStretch},
+      {n:'가벼운 유산소 (15~20분)', exs:[
+        warmup,
+        {n:isHome ? '가벼운 제자리 걷기' : '업라이트 바이크', d:'10~15분 · 저강도', tags:['심폐','하체'], w:[], sets:0, cardioMin:12}
+      ]}
+    ];
+  }
+
+  return {
+    label:label,
+    title:label + ' · ' + totalMin + '분',
+    color:'rh-d',
+    muscles:muscles,
+    sections:sections
   };
 }
 
@@ -10303,7 +10391,7 @@ function buildManualPlan(opt){
       if(targetMin > 0){
         const _cm = Math.max(10, Math.round(targetMin * 0.6));
         m_scaleTimeSection(rd.sections[0], _cm);
-        rd.title = '유산소 / 휴식 · ' + _cm + '분';
+        rd.title = rd.label + ' · ' + _cm + '분';
       }
       rd.estMin = m_estimateMinutes(rd);
       plan.push(rd);
