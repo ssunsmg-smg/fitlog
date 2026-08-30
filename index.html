@@ -233,21 +233,6 @@
         }
       });
     }
-    // level 복원
-    if (data.level !== undefined) {
-      curLevel = parseInt(data.level);
-      localStorage.setItem('fitlog-level', curLevel);
-    }
-    // classType, purposes 복원
-    if (data.classType) {
-      classType = data.classType;
-      localStorage.setItem('fitlog-classtype', classType);
-    }
-    if (data.purposes) {
-      classPurposes = data.purposes;
-      localStorage.setItem('fitlog-purposes', JSON.stringify(classPurposes));
-    }
-
     // ── 기기 간 동기화: 루틴을 만드는 값들을 전부 이 기기에 반영 ──
     // 이 기기가 더 최신이면 덮어쓰지 않는다 (방금 바꾼 설정이 사라지면 안 되니까)
     // 규칙을 단순하게 만든다.
@@ -256,6 +241,23 @@
     // savedAt 비교만으로 정하면 두 기기가 서로를 덮어쓰며 계속 어긋난다.
     const dirtyHere = (localStorage.getItem('fitlog-settings-dirty') === '1');
     const remoteNewer = !dirtyHere;
+    // level·classType·purposes 도 반드시 이 규칙을 따른다.
+    // (예전에는 무조건 클라우드 값으로 덮어써서, 설정에서 성장단계·운동환경을
+    //  바꿔도 앱을 다시 열면 옛 값으로 되돌아가 "루틴이 안 바뀌는" 문제가 있었다)
+    if (remoteNewer) {
+      if (data.level !== undefined) {
+        curLevel = parseInt(data.level);
+        localStorage.setItem('fitlog-level', curLevel);
+      }
+      if (data.classType) {
+        classType = data.classType;
+        localStorage.setItem('fitlog-classtype', classType);
+      }
+      if (data.purposes) {
+        classPurposes = data.purposes;
+        localStorage.setItem('fitlog-purposes', JSON.stringify(classPurposes));
+      }
+    }
     if (remoteNewer) {
       const put  = function(k, v){ if(v !== undefined && v !== null) try{ localStorage.setItem(k, String(v)); }catch(e){} };
       const putJ = function(k, v){ if(v !== undefined && v !== null) try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} };
@@ -8891,8 +8893,17 @@ async function applyLevel(){
   var applyBtn3 = document.getElementById('step3-apply-btn');
   if(applyBtn3){ applyBtn3.disabled=true; applyBtn3.textContent='⏳ 저장 중...'; applyBtn3.style.opacity='0.7'; }
 
-  // 레벨만 저장 (루틴은 아직 생성 안 함)
+  // 레벨 저장 + 루틴 즉시 재생성 (레벨이 바뀌면 분할·종목이 바뀌어야 한다)
   localStorage.setItem('fitlog-level', curLevel);
+  localStorage.removeItem('fitlog-rt-custom'); // 이전 레벨로 만든 루틴 백업 무효화
+  try{
+    const _hasPurp = (JSON.parse(localStorage.getItem('fitlog-purposes') || '[]')).length > 0;
+    if(_hasPurp && typeof rebuildFromSettings === 'function'){
+      await rebuildFromSettings(true); // 새 레벨 기준으로 조용히 재생성 + 클라우드 저장
+    } else {
+      markSettingsDirty(); // 목적이 아직 없으면 "미반영" 표시만
+    }
+  }catch(e){ console.warn('[FitLog] 레벨 변경 루틴 재생성 실패', e); markSettingsDirty(); }
 
   markSettDone(3);
 
@@ -8906,7 +8917,7 @@ async function applyLevel(){
   var txt3 = document.getElementById('step3-status-txt');
   if(dot3) dot3.style.background='var(--green)';
   if(txt3){ txt3.style.color='var(--green)';
-    txt3.textContent='✅ '+lv.name+' 단계 저장! 다음 단계로 이동하세요.'; }
+    txt3.textContent='✅ '+lv.name+' 단계 저장 · 루틴에 바로 반영했습니다!'; }
   var nextBtn3 = document.getElementById('step3-next-btn');
   if(nextBtn3){
     nextBtn3.disabled=false; nextBtn3.style.cursor='pointer'; nextBtn3.style.opacity='1';
@@ -8914,7 +8925,7 @@ async function applyLevel(){
     nextBtn3.style.color='#fff'; nextBtn3.style.border='none';
   }
 
-  showToast('✅ '+lv.name+' 단계 저장! ④ 기준중량으로 이동하세요.', 'success');
+  showToast('✅ '+lv.name+' 단계 저장 · 루틴 반영 완료! ④ 기준중량으로 이동하세요.', 'success');
   goSettStep(4);
 }
 
@@ -9010,7 +9021,7 @@ function renderORMGrid(){
 // (meta 태그의 no-cache는 브라우저가 거의 무시한다)
 // 그래서 서버에 있는 파일을 직접 읽어 빌드 번호를 비교한다.
 // ══════════════════════════════════════════════════════════════════
-const APP_BUILD = '20260830-manual';
+const APP_BUILD = '20260830-sync2';
 // 화면이 뜨자마자 빌드를 보여준다 — 어느 기기가 옛 파일인지 3초 만에 알 수 있게
 (function(){
   const paint = function(){
@@ -11730,11 +11741,12 @@ function m_coverageBanner(){
   return html;
 }
 // 지금 저장된 설정 그대로 루틴을 다시 만든다
-async function rebuildFromSettings(){
+// silent=true : 단계별 저장 버튼에서 자동 호출될 때 (토스트 생략)
+async function rebuildFromSettings(silent){
   try{
     const _p = JSON.parse(localStorage.getItem('fitlog-purposes') || '[]');
     let   _d = JSON.parse(localStorage.getItem('fitlog-assigned-days') || 'null');
-    if(!_p.length){ showToast('설정에서 운동 목적을 먼저 선택해주세요','error'); return; }
+    if(!_p.length){ if(!silent) showToast('설정에서 운동 목적을 먼저 선택해주세요','error'); return; }
     if(!_d || !_d.length) _d = ['월','화','목','금'];
     const _order = ['월','화','수','목','금','토','일'];
     const _keys  = ['A','B','C','D','E','F'];
@@ -11761,13 +11773,15 @@ async function rebuildFromSettings(){
     try{ applyWeeklyVariation(); }catch(e){}
     initSetData(DAY_SCHED[selDay]);
     renderWorkout(); renderHome && renderHome();
-    const miss = m_checkPurposeCoverage();
-    showToast(miss.length
-      ? ('루틴을 다시 만들었지만 ' + miss.map(function(m){ return m.name; }).join('·') + '은(는) 시간이 부족해 못 들어갔어요. ⏱ 운동 시간을 늘려보세요.')
-      : '✅ 지금 설정 그대로 루틴을 다시 만들었습니다', miss.length ? 'info' : 'success');
+    if(!silent){
+      const miss = m_checkPurposeCoverage();
+      showToast(miss.length
+        ? ('루틴을 다시 만들었지만 ' + miss.map(function(m){ return m.name; }).join('·') + '은(는) 시간이 부족해 못 들어갔어요. ⏱ 운동 시간을 늘려보세요.')
+        : '✅ 지금 설정 그대로 루틴을 다시 만들었습니다', miss.length ? 'info' : 'success');
+    }
   }catch(e){
     console.error('[FitLog] 재구성 실패', e);
-    showToast('오류: ' + e.message, 'error');
+    if(!silent) showToast('오류: ' + e.message, 'error');
   }
 }
 
@@ -12498,7 +12512,15 @@ async function applyClassificationWithDays(){
   sorted.forEach(function(day, i){ DAY_SCHED[DAY_NUM_MAP[day]] = routineKeys[i % routineKeys.length]; });
 
   markSettDone(2);
-  clearSettingsDirty();
+
+  // ── 루틴 즉시 재생성: 환경·목적·요일이 바뀌면 루틴도 그 자리에서 바뀌어야 한다 ──
+  // (예전에는 ④단계 최종 버튼을 눌러야만 반영돼서, 여기까지만 하고 운동 탭으로
+  //  가면 옛 루틴이 그대로 보이는 문제가 있었다)
+  try{
+    if(typeof rebuildFromSettings === 'function'){
+      await rebuildFromSettings(true); // 조용히 재생성 + 클라우드 저장 + dirty 해제
+    }
+  }catch(e){ console.warn('[FitLog] 2단계 루틴 재생성 실패', e); markSettingsDirty(); }
 
   // 완료 표시
   if(applyBtn){
@@ -12520,7 +12542,7 @@ async function applyClassificationWithDays(){
   }
 
   updateDayAssignPreview();
-  showToast('✅ 운동환경·목적·요일 저장! 다음 단계에서 성장단계를 선택하세요.', 'success');
+  showToast('✅ 운동환경·목적·요일 저장 · 루틴 반영 완료! 다음 단계에서 성장단계를 선택하세요.', 'success');
   goSettStep(3);
 }
 
