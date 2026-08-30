@@ -3453,6 +3453,63 @@ function migrateExNames(){
     }catch(e){}
   }
 }
+// ══════════════════════════════════════════════════════════════════
+// ■ 요일 ↔ 루틴 매칭 (단일 기준점)
+// ──────────────────────────────────────────────────────────────────
+// 예전에는 요일→루틴키 배정이 4곳에서 제각각 이뤄졌고, RT에 실제로 있는
+// 루틴을 확인하지 않았다. 그래서 배정 요일 수와 RT 루틴 수가 어긋나면
+// (설정 변경·구버전 백업 복원·기기 간 동기화 충돌) 없는 키를 가리키는
+// 요일이 생기고, 복구 코드가 그런 요일을 전부 첫 루틴('A')으로 되돌려
+// 월·화·일이 똑같은 루틴을 보여주는 문제가 있었다.
+// 이제 요일 배정은 반드시 이 함수 하나를 거친다.
+//   · RT에 실제로 존재하는 루틴만 사용
+//   · 배정 요일 수가 루틴 수보다 많으면 매뉴얼처럼 순환 배정
+//   · 루틴이 모자라면 지금 설정으로 루틴을 다시 만든다
+// ══════════════════════════════════════════════════════════════════
+function m_availRoutineKeys(){
+  return ['A','B','C','D','E','F'].filter(function(k){
+    return RT[k] && RT[k].sections && RT[k].sections.length;
+  });
+}
+function m_syncDaySchedule(){
+  const order = ['월','화','수','목','금','토','일'];
+  const avail = m_availRoutineKeys();
+  if(!avail.length) return false;
+
+  // 운동 요일 확보: 저장값 → 없으면 현재 DAY_SCHED에서 역산
+  let days = [];
+  try{ days = JSON.parse(localStorage.getItem('fitlog-assigned-days')||'null') || []; }catch(e){ days = []; }
+  if(!days.length && Array.isArray(assignedDays) && assignedDays.length) days = assignedDays.slice();
+  if(!days.length){
+    const kr = ['일','월','화','수','목','금','토'];
+    for(let i=0;i<7;i++){ if(DAY_SCHED[i] && DAY_SCHED[i] !== 'REST') days.push(kr[i]); }
+  }
+  if(!days.length) return false;
+
+  // 중복 제거 + 매뉴얼 순서(월~일)로 정렬
+  days = days.filter(function(d,i){ return order.indexOf(d) >= 0 && days.indexOf(d) === i; });
+  const sorted = days.slice().sort(function(a,b){ return order.indexOf(a) - order.indexOf(b); });
+
+  order.forEach(function(d){ DAY_SCHED[DAY_NUM_MAP[d]] = 'REST'; });
+  sorted.forEach(function(d,i){ DAY_SCHED[DAY_NUM_MAP[d]] = avail[i % avail.length]; });
+
+  assignedDays = sorted;
+  try{
+    localStorage.setItem('fitlog-day-sched', JSON.stringify(DAY_SCHED));
+    localStorage.setItem('fitlog-assigned-days', JSON.stringify(sorted));
+  }catch(e){}
+
+  // 루틴 수가 운동 요일 수보다 적으면 요일이 겹친다 → 지금 설정으로 다시 생성
+  if(avail.length < sorted.length && typeof rebuildFromSettings === 'function' && !m_syncDaySchedule._busy){
+    m_syncDaySchedule._busy = true;
+    console.info('[FitLog] 루틴 '+avail.length+'개 < 운동 요일 '+sorted.length+'일 → 루틴 재생성');
+    Promise.resolve(rebuildFromSettings(true))
+      .catch(function(e){ console.warn('[FitLog] 루틴 재생성 실패', e); })
+      .then(function(){ m_syncDaySchedule._busy = false; });
+  }
+  return true;
+}
+
 function showApp(){
   document.getElementById('loading').style.display='none';
   document.getElementById('login-screen').style.display='none';
@@ -3476,16 +3533,11 @@ function showApp(){
 
   selDay=new Date().getDay();
   // ── localStorage에 남아있을 수 있는 임시 루틴 키(HANGOVER/QUICK 등) 정리 ──
-  const _defaults={0:'REST',1:'A',2:'B',3:'C',4:'D',5:'E',6:'F'};
-  let _dsFixed=false;
   // NaN 키 제거
-  Object.keys(DAY_SCHED).forEach(k=>{ if(isNaN(parseInt(k))){ delete DAY_SCHED[k]; _dsFixed=true; } });
-  [0,1,2,3,4,5,6].forEach(d=>{
-    if(DAY_SCHED[d]!=='REST' && !RT[DAY_SCHED[d]]){
-      DAY_SCHED[d]=_defaults[d]; _dsFixed=true;
-    }
-  });
-  if(_dsFixed){ try{ localStorage.setItem('fitlog-day-sched',JSON.stringify(DAY_SCHED)); }catch(e){} }
+  Object.keys(DAY_SCHED).forEach(k=>{ if(isNaN(parseInt(k))) delete DAY_SCHED[k]; });
+  // 요일 ↔ 루틴 매칭을 RT에 실제로 있는 루틴만으로 다시 맞춘다
+  // (예전에는 없는 키를 쓰는 요일을 전부 'A'로 되돌려 여러 요일이 같은 루틴이 됐다)
+  m_syncDaySchedule();
   initSetData(DAY_SCHED[selDay]);
   renderHome(); renderWorkout(); renderCalendar(); renderLog(); renderStats();
   updateVoiceCoachBtn();
@@ -3511,15 +3563,13 @@ function showApp(){
   }catch(e){ orm1RM = JSON.parse(localStorage.getItem('fitlog-1rm')||'{}'); }
 
   // 저장된 요일 배정 복원 → DAY_SCHED 재적용
-  const savedDays = JSON.parse(localStorage.getItem('fitlog-assigned-days')||'null');
-  if(savedDays && savedDays.length > 0){
-    assignedDays = savedDays;
-    const dayOrder2 = ['월','화','수','목','금','토','일'];
-    const routineKeys2 = ['A','B','C','D','E','F'];
-    const sorted2 = [...assignedDays].sort((a,b)=>dayOrder2.indexOf(a)-dayOrder2.indexOf(b));
-    dayOrder2.forEach(d=>{ DAY_SCHED[DAY_NUM_MAP[d]] = 'REST'; });
-    sorted2.forEach((d,i)=>{ DAY_SCHED[DAY_NUM_MAP[d]] = routineKeys2[i % routineKeys2.length]; });
-  }
+  // ⚠️ 여기서 A,B,C… 를 그대로 박아 넣으면 RT에 없는 키가 생겨 여러 요일이
+  //    같은 루틴으로 무너진다. m_syncDaySchedule()이 RT 기준으로 맞춰준다.
+  try{
+    const savedDays = JSON.parse(localStorage.getItem('fitlog-assigned-days')||'null');
+    if(savedDays && savedDays.length > 0) assignedDays = savedDays;
+  }catch(e){}
+  m_syncDaySchedule();
 
   showToast(`환영합니다, ${userProfile?.name||''}님! 💪`,'success');
 
@@ -4170,16 +4220,20 @@ function renderWorkout(){
   // ── rt가 없으면 (루틴 키 불일치) 안전하게 처리 ──
   if(!rt){
     console.error('[FitLog] renderWorkout: RT에 없는 키 =', tk, '/ DAY_SCHED =', JSON.stringify(DAY_SCHED));
-    // DAY_SCHED를 기본값으로 리셋하고 재시도
-    const fallbackTk = ['A','B','C','D','E','F'].find(k=>RT[k]) || null;
-    if(fallbackTk){
-      DAY_SCHED[selDay] = fallbackTk;
-      try{ localStorage.setItem('fitlog-day-sched', JSON.stringify(DAY_SCHED)); }catch(e){}
-      showToast('⚠️ 루틴 설정이 초기화됐어요 ('+tk+'→'+fallbackTk+')','info');
-      renderWorkout(); // 재귀 1회
-    } else {
-      content.innerHTML='<div style="padding:30px;text-align:center;color:var(--muted);">루틴을 불러올 수 없습니다.<br>설정에서 루틴을 재설정해주세요.</div>';
+    // ⚠️ 예전에는 이 요일을 무조건 첫 루틴('A')으로 바꿨다. 그래서 키가 어긋난
+    //    요일이 여러 개면 전부 'A'가 되어 월·화·일이 같은 루틴으로 보였다.
+    //    이제는 전체 요일 배정을 RT 기준으로 다시 맞춘다.
+    if(!renderWorkout._healing){
+      renderWorkout._healing = true;
+      const fixed = m_syncDaySchedule();
+      renderWorkout._healing = false;
+      if(fixed && RT[DAY_SCHED[selDay]]){
+        showToast('⚠️ 요일별 루틴을 다시 맞췄어요','info');
+        renderWorkout(); // 재귀 1회
+        return;
+      }
     }
+    content.innerHTML='<div style="padding:30px;text-align:center;color:var(--muted);">루틴을 불러올 수 없습니다.<br>설정에서 루틴을 재설정해주세요.</div>';
     return;
   }
   let html_cov='';
@@ -9281,7 +9335,7 @@ function renderORMGrid(){
 // (meta 태그의 no-cache는 브라우저가 거의 무시한다)
 // 그래서 서버에 있는 파일을 직접 읽어 빌드 번호를 비교한다.
 // ══════════════════════════════════════════════════════════════════
-const APP_BUILD = '20260830-multi';
+const APP_BUILD = '20260830-days';
 // 화면이 뜨자마자 빌드를 보여준다 — 어느 기기가 옛 파일인지 3초 만에 알 수 있게
 (function(){
   const paint = function(){
